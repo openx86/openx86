@@ -24,6 +24,8 @@ initial begin: check_register_sequence_code
             end
         end
     end
+
+    $finish();
 end
 
 endmodule
