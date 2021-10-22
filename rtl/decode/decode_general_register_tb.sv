@@ -13,16 +13,10 @@ module decode_general_register_tb #(
 );
 
 initial begin: check_register_sequence_code
-    logic [2:0] register_sequence_code;
-    logic       w_in_instruction;
-    logic       w;
+    bit testcase [1:0][1:0][7:0];
 
-    for (w_in_instruction = 0; w_in_instruction <= 1; w_in_instruction = w_in_instruction + 1) begin
-        for (w = 0; w <= 1; w = w + 1) begin
-            for (register_sequence_code = 0; register_sequence_code <= 7; register_sequence_code = register_sequence_code + 1) begin
-                #1 $display ("w_in_instruction = %b, w = %b, register_sequence_code = %b", w_in_instruction, w, register_sequence_code);
-            end
-        end
+    foreach (testcase[w_in_instruction, w, register_sequence_code]) begin
+        #1 $display ("w_in_instruction = %1b, w = %1b, register_sequence_code = %3b", w_in_instruction, w, register_sequence_code);
     end
 
     $finish();
