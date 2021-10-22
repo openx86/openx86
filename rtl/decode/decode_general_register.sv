@@ -18,7 +18,7 @@ module decode_general_register #(
 ) (
     // ports
     input  logic [1:0] bit_width,
-    input  logic [2:0] register,
+    input  logic [2:0] register_sequence_code,
     input  logic       w_in_instruction,
     input  logic       w,
 
@@ -50,7 +50,7 @@ module decode_general_register #(
     output logic       SP,
     output logic       BP,
     output logic       SI,
-    output logic       DI
+    output logic       DI,
 );
 
 localparam bit_width_16 = 2'b01 << 0;
@@ -75,7 +75,7 @@ always_comb begin
             unique case (bit_width)
                 // Register Selected During 16-Bit Data Operations
                 bit_width_16 : begin
-                    unique case (register)
+                    unique case (register_sequence_code)
                         3'b000 : one_hot_code_general_register_16bit <= 1'b1 << 7;
                         3'b001 : one_hot_code_general_register_16bit <= 1'b1 << 6;
                         3'b010 : one_hot_code_general_register_16bit <= 1'b1 << 5;
@@ -88,7 +88,7 @@ always_comb begin
                 end
                 // Register Selected During 32-Bit Data Operations
                 bit_width_32 : begin
-                    unique case (register)
+                    unique case (register_sequence_code)
                         3'b000 : one_hot_code_general_register_32bit <= 1'b1 << 7;
                         3'b001 : one_hot_code_general_register_32bit <= 1'b1 << 6;
                         3'b010 : one_hot_code_general_register_32bit <= 1'b1 << 5;
@@ -110,7 +110,7 @@ always_comb begin
                     unique case (w)
                         // (when w == 0)
                         1'b0 : begin
-                            unique case (register)
+                            unique case (register_sequence_code)
                                 3'b000 : one_hot_code_general_register_08bit <= 1'b1 << 7;
                                 3'b001 : one_hot_code_general_register_08bit <= 1'b1 << 6;
                                 3'b010 : one_hot_code_general_register_08bit <= 1'b1 << 5;
@@ -123,7 +123,7 @@ always_comb begin
                         end
                         // (when w == 1)
                         1'b1 : begin
-                            unique case (register)
+                            unique case (register_sequence_code)
                                 3'b000 : one_hot_code_general_register_16bit <= 1'b1 << 7;
                                 3'b001 : one_hot_code_general_register_16bit <= 1'b1 << 6;
                                 3'b010 : one_hot_code_general_register_16bit <= 1'b1 << 5;
@@ -142,7 +142,7 @@ always_comb begin
                     unique case (w)
                         // (when w == 0)
                         1'b0 : begin
-                            unique case (register)
+                            unique case (register_sequence_code)
                                 3'b000 : one_hot_code_general_register_08bit <= 1'b1 << 7;
                                 3'b001 : one_hot_code_general_register_08bit <= 1'b1 << 6;
                                 3'b010 : one_hot_code_general_register_08bit <= 1'b1 << 5;
@@ -155,7 +155,7 @@ always_comb begin
                         end
                         // (when w == 1)
                         1'b1 : begin
-                            unique case (register)
+                            unique case (register_sequence_code)
                                 3'b000 : one_hot_code_general_register_32bit <= 1'b1 << 7;
                                 3'b001 : one_hot_code_general_register_32bit <= 1'b1 << 6;
                                 3'b010 : one_hot_code_general_register_32bit <= 1'b1 << 5;
