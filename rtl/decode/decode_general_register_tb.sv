@@ -13,13 +13,14 @@ module decode_general_register_tb #(
 );
 
 initial begin: check_register_sequence_code
+    logic [2:0] register_sequence_code;
     logic       w_in_instruction;
     logic       w;
 
     for (w_in_instruction = 0; w_in_instruction <= 1; w_in_instruction = w_in_instruction + 1) begin
         for (w = 0; w <= 1; w = w + 1) begin
-            for (register = 0; register <= 7; register = register + 1) begin
-                #1 $display ("w_in_instruction = %b, w = %b, register = %b", w_in_instruction, w, register);
+            for (register_sequence_code = 0; register_sequence_code <= 7; register_sequence_code = register_sequence_code + 1) begin
+                #1 $display ("w_in_instruction = %b, w = %b, register_sequence_code = %b", w_in_instruction, w, register_sequence_code);
             end
         end
     end
