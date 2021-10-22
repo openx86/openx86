@@ -66,28 +66,32 @@ always_comb begin
             unique case (bit_width)
                 // Register Selected During 16-Bit Data Operations
                 bit_width_16 : begin
+                    { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b0;
+                    { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b0;
                     unique case (register_sequence_code)
                         3'b000 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 7;
                         3'b001 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 6;
                         3'b010 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 5;
                         3'b011 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 4;
-                        3'b000 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 3;
-                        3'b001 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 2;
-                        3'b010 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 1;
-                        3'b011 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 0;
+                        3'b100 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 3;
+                        3'b101 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 2;
+                        3'b110 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 1;
+                        3'b111 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 0;
                     endcase
                 end
                 // Register Selected During 32-Bit Data Operations
                 bit_width_32 : begin
+                    { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b0;
+                    { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b0;
                     unique case (register_sequence_code)
                         3'b000 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 7;
                         3'b001 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 6;
                         3'b010 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 5;
                         3'b011 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 4;
-                        3'b000 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 3;
-                        3'b001 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 2;
-                        3'b010 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 1;
-                        3'b011 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 0;
+                        3'b100 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 3;
+                        3'b101 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 2;
+                        3'b110 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 1;
+                        3'b111 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 0;
                     endcase
                 end
             endcase
@@ -101,28 +105,32 @@ always_comb begin
                     unique case (w)
                         // (when w == 0)
                         1'b0 : begin
+                            { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b0;
+                            { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b0;
                             unique case (register_sequence_code)
                                 3'b000 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 7;
                                 3'b001 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 6;
                                 3'b010 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 5;
                                 3'b011 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 4;
-                                3'b000 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 3;
-                                3'b001 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 2;
-                                3'b010 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 1;
-                                3'b011 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 0;
+                                3'b100 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 3;
+                                3'b101 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 2;
+                                3'b110 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 1;
+                                3'b111 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 0;
                             endcase
                         end
                         // (when w == 1)
                         8'b1 : begin
+                            { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b0;
+                            { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b0;
                             unique case (register_sequence_code)
                                 3'b000 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 7;
                                 3'b001 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 6;
                                 3'b010 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 5;
                                 3'b011 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 4;
-                                3'b000 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 3;
-                                3'b001 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 2;
-                                3'b010 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 1;
-                                3'b011 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 0;
+                                3'b100 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 3;
+                                3'b101 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 2;
+                                3'b110 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 1;
+                                3'b111 : { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b1 << 0;
                             endcase
                         end
                     endcase
@@ -133,28 +141,32 @@ always_comb begin
                     unique case (w)
                         // (when w == 0)
                         1'b0 : begin
+                            { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b0;
+                            { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b0;
                             unique case (register_sequence_code)
                                 3'b000 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 7;
                                 3'b001 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 6;
                                 3'b010 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 5;
                                 3'b011 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 4;
-                                3'b000 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 3;
-                                3'b001 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 2;
-                                3'b010 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 1;
-                                3'b011 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 0;
+                                3'b100 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 3;
+                                3'b101 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 2;
+                                3'b110 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 1;
+                                3'b111 : { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b1 << 0;
                             endcase
                         end
                         // (when w == 1)
                         8'b1 : begin
+                            { AX, CX, DX, BX, SP, BP, SI, DI } <= 8'b0;
+                            { AL, CL, DL, BL, AH, CH, DH, BH } <= 8'b0;
                             unique case (register_sequence_code)
                                 3'b000 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 7;
                                 3'b001 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 6;
                                 3'b010 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 5;
                                 3'b011 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 4;
-                                3'b000 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 3;
-                                3'b001 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 2;
-                                3'b010 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 1;
-                                3'b011 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 0;
+                                3'b100 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 3;
+                                3'b101 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 2;
+                                3'b110 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 1;
+                                3'b111 : { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } <= 8'b1 << 0;
                             endcase
                         end
                     endcase
