@@ -45,38 +45,38 @@ module register_flags #(
     input  logic        clock, reset
 );
 
-reg   [31:0] EFLAGS_r;
+reg   [31:0] EFLAGS_register;
 
 always_ff @( posedge clock or negedge reset ) begin : ff_flags_register
     if (reset) begin
-        EFLAGS_r <= 32'b0;
+        EFLAGS_register <= 32'b0;
     end else begin
         if (write_enable) begin
-            EFLAGS_r[write_index] <= write_data;
+            EFLAGS_register[write_index] <= write_data;
         end if (write_IOPL_enable) begin
-            EFLAGS_r[13:12] <= write_IOPL_data;
+            EFLAGS_register[13:12] <= write_IOPL_data;
         end else begin
-            EFLAGS_r[write_index] <= EFLAGS_r[write_index];
+            EFLAGS_register[write_index] <= EFLAGS_register[write_index];
         end
 
     end
 end
 
-assign EFLAGS = EFLAGS_r;
-assign FLAGS = EFLAGS_r[15:0];
+assign EFLAGS = EFLAGS_register;
+assign FLAGS = EFLAGS_register[15:0];
 
-assign CF   = EFLAGS_r[    0];
-assign PF   = EFLAGS_r[    2];
-assign AF   = EFLAGS_r[    4];
-assign ZF   = EFLAGS_r[    6];
-assign SF   = EFLAGS_r[    7];
-assign TF   = EFLAGS_r[    8];
-assign IF   = EFLAGS_r[    9];
-assign DF   = EFLAGS_r[   10];
-assign OF   = EFLAGS_r[   11];
-assign IOPL = EFLAGS_r[13:12];
-assign NT   = EFLAGS_r[   14];
-assign RF   = EFLAGS_r[   16];
-assign VM   = EFLAGS_r[   17];
+assign CF   = EFLAGS_register[    0];
+assign PF   = EFLAGS_register[    2];
+assign AF   = EFLAGS_register[    4];
+assign ZF   = EFLAGS_register[    6];
+assign SF   = EFLAGS_register[    7];
+assign TF   = EFLAGS_register[    8];
+assign IF   = EFLAGS_register[    9];
+assign DF   = EFLAGS_register[   10];
+assign OF   = EFLAGS_register[   11];
+assign IOPL = EFLAGS_register[13:12];
+assign NT   = EFLAGS_register[   14];
+assign RF   = EFLAGS_register[   16];
+assign VM   = EFLAGS_register[   17];
 
 endmodule
