@@ -1,0 +1,4 @@
+10110000 // Immediate to Register (short form) mov ax
+00000001 // Immediate to Register (short form) 1
+10110011 // Immediate to Register (short form) mov bx
+00000011 // Immediate to Register (short form) 3
