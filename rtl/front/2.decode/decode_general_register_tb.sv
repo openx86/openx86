@@ -12,9 +12,10 @@ module decode_general_register_tb #(
     // ports
 );
 
-logic [1:0] bit_width = 1 << 0;
-logic [2:0] register_sequence_code;
-logic       w_in_instruction;
+logic [2:0] instruction_reg;
+logic       bit_width_16;
+logic       bit_width_32;
+logic       w_is_present;
 logic       w;
 logic       AL;
 logic       CL;
@@ -24,14 +25,6 @@ logic       AH;
 logic       CH;
 logic       DH;
 logic       BH;
-logic       EAX;
-logic       ECX;
-logic       EDX;
-logic       EBX;
-logic       ESP;
-logic       EBP;
-logic       ESI;
-logic       EDI;
 logic       AX;
 logic       CX;
 logic       DX;
@@ -40,13 +33,21 @@ logic       SP;
 logic       BP;
 logic       SI;
 logic       DI;
+logic       EAX;
+logic       ECX;
+logic       EDX;
+logic       EBX;
+logic       ESP;
+logic       EBP;
+logic       ESI;
+logic       EDI;
 
 decode_general_register decode_general_register_inst (
-    .bit_width ( bit_width ),
-    .register_sequence_code ( register_sequence_code ),
-    .w_in_instruction ( w_in_instruction ),
+    .instruction_reg ( instruction_reg ),
+    .bit_width_16 ( bit_width_16 ),
+    .bit_width_32 ( bit_width_32 ),
+    .w_is_present ( w_is_present ),
     .w ( w ),
-
     .AL ( AL ),
     .CL ( CL ),
     .DL ( DL ),
@@ -55,14 +56,6 @@ decode_general_register decode_general_register_inst (
     .CH ( CH ),
     .DH ( DH ),
     .BH ( BH ),
-    .EAX ( EAX ),
-    .ECX ( ECX ),
-    .EDX ( EDX ),
-    .EBX ( EBX ),
-    .ESP ( ESP ),
-    .EBP ( EBP ),
-    .ESI ( ESI ),
-    .EDI ( EDI ),
     .AX ( AX ),
     .CX ( CX ),
     .DX ( DX ),
@@ -70,19 +63,96 @@ decode_general_register decode_general_register_inst (
     .SP ( SP ),
     .BP ( BP ),
     .SI ( SI ),
-    .DI ( DI )
+    .DI ( DI ),
+    .EAX ( EAX ),
+    .ECX ( ECX ),
+    .EDX ( EDX ),
+    .EBX ( EBX ),
+    .ESP ( ESP ),
+    .EBP ( EBP ),
+    .ESI ( ESI ),
+    .EDI ( EDI )
 );
 
-initial begin: check_register_sequence_code
-    bit testcase [1:0][1:0][7:0];
+reg [3:0] i;
 
-    foreach (testcase[testcase_w_in_instruction, testcase_w, testcase_register_sequence_code]) begin
-        #1 $display ("w_in_instruction = %1b, w = %1b, register_sequence_code = %3b", testcase_w_in_instruction, testcase_w, testcase_register_sequence_code);
-        w_in_instruction <= testcase_w_in_instruction;
-        w <= testcase_w;
-        register_sequence_code <= testcase_register_sequence_code;
+initial begin
+    instruction_reg = 0;
+    bit_width_16 = 0;
+    bit_width_32 = 0;
+    w_is_present = 0;
+    w = 0;
+
+    $monitor("%t: instruction_reg=%h, bit_width 16_32=%h_%h, w_is_present=%h, w=%h", $time, instruction_reg, bit_width_16, bit_width_32, w_is_present, w);
+    $monitor("%t:  AL=%h,  CL=%h,  DL=%h,  BL=%h,  AH=%h,  CH=%h,  DH=%h,  BH=%h", $time, AL, CL, DL, BL, AH, CH, DH, BH);
+    $monitor("%t:  AX=%h,  CX=%h,  DX=%h,  BX=%h,  SP=%h,  BP=%h,  SI=%h,  DI=%h", $time, AX, CX, DX, BX, SP, BP, SI, DI);
+    $monitor("%t: EAX=%h, ECX=%h, EDX=%h, EBX=%h, ESP=%h, EBP=%h, ESI=%h, EDI=%h", $time, EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI);
+
+    #1;
+    w_is_present = 0;
+    bit_width_16 = 1;
+    bit_width_32 = 0;
+    for(i=0;i<8;i=i+1) begin
+        #1;
+        instruction_reg = i;
     end
 
+    #1;
+    w_is_present = 0;
+    bit_width_16 = 0;
+    bit_width_32 = 1;
+    for(i=0;i<8;i=i+1) begin
+        #1;
+        instruction_reg = i;
+    end
+
+    #1;
+    w_is_present = 1;
+    w = 1;
+    bit_width_16 = 1;
+    bit_width_32 = 0;
+    for(i=0;i<8;i=i+1) begin
+        #1;
+        instruction_reg = i;
+    end
+
+    #1;
+    w_is_present = 1;
+    w = 1;
+    bit_width_16 = 0;
+    bit_width_32 = 1;
+    for(i=0;i<8;i=i+1) begin
+        #1;
+        instruction_reg = i;
+    end
+
+    #1;
+    w_is_present = 1;
+    w = 0;
+    bit_width_16 = 1;
+    bit_width_32 = 0;
+    for(i=0;i<8;i=i+1) begin
+        #1;
+        instruction_reg = i;
+    end
+
+    #1;
+    w_is_present = 1;
+    w = 0;
+    bit_width_16 = 0;
+    bit_width_32 = 1;
+    for(i=0;i<8;i=i+1) begin
+        #1;
+        instruction_reg = i;
+    end
+
+    instruction_reg = 0;
+    bit_width_16 = 0;
+    bit_width_32 = 0;
+    w_is_present = 0;
+    w = 0;
+
+    #16;
     $stop();
 end
 
