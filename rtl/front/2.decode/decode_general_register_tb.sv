@@ -93,8 +93,8 @@ initial begin
     bit_width_16 = 1;
     bit_width_32 = 0;
     for(i=0;i<8;i=i+1) begin
-        #1;
         instruction_reg = i;
+        #1;
     end
 
     #1;
@@ -102,8 +102,8 @@ initial begin
     bit_width_16 = 0;
     bit_width_32 = 1;
     for(i=0;i<8;i=i+1) begin
-        #1;
         instruction_reg = i;
+        #1;
     end
 
     #1;
@@ -112,8 +112,8 @@ initial begin
     bit_width_16 = 1;
     bit_width_32 = 0;
     for(i=0;i<8;i=i+1) begin
-        #1;
         instruction_reg = i;
+        #1;
     end
 
     #1;
@@ -122,8 +122,8 @@ initial begin
     bit_width_16 = 0;
     bit_width_32 = 1;
     for(i=0;i<8;i=i+1) begin
-        #1;
         instruction_reg = i;
+        #1;
     end
 
     #1;
@@ -132,8 +132,8 @@ initial begin
     bit_width_16 = 1;
     bit_width_32 = 0;
     for(i=0;i<8;i=i+1) begin
-        #1;
         instruction_reg = i;
+        #1;
     end
 
     #1;
@@ -142,8 +142,8 @@ initial begin
     bit_width_16 = 0;
     bit_width_32 = 1;
     for(i=0;i<8;i=i+1) begin
-        #1;
         instruction_reg = i;
+        #1;
     end
 
     instruction_reg = 0;
