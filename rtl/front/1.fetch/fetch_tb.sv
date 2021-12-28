@@ -18,7 +18,7 @@ logic [31:0] bus_read_address;
 logic [31:0] bus_read_data;
 logic [31:0] program_counter;
 logic        program_counter_valid;
-logic [31:0] instruction;
+logic [ 7:0] instruction [0:9];
 logic        instruction_ready;
 logic        clock, reset;
 
@@ -35,7 +35,23 @@ fetch fetch_inst (
     .reset ( reset )
 );
 
+reg [31:0] i;
+
 always #1 clock = ~clock;
+
+always @(bus_read_vaild) begin
+    if (bus_read_vaild == 1) begin
+        #8;
+        bus_read_ready = 1;
+        bus_read_data = 32'h1234_5678;
+        #2;
+        bus_read_ready = 0;
+        bus_read_data = 0;
+    end else begin
+        bus_read_ready = 0;
+        bus_read_data = 0;
+    end
+end
 
 initial begin
     bus_read_ready = 0;
@@ -47,18 +63,23 @@ initial begin
     #2;
     reset = 0;
 
-    program_counter = 32'h0000_0020;
-    program_counter_valid = 1;
-    $display("%t: test fetch instruction: program_counter=%h", $time, program_counter);
-    #4
-    program_counter_valid = 0;
+    // bus_read_ready = 1;
+    // bus_read_data = 32'h0000_0001;
+    // bus_read_data = 32'h0001_1011;
 
-    $monitor("%t: instruction=%h, instruction_ready=%h", $time, instruction, instruction_ready);
-    $monitor("%t: bus_read_vaild=%h, bus_read_address=%h", $time, bus_read_vaild, bus_read_address);
+    for(i=0;i<4;i=i+1) begin
+        // program_counter = 32'h0000_0000;
+        program_counter = i;
+        program_counter_valid = 1;
+        $display("%t: test fetch instruction: program_counter=%h", $time, program_counter);
+        wait(instruction_ready);
+        program_counter_valid = 0;
+        $monitor("%t: instruction_ready=%h, instruction=%p", $time, instruction_ready, instruction);
+        $monitor("%t: bus_read_vaild=%h, bus_read_address=%h", $time, bus_read_vaild, bus_read_address);
+        #32;
+    end
 
-    #8;
-    bus_read_ready = 1;
-    bus_read_data = 32'h0001_1011;
+    // #8;
 
     #64;
 
