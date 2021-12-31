@@ -43,8 +43,9 @@ module decode_mod_rm #(
     // parameters
 ) (
     // ports
-    input  logic [ 7:0] instruction,
-    input  logic        w,
+    input  logic [1:0] mod,
+    input  logic [2:0] rm,
+    input  logic       w,
     input  logic [`info_bit_width_len-1:0] info_bit_width,
     output logic [`info_reg_seg_len-1:0] info_segment_reg,
     output logic [`info_reg_gpr_len-1:0] info_base_reg,
@@ -52,9 +53,6 @@ module decode_mod_rm #(
     output logic [`info_displacement_len-1:0] info_displacement,
     output logic        sib_is_present
 );
-
-wire [1:0] mod = instruction[7:6];
-wire [2:0]  rm = instruction[2:0];
 
 always_comb begin
     case (info_bit_width)

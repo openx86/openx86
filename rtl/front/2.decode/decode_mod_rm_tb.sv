@@ -22,8 +22,12 @@ logic [`info_reg_gpr_len-1:0] info_index_reg;
 logic [`info_displacement_len-1:0] info_displacement;
 logic        sib_is_present;
 
+wire [1:0] mod = instruction[7:6];
+wire [2:0]  rm = instruction[2:0];
+
 decode_mod_rm decode_mod_rm_inst (
-    .instruction ( instruction ),
+    .mod ( mod ),
+    .rm ( rm ),
     .w ( w ),
     .info_bit_width ( info_bit_width ),
     .info_segment_reg ( info_segment_reg ),
