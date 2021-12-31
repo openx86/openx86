@@ -14,12 +14,10 @@ module decode_opcode_tb #(
 );
 
 logic [7:0] instruction [0:9];
-logic [0:`info_opcode_len-1] info_opcode;
 // logic        clock, reset;
 
 decode_opcode decode_opcode_inst (
-    .instruction ( instruction ),
-    .info_opcode ( info_opcode )
+    .instruction ( instruction )
 );
 
 // always #1 clock = ~clock;
@@ -27,7 +25,7 @@ decode_opcode decode_opcode_inst (
 initial begin
     #2; instruction[0:9] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
 
-    $monitor("%t: info_opcode=%b, instruction=%p", $time, info_opcode, instruction);
+    $monitor("%t: instruction=%p", $time, instruction);
 
     #2; instruction[0:5] = {8'h89, 8'h0E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("890E0100                mov [1], cx");
     #2; instruction[0:5] = {8'h8B, 8'h1E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("8B1E0100                mov bx, [1]");
