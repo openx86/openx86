@@ -2,13 +2,13 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_operand
+module: decode_field
 create at: 2021-12-28 16:56:15
-description: decode operand by opcode
+description: decode field by opcode
 */
 
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
-module decode_operand #(
+module decode_field #(
     // parameters
 ) (
     // ports
