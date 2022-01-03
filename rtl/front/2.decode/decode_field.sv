@@ -264,8 +264,8 @@ module decode_field #(
     input  logic        opcode_VERR,
     input  logic        opcode_VERW,
     input  logic [ 7:0] instruction[0:9],
-    input  logic        s,
-    input  logic        w,
+    output logic        s,
+    output logic        w,
     output logic [ 2:0] gereral_propose_register,
     output logic [ 2:0] sreg3,
     output logic [ 1:0] sreg2,
@@ -286,7 +286,7 @@ wire has_prefix =
 opcode_prefix_address_size |
 opcode_prefix_bus_lock |
 opcode_prefix_operand_size |
-has_prefix_segment
+has_prefix_segment |
 0;
 
 
