@@ -77,7 +77,6 @@ module decode_opcode #(
     output logic        opcode_SBB_imm_to_acc,
     output logic        opcode_DEC_reg_mem,
     output logic        opcode_DEC_reg,
-    output logic        opcode_CMP_reg_with_reg,
     output logic        opcode_CMP_mem_with_reg,
     output logic        opcode_CMP_reg_with_mem,
     output logic        opcode_CMP_imm_with_reg_mem,
@@ -90,7 +89,7 @@ module decode_opcode #(
     output logic        opcode_MUL_acc_with_reg_mem,
     output logic        opcode_IMUL_acc_with_reg_mem,
     output logic        opcode_IMUL_reg_with_reg_mem,
-    output logic        opcode_IMUL_reg_mem_with_imm_to_mem,
+    output logic        opcode_IMUL_reg_mem_with_imm_to_reg,
     output logic        opcode_DIV_acc_by_reg_mem,
     output logic        opcode_IDIV_acc_by_reg_mem,
     output logic        opcode_AAD,
@@ -332,7 +331,6 @@ assign opcode_SBB_imm_to_reg_mem                  = (instruction[0][7:2] == 6'b1
 assign opcode_SBB_imm_to_acc                      = (instruction[0][7:1] == 7'b0001_110);
 assign opcode_DEC_reg_mem                         = (instruction[0][7:0] == 8'b1111_1111) & (instruction[1][5:3] == 3'b001);
 assign opcode_DEC_reg                             = (instruction[0][7:3] == 5'b0100_1);
-assign opcode_CMP_reg_with_reg                    = (instruction[0][7:2] == 6'b0011_10) & (instruction[1][7:6] == 2'b11);
 assign opcode_CMP_mem_with_reg                    = (instruction[0][7:1] == 7'b0011_100);
 assign opcode_CMP_reg_with_mem                    = (instruction[0][7:1] == 7'b0011_101);
 assign opcode_CMP_imm_with_reg_mem                = (instruction[0][7:2] == 6'b1000_00) & (instruction[1][5:3] == 3'b111);
@@ -345,7 +343,7 @@ assign opcode_DAS                                 = (instruction[0][7:0] == 8'b0
 assign opcode_MUL_acc_with_reg_mem                = (instruction[0][7:1] == 7'b1111_011) & (instruction[1][5:3] == 3'b100);
 assign opcode_IMUL_acc_with_reg_mem               = (instruction[0][7:1] == 7'b1111_011) & (instruction[1][5:3] == 3'b101);
 assign opcode_IMUL_reg_with_reg_mem               = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1010_1111);
-assign opcode_IMUL_reg_mem_with_imm_to_mem        = (instruction[0][7:2] == 6'b0110_10) & (instruction[0][0] == 1'b1);
+assign opcode_IMUL_reg_mem_with_imm_to_reg        = (instruction[0][7:2] == 6'b0110_10) & (instruction[0][0] == 1'b1);
 assign opcode_DIV_acc_by_reg_mem                  = (instruction[0][7:1] == 7'b1111_011) & (instruction[1][5:3] == 3'b110);
 assign opcode_IDIV_acc_by_reg_mem                 = (instruction[0][7:1] == 7'b1111_011) & (instruction[1][5:3] == 3'b111);
 assign opcode_AAD                                 = (instruction[0][7:0] == 8'b1101_0101) & (instruction[1][7:0] == 8'b0000_1010);
