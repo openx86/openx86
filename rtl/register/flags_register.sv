@@ -22,7 +22,6 @@ module flags_register (
     // ports
     input  logic        write_enable,
     input  logic [31:0] write_data,
-    input  logic [31:0] write_mask,
     output logic        CF,
     output logic        PF,
     output logic        AF,
