@@ -47,14 +47,7 @@ module control_register (
     input  logic         write_enable,
     input  logic [ 2: 0] write_index,
     input  logic [31: 0] write_data,
-    output logic [31: 0] CR0,
-    output logic [31: 0] CR1,
-    output logic [31: 0] CR2,
-    output logic [31: 0] CR3,
-    output logic [31: 0] CR4,
-    output logic [31: 0] CR5,
-    output logic [31: 0] CR6,
-    output logic [31: 0] CR7,
+    output logic [31: 0] CR [0:7],
     output logic         PE,
     output logic         MP,
     output logic         EM,
@@ -65,41 +58,32 @@ module control_register (
     input  logic         clock, reset
 );
 
-reg [31:0] control_reg [0:7];
+reg [31:0] CR [0:7];
 
 always_ff @( posedge clock or posedge reset ) begin : ff_control_register
     if (reset) begin
-        control_reg[0] <= 32'b0;
-        control_reg[1] <= 32'b0;
-        control_reg[2] <= 32'b0;
-        control_reg[3] <= 32'b0;
-        control_reg[4] <= 32'b0;
-        control_reg[5] <= 32'b0;
-        control_reg[6] <= 32'b0;
-        control_reg[7] <= 32'b0;
+        CR[0] <= 32'b0;
+        CR[1] <= 32'b0;
+        CR[2] <= 32'b0;
+        CR[3] <= 32'b0;
+        CR[4] <= 32'b0;
+        CR[5] <= 32'b0;
+        CR[6] <= 32'b0;
+        CR[7] <= 32'b0;
     end else begin
         if (write_enable) begin
-            control_reg[write_index] <= write_data;
+            CR[write_index] <= write_data;
         end
     end
 end
 
-assign CR0 = control_reg[0][31:0];
-assign CR1 = control_reg[1][31:0];
-assign CR2 = control_reg[2][31:0];
-assign CR3 = control_reg[3][31:0];
-assign CR4 = control_reg[4][31:0];
-assign CR5 = control_reg[5][31:0];
-assign CR6 = control_reg[6][31:0];
-assign CR7 = control_reg[7][31:0];
+assign PE = CR[0][0];
+assign MP = CR[0][1];
+assign EM = CR[0][2];
+assign TS = CR[0][3];
+assign R  = CR[0][4];
+assign PG = CR[0][31];
 
-assign PE = control_reg[0][0];
-assign MP = control_reg[0][1];
-assign EM = control_reg[0][2];
-assign TS = control_reg[0][3];
-assign R  = control_reg[0][4];
-assign PG = control_reg[0][31];
-
-assign page_directory_base = control_reg[3][31:12];
+assign page_directory_base = CR[3][31:12];
 
 endmodule
