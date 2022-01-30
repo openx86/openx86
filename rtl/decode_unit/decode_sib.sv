@@ -12,9 +12,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 6.2.3.4 ENCODING OF ADDRESS MODE
 */
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
-module decode_sib #(
-    // parameters
-) (
+module decode_sib (
     // ports
     input  logic [ 7:0] instruction,
     input  logic [ 1:0] mod,

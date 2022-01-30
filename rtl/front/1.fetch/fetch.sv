@@ -5,21 +5,53 @@
 // create at: 2021-12-28 15:31:24
 // description: instruction fetch module
 
+`include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
 module fetch #(
     // parameters
 ) (
     // ports
+    input  logic        PE,
+    input  logic [15:0] IP,
+    input  logic [31:0] EIP,
+    input  logic [15:0] CS,
+    input  logic [31:0] code_segment_base,
+    input  logic        code_default_operation_size,
     output logic        bus_read_vaild,
     input  logic        bus_read_ready,
     output logic [31:0] bus_read_address,
     input  logic [31:0] bus_read_data,
-    input  logic [31:0] program_counter,
     input  logic        program_counter_valid,
     // input  logic [ 3:0] program_counter_offset,
     output logic [ 7:0] instruction [0:9],
     output logic        instruction_ready,
+    output logic [`info_bit_width_len-1:0] bit_width,
     input  logic        clock, reset
 );
+
+wire bit_width_32 = PE & code_default_operation_size;
+wire bit_width_16 = ~bit_width_32;
+
+always_comb begin
+    unique case (1'b1)
+        bit_width_32: bit_width = `info_bit_width_32;
+        bit_width_16: bit_width = `info_bit_width_16;
+        default:      bit_width = `info_bit_width_16;
+    endcase
+end
+
+logic [31:0] program_counter;
+always_comb begin
+    if (PE) begin
+        if (code_default_operation_size) begin
+            program_counter <= code_segment_base << 0 + EIP;
+        end else begin
+            program_counter <= code_segment_base << 0 + IP;
+        end
+    end else begin
+        program_counter <= CS << 4 + IP;
+    end
+end
+
 // wire [31:0] real_address = program_counter // {4'b0_0000, program_counter[31:5]}; // 32 bit == 2^5
 wire [1:0] program_counter_offset = program_counter % 4;
 // wire [31:0] real_address = program_counter >>> 5; // some bits become to 1'bx when simulate

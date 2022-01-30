@@ -42,38 +42,64 @@ does not change during the task switch, the cached
 page table entries are not flushed.
 */
 
-module control_register #(
-    // parameters
-) (
+module control_register (
     // ports
-    input  logic        write_enable,
-    input  logic [ 4:0] write_index,
-    input  logic [31:0] write_data,
-    output logic [31:0] CR0,
-    output logic [31:0] CR1,
-    output logic [31:0] CR2,
-    output logic [31:0] CR3,
-    input  logic        clock, reset
+    input  logic         write_enable,
+    input  logic [ 2: 0] write_index,
+    input  logic [31: 0] write_data,
+    output logic [31: 0] CR0,
+    output logic [31: 0] CR1,
+    output logic [31: 0] CR2,
+    output logic [31: 0] CR3,
+    output logic [31: 0] CR4,
+    output logic [31: 0] CR5,
+    output logic [31: 0] CR6,
+    output logic [31: 0] CR7,
+    output logic         PE,
+    output logic         MP,
+    output logic         EM,
+    output logic         TS,
+    output logic         R,
+    output logic         PG,
+    output logic [19: 0] page_directory_base,
+    input  logic         clock, reset
 );
 
-reg [31:0] control_register [4];
+reg [31:0] control_reg [0:7];
 
 always_ff @( posedge clock or posedge reset ) begin : ff_control_register
     if (reset) begin
-       control_register[0] <= 32'b0;
-       control_register[1] <= 32'b0;
-       control_register[2] <= 32'b0;
-       control_register[3] <= 32'b0;
+        control_reg[0] <= 32'b0;
+        control_reg[1] <= 32'b0;
+        control_reg[2] <= 32'b0;
+        control_reg[3] <= 32'b0;
+        control_reg[4] <= 32'b0;
+        control_reg[5] <= 32'b0;
+        control_reg[6] <= 32'b0;
+        control_reg[7] <= 32'b0;
     end else begin
         if (write_enable) begin
-            control_register[write_index] <= write_data;
+            control_reg[write_index] <= write_data;
         end
     end
 end
 
-assign CR0 = control_register[0][31:0];
-assign CR1 = control_register[1][31:0];
-assign CR2 = control_register[2][31:0];
-assign CR3 = control_register[3][31:0];
+assign CR0 = control_reg[0][31:0];
+assign CR1 = control_reg[1][31:0];
+assign CR2 = control_reg[2][31:0];
+assign CR3 = control_reg[3][31:0];
+assign CR4 = control_reg[4][31:0];
+assign CR5 = control_reg[5][31:0];
+assign CR6 = control_reg[6][31:0];
+assign CR7 = control_reg[7][31:0];
+
+assign PE = control_reg[0][0];
+assign MP = control_reg[0][1];
+assign EM = control_reg[0][2];
+assign TS = control_reg[0][3];
+assign R  = control_reg[0][4];
+assign PG = control_reg[0][31];
+
+assign page_directory_base = control_reg[3][31:12];
 
 endmodule

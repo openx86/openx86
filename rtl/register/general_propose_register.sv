@@ -33,9 +33,7 @@ offers additional flexibility for data operations,
 but is not used for effective address calculation.
 */
 
-module general_propose_register #(
-    // parameters
-) (
+module general_propose_register (
     // ports
     input  logic        write_enable,
     input  logic [ 2:0] write_index,
@@ -83,6 +81,8 @@ always_ff @( posedge clock or negedge reset ) begin : ff_basic_register
     end else begin
         if (write_enable) begin
             general_register[write_index] <= write_data;
+        end else begin
+            // pass
         end
     end
 end

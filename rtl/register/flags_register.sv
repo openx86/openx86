@@ -18,9 +18,7 @@ lower 16 bits (bit 0-15) of EFLAGS contain the
 useful when executing 8086 and 80286 code.
 */
 
-module flags_register #(
-    // parameters
-) (
+module flags_register (
     // ports
     input  logic        write_enable,
     input  logic [31:0] write_data,
@@ -43,38 +41,36 @@ module flags_register #(
     input  logic        clock, reset
 );
 
-reg   [31:0] FLAGS_register;
+reg [31:0] flags_reg;
 
-always_ff @( posedge clock or negedge reset ) begin : ff_flags_register
+always_ff @( posedge clock or negedge reset ) begin
     if (reset) begin
-        FLAGS_register <= 32'b0;
+        flags_reg <= 32'b0;
     end else begin
         if (write_enable) begin
-            FLAGS_register[write_index] <= write_data;
-        end if (write_IOPL_enable) begin
-            FLAGS_register[13:12] <= write_IOPL_data;
+            flags_reg <= write_data;
         end else begin
-            FLAGS_register[write_index] <= FLAGS_register[write_index];
+            flags_reg <= flags_reg;
         end
 
     end
 end
 
-assign EFLAGS = FLAGS_register;
-assign FLAGS = FLAGS_register[15:0];
+assign EFLAGS = flags_reg[31:0];
+assign FLAGS  = flags_reg[15:0];
 
-assign CF   = FLAGS_register[    0];
-assign PF   = FLAGS_register[    2];
-assign AF   = FLAGS_register[    4];
-assign ZF   = FLAGS_register[    6];
-assign SF   = FLAGS_register[    7];
-assign TF   = FLAGS_register[    8];
-assign IF   = FLAGS_register[    9];
-assign DF   = FLAGS_register[   10];
-assign OF   = FLAGS_register[   11];
-assign IOPL = FLAGS_register[13:12];
-assign NT   = FLAGS_register[   14];
-assign RF   = FLAGS_register[   16];
-assign VM   = FLAGS_register[   17];
+assign CF   = flags_reg[    0];
+assign PF   = flags_reg[    2];
+assign AF   = flags_reg[    4];
+assign ZF   = flags_reg[    6];
+assign SF   = flags_reg[    7];
+assign TF   = flags_reg[    8];
+assign IF   = flags_reg[    9];
+assign DF   = flags_reg[   10];
+assign OF   = flags_reg[   11];
+assign IOPL = flags_reg[13:12];
+assign NT   = flags_reg[   14];
+assign RF   = flags_reg[   16];
+assign VM   = flags_reg[   17];
 
 endmodule

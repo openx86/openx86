@@ -15,7 +15,7 @@ reg [31:0] n;
 assign read_data = mem[read_address];
 
 initial begin
-	$readmemb("D:\\GitHub\\openx86\\w80386dx\\rtl\\sim\\rom.bin", mem);
+	$readmemb("D:\\GitHub\\openx86\\w80386dx\\rtl\\sim\\rom", mem);
     for(n=0;n<=31;n=n+1)
         $display("mem[0x%h] = %h", n, mem[n]);
 end

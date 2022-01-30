@@ -17,7 +17,7 @@ logic [7:0] instruction [0:9];
 // logic        clock, reset;
 
 decode_opcode decode_opcode_inst (
-    .instruction ( instruction )
+    .instruction ( instruction[0:2] )
 );
 
 // always #1 clock = ~clock;

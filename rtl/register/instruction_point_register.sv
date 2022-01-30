@@ -3,7 +3,7 @@ project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
 module: instruction_point_register
-create at: 2021-10-22 23:27:32
+create at: 2022-01-31 01:19:14
 description: define the instruction point register
 */
 
@@ -19,9 +19,7 @@ pointer named IP, which is used by 16-bit
 addressing.
 */
 
-module instruction_point_register #(
-    // parameters
-) (
+module instruction_point_register (
     // ports
     input  logic        write_enable,
     input  logic [31:0] write_data,
@@ -30,19 +28,19 @@ module instruction_point_register #(
     input  logic        clock, reset
 );
 
-reg   [31:0] IP_r;
+reg   [31:0] instruction_point;
 
-always_ff @( posedge clock or negedge reset ) begin : ff_instruction_point_register
+always_ff @( posedge clock or negedge reset ) begin
     if (reset) begin
-        IP_r <= 32'b0;
+        instruction_point <= 32'h0000_FFF0;
     end else begin
         if (write_enable) begin
-            IP_r <= write_data;
+            instruction_point <= write_data;
         end
     end
 end
 
-assign IP   = IP_r[15:0];
-assign EIP  = IP_r[31:0];
+assign IP   = instruction_point[15:0];
+assign EIP  = instruction_point[31:0];
 
 endmodule

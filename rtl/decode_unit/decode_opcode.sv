@@ -8,9 +8,7 @@ description: decode opcode from instruction
 */
 
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
-module decode_opcode #(
-    // parameters
-) (
+module decode_opcode (
     // ports
     output logic        opcode_MOV_reg_to_reg_mem,
     output logic        opcode_MOV_reg_mem_to_reg,
@@ -263,7 +261,7 @@ module decode_opcode #(
     output logic        opcode_STR,
     output logic        opcode_VERR,
     output logic        opcode_VERW,
-    input  logic [ 7:0] instruction[0:9]
+    input  logic [ 7:0] instruction[0:2]
 );
 
 assign opcode_MOV_reg_to_reg_mem                  = (instruction[0][7:1] == 7'b1000_100);
@@ -403,13 +401,13 @@ assign opcode_REPE                                = (instruction[0][7:0] == 8'b1
 assign opcode_REPNE                               = (instruction[0][7:0] == 8'b1111_0010);
 assign opcode_BSF                                 = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1100);
 assign opcode_BSR                                 = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1101);
-assign opcode_BT_reg_mem_with_imm                 = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1010) & (instruction[2][5:3] == 3'b100);;
+assign opcode_BT_reg_mem_with_imm                 = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1010) & (instruction[2][5:3] == 3'b100);
 assign opcode_BT_reg_mem_with_reg                 = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1010_0011);
-assign opcode_BTC_reg_mem_with_imm                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1010) & (instruction[2][5:3] == 3'b111);;
+assign opcode_BTC_reg_mem_with_imm                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1010) & (instruction[2][5:3] == 3'b111);
 assign opcode_BTC_reg_mem_with_reg                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1011);
-assign opcode_BTR_reg_mem_with_imm                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1010) & (instruction[2][5:3] == 3'b110);;
+assign opcode_BTR_reg_mem_with_imm                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1010) & (instruction[2][5:3] == 3'b110);
 assign opcode_BTR_reg_mem_with_reg                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_0011);
-assign opcode_BTS_reg_mem_with_imm                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1010) & (instruction[2][5:3] == 3'b101);;
+assign opcode_BTS_reg_mem_with_imm                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1011_1010) & (instruction[2][5:3] == 3'b101);
 assign opcode_BTS_reg_mem_with_reg                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b1010_1011);
 assign opcode_CALL_direct_within_segment          = (instruction[0][7:0] == 8'b1110_1000);
 assign opcode_CALL_indirect_within_segment        = (instruction[0][7:1] == 8'b1111_1111) & (instruction[1][5:3] == 3'b010);

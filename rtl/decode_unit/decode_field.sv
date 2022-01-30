@@ -8,9 +8,7 @@ description: decode field by opcode
 */
 
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
-module decode_field #(
-    // parameters
-) (
+module decode_field (
     // ports
     input  logic        opcode_MOV_reg_to_reg_mem,
     input  logic        opcode_MOV_reg_mem_to_reg,
@@ -266,14 +264,20 @@ module decode_field #(
     input  logic [ 7:0] instruction[0:9],
     output logic        s,
     output logic        w,
-    output logic [ 2:0] gereral_propose_register,
-    output logic [ 2:0] sreg3,
-    output logic [ 1:0] sreg2,
+    output logic [ 2:0] greg,
+    output logic [ 2:0] sreg,
     output logic [ 1:0] mod,
-    output logic [ 2:0] rm
+    output logic [ 2:0] rm,
+    output logic        has_s,
+    output logic        has_w,
+    output logic        has_greg,
+    output logic        has_sreg,
+    output logic        has_mod_rm,
+    output logic        is_prefix_segment,
+    output logic        is_prefix
 );
 
-wire has_prefix_segment =
+assign is_prefix_segment =
 opcode_prefix_segment_override_CS |
 opcode_prefix_segment_override_DS |
 opcode_prefix_segment_override_ES |
@@ -282,11 +286,11 @@ opcode_prefix_segment_override_GS |
 opcode_prefix_segment_override_SS |
 0;
 
-wire has_prefix =
+assign is_prefix =
 opcode_prefix_address_size |
 opcode_prefix_bus_lock |
 opcode_prefix_operand_size |
-has_prefix_segment |
+is_prefix_segment |
 0;
 
 
@@ -588,49 +592,43 @@ opcode_VERW |
 
 always_comb begin: decode_s
     unique case (1'b1)
-        s_at_0_1: s <= instruction[0][1];
-        default: s <= 0;
+        s_at_0_1: begin has_s <= 1; s <= instruction[0][1]; end
+        default:  begin has_s <= 0; s <= s; end
     endcase
 end
 
 always_comb begin: decode_w
     unique case (1'b1)
-        w_at_0_0: w <= instruction[0][0];
-        w_at_0_3: w <= instruction[0][3];
-        w_at_1_0: w <= instruction[1][0];
-        default:  w <= 0;
+        w_at_0_0: begin has_w <= 1; w <= instruction[0][0]; end
+        w_at_0_3: begin has_w <= 1; w <= instruction[0][3]; end
+        w_at_1_0: begin has_w <= 1; w <= instruction[1][0]; end
+        default:  begin has_w <= 0; w <= w; end
     endcase
 end
 
-always_comb begin: decode_gereral_propose_register
+always_comb begin: decode_greg
     unique case (1'b1)
-        reg_at_0_2_0: gereral_propose_register <= instruction[0][2:0];
-        reg_at_1_5_3: gereral_propose_register <= instruction[1][5:3];
-        reg_at_2_5_3: gereral_propose_register <= instruction[2][5:3];
-        reg_at_2_2_0: gereral_propose_register <= instruction[2][2:0];
-        default:  gereral_propose_register <= 0;
+        reg_at_0_2_0: begin has_greg <= 1; greg <= instruction[0][2:0]; end
+        reg_at_1_5_3: begin has_greg <= 1; greg <= instruction[1][5:3]; end
+        reg_at_2_5_3: begin has_greg <= 1; greg <= instruction[2][5:3]; end
+        reg_at_2_2_0: begin has_greg <= 1; greg <= instruction[2][2:0]; end
+        default:      begin has_greg <= 0; greg <= greg; end
     endcase
 end
 
 always_comb begin: decode_sreg3
     unique case (1'b1)
-        sreg3_at_1_5_3: sreg3 <= instruction[1][5:3];
-        default:  sreg3 <= 0;
-    endcase
-end
-
-always_comb begin: decode_sreg2
-    unique case (1'b1)
-        sreg2_at_1_4_3: sreg2 <= instruction[1][4:3];
-        default:  sreg2 <= 0;
+        sreg3_at_1_5_3: begin has_sreg <= 1; sreg <= instruction[1][5:3]; end
+        sreg2_at_1_4_3: begin has_sreg <= 1; sreg <= {1'b0, instruction[1][4:3]}; end
+        default:        begin has_sreg <= 0; sreg <= sreg; end
     endcase
 end
 
 always_comb begin: decode_mod_rm
     unique case (1'b1)
-        mod_rm_at_1: begin mod <= instruction[1][7:6]; rm <= instruction[1][2:0]; end
-        mod_rm_at_2: begin mod <= instruction[2][7:6]; rm <= instruction[2][2:0]; end
-        default:  begin mod <= 0; rm <= 0; end
+        mod_rm_at_1: begin has_mod_rm <= 1; mod <= instruction[1][7:6]; rm <= instruction[1][2:0]; end
+        mod_rm_at_2: begin has_mod_rm <= 1; mod <= instruction[2][7:6]; rm <= instruction[2][2:0]; end
+        default:     begin has_mod_rm <= 0; mod <= 0; rm <= 0; end
     endcase
 end
 
