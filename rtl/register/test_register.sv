@@ -22,8 +22,6 @@ module debug_register #(
     input  logic         clock, reset
 );
 
-// reg [31:0] TR [7:0];
-
 always_ff @( posedge clock or posedge reset ) begin
     if (reset) begin
         TR[0] <= 32'b0;
