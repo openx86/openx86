@@ -28,9 +28,7 @@ specifies the protection level 0–3 associated with a
 segment
 */
 
-module segment_descriptor_encode #(
-    // parameters
-) (
+module segment_descriptor_encode (
     // ports
     input  logic [31:0] base,
     input  logic [19:0] limit,
@@ -40,20 +38,17 @@ module segment_descriptor_encode #(
     input  logic        descriptor_type,
     input  logic        date_or_code_granularity,
     input  logic        date_or_code_default_operation_size,
-    input  logic        date_or_code_segment_executable,
-    input  logic        data_segment_expansion_direction,
-    input  logic        data_segment_writeable,
-    input  logic        code_segment_conforming,
-    input  logic        code_segment_readable,
+    input  logic        date_or_code_executable,
+    input  logic        data_expansion_direction_code_conforming,
+    input  logic        data_writeable_code_readable,
     input  logic        date_or_code_accessed,
-    input  logic [ 2:0] segment_type,
     output logic [63:0] descriptor
 );
 
 assign descriptor = {
     base[15:0],
     limit[15:0],
-    base[13:24],
+    base[31:24],
     date_or_code_granularity,
     date_or_code_default_operation_size,
     1'b0,
@@ -62,7 +57,9 @@ assign descriptor = {
     present,
     privilege_level,
     descriptor_type,
-    segment_type[2:0],
+    date_or_code_executable,
+    data_expansion_direction_code_conforming,
+    data_writeable_code_readable,
     accessed,
     base[23:16],
 };

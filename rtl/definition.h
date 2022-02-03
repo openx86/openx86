@@ -77,6 +77,25 @@
 `define cpuid_feature_rdrnd          1'b0
 `define cpuid_feature_hypervisor     1'b0
 
+// segment register
+`define sreg_index_ES 3'b000
+`define sreg_index_CS 3'b001
+`define sreg_index_SS 3'b010
+`define sreg_index_DS 3'b011
+`define sreg_index_FS 3'b100
+`define sreg_index_GS 3'b101
+
+// granularity
+`define granularity_byte 1'b0
+`define granularity_page 1'b1
+
+// data_expansion_direction
+`define data_expansion_direction_up   1'b0
+`define data_expansion_direction_down 1'b1
+
+// default_operation_size
+`default_operation_size_16 1'b0
+`default_operation_size_32 1'b1
 
 // decode_register_general
 `define info_reg_gpr_len (24)

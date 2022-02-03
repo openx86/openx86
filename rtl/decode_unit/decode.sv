@@ -277,14 +277,12 @@ module decode #(
 logic        s;
 logic        w;
 logic [ 2:0] gereral_propose_register;
-logic [ 2:0] sreg3;
-logic [ 1:0] sreg2;
+logic [ 2:0] sreg;
 logic [ 1:0] mod;
 logic [ 2:0] rm;
 logic        has_s;
 logic        has_w;
-logic        has_sreg3;
-logic        has_sreg2;
+logic        has_sreg;
 logic        has_mod_rm;
 logic        is_prefix_segment;
 logic        is_prefix;
@@ -800,14 +798,12 @@ decode_field u_decode_field (
     .s ( s ),
     .w ( w ),
     .gereral_propose_register ( gereral_propose_register ),
-    .sreg3 ( sreg3 ),
-    .sreg2 ( sreg2 ),
+    .sreg ( sreg ),
     .mod ( mod ),
     .rm ( rm ),
     .has_s ( has_s ),
     .has_w ( has_w ),
-    .has_sreg3 ( has_sreg3 ),
-    .has_sreg2 ( has_sreg2 ),
+    .has_sreg ( has_sreg ),
     .has_mod_rm ( has_mod_rm ),
     .is_prefix_segment ( is_prefix_segment ),
     .is_prefix ( is_prefix )
