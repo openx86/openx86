@@ -65,30 +65,31 @@ always_ff @( posedge clock or posedge reset ) begin : ff_basic_register
     end
 end
 
-wire AL   = general_register[0][ 7:0];
-wire BL   = general_register[1][ 7:0];
-wire CL   = general_register[2][ 7:0];
-wire DL   = general_register[3][ 7:0];
-wire AH   = general_register[0][15:8];
-wire BH   = general_register[1][15:8];
-wire CH   = general_register[2][15:8];
-wire DH   = general_register[3][15:8];
-wire AX   = general_register[0][31:0];
-wire BX   = general_register[1][31:0];
-wire CX   = general_register[2][31:0];
-wire DX   = general_register[3][31:0];
-wire SI   = general_register[4][15:0];
-wire DI   = general_register[5][15:0];
-wire BP   = general_register[6][15:0];
-wire SP   = general_register[7][15:0];
-wire EAX  = general_register[0][31:0];
-wire EBX  = general_register[1][31:0];
-wire ECX  = general_register[2][31:0];
-wire EDX  = general_register[3][31:0];
-wire ESI  = general_register[4][31:0];
-wire EDI  = general_register[5][31:0];
-wire EBP  = general_register[6][31:0];
-wire ESP  = general_register[7][31:0];
+// below signal is generated for debug
+wire [ 7:0] AL   = general_register[0][ 7:0];
+wire [ 7:0] BL   = general_register[1][ 7:0];
+wire [ 7:0] CL   = general_register[2][ 7:0];
+wire [ 7:0] DL   = general_register[3][ 7:0];
+wire [ 7:0] AH   = general_register[0][15:8];
+wire [ 7:0] BH   = general_register[1][15:8];
+wire [ 7:0] CH   = general_register[2][15:8];
+wire [ 7:0] DH   = general_register[3][15:8];
+wire [31:0] AX   = general_register[0][31:0];
+wire [31:0] BX   = general_register[1][31:0];
+wire [31:0] CX   = general_register[2][31:0];
+wire [31:0] DX   = general_register[3][31:0];
+wire [31:0] SI   = general_register[4][15:0];
+wire [15:0] DI   = general_register[5][15:0];
+wire [15:0] BP   = general_register[6][15:0];
+wire [15:0] SP   = general_register[7][15:0];
+wire [31:0] EAX  = general_register[0][31:0];
+wire [31:0] EBX  = general_register[1][31:0];
+wire [31:0] ECX  = general_register[2][31:0];
+wire [31:0] EDX  = general_register[3][31:0];
+wire [31:0] ESI  = general_register[4][31:0];
+wire [31:0] EDI  = general_register[5][31:0];
+wire [31:0] EBP  = general_register[6][31:0];
+wire [31:0] ESP  = general_register[7][31:0];
 
 assign read__8[0] = AL ;
 assign read__8[1] = BL ;
