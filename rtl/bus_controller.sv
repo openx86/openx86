@@ -1,6 +1,4 @@
-module bus_controller #(
-    // parameters
-) (
+module bus_controller (
     // ports
     input  logic        bus_read_vaild,
     output logic        bus_read_ready,
@@ -12,13 +10,15 @@ module bus_controller #(
     input  logic        reset
 );
 
-rom u_rom (
-    // .data    (_connected_to_data_),    //   input,  width = 32,    data.datain
-    .q       (bus_read_data),       //  output,  width = 32,       q.dataout
-    .address (bus_read_address[7:0]), //   input,  width = 8, address.address
-    // .wren    (_connected_to_wren_),    //   input,   width = 1,    wren.wren
-    .clock   (clock)    //   input,   width = 1,   clock.clk
-);
+// TODO: use BIOS ROM data
+assign bus_read_data = 32'hABCD_EF01;
+// rom u_rom (
+//     // .data    (_connected_to_data_),    //   input,  width = 32,    data.datain
+//     .q       (bus_read_data),       //  output,  width = 32,       q.dataout
+//     .address (bus_read_address[7:0]), //   input,  width = 8, address.address
+//     // .wren    (_connected_to_wren_),    //   input,   width = 1,    wren.wren
+//     .clock   (clock)    //   input,   width = 1,   clock.clk
+// );
 
 assign bus_read_ready = bus_read_vaild;
 

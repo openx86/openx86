@@ -11,9 +11,7 @@ description: define the test register
 Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMORY MANAGEMENT
 */
 
-module debug_register #(
-    // parameters
-) (
+module test_register (
     // ports
     input  logic         write_enable,
     input  logic [ 2: 0] write_index,

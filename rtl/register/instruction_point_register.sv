@@ -30,7 +30,7 @@ module instruction_point_register (
 
 reg   [31:0] instruction_point;
 
-always_ff @( posedge clock or negedge reset ) begin
+always_ff @( posedge clock or posedge reset ) begin
     if (reset) begin
         instruction_point <= 32'h0000_FFF0;
     end else begin

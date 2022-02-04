@@ -58,8 +58,6 @@ module control_register (
     input  logic         clock, reset
 );
 
-reg [31:0] CR [0:7];
-
 always_ff @( posedge clock or posedge reset ) begin : ff_control_register
     if (reset) begin
         CR[0] <= 32'b0;

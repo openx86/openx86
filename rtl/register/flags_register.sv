@@ -42,7 +42,7 @@ module flags_register (
 
 reg [31:0] flags_reg;
 
-always_ff @( posedge clock or negedge reset ) begin
+always_ff @( posedge clock or posedge reset ) begin
     if (reset) begin
         flags_reg <= 32'b0;
     end else begin

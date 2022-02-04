@@ -94,8 +94,8 @@
 `define data_expansion_direction_down 1'b1
 
 // default_operation_size
-`default_operation_size_16 1'b0
-`default_operation_size_32 1'b1
+`define default_operation_size_16 1'b0
+`define default_operation_size_32 1'b1
 
 // decode_register_general
 `define info_reg_gpr_len (24)

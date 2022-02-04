@@ -34,20 +34,19 @@ but is not used for effective address calculation.
 */
 
 module general_propose_register (
-    // ports
     input  logic        write_enable,
     input  logic [ 2:0] write_index,
     input  logic [31:0] write_data,
-    input  logic [31:0] read__8 [0:7],
-    input  logic [31:0] read_16 [0:7],
-    input  logic [31:0] read_32 [0:7],
+    output logic [31:0] read__8 [0:7],
+    output logic [31:0] read_16 [0:7],
+    output logic [31:0] read_32 [0:7],
     input  logic        clock, reset
 );
 
 // GENERAL DATA AND ADDRESS REGISTERS
 reg   [31:0] general_register [8];
 
-always_ff @( posedge clock or negedge reset ) begin : ff_basic_register
+always_ff @( posedge clock or posedge reset ) begin : ff_basic_register
     if (reset) begin
         general_register[0] <= 32'b0;
         general_register[1] <= 32'b0;
