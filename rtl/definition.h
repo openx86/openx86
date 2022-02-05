@@ -135,6 +135,55 @@
 `define info_reg_seg__FS (6'b1 << 4)
 `define info_reg_seg__GS (6'b1 << 5)
 
+// bit width of general propose register
+`define bit_width_gpr__0 (2'b00)
+`define bit_width_gpr__8 (2'b01)
+`define bit_width_gpr_16 (2'b10)
+`define bit_width_gpr_32 (2'b11)
+
+// index of general propose register
+`define index_reg_gpr__AL (3'b000)
+`define index_reg_gpr__BL (3'b001)
+`define index_reg_gpr__CL (3'b010)
+`define index_reg_gpr__DL (3'b011)
+`define index_reg_gpr__AH (3'b100)
+`define index_reg_gpr__BH (3'b101)
+`define index_reg_gpr__CH (3'b110)
+`define index_reg_gpr__DH (3'b111)
+
+`define index_reg_gpr__AX (3'b000)
+`define index_reg_gpr__BX (3'b001)
+`define index_reg_gpr__CX (3'b010)
+`define index_reg_gpr__DX (3'b011)
+`define index_reg_gpr__SI (3'b100)
+`define index_reg_gpr__DI (3'b101)
+`define index_reg_gpr__BP (3'b110)
+`define index_reg_gpr__SP (3'b111)
+
+`define index_reg_gpr_EAX (3'b000)
+`define index_reg_gpr_EBX (3'b001)
+`define index_reg_gpr_ECX (3'b010)
+`define index_reg_gpr_EDX (3'b011)
+`define index_reg_gpr_ESI (3'b100)
+`define index_reg_gpr_EDI (3'b101)
+`define index_reg_gpr_EBP (3'b110)
+`define index_reg_gpr_ESP (3'b111)
+
+// index of segment register
+`define index_reg_seg__ES (3'b000)
+`define index_reg_seg__CS (3'b001)
+`define index_reg_seg__SS (3'b010)
+`define index_reg_seg__DS (3'b011)
+`define index_reg_seg__FS (3'b100)
+`define index_reg_seg__GS (3'b101)
+
+// length of displacement
+`define length_displacement__0 (2'b00)
+`define length_displacement__8 (2'b01)
+`define length_displacement_16 (2'b10)
+`define length_displacement_32 (2'b11)
+
+
 // scale
 `define info_scale_len (3)
 `define info_scale_x1  (3'b0 << 0)

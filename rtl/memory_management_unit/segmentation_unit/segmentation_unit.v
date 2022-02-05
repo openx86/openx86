@@ -11,13 +11,13 @@ module segmentation_unit #(
     parameter
     read_from_fetch
 ) (
-    input  logic         protected_mode,
-    input  logic         read_write_n,
-    input  logic [63: 0] segment_descriptor [6],
-    input  logic [ 2: 0] segment_index,
-    input  logic [31: 0] offset,
-    input  logic [ 1: 0] current_privilege_level,
-    output logic [31: 0] linear_address
+    input  logic        protected_mode,
+    input  logic        read_write_n,
+    input  logic [63:0] segment_descriptor [6],
+    input  logic [ 2:0] segment_index,
+    input  logic [31:0] offset,
+    input  logic [ 1:0] current_privilege_level,
+    output logic [31:0] linear_address
 );
 
 wire  [63:0] descriptor = segment_descriptor[segment_index];

@@ -284,14 +284,14 @@ opcode_prefix_segment_override_ES |
 opcode_prefix_segment_override_FS |
 opcode_prefix_segment_override_GS |
 opcode_prefix_segment_override_SS |
-0;
+1'b0;
 
 assign is_prefix =
 opcode_prefix_address_size |
 opcode_prefix_bus_lock |
 opcode_prefix_operand_size |
 is_prefix_segment |
-0;
+1'b0;
 
 
 wire s_at_0_1 =
@@ -305,7 +305,7 @@ opcode_IMUL_reg_mem_with_imm_to_reg |
 opcode_AND_imm_to_reg_mem |
 opcode_OR_imm_to_reg_mem |
 opcode_XOR_imm_to_reg_mem |
-0;
+1'b0;
 
 
 wire w_at_0_0 =
@@ -391,14 +391,14 @@ opcode_MOVS |
 opcode_OUTS |
 opcode_SCAS |
 opcode_STOS |
-0;
+1'b0;
 
 wire w_at_0_3 = opcode_MOV_imm_to_reg_short;
 
 wire w_at_1_0 =
 opcode_MOVSX |
 opcode_MOVZX |
-0;
+1'b0;
 
 
 wire reg_at_0_2_0 =
@@ -408,12 +408,12 @@ opcode_POP_reg_short |
 opcode_XCHG_reg_with_acc_short |
 opcode_INC_reg |
 opcode_DEC_reg |
-0;
+1'b0;
 
 wire reg_at_1_5_3 =
 opcode_MOV_reg_to_reg_mem |
 opcode_MOV_reg_mem_to_reg |
-0;
+1'b0;
 
 wire reg_at_2_5_3 =
 opcode_MOVSX |
@@ -434,7 +434,7 @@ opcode_BTR_reg_mem_with_reg |
 opcode_BTS_reg_mem_with_reg |
 opcode_LAR |
 opcode_LSL |
-0;
+1'b0;
 
 wire reg_at_2_2_0 =
 opcode_MOV_CR0_CR2_CR3_from_reg |
@@ -443,7 +443,7 @@ opcode_MOV_DR0_7_from_reg |
 opcode_MOV_reg_from_DR0_7 |
 opcode_MOV_TR6_7_from_reg |
 opcode_MOV_reg_from_TR6_7 |
-0;
+1'b0;
 
 
 wire sreg3_at_1_5_3 =
@@ -451,13 +451,13 @@ opcode_MOV_reg_mem_to_sreg |
 opcode_MOV_sreg_to_reg_mem |
 opcode_PUSH_sreg_3 |
 opcode_POP_sreg_3 |
-0;
+1'b0;
 
 
 wire sreg2_at_1_4_3 =
 opcode_PUSH_sreg_2 |
 opcode_POP_sreg_2 |
-0;
+1'b0;
 
 
 wire mod_rm_at_1 =
@@ -534,7 +534,7 @@ opcode_JMP_indirect_within_segment |
 opcode_JMP_indirect_intersegment |
 opcode_BOUND |
 opcode_ARPL |
-0;
+1'b0;
 
 wire mod_rm_at_2 =
 opcode_MOVSX |
@@ -587,48 +587,48 @@ opcode_SMSW |
 opcode_STR |
 opcode_VERR |
 opcode_VERW |
-0;
+1'b0;
 
 
 always_comb begin: decode_s
     unique case (1'b1)
-        s_at_0_1: begin has_s <= 1; s <= instruction[0][1]; end
-        default:  begin has_s <= 0; s <= s; end
+        s_at_0_1: begin has_s <= 1'b1; s <= instruction[0][1]; end
+        default:  begin has_s <= 1'b0; s <= 0; end
     endcase
 end
 
 always_comb begin: decode_w
     unique case (1'b1)
-        w_at_0_0: begin has_w <= 1; w <= instruction[0][0]; end
-        w_at_0_3: begin has_w <= 1; w <= instruction[0][3]; end
-        w_at_1_0: begin has_w <= 1; w <= instruction[1][0]; end
-        default:  begin has_w <= 0; w <= w; end
+        w_at_0_0: begin has_w <= 1'b1; w <= instruction[0][0]; end
+        w_at_0_3: begin has_w <= 1'b1; w <= instruction[0][3]; end
+        w_at_1_0: begin has_w <= 1'b1; w <= instruction[1][0]; end
+        default:  begin has_w <= 1'b0; w <= 0; end
     endcase
 end
 
 always_comb begin: decode_greg
     unique case (1'b1)
-        reg_at_0_2_0: begin has_greg <= 1; greg <= instruction[0][2:0]; end
-        reg_at_1_5_3: begin has_greg <= 1; greg <= instruction[1][5:3]; end
-        reg_at_2_5_3: begin has_greg <= 1; greg <= instruction[2][5:3]; end
-        reg_at_2_2_0: begin has_greg <= 1; greg <= instruction[2][2:0]; end
-        default:      begin has_greg <= 0; greg <= greg; end
+        reg_at_0_2_0: begin has_greg <= 1'b1; greg <= instruction[0][2:0]; end
+        reg_at_1_5_3: begin has_greg <= 1'b1; greg <= instruction[1][5:3]; end
+        reg_at_2_5_3: begin has_greg <= 1'b1; greg <= instruction[2][5:3]; end
+        reg_at_2_2_0: begin has_greg <= 1'b1; greg <= instruction[2][2:0]; end
+        default:      begin has_greg <= 1'b0; greg <= 0; end
     endcase
 end
 
 always_comb begin: decode_sreg3
     unique case (1'b1)
-        sreg3_at_1_5_3: begin has_sreg <= 1; sreg <= instruction[1][5:3]; end
-        sreg2_at_1_4_3: begin has_sreg <= 1; sreg <= {1'b0, instruction[1][4:3]}; end
-        default:        begin has_sreg <= 0; sreg <= sreg; end
+        sreg3_at_1_5_3: begin has_sreg <= 1'b1; sreg <= instruction[1][5:3]; end
+        sreg2_at_1_4_3: begin has_sreg <= 1'b1; sreg <= {1'b0, instruction[1][4:3]}; end
+        default:        begin has_sreg <= 1'b0; sreg <= 0; end
     endcase
 end
 
 always_comb begin: decode_mod_rm
     unique case (1'b1)
-        mod_rm_at_1: begin has_mod_rm <= 1; mod <= instruction[1][7:6]; rm <= instruction[1][2:0]; end
-        mod_rm_at_2: begin has_mod_rm <= 1; mod <= instruction[2][7:6]; rm <= instruction[2][2:0]; end
-        default:     begin has_mod_rm <= 0; mod <= 0; rm <= 0; end
+        mod_rm_at_1: begin has_mod_rm <= 1'b1; mod <= instruction[1][7:6]; rm <= instruction[1][2:0]; end
+        mod_rm_at_2: begin has_mod_rm <= 1'b1; mod <= instruction[2][7:6]; rm <= instruction[2][2:0]; end
+        default:     begin has_mod_rm <= 1'b0; mod <= 0; rm <= 0; end
     endcase
 end
 

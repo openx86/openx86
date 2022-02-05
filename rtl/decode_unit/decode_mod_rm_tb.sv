@@ -13,14 +13,11 @@ module decode_mod_rm_tb #(
     // ports
 );
 
-logic [7:0] instruction;
-logic       w;
-logic [`info_bit_width_len-1:0] info_bit_width;
-logic [`info_reg_seg_len-1:0] info_segment_reg;
-logic [`info_reg_gpr_len-1:0] info_base_reg;
-logic [`info_reg_gpr_len-1:0] info_index_reg;
-logic [`info_displacement_len-1:0] info_displacement;
-logic        sib_is_present;
+logic [ 1:0] mod;
+logic [ 2:0] rm;
+logic        has_w;
+logic        w;
+logic        bit_width_in_code_descriptor;
 
 wire [1:0] mod = instruction[7:6];
 wire [2:0]  rm = instruction[2:0];
@@ -28,13 +25,8 @@ wire [2:0]  rm = instruction[2:0];
 decode_mod_rm decode_mod_rm_inst (
     .mod ( mod ),
     .rm ( rm ),
+    .has_w ( 1 ),
     .w ( w ),
-    .info_bit_width ( info_bit_width ),
-    .info_segment_reg ( info_segment_reg ),
-    .info_base_reg ( info_base_reg ),
-    .info_index_reg ( info_index_reg ),
-    .info_displacement ( info_displacement ),
-    .sib_is_present ( sib_is_present )
 );
 
 reg [8:0] i;
@@ -45,11 +37,6 @@ initial begin
     w = 0;
 
     $monitor("%t: instruction=%h, info_bit_width=%h, w=%h", $time, instruction, info_bit_width, w);
-    $monitor("%t: info_segment_reg=%b", $time, info_segment_reg);
-    $monitor("%t: info_base_reg=%b", $time, info_base_reg);
-    $monitor("%t: info_index_reg=%b", $time, info_index_reg);
-    $monitor("%t: info_displacement=%b", $time, info_displacement);
-    $monitor("%t: sib_is_present=%b", $time, sib_is_present);
 
     #1;
     info_bit_width = `info_bit_width_16;
