@@ -72,7 +72,7 @@ module decode_mod_rm (
     output logic        gpr_reg_used,
     output logic [ 2:0] gpr_reg_index,
     output logic [ 2:0] gpr_reg_bit_width,
-    output logic [ 1:0] displacement,
+    output logic [ 1:0] displacement_length,
     output logic        sib_is_present
 );
 
@@ -149,16 +149,16 @@ wire index_mod_xx_DI = ~mod_11 & (rm_001 | rm_011 | rm_101);
 assign index_reg_used = CS_bit_width_16 & (index_mod_xx_SI | index_mod_xx_DI);
 
 
-// displacement
-wire length_displacement__8 = mod_01;
-wire length_displacement_16 = CS_bit_width_16 & ((mod_00 & rm_110) | mod_10);
-wire length_displacement_32 = CS_bit_width_32 & ((mod_00 & rm_110) | mod_10);
+// displacement_length
+wire displacement_length__8 = mod_01;
+wire displacement_length_16 = CS_bit_width_16 & ((mod_00 & rm_110) | mod_10);
+wire displacement_length_32 = CS_bit_width_32 & ((mod_00 & rm_110) | mod_10);
 always_comb begin
     unique case (1'b1)
-        length_displacement__8: displacement <= `length_displacement__8;
-        length_displacement_16: displacement <= `length_displacement_16;
-        length_displacement_32: displacement <= `length_displacement_32;
-        default               : displacement <= `length_displacement__0;
+        displacement_length__8: displacement_length <= `length_displacement__8;
+        displacement_length_16: displacement_length <= `length_displacement_16;
+        displacement_length_32: displacement_length <= `length_displacement_32;
+        default               : displacement_length <= `length_displacement__0;
     endcase
 end
 

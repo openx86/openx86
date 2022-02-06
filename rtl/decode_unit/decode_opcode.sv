@@ -516,4 +516,5 @@ assign opcode_STR                                 = (instruction[0][7:0] == 8'b0
 assign opcode_VERR                                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b0000_0000) & (instruction[2][5:3] == 3'b100);
 assign opcode_VERW                                = (instruction[0][7:0] == 8'b0000_1111) & (instruction[1][7:0] == 8'b0000_0000) & (instruction[2][5:3] == 3'b101);
 
+
 endmodule

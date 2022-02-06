@@ -261,7 +261,7 @@ module decode_field (
     input  logic        opcode_STR,
     input  logic        opcode_VERR,
     input  logic        opcode_VERW,
-    input  logic [ 7:0] instruction[0:9],
+    input  logic [ 7:0] instruction [0:2],
     output logic        s,
     output logic        w,
     output logic [ 2:0] greg,
@@ -274,7 +274,8 @@ module decode_field (
     output logic        has_sreg,
     output logic        has_mod_rm,
     output logic        is_prefix_segment,
-    output logic        is_prefix
+    output logic        is_prefix,
+    output logic [ 2:0] next_decode_offset
 );
 
 assign is_prefix_segment =
@@ -629,6 +630,280 @@ always_comb begin: decode_mod_rm
         mod_rm_at_1: begin has_mod_rm <= 1'b1; mod <= instruction[1][7:6]; rm <= instruction[1][2:0]; end
         mod_rm_at_2: begin has_mod_rm <= 1'b1; mod <= instruction[2][7:6]; rm <= instruction[2][2:0]; end
         default:     begin has_mod_rm <= 1'b0; mod <= 0; rm <= 0; end
+    endcase
+end
+
+// length (include {mod {3-bytes opcode | greg} r/m})
+wire opcode_length_1 =
+opcode_MOV_imm_to_reg_short |
+opcode_MOV_mem_to_acc |
+opcode_MOV_acc_to_mem |
+opcode_PUSH_reg_short |
+opcode_PUSH_sreg_2 |
+opcode_PUSH_imm |
+opcode_PUSH_all |
+opcode_POP_reg_short |
+opcode_POP_sreg_2 |
+opcode_POP_all |
+opcode_XCHG_reg_with_acc_short |
+opcode_IN_port_variable |
+opcode_OUT_port_variable |
+opcode_CLC_clear_carry_flag |
+opcode_CLD_clear_direction_flag |
+opcode_CLI_clear_interrupt_enable_flag |
+opcode_CMC_complement_carry_flag |
+opcode_LAHF_load_ah_into_flag |
+opcode_POPF_pop_flags |
+opcode_PUSHF_push_flags |
+opcode_SAHF_store_ah_into_flag |
+opcode_STC_set_carry_flag |
+opcode_STD_set_direction_flag |
+opcode_STI_set_interrupt_enable_flag |
+opcode_ADD_imm_to_acc |
+opcode_ADC_imm_to_acc |
+opcode_INC_reg |
+opcode_SUB_imm_to_acc |
+opcode_SBB_imm_to_acc |
+opcode_DEC_reg |
+opcode_CMP_imm_with_acc |
+opcode_AAA |
+opcode_AAS |
+opcode_DAA |
+opcode_DAS |
+opcode_CBW |
+opcode_CWD |
+opcode_AND_imm_to_acc |
+opcode_TEST_imm_to_acc |
+opcode_OR_imm_to_acc |
+opcode_XOR_imm_to_acc |
+opcode_CMPS |
+opcode_INS |
+opcode_LODS |
+opcode_MOVS |
+opcode_OUTS |
+opcode_SCAS |
+opcode_STOS |
+opcode_XLAT |
+opcode_CALL_direct_within_segment |
+opcode_CALL_direct_intersegment |
+opcode_JMP_direct_within_segment |
+opcode_JMP_direct_intersegment |
+opcode_RET_within_segment |
+opcode_RET_intersegment |
+opcode_LEAVE |
+opcode_INT_type_3 |
+opcode_INTO |
+opcode_IRET |
+opcode_HLT |
+opcode_NOP |
+opcode_WAIT |
+opcode_prefix_address_size |
+opcode_prefix_bus_lock |
+opcode_prefix_operand_size |
+opcode_prefix_segment_override_CS |
+opcode_prefix_segment_override_DS |
+opcode_prefix_segment_override_ES |
+opcode_prefix_segment_override_FS |
+opcode_prefix_segment_override_GS |
+opcode_prefix_segment_override_SS |
+0;
+
+wire opcode_length_2 =
+opcode_MOV_reg_to_reg_mem |
+opcode_MOV_reg_mem_to_reg |
+opcode_MOV_imm_to_reg_mem |
+opcode_MOV_reg_mem_to_sreg |
+opcode_MOV_sreg_to_reg_mem |
+opcode_PUSH_reg_mem |
+opcode_PUSH_sreg_3 |
+opcode_POP_reg_mem |
+opcode_POP_sreg_3 |
+opcode_XCHG_reg_with_acc_short |
+opcode_IN_port_fixed |
+opcode_OUT_port_fixed |
+opcode_LEA_load_ea_to_reg |
+opcode_LDS_load_ptr_to_DS |
+opcode_LES_load_ptr_to_ES |
+opcode_CLTS_clear_task_switched_flag |
+opcode_ADD_reg_to_mem |
+opcode_ADD_mem_to_reg |
+opcode_ADD_imm_to_reg_mem |
+opcode_ADC_reg_to_mem |
+opcode_ADC_mem_to_reg |
+opcode_ADC_imm_to_reg_mem |
+opcode_INC_reg_mem |
+opcode_SUB_reg_to_mem |
+opcode_SUB_mem_to_reg |
+opcode_SUB_imm_to_reg_mem |
+opcode_SBB_reg_to_mem |
+opcode_SBB_mem_to_reg |
+opcode_SBB_imm_to_reg_mem |
+opcode_DEC_reg_mem |
+opcode_CMP_mem_with_reg |
+opcode_CMP_reg_with_mem |
+opcode_CMP_imm_with_reg_mem |
+opcode_NEG_change_sign |
+opcode_MUL_acc_with_reg_mem |
+opcode_IMUL_acc_with_reg_mem |
+opcode_IMUL_reg_mem_with_imm_to_reg |
+opcode_DIV_acc_by_reg_mem |
+opcode_IDIV_acc_by_reg_mem |
+opcode_AAD |
+opcode_AAM |
+opcode_ROL_reg_mem_by_1 |
+opcode_ROL_reg_mem_by_CL |
+opcode_ROR_reg_mem_by_1 |
+opcode_ROR_reg_mem_by_CL |
+opcode_SHL_reg_mem_by_1 |
+opcode_SHL_reg_mem_by_CL |
+opcode_SAR_reg_mem_by_1 |
+opcode_SAR_reg_mem_by_CL |
+opcode_SHR_reg_mem_by_1 |
+opcode_SHR_reg_mem_by_CL |
+opcode_RCL_reg_mem_by_1 |
+opcode_RCL_reg_mem_by_CL |
+opcode_RCR_reg_mem_by_1 |
+opcode_RCR_reg_mem_by_CL |
+opcode_AND_reg_to_mem |
+opcode_AND_mem_to_reg |
+opcode_AND_imm_to_reg_mem |
+opcode_TEST_reg_mem_and_reg |
+opcode_TEST_imm_to_reg_mem |
+opcode_OR_reg_to_mem |
+opcode_OR_mem_to_reg |
+opcode_OR_imm_to_reg_mem |
+opcode_XOR_reg_to_mem |
+opcode_XOR_mem_to_reg |
+opcode_XOR_imm_to_reg_mem |
+opcode_NOT |
+opcode_REPE |
+opcode_REPNE |
+opcode_CALL_indirect_within_segment |
+opcode_CALL_indirect_intersegment |
+opcode_JMP_short |
+opcode_JMP_direct_intersegment |
+opcode_JMP_indirect_intersegment |
+opcode_JO_8bit_disp |
+opcode_JO_full_disp |
+opcode_JNO_8bit_disp |
+opcode_JNO_full_disp |
+opcode_JB_8bit_disp |
+opcode_JB_full_disp |
+opcode_JNB_8bit_disp |
+opcode_JNB_full_disp |
+opcode_JE_8bit_disp |
+opcode_JE_full_disp |
+opcode_JNE_8bit_disp |
+opcode_JNE_full_disp |
+opcode_JBE_8bit_disp |
+opcode_JBE_full_disp |
+opcode_JNBE_8bit_disp |
+opcode_JNBE_full_disp |
+opcode_JS_8bit_disp |
+opcode_JS_full_disp |
+opcode_JNS_8bit_disp |
+opcode_JNS_full_disp |
+opcode_JP_8bit_disp |
+opcode_JP_full_disp |
+opcode_JNP_8bit_disp |
+opcode_JNP_full_disp |
+opcode_JL_8bit_disp |
+opcode_JL_full_disp |
+opcode_JNL_8bit_disp |
+opcode_JNL_full_disp |
+opcode_JLE_8bit_disp |
+opcode_JLE_full_disp |
+opcode_JNLE_8bit_disp |
+opcode_JNLE_full_disp |
+opcode_JCXZ |
+opcode_LOOP |
+opcode_LOOPZ |
+opcode_LOOPNZ |
+opcode_INT_type_specified |
+opcode_BOUND |
+opcode_processor_extension_escape |
+opcode_ARPL |
+0;
+
+wire opcode_length_3 =
+opcode_MOVSX |
+opcode_MOVZX |
+opcode_LFS_load_ptr_to_FS |
+opcode_LGS_load_ptr_to_GS |
+opcode_LSS_load_ptr_to_SS |
+opcode_IMUL_reg_with_reg_mem |
+opcode_ROL_reg_mem_by_imm |
+opcode_ROR_reg_mem_by_imm |
+opcode_SHL_reg_mem_by_imm |
+opcode_SAR_reg_mem_by_imm |
+opcode_SHR_reg_mem_by_imm |
+opcode_RCL_reg_mem_by_imm |
+opcode_RCR_reg_mem_by_imm |
+opcode_SHLD_reg_mem_by_CL |
+opcode_SHRD_reg_mem_by_CL |
+opcode_BSF |
+opcode_BSR |
+opcode_BT_reg_mem_with_reg |
+opcode_BTC_reg_mem_with_reg |
+opcode_BTR_reg_mem_with_reg |
+opcode_BTS_reg_mem_with_reg |
+opcode_RET_within_segment_adding_imm_to_SP |
+opcode_RET_intersegment_adding_imm_to_SP |
+opcode_SETO |
+opcode_SETNO |
+opcode_SETB |
+opcode_SETNB |
+opcode_SETE |
+opcode_SETNE |
+opcode_SETBE |
+opcode_SETNBE |
+opcode_SETS |
+opcode_SETNS |
+opcode_SETP |
+opcode_SETNP |
+opcode_SETL |
+opcode_SETNL |
+opcode_SETLE |
+opcode_SETNLE |
+opcode_ENTER |
+opcode_MOV_CR0_CR2_CR3_from_reg |
+opcode_MOV_reg_from_CR0_3 |
+opcode_MOV_DR0_7_from_reg |
+opcode_MOV_reg_from_DR0_7 |
+opcode_MOV_TR6_7_from_reg |
+opcode_MOV_reg_from_TR6_7 |
+opcode_LAR |
+opcode_LGDT |
+opcode_LIDT |
+opcode_LLDT |
+opcode_LMSW |
+opcode_LSL |
+opcode_LTR |
+opcode_SGDT |
+opcode_SIDT |
+opcode_SLDT |
+opcode_SMSW |
+opcode_STR |
+opcode_VERR |
+opcode_VERW |
+0;
+
+wire opcode_length_4 =
+opcode_SHLD_reg_mem_by_imm |
+opcode_SHRD_reg_mem_by_imm |
+opcode_BT_reg_mem_with_imm |
+opcode_BTC_reg_mem_with_imm |
+opcode_BTR_reg_mem_with_imm |
+opcode_BTS_reg_mem_with_imm |
+0;
+
+always_comb begin
+    unique case (1'b1)
+        opcode_length_1: next_decode_offset <= 2'h0;
+        opcode_length_2: next_decode_offset <= 2'h1;
+        opcode_length_3: next_decode_offset <= 2'h2;
+        opcode_length_4: next_decode_offset <= 2'h3;
+        default:         next_decode_offset <= 2'h0;
     endcase
 end
 

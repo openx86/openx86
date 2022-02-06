@@ -185,11 +185,10 @@
 
 
 // scale
-`define info_scale_len (3)
-`define info_scale_x1  (3'b0 << 0)
-`define info_scale_x2  (3'b1 << 0)
-`define info_scale_x4  (3'b1 << 1)
-`define info_scale_x8  (3'b1 << 2)
+`define scale_x1 (2'b00)
+`define scale_x2 (2'b01)
+`define scale_x4 (2'b10)
+`define scale_x8 (2'b11)
 
 // displacement
 `define info_displacement_len (3)
