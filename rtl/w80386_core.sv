@@ -1,9 +1,9 @@
 module w80386_core (
-    // ports
-    output logic        bus_read_vaild,
-    input  logic        bus_read_ready,
-    output logic [31:0] bus_read_address,
-    input  logic [31:0] bus_read_data,
+    output logic        bus_vaild,
+    input  logic        bus_ready,
+    output logic        bus_write_enable,
+    output logic [31:0] bus_address,
+    input  logic [31:0] bus_data,
     input  logic        clock,
     input  logic        reset
 );
