@@ -240,7 +240,7 @@ interrupt_descriptor_table_register u_interrupt_descriptor_table_register_in_cor
 // );
 
 // logic program_counter_valid = 1;
-logic [ 7:0] instruction [0:9];
+logic [ 7:0] instruction [0:15];
 // logic        instruction_ready;
 // logic [`info_bit_width_len-1:0] bit_width;
 // fetch u_fetch (
@@ -513,6 +513,21 @@ logic        opcode_SMSW;
 logic        opcode_STR;
 logic        opcode_VERR;
 logic        opcode_VERW;
+
+logic        segment_reg_used;
+logic [ 2:0] segment_reg_index;
+logic [ 1:0] scale_factor;
+logic        base_reg_used;
+logic [ 2:0] base_reg_index;
+logic        index_reg_used;
+logic [ 2:0] index_reg_index;
+logic [ 2:0] base_index_reg_bit_width;
+logic        gpr_reg_used;
+logic [ 2:0] gpr_reg_index;
+logic [ 2:0] gpr_reg_bit_width;
+logic [31:0] displacement;
+logic [31:0] immediate;
+
 decode u_decode (
     .opcode_MOV_reg_to_reg_mem ( opcode_MOV_reg_to_reg_mem ),
     .opcode_MOV_reg_mem_to_reg ( opcode_MOV_reg_mem_to_reg ),
@@ -766,6 +781,19 @@ decode u_decode (
     .opcode_VERR ( opcode_VERR ),
     .opcode_VERW ( opcode_VERW ),
     // .bit_width ( bit_width ),
+    .segment_reg_used ( segment_reg_used ),
+    .segment_reg_index ( segment_reg_index ),
+    .scale_factor ( scale_factor ),
+    .base_reg_used ( base_reg_used ),
+    .base_reg_index ( base_reg_index ),
+    .index_reg_used ( index_reg_used ),
+    .index_reg_index ( index_reg_index ),
+    .base_index_reg_bit_width ( base_index_reg_bit_width ),
+    .gpr_reg_used ( gpr_reg_used ),
+    .gpr_reg_index ( gpr_reg_index ),
+    .gpr_reg_bit_width ( gpr_reg_bit_width ),
+    .displacement ( displacement ),
+    .immediate ( immediate ),
     .instruction ( instruction )
 );
 

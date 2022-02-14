@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_sib
+module: decode_stage_3
 create at: 2021-12-27 00:51:10
 description: decode the s-i-b means scale-index-base
 */
@@ -12,7 +12,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 6.2.3.4 ENCODING OF ADDRESS MODE
 */
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
-module decode_sib (
+module decode_stage_3 (
     input  logic [ 7:0] instruction,
     input  logic [ 1:0] mod,
     output logic [ 1:0] scale_factor,
@@ -20,7 +20,8 @@ module decode_sib (
     output logic [ 2:0] index_reg_index,
     output logic        base_reg_used,
     output logic [ 2:0] base_reg_index,
-    output logic [ 2:0] displacement_length,
+    output logic        displacement_is_present,
+    output logic [ 3:0] displacement_length,
     output logic        effecitve_address_undefined
 );
 
@@ -49,14 +50,16 @@ assign base_reg_used   = ~(mod_00 & base_101);
 wire displacement_length__0 = mod_00 & ~base_101;
 wire displacement_length__8 = mod_01;
 wire displacement_length_32 = mod_10 | (mod_00 & base_101);
-always_comb begin
-    unique case (1'b1)
-        displacement_length__0: displacement_length <= `length_displacement__0;
-        displacement_length__8: displacement_length <= `length_displacement__8;
-        displacement_length_32: displacement_length <= `length_displacement_32;
-        default               : displacement_length <= `length_displacement__0;
-    endcase
-end
+assign displacement_is_present = displacement_length__0;
+assign displacement_length = {displacement_length__8, 1'b0, displacement_length_32, 1'b0};
+// always_comb begin
+//     unique case (1'b1)
+//         displacement_length__0: displacement_length <= `length_displacement__0;
+//         displacement_length__8: displacement_length <= `length_displacement__8;
+//         displacement_length_32: displacement_length <= `length_displacement_32;
+//         default               : displacement_length <= `length_displacement__0;
+//     endcase
+// end
 
 /*
 **IMPORTANT NOTE:

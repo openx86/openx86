@@ -10,10 +10,10 @@ description: memory_management_unit
 module memory_management_unit (
     input  logic [ 2:0] segment_index,
     input  logic [31:0] offset,
-    input  logic [31:0] linear_address,
     output logic [31:0] physical_address
 );
 
+wire [31:0] linear_address = 32'b0;
 // TODO: refer to 4.5.2 Paging Organization
 assign physical_address = linear_address;
 

@@ -2,13 +2,13 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_opcode
+module: decode_stage_0_opcode
 create at: 2021-12-28 16:56:15
 description: decode opcode from instruction
 */
 
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
-module decode_opcode (
+module decode_stage_0_opcode (
     // ports
     output logic        opcode_MOV_reg_to_reg_mem,
     output logic        opcode_MOV_reg_mem_to_reg,

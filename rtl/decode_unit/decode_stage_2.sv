@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_mod_rm
+module: decode_stage_2
 create at: 2021-10-23 15:54:39
 description: decode mod and r/m field in instruction
 */
@@ -55,13 +55,17 @@ of all 16-bit addressing modes and 32-bit
 addressing modes.
 */
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
-module decode_mod_rm (
+module decode_stage_2 (
     // ports
     input  logic [ 1:0] mod,
     input  logic [ 2:0] rm,
-    input  logic        has_w,
+    input  logic        w_is_present,
     input  logic        w,
-    input  logic        bit_width_in_code_descriptor,
+    // input  logic        stage_1_displacement_is_present,
+    // input  logic [ 3:0] stage_1_displacement_length,
+    // input  logic        stage_1_immediate_is_present,
+    // input  logic [ 1:0] stage_1_immediate_length,
+    input  logic        default_operand_size,
     output logic        segment_reg_used,
     output logic [ 2:0] segment_reg_index,
     output logic        base_reg_used,
@@ -72,12 +76,13 @@ module decode_mod_rm (
     output logic        gpr_reg_used,
     output logic [ 2:0] gpr_reg_index,
     output logic [ 2:0] gpr_reg_bit_width,
-    output logic [ 1:0] displacement_length,
+    output logic        displacement_is_present,
+    output logic [ 3:0] displacement_length,
     output logic        sib_is_present
 );
 
 // sib_is_present is 1'b1 means this module's signal is invalid
-// neet to check s-i-b byte for correct segment & base & index & displacement signal
+// need to check s-i-b byte for correct segment & base & index & displacement signal
 
 wire mod_00 = (mod == 2'b00);
 wire mod_01 = (mod == 2'b01);
@@ -93,8 +98,8 @@ wire rm_101 = (rm == 3'b101);
 wire rm_110 = (rm == 3'b110);
 wire rm_111 = (rm == 3'b111);
 
-wire CS_bit_width_16 = (bit_width_in_code_descriptor == `default_operation_size_16);
-wire CS_bit_width_32 = (bit_width_in_code_descriptor == `default_operation_size_32);
+wire default_operation_size_16 = (default_operand_size == `default_operation_size_16);
+wire default_operation_size_32 = (default_operand_size == `default_operation_size_32);
 
 
 // segment register
@@ -121,16 +126,16 @@ wire SS_16_bit = mod_00_SS_16_bit | mod_01_SS_16_bit | mod_10_SS_16_bit;
 wire DS_32_bit = mod_00_DS_32_bit | mod_01_DS_32_bit | mod_10_DS_32_bit;
 wire SS_32_bit = mod_00_SS_32_bit | mod_01_SS_32_bit | mod_10_SS_32_bit;
 
-wire segment_reg_index_DS = (CS_bit_width_16 & DS_16_bit) | (CS_bit_width_32 & DS_32_bit);
-wire segment_reg_index_SS = (CS_bit_width_16 & SS_16_bit) | (CS_bit_width_32 & SS_32_bit);
+wire segment_reg_index_DS = (default_operation_size_16 & DS_16_bit) | (default_operation_size_32 & DS_32_bit);
+wire segment_reg_index_SS = (default_operation_size_16 & SS_16_bit) | (default_operation_size_32 & SS_32_bit);
 
 assign segment_reg_index = segment_reg_index_DS ? `index_reg_seg__DS : `index_reg_seg__SS;
 
 // scale-index-base is present
-assign sib_is_present = CS_bit_width_32 & ~mod_11 & rm_100;
+assign sib_is_present = default_operation_size_32 & ~mod_11 & rm_100;
 
 // base and index register index
-assign base_index_reg_bit_width = bit_width_in_code_descriptor;
+assign base_index_reg_bit_width = default_operand_size;
 
 wire base_mod_xx_BX = ~mod_11 & (rm_000 | rm_001 | rm_111);
 wire base_mod_00_BP =  mod_00 & (rm_010 | rm_011);
@@ -138,29 +143,31 @@ wire base_mod_01_BP =  mod_01 & (rm_010 | rm_011 | rm_110);
 wire base_mod_10_BP =  mod_10 & (rm_010 | rm_011 | rm_110);
 wire base_mod_xx_32_bit = rm;
 
-wire base_reg_used_16_bit = CS_bit_width_16 & (base_mod_xx_BX | base_mod_00_BP | base_mod_01_BP | base_mod_10_BP);
-wire base_reg_used_32_bit = CS_bit_width_32 & (base_mod_xx_32_bit);
+wire base_reg_used_16_bit = default_operation_size_16 & (base_mod_xx_BX | base_mod_00_BP | base_mod_01_BP | base_mod_10_BP);
+wire base_reg_used_32_bit = default_operation_size_32 & (base_mod_xx_32_bit);
 
 assign base_reg_used = base_reg_used_16_bit | base_reg_used_32_bit;
 
 wire index_mod_xx_SI = ~mod_11 & (rm_000 | rm_010 | rm_100);
 wire index_mod_xx_DI = ~mod_11 & (rm_001 | rm_011 | rm_101);
 
-assign index_reg_used = CS_bit_width_16 & (index_mod_xx_SI | index_mod_xx_DI);
+assign index_reg_used = default_operation_size_16 & (index_mod_xx_SI | index_mod_xx_DI);
 
 
 // displacement_length
 wire displacement_length__8 = mod_01;
-wire displacement_length_16 = CS_bit_width_16 & ((mod_00 & rm_110) | mod_10);
-wire displacement_length_32 = CS_bit_width_32 & ((mod_00 & rm_110) | mod_10);
-always_comb begin
-    unique case (1'b1)
-        displacement_length__8: displacement_length <= `length_displacement__8;
-        displacement_length_16: displacement_length <= `length_displacement_16;
-        displacement_length_32: displacement_length <= `length_displacement_32;
-        default               : displacement_length <= `length_displacement__0;
-    endcase
-end
+wire displacement_length_16 = default_operation_size_16 & ((mod_00 & rm_110) | mod_10);
+wire displacement_length_32 = default_operation_size_32 & ((mod_00 & rm_110) | mod_10);
+assign displacement_is_present = ~displacement_length__8 & ~displacement_length_16 & ~displacement_length_32;
+assign displacement_length = {displacement_length__8, displacement_length_16, displacement_length_32, 1'b0};
+// always_comb begin
+//     unique case (1'b1)
+//         displacement_length__8: displacement_length <= `length_displacement__8;
+//         displacement_length_16: displacement_length <= `length_displacement_16;
+//         displacement_length_32: displacement_length <= `length_displacement_32;
+//         default               : displacement_length <= `length_displacement__0;
+//     endcase
+// end
 
 // general propose register
 assign gpr_reg_used = mod_11;
@@ -171,9 +178,9 @@ assign gpr_reg_index = rm;
 // which may appear in the primary opcode bytes, or as
 // the reg field of the ``mod r/m'' byte, or as the r/m
 // field of the ``mod r/m'' byte.
-wire gpr_reg_bit_width__8 = has_w ? (~w) : 1'b0;
-wire gpr_reg_bit_width_16 = has_w ? (w & CS_bit_width_16) : CS_bit_width_16;
-wire gpr_reg_bit_width_32 = has_w ? (w & CS_bit_width_32) : CS_bit_width_32;
+wire gpr_reg_bit_width__8 = w_is_present ? (~w) : 1'b0;
+wire gpr_reg_bit_width_16 = w_is_present ? (w & default_operation_size_16) : default_operation_size_16;
+wire gpr_reg_bit_width_32 = w_is_present ? (w & default_operation_size_32) : default_operation_size_32;
 always_comb begin
     unique case (1'b1)
         gpr_reg_bit_width__8: gpr_reg_bit_width <= `bit_width_gpr__8;

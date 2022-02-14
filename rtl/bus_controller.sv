@@ -1,15 +1,18 @@
 module bus_controller (
-    input  logic        bus_vaild,
-    output logic        bus_ready,
-    input  logic        bus_write_enable,
-    input  logic [31:0] bus_address,
-    inout  logic [31:0] bus_data,
+    output logic        bus_vaild,
+    input  logic        bus_ready,
+    input  logic        bus_busy,
+    output logic        bus_write_enable,
+    output logic [31:0] bus_address,
+    input  logic [31:0] bus_data_read,
+    output logic [31:0] bus_data_write,
     input  logic        clock,
     input  logic        reset
 );
 
 // TODO: use BIOS ROM data
 assign bus_data = 32'hABCD_EF01;
+assign bus_busy = 0;
 // rom u_rom (
 //     // .data    (_connected_to_data_),    //   input,  width = 32,    data.datain
 //     .q       (bus_read_data),       //  output,  width = 32,       q.dataout

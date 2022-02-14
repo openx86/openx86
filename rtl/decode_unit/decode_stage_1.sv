@@ -2,13 +2,13 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_field
+module: decode_stage_1
 create at: 2021-12-28 16:56:15
-description: decode field by opcode
+description: decode stage-1
 */
 
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
-module decode_field (
+module decode_stage_1 (
     // ports
     input  logic        opcode_MOV_reg_to_reg_mem,
     input  logic        opcode_MOV_reg_mem_to_reg,
@@ -261,23 +261,29 @@ module decode_field (
     input  logic        opcode_STR,
     input  logic        opcode_VERR,
     input  logic        opcode_VERW,
-    input  logic [ 7:0] instruction [0:2],
-    output logic        s,
-    output logic        w,
-    output logic [ 2:0] greg,
-    output logic [ 2:0] sreg,
-    output logic [ 1:0] mod,
-    output logic [ 2:0] rm,
-    output logic        has_s,
-    output logic        has_w,
-    output logic        has_greg,
-    output logic        has_sreg,
-    output logic        has_mod_rm,
+    input  logic [ 7:0] instruction [0:15],
     output logic        is_prefix_segment,
     output logic        is_prefix,
-    output logic [ 2:0] next_decode_offset
+    output logic        s_is_present,
+    output logic        s,
+    output logic        w_is_present,
+    output logic        w,
+    output logic        greg_is_present,
+    output logic [ 2:0] greg,
+    output logic        sreg_is_present,
+    output logic [ 2:0] sreg,
+    output logic        mod_rm_is_present,
+    output logic [ 1:0] mod,
+    output logic [ 2:0] rm,
+    output logic        displacement_is_present,
+    output logic [ 2:0] displacement_length, // 0 means displacement length is unknwon, 3 means full length
+    output logic        immediate_is_present,
+    output logic [ 1:0] immediate_length,
+    output logic        unsigned_full_offset_or_selector_is_present,
+    output logic [ 2:0] next_stage_decode_offset
 );
 
+// prefix
 assign is_prefix_segment =
 opcode_prefix_segment_override_CS |
 opcode_prefix_segment_override_DS |
@@ -295,6 +301,7 @@ is_prefix_segment |
 1'b0;
 
 
+// signed
 wire s_at_0_1 =
 opcode_PUSH_imm |
 opcode_ADD_imm_to_reg_mem |
@@ -308,7 +315,15 @@ opcode_OR_imm_to_reg_mem |
 opcode_XOR_imm_to_reg_mem |
 1'b0;
 
+always_comb begin: decode_s
+    unique case (1'b1)
+        s_at_0_1: begin s_is_present <= 1'b1; s <= instruction[0][1]; end
+        default:  begin s_is_present <= 1'b0; s <= 0; end
+    endcase
+end
 
+
+// width
 wire w_at_0_0 =
 opcode_MOV_reg_to_reg_mem |
 opcode_MOV_reg_mem_to_reg |
@@ -401,7 +416,17 @@ opcode_MOVSX |
 opcode_MOVZX |
 1'b0;
 
+always_comb begin: decode_w
+    unique case (1'b1)
+        w_at_0_0: begin w_is_present <= 1'b1; w <= instruction[0][0]; end
+        w_at_0_3: begin w_is_present <= 1'b1; w <= instruction[0][3]; end
+        w_at_1_0: begin w_is_present <= 1'b1; w <= instruction[1][0]; end
+        default:  begin w_is_present <= 1'b0; w <= 0; end
+    endcase
+end
 
+
+// general propose register
 wire reg_at_0_2_0 =
 opcode_MOV_imm_to_reg_short |
 opcode_PUSH_reg_short |
@@ -446,7 +471,18 @@ opcode_MOV_TR6_7_from_reg |
 opcode_MOV_reg_from_TR6_7 |
 1'b0;
 
+always_comb begin: decode_greg
+    unique case (1'b1)
+        reg_at_0_2_0: begin greg_is_present <= 1'b1; greg <= instruction[0][2:0]; end
+        reg_at_1_5_3: begin greg_is_present <= 1'b1; greg <= instruction[1][5:3]; end
+        reg_at_2_5_3: begin greg_is_present <= 1'b1; greg <= instruction[2][5:3]; end
+        reg_at_2_2_0: begin greg_is_present <= 1'b1; greg <= instruction[2][2:0]; end
+        default:      begin greg_is_present <= 1'b0; greg <= 0; end
+    endcase
+end
 
+
+// segment register
 wire sreg3_at_1_5_3 =
 opcode_MOV_reg_mem_to_sreg |
 opcode_MOV_sreg_to_reg_mem |
@@ -454,13 +490,20 @@ opcode_PUSH_sreg_3 |
 opcode_POP_sreg_3 |
 1'b0;
 
-
 wire sreg2_at_1_4_3 =
 opcode_PUSH_sreg_2 |
 opcode_POP_sreg_2 |
 1'b0;
 
+always_comb begin: decode_sreg3
+    unique case (1'b1)
+        sreg3_at_1_5_3: begin sreg_is_present <= 1'b1; sreg <= instruction[1][5:3]; end
+        sreg2_at_1_4_3: begin sreg_is_present <= 1'b1; sreg <= {1'b0, instruction[1][4:3]}; end
+        default:        begin sreg_is_present <= 1'b0; sreg <= 0; end
+    endcase
+end
 
+// mod_rm
 wire mod_rm_at_1 =
 opcode_MOV_reg_to_reg_mem |
 opcode_MOV_reg_mem_to_reg |
@@ -590,48 +633,136 @@ opcode_VERR |
 opcode_VERW |
 1'b0;
 
-
-always_comb begin: decode_s
-    unique case (1'b1)
-        s_at_0_1: begin has_s <= 1'b1; s <= instruction[0][1]; end
-        default:  begin has_s <= 1'b0; s <= 0; end
-    endcase
-end
-
-always_comb begin: decode_w
-    unique case (1'b1)
-        w_at_0_0: begin has_w <= 1'b1; w <= instruction[0][0]; end
-        w_at_0_3: begin has_w <= 1'b1; w <= instruction[0][3]; end
-        w_at_1_0: begin has_w <= 1'b1; w <= instruction[1][0]; end
-        default:  begin has_w <= 1'b0; w <= 0; end
-    endcase
-end
-
-always_comb begin: decode_greg
-    unique case (1'b1)
-        reg_at_0_2_0: begin has_greg <= 1'b1; greg <= instruction[0][2:0]; end
-        reg_at_1_5_3: begin has_greg <= 1'b1; greg <= instruction[1][5:3]; end
-        reg_at_2_5_3: begin has_greg <= 1'b1; greg <= instruction[2][5:3]; end
-        reg_at_2_2_0: begin has_greg <= 1'b1; greg <= instruction[2][2:0]; end
-        default:      begin has_greg <= 1'b0; greg <= 0; end
-    endcase
-end
-
-always_comb begin: decode_sreg3
-    unique case (1'b1)
-        sreg3_at_1_5_3: begin has_sreg <= 1'b1; sreg <= instruction[1][5:3]; end
-        sreg2_at_1_4_3: begin has_sreg <= 1'b1; sreg <= {1'b0, instruction[1][4:3]}; end
-        default:        begin has_sreg <= 1'b0; sreg <= 0; end
-    endcase
-end
-
 always_comb begin: decode_mod_rm
     unique case (1'b1)
-        mod_rm_at_1: begin has_mod_rm <= 1'b1; mod <= instruction[1][7:6]; rm <= instruction[1][2:0]; end
-        mod_rm_at_2: begin has_mod_rm <= 1'b1; mod <= instruction[2][7:6]; rm <= instruction[2][2:0]; end
-        default:     begin has_mod_rm <= 1'b0; mod <= 0; rm <= 0; end
+        mod_rm_at_1: begin mod_rm_is_present <= 1'b1; mod <= instruction[1][7:6]; rm <= instruction[1][2:0]; end
+        mod_rm_at_2: begin mod_rm_is_present <= 1'b1; mod <= instruction[2][7:6]; rm <= instruction[2][2:0]; end
+        default:     begin mod_rm_is_present <= 1'b0; mod <= 0; rm <= 0; end
     endcase
 end
+
+
+// displacement
+wire displacement_full =
+opcode_MOV_mem_to_acc |
+opcode_MOV_acc_to_mem |
+opcode_CALL_direct_within_segment |
+opcode_JMP_direct_within_segment |
+opcode_JO_full_disp |
+opcode_JNO_full_disp |
+opcode_JB_full_disp |
+opcode_JNB_full_disp |
+opcode_JE_full_disp |
+opcode_JNE_full_disp |
+opcode_JBE_full_disp |
+opcode_JNBE_full_disp |
+opcode_JS_full_disp |
+opcode_JNS_full_disp |
+opcode_JP_full_disp |
+opcode_JNP_full_disp |
+opcode_JL_full_disp |
+opcode_JNL_full_disp |
+opcode_JLE_full_disp |
+opcode_JNLE_full_disp |
+1'b0;
+
+wire displacement__8 =
+opcode_JMP_short |
+opcode_JO_8bit_disp |
+opcode_JNO_8bit_disp |
+opcode_JB_8bit_disp |
+opcode_JNB_8bit_disp |
+opcode_JE_8bit_disp |
+opcode_JNE_8bit_disp |
+opcode_JBE_8bit_disp |
+opcode_JNBE_8bit_disp |
+opcode_JS_8bit_disp |
+opcode_JNS_8bit_disp |
+opcode_JP_8bit_disp |
+opcode_JNP_8bit_disp |
+opcode_JL_8bit_disp |
+opcode_JNL_8bit_disp |
+opcode_JLE_8bit_disp |
+opcode_JNLE_8bit_disp |
+opcode_JCXZ |
+opcode_LOOP |
+opcode_LOOPZ |
+opcode_LOOPNZ |
+1'b0;
+
+wire displacement_16 =
+opcode_RET_within_segment_adding_imm_to_SP |
+opcode_RET_intersegment_adding_imm_to_SP |
+opcode_ENTER |
+1'b0;
+
+assign displacement_is_present = displacement_full | displacement__8 | displacement_16;
+assign displacement_length = {displacement__8, displacement_16, 1'b0, displacement_full};
+
+
+// unsigned full offset or selector
+assign unsigned_full_offset_or_selector_is_present =
+opcode_CALL_direct_intersegment |
+opcode_JMP_direct_intersegment |
+1'b0;
+
+
+// immediate
+wire immediate_full =
+opcode_MOV_imm_to_reg_mem |
+opcode_MOV_imm_to_reg_short |
+opcode_PUSH_imm |
+opcode_ADD_imm_to_reg_mem |
+opcode_ADD_imm_to_acc |
+opcode_ADC_imm_to_reg_mem |
+opcode_ADC_imm_to_acc |
+opcode_SUB_imm_to_reg_mem |
+opcode_SUB_imm_to_acc |
+opcode_SBB_imm_to_reg_mem |
+opcode_SBB_imm_to_acc |
+opcode_CMP_imm_with_reg_mem |
+opcode_CMP_imm_with_acc |
+opcode_IMUL_reg_mem_with_imm_to_reg |
+opcode_AND_imm_to_reg_mem |
+opcode_AND_imm_to_acc |
+opcode_TEST_imm_to_reg_mem |
+opcode_TEST_imm_to_acc |
+opcode_OR_imm_to_reg_mem |
+opcode_OR_imm_to_acc |
+opcode_XOR_imm_to_reg_mem |
+opcode_XOR_imm_to_acc |
+opcode_BT_reg_mem_with_imm |
+opcode_BTC_reg_mem_with_imm |
+opcode_BTR_reg_mem_with_imm |
+opcode_BTS_reg_mem_with_imm |
+1'b0;
+
+/* consider the
+IN port,
+OUT port,
+ENTER level,
+INT type
+as 8-bit operand
+*/
+wire immediate__8 =
+opcode_IN_port_fixed |
+opcode_OUT_port_fixed |
+opcode_ROL_reg_mem_by_imm |
+opcode_ROR_reg_mem_by_imm |
+opcode_SHL_reg_mem_by_imm |
+opcode_SAR_reg_mem_by_imm |
+opcode_SHR_reg_mem_by_imm |
+opcode_RCL_reg_mem_by_imm |
+opcode_RCR_reg_mem_by_imm |
+opcode_SHLD_reg_mem_by_imm |
+opcode_SHRD_reg_mem_by_imm |
+opcode_ENTER |
+opcode_INT_type_specified |
+1'b0;
+
+assign immediate_is_present = immediate_full | immediate__8;
+assign immediate_length = {immediate_full, immediate__8};
+
 
 // length (include {mod {3-bytes opcode | greg} r/m})
 wire opcode_length_1 =
@@ -706,7 +837,7 @@ opcode_prefix_segment_override_ES |
 opcode_prefix_segment_override_FS |
 opcode_prefix_segment_override_GS |
 opcode_prefix_segment_override_SS |
-0;
+1'b0;
 
 wire opcode_length_2 =
 opcode_MOV_reg_to_reg_mem |
@@ -823,7 +954,7 @@ opcode_INT_type_specified |
 opcode_BOUND |
 opcode_processor_extension_escape |
 opcode_ARPL |
-0;
+1'b0;
 
 wire opcode_length_3 =
 opcode_MOVSX |
@@ -886,7 +1017,7 @@ opcode_SMSW |
 opcode_STR |
 opcode_VERR |
 opcode_VERW |
-0;
+1'b0;
 
 wire opcode_length_4 =
 opcode_SHLD_reg_mem_by_imm |
@@ -895,15 +1026,15 @@ opcode_BT_reg_mem_with_imm |
 opcode_BTC_reg_mem_with_imm |
 opcode_BTR_reg_mem_with_imm |
 opcode_BTS_reg_mem_with_imm |
-0;
+1'b0;
 
 always_comb begin
     unique case (1'b1)
-        opcode_length_1: next_decode_offset <= 2'h0;
-        opcode_length_2: next_decode_offset <= 2'h1;
-        opcode_length_3: next_decode_offset <= 2'h2;
-        opcode_length_4: next_decode_offset <= 2'h3;
-        default:         next_decode_offset <= 2'h0;
+        opcode_length_1: next_stage_decode_offset <= 2'h0;
+        opcode_length_2: next_stage_decode_offset <= 2'h1;
+        opcode_length_3: next_stage_decode_offset <= 2'h2;
+        opcode_length_4: next_stage_decode_offset <= 2'h3;
+        default:         next_stage_decode_offset <= 2'h0;
     endcase
 end
 
