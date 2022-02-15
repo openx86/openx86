@@ -35,7 +35,7 @@ wire immediate_length_full = immediate_length[3];
 // assign displacement = 32'b0;
 // assign immediate = 32'b0;
 
-wire [7:0] instruction_for_immediate [0:3];
+logic [7:0] instruction_for_immediate [0:3];
 
 always_comb begin
     unique case (1'b1)

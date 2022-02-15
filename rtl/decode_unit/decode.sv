@@ -93,7 +93,7 @@ wire  [ 2:0] stage_3_next_stage_decode_offset = stage_2_sib_is_present ? (stage_
 wire  [ 7:0] instruction_for_decode_opcode       [0:2] = instruction[0:2];
 wire  [ 7:0] stage_3_instruction            = instruction[stage_2_next_stage_decode_offset];
 // wire  [ 7:0] stage_4_instruction      [0:7] = instruction[stage_3_next_stage_decode_offset:stage_3_next_stage_decode_offset+7];
-wire  [ 7:0] stage_4_instruction [0:7];
+logic [ 7:0] stage_4_instruction [0:7];
 // wire  [ 7:0] instruction_for_decode_mod_rm             = instruction[offset_after_decode_field];
 // wire  [ 7:0] instruction_for_decode_sib                = instruction[offset_after_decode_field + 1];
 // wire  [ 7:0] instruction_for_decode_displacement       = instruction[offset_after_decode_field + 1];
@@ -131,7 +131,7 @@ assign index_reg_index = stage_2_sib_is_present ? stage_3_index_reg_index : stag
 wire stop_on_stage_1 = ~stage_1_mod_rm_is_present & ~stage_1_displacement_is_present & ~stage_1_immediate_is_present;
 wire stop_on_stage_2 = ~stage_2_sib_is_present;
 
-wire [3:0] displacement_length;
+logic [3:0] displacement_length;
 always_comb begin
     unique case (1'b1)
         stop_on_stage_1: displacement_length <= stage_1_displacement_length;

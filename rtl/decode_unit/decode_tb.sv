@@ -13,17 +13,20 @@ module decode_tb #(
     // ports
 );
 
-logic [7:0] instruction [0:9];
+logic [7:0] instruction [0:15];
 // logic        clock, reset;
 
-decode decode_inst (
+interface_opcode opcode_interface_instance ();
+
+decode decode_instance_in_testbench (
+    .opcode ( opcode_interface_instance ),
     .instruction ( instruction )
 );
 
 // always #1 clock = ~clock;
 
 initial begin
-    #2; instruction[0:9] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
+    #2; instruction[0:15] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
 
     $monitor("%t: instruction=%p", $time, instruction);
 
@@ -356,7 +359,7 @@ initial begin
     #2; instruction[0:5] = {8'h0F, 8'h00, 8'hE2, 8'h00, 8'h00, 8'h00}; $display("0F00E2                  VERR dx");
     #2; instruction[0:5] = {8'h0F, 8'h00, 8'hEA, 8'h00, 8'h00, 8'h00}; $display("0F00EA                  VERW dx");
 
-    #2; instruction[0:9] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
+    #2; instruction[0:15] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
     #16;
 
     $stop();
