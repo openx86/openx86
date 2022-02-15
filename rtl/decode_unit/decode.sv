@@ -24,6 +24,7 @@ module decode (
     output logic [ 2:0] gpr_reg_bit_width,
     output logic [31:0] displacement,
     output logic [31:0] immediate,
+    output logic [15:0] bytes_consumed,
     // input  logic [`info_bit_width_len-1:0] bit_width,
     // output logic [`info_reg_seg_len-1:0] info_segment_reg,
     // output logic [`info_reg_gpr_len-1:0] info_base_reg,
@@ -33,14 +34,9 @@ module decode (
     // output logic [ 3:0] instruction_length,
     // input  logic        valid,
     // output logic        ready,
-    // input  logic        default_operand_size,
+    input  logic        default_operand_size,
     input  logic [ 7:0] instruction [0:15]
 );
-
-logic opcode_length_1;
-logic opcode_length_2;
-logic opcode_length_3;
-logic opcode_length_4;
 
 logic        stage_1_is_prefix_segment;
 logic        stage_1_is_prefix;
@@ -63,7 +59,6 @@ logic        stage_1_unsigned_full_offset_or_selector_is_present;
 logic [ 2:0] stage_1_next_stage_decode_offset;
 
 // TODO: connect to segment cache
-wire         default_operand_size = `default_operation_size_16;
 logic        stage_2_segment_reg_used;
 logic [ 2:0] stage_2_segment_reg_index;
 logic        stage_2_base_reg_used;
@@ -142,6 +137,10 @@ end
 
 assign displacement = stage_4_displacement;
 assign immediate = stage_4_immediate;
+
+// calculate costed bytes
+// wire costed_bytes_01 = stage_1_;
+// assign costed_bytes = 0;
 
 decode_stage_0_opcode decode_stage_0_opcode_instance_in_decode (
     .opcode ( opcode ),

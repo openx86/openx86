@@ -280,7 +280,6 @@ logic [31:0] immediate;
 
 decode decode_in_core (
     .opcode ( opcode_interface_instance ),
-    // .bit_width ( bit_width ),
     .segment_reg_used ( segment_reg_used ),
     .segment_reg_index ( segment_reg_index ),
     .scale_factor ( scale_factor ),
@@ -294,6 +293,7 @@ decode decode_in_core (
     .gpr_reg_bit_width ( gpr_reg_bit_width ),
     .displacement ( displacement ),
     .immediate ( immediate ),
+    .default_operand_size ( `default_operand_size_16 ),
     .instruction ( instruction )
 );
 
