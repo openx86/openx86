@@ -18,7 +18,7 @@ logic [7:0] instruction [0:15];
 
 interface_opcode opcode_interface_instance ();
 
-wire default_operand_size = `default_operation_size_32;
+wire default_operand_size = `default_operation_size_16;
 
 decode decode_instance_in_testbench (
     .opcode ( opcode_interface_instance ),
@@ -29,7 +29,7 @@ decode decode_instance_in_testbench (
 // always #1 clock = ~clock;
 
 initial begin
-    #2; instruction[0:15] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
+    instruction[0:15] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
 
     $monitor("%t: instruction=%p", $time, instruction);
 

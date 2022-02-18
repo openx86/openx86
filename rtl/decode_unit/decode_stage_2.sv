@@ -72,7 +72,6 @@ module decode_stage_2 (
     output logic [ 2:0] base_reg_index,
     output logic        index_reg_used,
     output logic [ 2:0] index_reg_index,
-    output logic [ 2:0] base_index_reg_bit_width,
     output logic        gpr_reg_used,
     output logic [ 2:0] gpr_reg_index,
     output logic [ 2:0] gpr_reg_bit_width,
@@ -103,7 +102,7 @@ wire default_operation_size_32 = (default_operand_size == `default_operation_siz
 
 
 // segment register
-assign segment_reg_used = mod_00 | mod_01 | mod_10;
+assign segment_reg_used = ~mod_11;
 
 wire mod_00_DS_16_bit = mod_00 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_110 | rm_111);
 wire mod_01_DS_16_bit = mod_01 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_111);
@@ -129,36 +128,92 @@ wire SS_32_bit = mod_00_SS_32_bit | mod_01_SS_32_bit | mod_10_SS_32_bit;
 wire segment_reg_index_DS = (default_operation_size_16 & DS_16_bit) | (default_operation_size_32 & DS_32_bit);
 wire segment_reg_index_SS = (default_operation_size_16 & SS_16_bit) | (default_operation_size_32 & SS_32_bit);
 
-assign segment_reg_index = segment_reg_index_DS ? `index_reg_seg__DS : `index_reg_seg__SS;
+always_comb begin
+    unique case (1'b1)
+        segment_reg_index_DS: segment_reg_index <= `index_reg_seg__DS;
+        segment_reg_index_SS: segment_reg_index <= `index_reg_seg__SS;
+        default             : segment_reg_index <= 3'b0;
+    endcase
+end
+// assign segment_reg_index = segment_reg_index_DS ? `index_reg_seg__DS : `index_reg_seg__SS;
+
 
 // scale-index-base is present
 assign sib_is_present = default_operation_size_32 & ~mod_11 & rm_100;
 
-// base and index register index
-assign base_index_reg_bit_width = default_operand_size;
 
+// base register
 wire base_mod_xx_BX = ~mod_11 & (rm_000 | rm_001 | rm_111);
 wire base_mod_00_BP =  mod_00 & (rm_010 | rm_011);
 wire base_mod_01_BP =  mod_01 & (rm_010 | rm_011 | rm_110);
 wire base_mod_10_BP =  mod_10 & (rm_010 | rm_011 | rm_110);
-wire base_mod_xx_32_bit = rm;
+// wire base_mod_xx_32_bit = rm;
 
-wire base_reg_used_16_bit = default_operation_size_16 & (base_mod_xx_BX | base_mod_00_BP | base_mod_01_BP | base_mod_10_BP);
-wire base_reg_used_32_bit = default_operation_size_32 & (base_mod_xx_32_bit);
+wire base_16_BX = base_mod_xx_BX;
+wire base_16_BP = base_mod_00_BP | base_mod_01_BP | base_mod_10_BP;
+
+always_comb begin
+    unique case (1'b1)
+        base_16_BX: base_reg_index <= `index_reg_gpr__BX;
+        base_16_BP: base_reg_index <= `index_reg_gpr__BP;
+        default   : base_reg_index <= 3'b0;
+    endcase
+end
+
+wire base_reg_used_16_bit = default_operation_size_16 & (base_16_BX | base_16_BP);
+wire base_reg_used_32_bit = 0;
 
 assign base_reg_used = base_reg_used_16_bit | base_reg_used_32_bit;
 
-wire index_mod_xx_SI = ~mod_11 & (rm_000 | rm_010 | rm_100);
-wire index_mod_xx_DI = ~mod_11 & (rm_001 | rm_011 | rm_101);
 
-assign index_reg_used = default_operation_size_16 & (index_mod_xx_SI | index_mod_xx_DI);
+// index register
+wire index_mod_xx__SI = ~mod_11 & (rm_000 | rm_010 | rm_100);
+wire index_mod_xx__DI = ~mod_11 & (rm_001 | rm_011 | rm_101);
+wire index_mod_xx_EAX = ~mod_11 & rm_000;
+wire index_mod_xx_ECX = ~mod_11 & rm_001;
+wire index_mod_xx_EDX = ~mod_11 & rm_010;
+wire index_mod_xx_EBX = ~mod_11 & rm_011;
+wire index_mod_xx_ESP = 0;
+wire index_mod_xx_EBP = (mod_01 | mod_10) & rm_101;
+wire index_mod_xx_ESI = ~mod_11 & rm_110;
+wire index_mod_xx_EDI = ~mod_11 & rm_111;
+
+// TODO: reg index
+always_comb begin
+    unique case (1'b1)
+        index_mod_xx__SI: index_reg_index <= `index_reg_gpr__SI;
+        index_mod_xx__DI: index_reg_index <= `index_reg_gpr__DI;
+        index_mod_xx_EAX: index_reg_index <= `index_reg_gpr_EAX;
+        index_mod_xx_ECX: index_reg_index <= `index_reg_gpr_ECX;
+        index_mod_xx_EDX: index_reg_index <= `index_reg_gpr_EDX;
+        index_mod_xx_EBX: index_reg_index <= `index_reg_gpr_EBX;
+        index_mod_xx_ESP: index_reg_index <= `index_reg_gpr_ESP;
+        index_mod_xx_EBP: index_reg_index <= `index_reg_gpr_EBP;
+        index_mod_xx_ESI: index_reg_index <= `index_reg_gpr_ESI;
+        index_mod_xx_EDI: index_reg_index <= `index_reg_gpr_EDI;
+        default         : index_reg_index <= 3'b0;
+    endcase
+end
+
+wire index_reg_used_16 = default_operation_size_16 & (index_mod_xx__SI | index_mod_xx__DI);
+wire index_reg_used_32 = default_operation_size_32 & (
+    index_mod_xx_EAX |
+    index_mod_xx_ECX |
+    index_mod_xx_EDX |
+    index_mod_xx_EBX |
+    index_mod_xx_ESP |
+    index_mod_xx_EBP |
+    index_mod_xx_ESI |
+    index_mod_xx_EDI |
+0);
+assign index_reg_used = index_reg_used_16 | index_reg_used_32;
 
 
 // displacement_length
 wire displacement_length__8 = mod_01;
 wire displacement_length_16 = default_operation_size_16 & ((mod_00 & rm_110) | mod_10);
 wire displacement_length_32 = default_operation_size_32 & ((mod_00 & rm_110) | mod_10);
-assign displacement_is_present = ~displacement_length__8 & ~displacement_length_16 & ~displacement_length_32;
+assign displacement_is_present = displacement_length__8 | displacement_length_16 | displacement_length_32;
 assign displacement_length = {displacement_length__8, displacement_length_16, displacement_length_32, 1'b0};
 // always_comb begin
 //     unique case (1'b1)

@@ -38,23 +38,32 @@ wire immediate_length_full = immediate_length[3];
 logic [7:0] instruction_for_immediate [0:3];
 
 always_comb begin
-    unique case (1'b1)
-        displacement_length__8:   begin instruction_for_immediate <= instruction[1:4]; displacement <= {24'b0, instruction[0][7:0]}; end
-        displacement_length_16:   begin instruction_for_immediate <= instruction[2:5]; displacement <= {16'b0, instruction[1][7:0], instruction[0][7:0]}; end
-        displacement_length_32:   begin instruction_for_immediate <= instruction[4:7]; displacement <= {       instruction[3][7:0], instruction[2][7:0], instruction[1][7:0], instruction[0][7:0]}; end
-        displacement_length_full: begin instruction_for_immediate <= instruction[4:7]; displacement <= {       instruction[3][7:0], instruction[2][7:0], instruction[1][7:0], instruction[0][7:0]}; end
-        default:                  begin instruction_for_immediate <= instruction[0:3]; displacement <= 32'b0; end
-    endcase
+    if (displacement_is_present) begin
+        unique case (1'b1)
+            displacement_length__8:   begin instruction_for_immediate <= instruction[1:4]; displacement <= {24'b0, instruction[0][7:0]}; end
+            displacement_length_16:   begin instruction_for_immediate <= instruction[2:5]; displacement <= {16'b0, instruction[1][7:0], instruction[0][7:0]}; end
+            displacement_length_32:   begin instruction_for_immediate <= instruction[4:7]; displacement <= {       instruction[3][7:0], instruction[2][7:0], instruction[1][7:0], instruction[0][7:0]}; end
+            displacement_length_full: begin instruction_for_immediate <= instruction[4:7]; displacement <= {       instruction[3][7:0], instruction[2][7:0], instruction[1][7:0], instruction[0][7:0]}; end
+            default:                  begin instruction_for_immediate <= instruction[0:3]; displacement <= 32'b0; end
+        endcase
+    end else begin
+        instruction_for_immediate <= instruction[0:3];
+		  displacement <= 32'b0;
+    end
 end
 
 always_comb begin
-    unique case (1'b1)
-        immediate_length__8:   immediate <= {24'b0, instruction_for_immediate[0][7:0]};
-        immediate_length_16:   immediate <= {16'b0, instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
-        immediate_length_32:   immediate <= {       instruction_for_immediate[3][7:0], instruction_for_immediate[2][7:0], instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
-        immediate_length_full: immediate <= {       instruction_for_immediate[3][7:0], instruction_for_immediate[2][7:0], instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
-        default:               immediate <= 32'b0;
-    endcase
+    if (immediate_is_present) begin
+        unique case (1'b1)
+            immediate_length__8:   immediate <= {24'b0, instruction_for_immediate[0][7:0]};
+            immediate_length_16:   immediate <= {16'b0, instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
+            immediate_length_32:   immediate <= {       instruction_for_immediate[3][7:0], instruction_for_immediate[2][7:0], instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
+            immediate_length_full: immediate <= {       instruction_for_immediate[3][7:0], instruction_for_immediate[2][7:0], instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
+            default:               immediate <= 32'b0;
+        endcase
+    end else begin
+        immediate <= 32'b0;
+    end
 end
 
 endmodule

@@ -29,7 +29,10 @@ module decode_stage_1 (
     output logic        immediate_is_present,
     output logic [ 1:0] immediate_length,
     output logic        unsigned_full_offset_or_selector_is_present,
-    output logic [ 2:0] next_stage_decode_offset
+    output logic        next_stage_decode_offset_1,
+    output logic        next_stage_decode_offset_2,
+    output logic        next_stage_decode_offset_3,
+    output logic        next_stage_decode_offset_4
 );
 
 wire opcode_MOV_reg_to_reg_mem = opcode.opcode_MOV_reg_to_reg_mem;
@@ -766,7 +769,7 @@ assign immediate_length = {immediate_full, immediate__8};
 
 
 // length (include {mod {3-bytes opcode | greg} r/m})
-wire opcode_length_1 =
+assign next_stage_decode_offset_1 =
 opcode_MOV_imm_to_reg_short |
 opcode_MOV_mem_to_acc |
 opcode_MOV_acc_to_mem |
@@ -840,7 +843,7 @@ opcode_prefix_segment_override_GS |
 opcode_prefix_segment_override_SS |
 1'b0;
 
-wire opcode_length_2 =
+assign next_stage_decode_offset_2 =
 opcode_MOV_reg_to_reg_mem |
 opcode_MOV_reg_mem_to_reg |
 opcode_MOV_imm_to_reg_mem |
@@ -957,7 +960,7 @@ opcode_processor_extension_escape |
 opcode_ARPL |
 1'b0;
 
-wire opcode_length_3 =
+assign next_stage_decode_offset_3 =
 opcode_MOVSX |
 opcode_MOVZX |
 opcode_LFS_load_ptr_to_FS |
@@ -1020,7 +1023,7 @@ opcode_VERR |
 opcode_VERW |
 1'b0;
 
-wire opcode_length_4 =
+assign next_stage_decode_offset_4 =
 opcode_SHLD_reg_mem_by_imm |
 opcode_SHRD_reg_mem_by_imm |
 opcode_BT_reg_mem_with_imm |
@@ -1028,15 +1031,5 @@ opcode_BTC_reg_mem_with_imm |
 opcode_BTR_reg_mem_with_imm |
 opcode_BTS_reg_mem_with_imm |
 1'b0;
-
-always_comb begin
-    unique case (1'b1)
-        opcode_length_1: next_stage_decode_offset <= 2'h0;
-        opcode_length_2: next_stage_decode_offset <= 2'h1;
-        opcode_length_3: next_stage_decode_offset <= 2'h2;
-        opcode_length_4: next_stage_decode_offset <= 2'h3;
-        default:         next_stage_decode_offset <= 2'h0;
-    endcase
-end
 
 endmodule
