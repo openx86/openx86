@@ -169,6 +169,24 @@
 `define index_reg_gpr_ESI (3'b110)
 `define index_reg_gpr_EDI (3'b111)
 
+`define index_reg__mm___0 (3'b000)
+`define index_reg__mm___1 (3'b001)
+`define index_reg__mm___2 (3'b010)
+`define index_reg__mm___3 (3'b011)
+`define index_reg__mm___4 (3'b100)
+`define index_reg__mm___5 (3'b101)
+`define index_reg__mm___6 (3'b110)
+`define index_reg__mm___7 (3'b111)
+
+`define index_reg_xmm___0 (3'b000)
+`define index_reg_xmm___1 (3'b001)
+`define index_reg_xmm___2 (3'b010)
+`define index_reg_xmm___3 (3'b011)
+`define index_reg_xmm___4 (3'b100)
+`define index_reg_xmm___5 (3'b101)
+`define index_reg_xmm___6 (3'b110)
+`define index_reg_xmm___7 (3'b111)
+
 // index of segment register
 `define index_reg_seg__ES (3'b000)
 `define index_reg_seg__CS (3'b001)
