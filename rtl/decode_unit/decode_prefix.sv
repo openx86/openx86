@@ -3,32 +3,42 @@ project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
 module: decode_prefix
-create at: 2021-12-28 16:56:15
+create at: 2022-02-20 09:24:27
 description: decode prefix from instruction
 */
 
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
 module decode_prefix (
-    input  logic [ 7:0] instruction[0:2],
-    output logic        address_size,
-    output logic        bus_lock,
-    output logic        operand_size,
-    output logic        segment_override,
-    output logic [ 2:0] segment_override_index
+    input  logic [ 7:0] i_instruction [0:15],
+    output logic        o_group_1_lock_bus,
+    output logic        o_group_1_repeat_not_equal,
+    output logic        o_group_1_repeat_equal,
+    output logic        o_group_1_bound,
+    output logic        o_group_2_segment_override,
+    output logic        o_group_2_hint_branch_not_taken,
+    output logic        o_group_2_hint_branch_taken,
+    output logic        o_group_3_operand_size,
+    output logic        o_group_4_address_size,
+    output logic        o_group_1_is_present,
+    output logic        o_group_2_is_present,
+    output logic        o_group_3_is_present,
+    output logic        o_group_4_is_present,
+    output logic        o_is_present,
+    output logic [ 2:0] o_segment_override_index
 );
 
-assign address_size        = (instruction[0][7:0] == 8'b0110_0111);
-assign bus_lock            = (instruction[0][7:0] == 8'b1111_0000);
-assign operand_size        = (instruction[0][7:0] == 8'b0110_0110);
+wire   segment_override_CS = (i_instruction[0][7:0] == 8'h2E);
+wire   segment_override_DS = (i_instruction[0][7:0] == 8'h36);
+wire   segment_override_ES = (i_instruction[0][7:0] == 8'h3E);
+wire   segment_override_FS = (i_instruction[0][7:0] == 8'h26);
+wire   segment_override_GS = (i_instruction[0][7:0] == 8'h64);
+wire   segment_override_SS = (i_instruction[0][7:0] == 8'h65);
 
-wire   segment_override_CS = (instruction[0][7:0] == 8'b0010_1110);
-wire   segment_override_DS = (instruction[0][7:0] == 8'b0011_1110);
-wire   segment_override_ES = (instruction[0][7:0] == 8'b0010_0110);
-wire   segment_override_FS = (instruction[0][7:0] == 8'b0110_0100);
-wire   segment_override_GS = (instruction[0][7:0] == 8'b0110_0101);
-wire   segment_override_SS = (instruction[0][7:0] == 8'b0011_0110);
-
-assign segment_override    =
+assign o_group_1_lock_bus              = 8'hF0;
+assign o_group_1_repeat_not_equal      = 8'hF2;
+assign o_group_1_repeat_equal          = 8'hF3;
+assign o_group_1_bound                 = 8'hF2;
+assign o_group_2_segment_override      =
 segment_override_CS |
 segment_override_DS |
 segment_override_ES |
@@ -36,16 +46,27 @@ segment_override_FS |
 segment_override_GS |
 segment_override_SS |
 0;
+assign o_group_2_hint_branch_not_taken = 8'h2E;
+assign o_group_2_hint_branch_taken     = 8'h3E;
+assign o_group_3_operand_size          = 8'h66;
+assign o_group_4_address_size          = 8'h67;
+
+assign o_group_1_is_present = o_group_1_lock_bus | o_group_1_repeat_not_equal | o_group_1_repeat_equal | o_group_1_bound;
+assign o_group_2_is_present = o_group_2_segment_override | o_group_2_hint_branch_not_taken | o_group_2_hint_branch_taken;
+assign o_group_3_is_present = o_group_3_operand_size;
+assign o_group_4_is_present = o_group_4_address_size;
+
+assign o_is_present = o_group_1_is_present | o_group_2_is_present | o_group_3_is_present | o_group_4_is_present;
 
 always_comb begin
     unique case (1'b1)
-        segment_override_CS: segment_override_index <= `index_reg_seg__CS;
-        segment_override_DS: segment_override_index <= `index_reg_seg__DS;
-        segment_override_ES: segment_override_index <= `index_reg_seg__ES;
-        segment_override_FS: segment_override_index <= `index_reg_seg__FS;
-        segment_override_GS: segment_override_index <= `index_reg_seg__GS;
-        segment_override_SS: segment_override_index <= `index_reg_seg__SS;
-        default            : segment_override_index <= 3'b0;
+        segment_override_CS: o_segment_override_index <= `index_reg_seg__CS;
+        segment_override_DS: o_segment_override_index <= `index_reg_seg__DS;
+        segment_override_ES: o_segment_override_index <= `index_reg_seg__ES;
+        segment_override_FS: o_segment_override_index <= `index_reg_seg__FS;
+        segment_override_GS: o_segment_override_index <= `index_reg_seg__GS;
+        segment_override_SS: o_segment_override_index <= `index_reg_seg__SS;
+        default            : o_segment_override_index <= 3'b0;
     endcase
 end
 
