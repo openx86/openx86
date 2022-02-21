@@ -19,7 +19,7 @@ logic[241:0] opcode;
 
 // interface_opcode opcode_interface_instance ();
 
-wire default_operand_size = `default_operation_size_16;
+wire default_operand_size = `default_operation_size_32;
 
 decode decode_instance_in_testbench (
     .i_default_operand_size ( default_operand_size ),

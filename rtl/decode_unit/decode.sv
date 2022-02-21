@@ -134,10 +134,10 @@ assign stage_field_i_opcode = stage_opcode_o_opcode;
 logic [7:0] mod_rm;
 always_comb begin
     case (stage_field_o_bytes_consumed)
-        1      : mod_rm <= i_instruction[0+1];
-        2      : mod_rm <= i_instruction[0+2];
-        3      : mod_rm <= i_instruction[0+3];
-        4      : mod_rm <= i_instruction[0+4];
+        1      : mod_rm <= i_instruction[0+0];
+        2      : mod_rm <= i_instruction[0+1];
+        3      : mod_rm <= i_instruction[0+2];
+        4      : mod_rm <= i_instruction[0+3];
         default: mod_rm <= i_instruction[0+0];
     endcase
 end
@@ -159,6 +159,15 @@ always_comb begin
     endcase
 end
 
+always_comb begin
+    case (stage_field_o_bytes_consumed)
+        1      : stage_disp_imm_i_instruction <= stage_sib_i_sib ? i_instruction[0+1+1:7+1+1] : i_instruction[0+1:7+1];
+        2      : stage_disp_imm_i_instruction <= stage_sib_i_sib ? i_instruction[0+2+1:7+2+1] : i_instruction[0+2:7+2];
+        3      : stage_disp_imm_i_instruction <= stage_sib_i_sib ? i_instruction[0+3+1:7+3+1] : i_instruction[0+3:7+3];
+        4      : stage_disp_imm_i_instruction <= stage_sib_i_sib ? i_instruction[0+4+1:7+4+1] : i_instruction[0+4:7+4];
+        default: stage_disp_imm_i_instruction <= stage_sib_i_sib ? i_instruction[0+0+1:7+0+1] : i_instruction[0+0:7+0];
+    endcase
+end
 always_comb begin
     if (stage_field_o_displacement_is_present) begin
         stage_disp_imm_i_displacement_is_present <= stage_field_o_displacement_is_present;
@@ -205,7 +214,7 @@ always_comb begin
     end else if (segment_reg_from_mod_rm) begin
         o_segment_reg_index <= stage_mod_rm_o_segment_reg_index;
     end else begin
-        o_segment_reg_index <= 3'bxxx;
+        o_segment_reg_index <= 3'b111;
     end
 end
 
