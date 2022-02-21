@@ -235,15 +235,6 @@ logic        opcode_MOV_reg_from_TR6_7;
 logic        opcode_NOP;
 logic        opcode_WAIT;
 logic        opcode_processor_extension_escape;
-logic        opcode_prefix_address_size;
-logic        opcode_prefix_bus_lock;
-logic        opcode_prefix_operand_size;
-logic        opcode_prefix_segment_override_CS;
-logic        opcode_prefix_segment_override_DS;
-logic        opcode_prefix_segment_override_ES;
-logic        opcode_prefix_segment_override_FS;
-logic        opcode_prefix_segment_override_GS;
-logic        opcode_prefix_segment_override_SS;
 logic        opcode_ARPL;
 logic        opcode_LAR;
 logic        opcode_LGDT;
@@ -488,15 +479,6 @@ modport opcode_input (
     opcode_NOP,
     opcode_WAIT,
     opcode_processor_extension_escape,
-    opcode_prefix_address_size,
-    opcode_prefix_bus_lock,
-    opcode_prefix_operand_size,
-    opcode_prefix_segment_override_CS,
-    opcode_prefix_segment_override_DS,
-    opcode_prefix_segment_override_ES,
-    opcode_prefix_segment_override_FS,
-    opcode_prefix_segment_override_GS,
-    opcode_prefix_segment_override_SS,
     opcode_ARPL,
     opcode_LAR,
     opcode_LGDT,
@@ -742,15 +724,6 @@ modport opcode_output (
     opcode_NOP,
     opcode_WAIT,
     opcode_processor_extension_escape,
-    opcode_prefix_address_size,
-    opcode_prefix_bus_lock,
-    opcode_prefix_operand_size,
-    opcode_prefix_segment_override_CS,
-    opcode_prefix_segment_override_DS,
-    opcode_prefix_segment_override_ES,
-    opcode_prefix_segment_override_FS,
-    opcode_prefix_segment_override_GS,
-    opcode_prefix_segment_override_SS,
     opcode_ARPL,
     opcode_LAR,
     opcode_LGDT,

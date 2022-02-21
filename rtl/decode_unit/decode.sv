@@ -10,249 +10,322 @@ description: decode unit module
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
 
 module decode (
-    interface_opcode.opcode_output opcode,
-    output logic        segment_reg_used,
-    output logic [ 2:0] segment_reg_index,
-    output logic [ 1:0] scale_factor,
-    output logic        base_reg_used,
-    output logic [ 2:0] base_reg_index,
-    output logic        index_reg_used,
-    output logic [ 2:0] index_reg_index,
-    output logic        gpr_reg_used,
-    output logic [ 2:0] gpr_reg_index,
-    output logic [ 2:0] gpr_reg_bit_width,
-    output logic        displacement_is_present,
-    output logic [31:0] displacement,
-    output logic        immediate_is_present,
-    output logic [31:0] immediate,
-    output logic [15:0] bytes_consumed,
-    // input  logic [`info_bit_width_len-1:0] bit_width,
-    // output logic [`info_reg_seg_len-1:0] info_segment_reg,
-    // output logic [`info_reg_gpr_len-1:0] info_base_reg,
-    // output logic [`info_reg_gpr_len-1:0] info_index_reg,
-    // output logic [`info_displacement_len-1:0] info_displacement,
-    // output logic        sib_is_present,
-    // output logic [ 3:0] instruction_length,
-    // input  logic        valid,
-    // output logic        ready,
-    input  logic        default_operand_size,
-    input  logic [ 7:0] instruction [0:15]
+    input  logic [ 7:0] i_instruction [0:15],
+    input  logic        i_default_operand_size,
+    output logic[241:0] o_opcode,
+    output logic        o_prefix_lock_bus,
+    output logic        o_prefix_repeat_not_equal,
+    output logic        o_prefix_repeat_equal,
+    output logic        o_prefix_bound,
+    output logic        o_prefix_hint_branch_not_taken,
+    output logic        o_prefix_hint_branch_taken,
+    output logic        o_field_gen_reg_is_present,
+    output logic [ 2:0] o_field_gen_reg_index,
+    output logic [ 2:0] o_segment_reg_index,
+    output logic [ 1:0] o_scale_factor,
+    output logic        o_base_reg_is_present,
+    output logic [ 2:0] o_base_reg_index,
+    output logic        o_index_reg_is_present,
+    output logic [ 2:0] o_index_reg_index,
+    output logic        o_mod_rm_gen_reg_is_present,
+    output logic [ 2:0] o_mod_rm_gen_reg_index,
+    output logic [ 2:0] o_mod_rm_gen_reg_bit_width,
+    output logic        o_displacement_is_present,
+    output logic [31:0] o_displacement,
+    output logic        o_immediate_is_present,
+    output logic [31:0] o_immediate,
+    output logic [ 4:0] o_bytes_consumed,
+    output logic        o_error
 );
 
-logic        stage_1_is_prefix_segment;
-logic        stage_1_is_prefix;
-logic        stage_1_s_is_present;
-logic        stage_1_s;
-logic        stage_1_w_is_present;
-logic        stage_1_w;
-logic        stage_1_greg_is_present;
-logic [ 2:0] stage_1_greg;
-logic        stage_1_sreg_is_present;
-logic [ 2:0] stage_1_sreg;
-logic        stage_1_mod_rm_is_present;
-logic [ 1:0] stage_1_mod;
-logic [ 2:0] stage_1_rm;
-logic        stage_1_displacement_is_present;
-logic [ 3:0] stage_1_displacement_length;
-logic        stage_1_immediate_is_present;
-logic [ 1:0] stage_1_immediate_length;
-logic        stage_1_unsigned_full_offset_or_selector_is_present;
-logic        stage_1_next_stage_decode_offset_1;
-logic        stage_1_next_stage_decode_offset_2;
-logic        stage_1_next_stage_decode_offset_3;
-logic        stage_1_next_stage_decode_offset_4;
+logic [ 7:0] stage_prefix_i_instruction [0:3];
+logic        stage_prefix_o_group_1_lock_bus;
+logic        stage_prefix_o_group_1_repeat_not_equal;
+logic        stage_prefix_o_group_1_repeat_equal;
+logic        stage_prefix_o_group_1_bound;
+logic        stage_prefix_o_group_2_segment_override;
+logic        stage_prefix_o_group_2_hint_branch_not_taken;
+logic        stage_prefix_o_group_2_hint_branch_taken;
+logic        stage_prefix_o_group_3_operand_size;
+logic        stage_prefix_o_group_4_address_size;
+logic        stage_prefix_o_group_1_is_present;
+logic        stage_prefix_o_group_2_is_present;
+logic        stage_prefix_o_group_3_is_present;
+logic        stage_prefix_o_group_4_is_present;
+logic [ 2:0] stage_prefix_o_segment_override_index;
+logic        stage_prefix_o_error;
+logic [ 2:0] stage_prefix_o_consumed_instruction_bytes;
 
-// TODO: connect to segment cache
-logic [ 1:0] stage_2_mod;
-logic [ 2:0] stage_2_rm;
-logic        stage_2_w_is_present;
-logic        stage_2_w;
-logic        stage_2_segment_reg_used;
-logic [ 2:0] stage_2_segment_reg_index;
-logic        stage_2_base_reg_used;
-logic [ 2:0] stage_2_base_reg_index;
-logic        stage_2_index_reg_used;
-logic [ 2:0] stage_2_index_reg_index;
-logic        stage_2_gpr_reg_used;
-logic [ 2:0] stage_2_gpr_reg_index;
-logic [ 2:0] stage_2_gpr_reg_bit_width;
-logic        stage_2_displacement_is_present;
-logic [ 3:0] stage_2_displacement_length;
-logic        stage_2_sib_is_present;
+logic [ 7:0] stage_opcode_i_instruction [0:2];
+logic[241:0] stage_opcode_o_opcode;
 
-logic [ 1:0] stage_3_mod;
-logic [ 1:0] stage_3_scale_factor;
-logic        stage_3_index_reg_used;
-logic [ 2:0] stage_3_index_reg_index;
-logic        stage_3_base_reg_used;
-logic [ 2:0] stage_3_base_reg_index;
-logic        stage_3_displacement_is_present;
-logic [ 3:0] stage_3_displacement_length;
-logic        stage_3_effecitve_address_undefined;
+logic [ 7:0] stage_field_i_instruction [0:2];
+logic[241:0] stage_field_i_opcode;
+logic        stage_field_o_s_is_present;
+logic        stage_field_o_s;
+logic        stage_field_o_w_is_present;
+logic        stage_field_o_w;
+logic        stage_field_o_gen_reg_is_present;
+logic [ 2:0] stage_field_o_gen_reg_index;
+logic        stage_field_o_seg_reg_is_present;
+logic [ 2:0] stage_field_o_seg_reg_index;
+logic        stage_field_o_mod_rm_is_present;
+logic [ 1:0] stage_field_o_mod;
+logic [ 2:0] stage_field_o_rm;
+logic        stage_field_o_displacement_is_present;
+logic [ 2:0] stage_field_o_displacement_length; // all 0: unknwon, 3: full, 2: 32, 1:
+logic        stage_field_o_immediate_is_present;
+logic [ 1:0] stage_field_o_immediate_length; // 1: full, 2: 8-bit
+logic        stage_field_o_unsigned_full_offset_or_selector_is_present;
+logic [ 2:0] stage_field_o_bytes_consumed;
+logic        stage_field_o_error;
 
-logic [ 7:0] stage_4_instruction [0:7];
-logic [ 3:0] stage_4_displacement_length;
-logic [ 3:0] stage_4_immediate_length;
-logic [31:0] stage_4_displacement;
-logic [31:0] stage_4_immediate;
+logic [ 1:0] stage_mod_rm_i_mod;
+logic [ 2:0] stage_mod_rm_i_rm;
+logic        stage_mod_rm_i_w_is_present;
+logic        stage_mod_rm_i_w;
+logic        stage_mod_rm_i_default_operand_size;
+logic [ 2:0] stage_mod_rm_o_segment_reg_index;
+logic        stage_mod_rm_o_base_reg_is_present;
+logic [ 2:0] stage_mod_rm_o_base_reg_index;
+logic        stage_mod_rm_o_index_reg_is_present;
+logic [ 2:0] stage_mod_rm_o_index_reg_index;
+logic        stage_mod_rm_o_gen_reg_is_present;
+logic [ 2:0] stage_mod_rm_o_gen_reg_index;
+logic [ 2:0] stage_mod_rm_o_gen_reg_bit_width;
+logic        stage_mod_rm_o_displacement_is_present;
+logic [ 3:0] stage_mod_rm_o_displacement_length;
+logic        stage_mod_rm_o_sib_is_present;
 
-// wire  [ 2:0] stage_2_next_stage_decode_offset = stage_2_sib_is_present ? (stage_1_next_stage_decode_offset + 3'h1) : (stage_1_next_stage_decode_offset + 3'h0);
-// wire  [ 2:0] stage_3_next_stage_decode_offset = stage_2_sib_is_present ? (stage_1_next_stage_decode_offset + 3'h2) : (stage_1_next_stage_decode_offset + 3'h1);
+logic [ 7:0] stage_sib_i_sib;
+logic [ 1:0] stage_sib_i_mod;
+logic [ 1:0] stage_sib_o_scale_factor;
+logic        stage_sib_o_index_reg_is_present;
+logic [ 2:0] stage_sib_o_index_reg_index;
+logic        stage_sib_o_base_reg_is_present;
+logic [ 2:0] stage_sib_o_base_reg_index;
+logic        stage_sib_o_displacement_is_present;
+logic [ 3:0] stage_sib_o_displacement_length;
+logic        stage_sib_o_effecitve_address_undefined;
 
-wire  [ 7:0] stage_0_instruction [0:2] = instruction[0:2];
-wire  [ 7:0] stage_1_instruction [0:2] = instruction[0:2];
-logic [ 7:0] stage_3_instruction;
-// wire  [ 7:0] stage_4_instruction      [0:7] = instruction[stage_3_next_stage_decode_offset:stage_3_next_stage_decode_offset+7];
-// wire  [ 7:0] instruction_for_decode_mod_rm             = instruction[offset_after_decode_field];
-// wire  [ 7:0] instruction_for_decode_sib                = instruction[offset_after_decode_field + 1];
-// wire  [ 7:0] instruction_for_decode_displacement       = instruction[offset_after_decode_field + 1];
-// wire  [ 7:0] instruction_for_decode_immediate;
+logic [ 7:0] stage_disp_imm_i_instruction [0:7];
+logic        stage_disp_imm_i_displacement_is_present;
+logic [ 3:0] stage_disp_imm_i_displacement_length;
+logic        stage_disp_imm_i_immediate_is_present;
+logic [ 3:0] stage_disp_imm_i_immediate_length;
+logic [31:0] stage_disp_imm_o_displacement;
+logic [31:0] stage_disp_imm_o_immediate;
+logic [ 3:0] stage_disp_imm_o_bytes_consumed;
+
+assign stage_prefix_i_instruction = i_instruction [0:3];
 always_comb begin
-    unique case (1'b1)
-        stage_1_next_stage_decode_offset_1: begin
-            stage_3_instruction <= instruction[1];
-            stage_4_instruction <= stage_2_sib_is_present ? instruction[1+1:1+1+7] : instruction[1:1+7];
-        end
-        stage_1_next_stage_decode_offset_2: begin
-            stage_3_instruction <= instruction[2];
-            stage_4_instruction <= stage_2_sib_is_present ? instruction[2+1:2+1+7] : instruction[2:2+7];
-        end
-        stage_1_next_stage_decode_offset_3: begin
-            stage_3_instruction <= instruction[3];
-            stage_4_instruction <= stage_2_sib_is_present ? instruction[3+1:3+1+7] : instruction[3:3+7];
-        end
-        stage_1_next_stage_decode_offset_4: begin
-            stage_3_instruction <= instruction[4];
-            stage_4_instruction <= stage_2_sib_is_present ? instruction[4+1:4+1+7] : instruction[4:4+7];
-        end
-        default: begin
-            stage_3_instruction <= instruction[0];
-		      stage_4_instruction <= instruction[0:0+7];
-		  end
+    case (stage_prefix_o_consumed_instruction_bytes)
+        1      : stage_opcode_i_instruction <= i_instruction[0+1:2+1];
+        2      : stage_opcode_i_instruction <= i_instruction[0+2:2+2];
+        3      : stage_opcode_i_instruction <= i_instruction[0+3:2+3];
+        4      : stage_opcode_i_instruction <= i_instruction[0+4:2+4];
+        default: stage_opcode_i_instruction <= i_instruction[0+0:2+0];
     endcase
 end
 
-assign segment_reg_used = stage_2_segment_reg_used;
-assign segment_reg_index = stage_2_segment_reg_index;
-assign gpr_reg_used = stage_2_gpr_reg_used;
-assign gpr_reg_index = stage_2_gpr_reg_index;
-assign gpr_reg_bit_width = stage_2_gpr_reg_bit_width;
+assign stage_field_i_instruction = stage_opcode_i_instruction;
+assign stage_field_i_opcode = stage_opcode_o_opcode;
 
-assign scale_factor = stage_3_scale_factor;
+logic [7:0] mod_rm;
+always_comb begin
+    case (stage_field_o_bytes_consumed)
+        1      : mod_rm <= i_instruction[0+1];
+        2      : mod_rm <= i_instruction[0+2];
+        3      : mod_rm <= i_instruction[0+3];
+        4      : mod_rm <= i_instruction[0+4];
+        default: mod_rm <= i_instruction[0+0];
+    endcase
+end
+assign stage_mod_rm_i_mod = mod_rm[7:6];
+assign stage_mod_rm_i_rm  = mod_rm[2:0];
+assign stage_mod_rm_i_w_is_present = stage_field_o_w_is_present;
+assign stage_mod_rm_i_w = stage_field_o_w;
+assign stage_mod_rm_i_default_operand_size = i_default_operand_size;
 
-assign base_reg_used   = stage_2_sib_is_present ? stage_3_base_reg_used   : stage_2_base_reg_used;
-assign base_reg_index  = stage_2_sib_is_present ? stage_3_base_reg_index  : stage_2_base_reg_index;
-assign index_reg_used  = stage_2_sib_is_present ? stage_3_index_reg_used  : stage_2_index_reg_used;
-assign index_reg_index = stage_2_sib_is_present ? stage_3_index_reg_index : stage_2_index_reg_index;
+wire  [ 3:0] bytes_offset_mod_rm = stage_prefix_o_consumed_instruction_bytes + stage_field_o_bytes_consumed;
+// wire  [ 3:0] bytes_offset_sib    = bytes_offset_mod_rm + 1;
+always_comb begin
+    unique case (bytes_offset_mod_rm)
+        1: begin stage_sib_i_sib <= i_instruction[2]; stage_sib_i_mod <= i_instruction[1][7:6]; end
+        2: begin stage_sib_i_sib <= i_instruction[3]; stage_sib_i_mod <= i_instruction[2][7:6]; end
+        3: begin stage_sib_i_sib <= i_instruction[4]; stage_sib_i_mod <= i_instruction[3][7:6]; end
+        4: begin stage_sib_i_sib <= i_instruction[5]; stage_sib_i_mod <= i_instruction[4][7:6]; end
+        default: begin stage_sib_i_sib <= 0; stage_sib_i_mod <= 0; end
+    endcase
+end
 
-wire stop_on_stage_1 = ~stage_1_mod_rm_is_present & ~stage_1_displacement_is_present & ~stage_1_immediate_is_present;
-wire stop_on_stage_2 = ~stage_2_sib_is_present;
+always_comb begin
+    if (stage_field_o_displacement_is_present) begin
+        stage_disp_imm_i_displacement_is_present <= stage_field_o_displacement_is_present;
+        stage_disp_imm_i_displacement_length <= stage_field_o_displacement_length;
+    end else if (stage_mod_rm_o_displacement_is_present) begin
+        stage_disp_imm_i_displacement_is_present <= stage_mod_rm_o_displacement_is_present;
+        stage_disp_imm_i_displacement_length <= stage_mod_rm_o_displacement_length;
+    end else if (stage_sib_o_displacement_is_present) begin
+        stage_disp_imm_i_displacement_is_present <= stage_sib_o_displacement_is_present;
+        stage_disp_imm_i_displacement_length <= stage_sib_o_displacement_length;
+    end else begin
+        stage_disp_imm_i_displacement_is_present <= 0;
+        stage_disp_imm_i_displacement_length <= 0;
+    end
+end
 
-// logic [3:0] displacement_length;
-// always_comb begin
-//     unique case (1'b1)
-//         stop_on_stage_1: displacement_length <= stage_1_displacement_length;
-//         stop_on_stage_2: displacement_length <= stage_2_displacement_length;
-//         default        : displacement_length <= stage_3_displacement_length;
-//     endcase
-// end
-
-assign displacement_is_present = stage_2_sib_is_present ? stage_3_displacement_is_present : stage_2_displacement_is_present;
-assign displacement = stage_4_displacement;
-assign immediate_is_present    = stage_1_immediate_is_present;
-assign immediate               = stage_4_immediate;
+assign stage_disp_imm_i_immediate_is_present = stage_field_o_immediate_is_present;
+assign stage_disp_imm_i_immediate_length = stage_field_o_immediate_length;
 
 
-// calculate costed bytes
-// wire costed_bytes_01 = stage_1_;
-// assign costed_bytes = 0;
+// port
 
-decode_stage_0_opcode decode_stage_0_opcode_instance_in_decode (
-    .opcode ( opcode ),
-    .instruction ( stage_0_instruction )
+assign o_opcode = stage_opcode_o_opcode;
+
+assign o_prefix_lock_bus              = stage_prefix_o_group_1_lock_bus;
+assign o_prefix_repeat_not_equal      = stage_prefix_o_group_1_repeat_not_equal;
+assign o_prefix_repeat_equal          = stage_prefix_o_group_1_repeat_equal;
+assign o_prefix_bound                 = stage_prefix_o_group_1_bound;
+assign o_prefix_hint_branch_not_taken = stage_prefix_o_group_2_hint_branch_not_taken;
+assign o_prefix_hint_branch_taken     = stage_prefix_o_group_2_hint_branch_taken;
+
+assign o_field_gen_reg_is_present = stage_field_o_gen_reg_is_present;
+assign o_field_gen_reg_index = stage_field_o_gen_reg_index;
+
+wire segment_reg_from_prefix = stage_prefix_o_group_2_segment_override;
+wire segment_reg_from_opcode = stage_field_o_seg_reg_is_present;
+wire segment_reg_from_mod_rm = stage_field_o_mod_rm_is_present;
+// assign o_segment_reg_used = segment_reg_from_prefix | segment_reg_from_opcode | segment_reg_from_mod_rm;
+always_comb begin
+    if (segment_reg_from_prefix) begin
+        o_segment_reg_index <= stage_prefix_o_segment_override_index;
+    end else if (segment_reg_from_opcode) begin
+        o_segment_reg_index <= stage_field_o_seg_reg_index;
+    end else if (segment_reg_from_mod_rm) begin
+        o_segment_reg_index <= stage_mod_rm_o_segment_reg_index;
+    end else begin
+        o_segment_reg_index <= 3'bxxx;
+    end
+end
+
+assign o_scale_factor = stage_sib_o_scale_factor;
+
+assign o_base_reg_is_present = stage_mod_rm_o_sib_is_present ? stage_sib_o_base_reg_is_present : stage_mod_rm_o_base_reg_is_present;
+assign o_base_reg_index = stage_mod_rm_o_sib_is_present ? stage_sib_o_base_reg_index : stage_mod_rm_o_base_reg_index;
+
+assign o_index_reg_is_present = stage_mod_rm_o_sib_is_present ? stage_sib_o_index_reg_is_present : stage_mod_rm_o_index_reg_is_present;
+assign o_index_reg_index = stage_mod_rm_o_sib_is_present ? stage_sib_o_index_reg_index : stage_mod_rm_o_index_reg_index;
+
+assign o_mod_rm_gen_reg_is_present = stage_mod_rm_o_gen_reg_is_present;
+assign o_mod_rm_gen_reg_index = stage_mod_rm_o_gen_reg_index;
+assign o_mod_rm_gen_reg_bit_width = stage_mod_rm_o_gen_reg_bit_width;
+
+assign o_displacement_is_present = stage_mod_rm_o_sib_is_present ? stage_sib_o_displacement_is_present : stage_mod_rm_o_displacement_is_present;
+assign o_displacement = stage_disp_imm_o_displacement;
+
+assign o_immediate_is_present = stage_field_o_immediate_is_present | stage_disp_imm_i_immediate_is_present;
+assign o_immediate = stage_disp_imm_o_immediate;
+
+assign o_bytes_consumed =
+stage_prefix_o_consumed_instruction_bytes +
+stage_field_o_bytes_consumed +
+stage_mod_rm_o_sib_is_present +
+stage_disp_imm_o_bytes_consumed +
+0;
+
+assign o_error = stage_prefix_o_error | stage_field_o_error;
+
+
+decode_stage_prefix decode_stage_1_prefix_in_decode (
+    .i_instruction                   ( stage_prefix_i_instruction ),
+    .o_group_1_lock_bus              ( stage_prefix_o_group_1_lock_bus ),
+    .o_group_1_repeat_not_equal      ( stage_prefix_o_group_1_repeat_not_equal ),
+    .o_group_1_repeat_equal          ( stage_prefix_o_group_1_repeat_equal ),
+    .o_group_1_bound                 ( stage_prefix_o_group_1_bound ),
+    .o_group_2_segment_override      ( stage_prefix_o_group_2_segment_override ),
+    .o_group_2_hint_branch_not_taken ( stage_prefix_o_group_2_hint_branch_not_taken ),
+    .o_group_2_hint_branch_taken     ( stage_prefix_o_group_2_hint_branch_taken ),
+    .o_group_3_operand_size          ( stage_prefix_o_group_3_operand_size ),
+    .o_group_4_address_size          ( stage_prefix_o_group_4_address_size ),
+    .o_group_1_is_present            ( stage_prefix_o_group_1_is_present ),
+    .o_group_2_is_present            ( stage_prefix_o_group_2_is_present ),
+    .o_group_3_is_present            ( stage_prefix_o_group_3_is_present ),
+    .o_group_4_is_present            ( stage_prefix_o_group_4_is_present ),
+    .o_segment_override_index        ( stage_prefix_o_segment_override_index ),
+    .o_error                         ( stage_prefix_o_error ),
+    .o_consumed_instruction_bytes    ( stage_prefix_o_consumed_instruction_bytes )
 );
 
-decode_stage_1 decode_stage_1_instance_in_decode (
-    .opcode ( opcode ),
-    .instruction ( instruction ),
-    .is_prefix_segment ( stage_1_is_prefix_segment ),
-    .is_prefix ( stage_1_is_prefix ),
-    .s_is_present ( stage_1_s_is_present ),
-    .s ( stage_1_s ),
-    .w_is_present ( stage_1_w_is_present ),
-    .w ( stage_1_w ),
-    .greg_is_present ( stage_1_greg_is_present ),
-    .greg ( stage_1_greg ),
-    .sreg_is_present ( stage_1_sreg_is_present ),
-    .sreg ( stage_1_sreg ),
-    .mod_rm_is_present ( stage_1_mod_rm_is_present ),
-    .mod ( stage_1_mod ),
-    .rm ( stage_1_rm ),
-    .displacement_is_present ( stage_1_displacement_is_present ),
-    .displacement_length ( stage_1_displacement_length ),
-    .immediate_is_present ( stage_1_immediate_is_present ),
-    .immediate_length ( stage_1_immediate_length ),
-    .unsigned_full_offset_or_selector_is_present ( stage_1_unsigned_full_offset_or_selector_is_present ),
-    .next_stage_decode_offset_1 ( stage_1_next_stage_decode_offset_1 ),
-    .next_stage_decode_offset_2 ( stage_1_next_stage_decode_offset_2 ),
-    .next_stage_decode_offset_3 ( stage_1_next_stage_decode_offset_3 ),
-    .next_stage_decode_offset_4 ( stage_1_next_stage_decode_offset_4 )
+decode_stage_opcode decode_stage_2_opcode_instance_in_decode (
+    .i_instruction ( stage_opcode_i_instruction ),
+    .o_opcode      ( stage_opcode_o_opcode )
 );
 
-assign stage_2_mod          = stage_1_mod;
-assign stage_2_rm           = stage_1_rm;
-assign stage_2_w_is_present = stage_1_w_is_present;
-assign stage_2_w            = stage_1_w;
-decode_stage_2 decode_stage_2_instance_in_decode (
-    .mod                             ( stage_2_mod ),
-    .rm                              ( stage_2_rm ),
-    .w_is_present                    ( stage_2_w_is_present ),
-    .w                               ( stage_2_w ),
-    // .stage_1_displacement_is_present ( stage_1_displacement_is_present ),
-    // .stage_1_displacement_length     ( stage_1_displacement_length ),
-    // .stage_1_immediate_is_present    ( stage_1_immediate_is_present ),
-    // .stage_1_immediate_length        ( stage_1_immediate_length ),
-    .default_operand_size            ( default_operand_size ),
-    .segment_reg_used                ( stage_2_segment_reg_used ),
-    .segment_reg_index               ( stage_2_segment_reg_index ),
-    .base_reg_used                   ( stage_2_base_reg_used ),
-    .base_reg_index                  ( stage_2_base_reg_index ),
-    .index_reg_used                  ( stage_2_index_reg_used ),
-    .index_reg_index                 ( stage_2_index_reg_index ),
-    .gpr_reg_used                    ( stage_2_gpr_reg_used ),
-    .gpr_reg_index                   ( stage_2_gpr_reg_index ),
-    .gpr_reg_bit_width               ( stage_2_gpr_reg_bit_width ),
-    .displacement_is_present         ( stage_2_displacement_is_present ),
-    .displacement_length             ( stage_2_displacement_length ),
-    .sib_is_present                  ( stage_2_sib_is_present )
+decode_stage_field decode_stage_3_field_instance_in_decode (
+    .i_instruction                                 ( stage_field_i_instruction ),
+    .i_opcode                                      ( stage_field_i_opcode ),
+    .o_s_is_present                                ( stage_field_o_s_is_present ),
+    .o_s                                           ( stage_field_o_s ),
+    .o_w_is_present                                ( stage_field_o_w_is_present ),
+    .o_w                                           ( stage_field_o_w ),
+    .o_gen_reg_is_present                          ( stage_field_o_gen_reg_is_present ),
+    .o_gen_reg_index                               ( stage_field_o_gen_reg_index ),
+    .o_seg_reg_is_present                          ( stage_field_o_seg_reg_is_present ),
+    .o_seg_reg_index                               ( stage_field_o_seg_reg_index ),
+    .o_mod_rm_is_present                           ( stage_field_o_mod_rm_is_present ),
+    .o_mod                                         ( stage_field_o_mod ),
+    .o_rm                                          ( stage_field_o_rm ),
+    .o_displacement_is_present                     ( stage_field_o_displacement_is_present ),
+    .o_displacement_length                         ( stage_field_o_displacement_length ),
+    .o_immediate_is_present                        ( stage_field_o_immediate_is_present ),
+    .o_immediate_length                            ( stage_field_o_immediate_length ),
+    .o_unsigned_full_offset_or_selector_is_present ( stage_field_o_unsigned_full_offset_or_selector_is_present ),
+    .o_bytes_consumed                              ( stage_field_o_bytes_consumed ),
+    .o_error                                       ( stage_field_o_error )
 );
 
-assign stage_3_mod = stage_1_mod;
-decode_stage_3 decode_stage_3_instance_in_decode (
-    .instruction                 ( stage_3_instruction ),
-    .mod                         ( stage_3_mod ),
-    .scale_factor                ( stage_3_scale_factor ),
-    .index_reg_used              ( stage_3_index_reg_used ),
-    .index_reg_index             ( stage_3_index_reg_index ),
-    .base_reg_used               ( stage_3_base_reg_used ),
-    .base_reg_index              ( stage_3_base_reg_index ),
-    .displacement_is_present     ( stage_3_displacement_is_present ),
-    .displacement_length         ( stage_3_displacement_length ),
-    .effecitve_address_undefined ( stage_3_effecitve_address_undefined )
+decode_stage_mod_rm decode_stage_4_mod_rm_instance_in_decode (
+    .i_mod                     ( stage_mod_rm_i_mod ),
+    .i_rm                      ( stage_mod_rm_i_rm ),
+    .i_w_is_present            ( stage_mod_rm_i_w_is_present ),
+    .i_w                       ( stage_mod_rm_i_w ),
+    .i_default_operand_size    ( stage_mod_rm_i_default_operand_size ),
+    .o_segment_reg_index       ( stage_mod_rm_o_segment_reg_index ),
+    .o_base_reg_is_present     ( stage_mod_rm_o_base_reg_is_present ),
+    .o_base_reg_index          ( stage_mod_rm_o_base_reg_index ),
+    .o_index_reg_is_present    ( stage_mod_rm_o_index_reg_is_present ),
+    .o_index_reg_index         ( stage_mod_rm_o_index_reg_index ),
+    .o_gen_reg_is_present      ( stage_mod_rm_o_gen_reg_is_present ),
+    .o_gen_reg_index           ( stage_mod_rm_o_gen_reg_index ),
+    .o_gen_reg_bit_width       ( stage_mod_rm_o_gen_reg_bit_width ),
+    .o_displacement_is_present ( stage_mod_rm_o_displacement_is_present ),
+    .o_displacement_length     ( stage_mod_rm_o_displacement_length ),
+    .o_sib_is_present          ( stage_mod_rm_o_sib_is_present )
 );
 
-assign stage_4_displacement_is_present =  displacement_is_present;
-assign stage_4_displacement_length            = stage_2_sib_is_present ? stage_3_displacement_length : stage_2_displacement_length;
-assign stage_4_immediate_is_present    =  immediate_is_present;
-assign stage_4_immediate_length        = stage_1_immediate_length;
-decode_stage_4 decode_stage_4_instance_in_decode (
-    .instruction             ( stage_4_instruction ),
-    .displacement_is_present ( stage_4_displacement_is_present ),
-    .displacement_length     ( stage_4_displacement_length ),
-    .immediate_is_present    ( stage_4_immediate_is_present ),
-    .immediate_length        ( stage_4_immediate_length ),
-    .displacement            ( stage_4_displacement ),
-    .immediate               ( stage_4_immediate )
+decode_stage_sib decode_stage_5_sib_instance_in_decode (
+    .i_sib                         ( stage_sib_i_sib ),
+    .i_mod                         ( stage_sib_i_mod ),
+    .o_scale_factor                ( stage_sib_o_scale_factor ),
+    .o_index_reg_is_present        ( stage_sib_o_index_reg_is_present ),
+    .o_index_reg_index             ( stage_sib_o_index_reg_index ),
+    .o_base_reg_is_present         ( stage_sib_o_base_reg_is_present ),
+    .o_base_reg_index              ( stage_sib_o_base_reg_index ),
+    .o_displacement_is_present     ( stage_sib_o_displacement_is_present ),
+    .o_displacement_length         ( stage_sib_o_displacement_length ),
+    .o_effecitve_address_undefined ( stage_sib_o_effecitve_address_undefined )
+);
+
+decode_stage_disp_imm decode_stage_6_disp_imm_instance_in_decode (
+    .i_instruction             ( stage_disp_imm_i_instruction ),
+    .i_displacement_is_present ( stage_disp_imm_i_displacement_is_present ),
+    .i_displacement_length     ( stage_disp_imm_i_displacement_length ),
+    .i_immediate_is_present    ( stage_disp_imm_i_immediate_is_present ),
+    .i_immediate_length        ( stage_disp_imm_i_immediate_length ),
+    .o_displacement            ( stage_disp_imm_o_displacement ),
+    .o_immediate               ( stage_disp_imm_o_immediate ),
+    .o_bytes_consumed          ( stage_disp_imm_o_bytes_consumed )
 );
 
 endmodule

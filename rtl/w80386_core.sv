@@ -262,39 +262,62 @@ logic [ 7:0] instruction [0:15];
 //     .reset ( reset )
 // );
 
-interface_opcode opcode_interface_instance ();
+// interface_opcode opcode_interface_instance ();
 
-logic        segment_reg_used;
-logic [ 2:0] segment_reg_index;
-logic [ 1:0] scale_factor;
-logic        base_reg_used;
-logic [ 2:0] base_reg_index;
-logic        index_reg_used;
-logic [ 2:0] index_reg_index;
-logic [ 2:0] base_index_reg_bit_width;
-logic        gpr_reg_used;
-logic [ 2:0] gpr_reg_index;
-logic [ 2:0] gpr_reg_bit_width;
-logic [31:0] displacement;
-logic [31:0] immediate;
+logic [ 7:0] decode_i_instruction [0:15];
+logic        decode_i_default_operand_size;
+logic[241:0] decode_o_opcode;
+logic        decode_o_prefix_lock_bus;
+logic        decode_o_prefix_repeat_not_equal;
+logic        decode_o_prefix_repeat_equal;
+logic        decode_o_prefix_bound;
+logic        decode_o_prefix_hint_branch_not_taken;
+logic        decode_o_prefix_hint_branch_taken;
+logic        o_field_gen_reg_is_present;
+logic [ 2:0] o_field_gen_reg_index;
+logic [ 2:0] decode_o_segment_reg_index;
+logic [ 1:0] decode_o_scale_factor;
+logic        decode_o_base_reg_is_present;
+logic [ 2:0] decode_o_base_reg_index;
+logic        decode_o_index_reg_is_present;
+logic [ 2:0] decode_o_index_reg_index;
+logic        decode_o_gen_reg_used;
+logic [ 2:0] decode_o_gen_reg_index;
+logic [ 2:0] decode_o_gen_reg_bit_width;
+logic        decode_o_displacement_is_present;
+logic [31:0] decode_o_displacement;
+logic        decode_o_immediate_is_present;
+logic [31:0] decode_o_immediate;
+logic [ 4:0] decode_o_bytes_consumed;
+logic        decode_o_error;
 
 decode decode_in_core (
-    .opcode ( opcode_interface_instance ),
-    .segment_reg_used ( segment_reg_used ),
-    .segment_reg_index ( segment_reg_index ),
-    .scale_factor ( scale_factor ),
-    .base_reg_used ( base_reg_used ),
-    .base_reg_index ( base_reg_index ),
-    .index_reg_used ( index_reg_used ),
-    .index_reg_index ( index_reg_index ),
-    .base_index_reg_bit_width ( base_index_reg_bit_width ),
-    .gpr_reg_used ( gpr_reg_used ),
-    .gpr_reg_index ( gpr_reg_index ),
-    .gpr_reg_bit_width ( gpr_reg_bit_width ),
-    .displacement ( displacement ),
-    .immediate ( immediate ),
-    .default_operand_size ( `default_operand_size_16 ),
-    .instruction ( instruction )
+    .i_instruction                  ( decode_i_instruction ),
+    .i_default_operand_size         ( decode_i_default_operand_size ),
+    .o_opcode                       ( decode_o_opcode ),
+    .o_prefix_lock_bus              ( decode_o_prefix_lock_bus ),
+    .o_prefix_repeat_not_equal      ( decode_o_prefix_repeat_not_equal ),
+    .o_prefix_repeat_equal          ( decode_o_prefix_repeat_equal ),
+    .o_prefix_bound                 ( decode_o_prefix_bound ),
+    .o_prefix_hint_branch_not_taken ( decode_o_prefix_hint_branch_not_taken ),
+    .o_prefix_hint_branch_taken     ( decode_o_prefix_hint_branch_taken ),
+    .o_field_gen_reg_is_present     ( decode_o_field_gen_reg_is_present ),
+    .o_field_gen_reg_index          ( decode_o_field_gen_reg_index ),
+    .o_segment_reg_index            ( decode_o_segment_reg_index ),
+    .o_scale_factor                 ( decode_o_scale_factor ),
+    .o_base_reg_is_present          ( decode_o_base_reg_is_present ),
+    .o_base_reg_index               ( decode_o_base_reg_index ),
+    .o_index_reg_is_present         ( decode_o_index_reg_is_present ),
+    .o_index_reg_index              ( decode_o_index_reg_index ),
+    .o_mod_rm_gen_reg_is_present    ( decode_o_mod_rm_gen_reg_is_present ),
+    .o_mod_rm_gen_reg_index         ( decode_o_mod_rm_gen_reg_index ),
+    .o_mod_rm_gen_reg_bit_width     ( decode_o_mod_rm_gen_reg_bit_width ),
+    .o_displacement_is_present      ( decode_o_displacement_is_present ),
+    .o_displacement                 ( decode_o_displacement ),
+    .o_immediate_is_present         ( decode_o_immediate_is_present ),
+    .o_immediate                    ( decode_o_immediate ),
+    .o_bytes_consumed               ( decode_o_bytes_consumed ),
+    .o_error                        ( decode_o_error )
 );
 
 endmodule

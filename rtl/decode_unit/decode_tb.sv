@@ -13,17 +13,18 @@ module decode_tb #(
     // ports
 );
 
-logic [7:0] instruction [0:15];
+logic  [7:0] instruction [0:15];
+logic[241:0] opcode;
 // logic        clock, reset;
 
-interface_opcode opcode_interface_instance ();
+// interface_opcode opcode_interface_instance ();
 
 wire default_operand_size = `default_operation_size_16;
 
 decode decode_instance_in_testbench (
-    .opcode ( opcode_interface_instance ),
-    .default_operand_size ( default_operand_size ),
-    .instruction ( instruction )
+    .i_default_operand_size ( default_operand_size ),
+    .i_instruction ( instruction ),
+    .o_opcode ( opcode )
 );
 
 // always #1 clock = ~clock;

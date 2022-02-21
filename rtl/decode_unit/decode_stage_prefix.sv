@@ -50,7 +50,7 @@ Kevin McGrath and Dave Christie, "The AMD x86-64 Architecture: Extending the x86
 
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
 module decode_stage_prefix (
-    input  logic [ 7:0] i_instruction [0:15],
+    input  logic [ 7:0] i_instruction [0:3],
     output logic        o_group_1_lock_bus,
     output logic        o_group_1_repeat_not_equal,
     output logic        o_group_1_repeat_equal,
@@ -64,7 +64,9 @@ module decode_stage_prefix (
     output logic        o_group_2_is_present,
     output logic        o_group_3_is_present,
     output logic        o_group_4_is_present,
-    output logic [ 2:0] o_segment_override_index
+    output logic [ 2:0] o_segment_override_index,
+    output logic        o_error,
+    output logic [ 2:0] o_consumed_instruction_bytes
 );
 
 logic        group_1_lock_bus [4];
@@ -113,7 +115,7 @@ assign o_error                         = error_repeat;
 assign o_consumed_instruction_bytes    = is_present[0] + is_present[1] + is_present[2] + is_present[3];
 
 decode_prefix decode_prefix_in_stage_0_from_instruction_0 (
-    .i_instruction                   ( i_instruction                    ),
+    .i_instruction                   ( i_instruction                [0] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [0] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [0] ),
     .o_group_1_repeat_equal          ( group_1_repeat_equal         [0] ),
@@ -132,7 +134,7 @@ decode_prefix decode_prefix_in_stage_0_from_instruction_0 (
 );
 
 decode_prefix decode_prefix_in_stage_0_from_instruction_1 (
-    .i_instruction                   ( i_instruction                    ),
+    .i_instruction                   ( i_instruction                [1] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [1] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [1] ),
     .o_group_1_repeat_equal          ( group_1_repeat_equal         [1] ),
@@ -151,7 +153,7 @@ decode_prefix decode_prefix_in_stage_0_from_instruction_1 (
 );
 
 decode_prefix decode_prefix_in_stage_0_from_instruction_2 (
-    .i_instruction                   ( i_instruction                    ),
+    .i_instruction                   ( i_instruction                [2] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [2] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [2] ),
     .o_group_1_repeat_equal          ( group_1_repeat_equal         [2] ),
@@ -170,7 +172,7 @@ decode_prefix decode_prefix_in_stage_0_from_instruction_2 (
 );
 
 decode_prefix decode_prefix_in_stage_0_from_instruction_3 (
-    .i_instruction                   ( i_instruction                    ),
+    .i_instruction                   ( i_instruction                [3] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [3] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [3] ),
     .o_group_1_repeat_equal          ( group_1_repeat_equal         [3] ),
