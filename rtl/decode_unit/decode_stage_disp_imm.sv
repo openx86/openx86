@@ -67,30 +67,30 @@ always_comb begin
     end
 end
 
-logic displacement_bytes;
+logic [ 3:0] displacement_bytes;
 always_comb begin
     if (i_displacement_is_present) begin
         unique case (1'b1)
-            displacement_length__8:   displacement_bytes <= 1;
-            displacement_length_16:   displacement_bytes <= 2;
-            displacement_length_32:   displacement_bytes <= 4;
-            displacement_length_full: displacement_bytes <= 4;
-            default:                  displacement_bytes <= 0;
+            displacement_length__8:   displacement_bytes <= 4'h1;
+            displacement_length_16:   displacement_bytes <= 4'h2;
+            displacement_length_32:   displacement_bytes <= 4'h4;
+            displacement_length_full: displacement_bytes <= 4'h4;
+            default:                  displacement_bytes <= 4'h0;
         endcase
     end else begin
         displacement_bytes <= 0;
     end
 end
 
-logic immediate_bytes;
+logic [ 3:0] immediate_bytes;
 always_comb begin
     if (i_immediate_is_present) begin
         unique case (1'b1)
-            immediate_length__8:   immediate_bytes <= 1;
-            immediate_length_16:   immediate_bytes <= 2;
-            immediate_length_32:   immediate_bytes <= 4;
-            immediate_length_full: immediate_bytes <= 4;
-            default:               immediate_bytes <= 0;
+            immediate_length__8:   immediate_bytes <= 4'h1;
+            immediate_length_16:   immediate_bytes <= 4'h2;
+            immediate_length_32:   immediate_bytes <= 4'h4;
+            immediate_length_full: immediate_bytes <= 4'h4;
+            default:               immediate_bytes <= 4'h0;
         endcase
     end else begin
         immediate_bytes <= 0;
