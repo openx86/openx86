@@ -66,7 +66,7 @@ module decode_stage_prefix (
     output logic        o_group_4_is_present,
     output logic [ 2:0] o_segment_override_index,
     output logic        o_error,
-    output logic [ 2:0] o_consumed_instruction_bytes
+    output logic [ 2:0] o_bytes_consumed
 );
 
 logic        group_1_lock_bus [4];
@@ -112,7 +112,7 @@ assign o_group_4_is_present            = group_4_is_present[0] | group_4_is_pres
 assign o_segment_override_index        = segment_override_index[0] | segment_override_index[1] | segment_override_index[2] | segment_override_index[3];
 // assign o_register_extension            = 1'b0; // Register EXtension(REX) IA-32e is ready!
 assign o_error                         = error_repeat;
-assign o_consumed_instruction_bytes    = is_present[0] + is_present[1] + is_present[2] + is_present[3];
+assign o_bytes_consumed    = is_present[0] + is_present[1] + is_present[2] + is_present[3];
 
 decode_prefix decode_prefix_in_stage_0_from_instruction_0 (
     .i_instruction                   ( i_instruction                [0] ),

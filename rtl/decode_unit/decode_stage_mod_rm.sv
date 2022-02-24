@@ -71,7 +71,9 @@ module decode_stage_mod_rm (
     output logic [ 2:0] o_gen_reg_index,
     output logic [ 2:0] o_gen_reg_bit_width,
     output logic        o_displacement_is_present,
-    output logic [ 3:0] o_displacement_length,
+    output logic        o_displacement_size_8,
+    output logic        o_displacement_size_16,
+    output logic        o_displacement_size_32,
     output logic        o_sib_is_present
 );
 
@@ -155,10 +157,10 @@ always_comb begin
     endcase
 end
 
-wire base_reg_used_16_bit = default_operation_size_16 & (base_16_BX | base_16_BP);
-wire base_reg_used_32_bit = 0;
+wire base_reg_size_16 = default_operation_size_16 & (base_16_BX | base_16_BP);
+wire base_reg_size_32 = 0;
 
-assign o_base_reg_is_present = base_reg_used_16_bit | base_reg_used_32_bit;
+assign o_base_reg_is_present = base_reg_size_16 | base_reg_size_32;
 
 
 // index register
@@ -190,8 +192,8 @@ always_comb begin
     endcase
 end
 
-wire index_reg_used_16 = default_operation_size_16 & (index_mod_xx__SI | index_mod_xx__DI);
-wire index_reg_used_32 = default_operation_size_32 & (
+wire index_reg_size_16 = default_operation_size_16 & (index_mod_xx__SI | index_mod_xx__DI);
+wire index_reg_size_32 = default_operation_size_32 & (
     index_mod_xx_EAX |
     index_mod_xx_ECX |
     index_mod_xx_EDX |
@@ -201,15 +203,15 @@ wire index_reg_used_32 = default_operation_size_32 & (
     index_mod_xx_ESI |
     index_mod_xx_EDI |
 0);
-assign o_index_reg_is_present = index_reg_used_16 | index_reg_used_32;
+assign o_index_reg_is_present = index_reg_size_16 | index_reg_size_32;
 
 
 // displacement_length
-wire displacement_length__8 = mod_01;
-wire displacement_length_16 = default_operation_size_16 & ((mod_00 & rm_110) | mod_10);
-wire displacement_length_32 = default_operation_size_32 & ((mod_00 & rm_110) | mod_10);
-assign o_displacement_is_present = displacement_length__8 | displacement_length_16 | displacement_length_32;
-assign o_displacement_length = {displacement_length__8, displacement_length_16, displacement_length_32, 1'b0};
+assign o_displacement_size_8  = mod_01;
+assign o_displacement_size_16 = default_operation_size_16 & ((mod_00 & rm_110) | mod_10);
+assign o_displacement_size_32 = default_operation_size_32 & ((mod_00 & rm_110) | mod_10);
+assign o_displacement_is_present = o_displacement_size_8 | o_displacement_size_16 | o_displacement_size_32;
+
 // always_comb begin
 //     unique case (1'b1)
 //         displacement_length__8: displacement_length <= `length_displacement__8;

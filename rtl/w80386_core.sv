@@ -294,7 +294,6 @@ logic        decode_o_error;
 decode decode_in_core (
     .i_instruction                  ( decode_i_instruction ),
     .i_default_operand_size         ( decode_i_default_operand_size ),
-    .o_opcode                       ( decode_o_opcode ),
     .o_prefix_lock_bus              ( decode_o_prefix_lock_bus ),
     .o_prefix_repeat_not_equal      ( decode_o_prefix_repeat_not_equal ),
     .o_prefix_repeat_equal          ( decode_o_prefix_repeat_equal ),
