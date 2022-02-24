@@ -58,7 +58,6 @@ addressing modes.
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
 
 module decode_mod_rm (
-    // ports
     input  logic [ 1:0] i_mod,
     input  logic [ 2:0] i_rm,
     input  logic        i_default_operand_size,
@@ -67,10 +66,9 @@ module decode_mod_rm (
     output logic [ 2:0] o_base_reg_index,
     output logic        o_index_reg_is_present,
     output logic [ 2:0] o_index_reg_index,
-    output logic        o_displacement_is_present,
-    output logic        o_displacement_size_8,
-    output logic        o_displacement_size_16,
-    output logic        o_displacement_size_32,
+    output logic        o_displacement_size_1,
+    output logic        o_displacement_size_2,
+    output logic        o_displacement_size_4,
     output logic        o_sib_is_present
 );
 
@@ -171,7 +169,6 @@ wire index_mod_xx_EBP = (mod_01 | mod_10) & rm_101;
 wire index_mod_xx_ESI = ~mod_11 & rm_110;
 wire index_mod_xx_EDI = ~mod_11 & rm_111;
 
-// TODO: reg index
 always_comb begin
     unique case (1'b1)
         index_mod_xx__SI: o_index_reg_index <= `index_reg_gpr__SI;
@@ -202,9 +199,9 @@ wire index_reg_size_32 = default_operation_size_32 & (
 assign o_index_reg_is_present = index_reg_size_16 | index_reg_size_32;
 
 // displacement_length
-assign o_displacement_size_8  = mod_01;
-assign o_displacement_size_16 = default_operation_size_16 & ((mod_00 & rm_110) | mod_10);
-assign o_displacement_size_32 = default_operation_size_32 & ((mod_00 & rm_110) | mod_10);
-assign o_displacement_is_present = o_displacement_size_8 | o_displacement_size_16 | o_displacement_size_32;
+assign o_displacement_size_1 = mod_01;
+assign o_displacement_size_2 = default_operation_size_16 & ((mod_00 & rm_110) | mod_10);
+assign o_displacement_size_4 = default_operation_size_32 & ((mod_00 & rm_110) | mod_10);
+// assign o_displacement_is_present = o_displacement_size_8 | o_displacement_size_16 | o_displacement_size_32;
 
 endmodule

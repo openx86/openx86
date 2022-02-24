@@ -240,28 +240,75 @@ interrupt_descriptor_table_register u_interrupt_descriptor_table_register_in_cor
 // );
 
 // logic program_counter_valid = 1;
-logic [ 7:0] instruction [0:15];
-wire  default_operand_size = 1;
+// logic [ 7:0] instruction [0:15];
+// wire  default_operand_size = 1;
+// logic [ 2:0] decode_o_index_reg_gen [0:2];
+// logic [ 2:0] decode_o_index_reg_seg;
+// logic [ 2:0] decode_o_index_reg_base;
+// logic [ 2:0] decode_o_index_reg_index;
+// logic [ 1:0] decode_o_index_scale_factor;
+// logic [31:0] decode_o_displacement;
+// logic [31:0] decode_o_immediate;
+// logic        decode_o_error;
+
+logic [ 7:0] decode_i_instruction [0:15];
+logic        decode_i_default_operand_size;
+logic        decode_o_group_1_lock_bus;
+logic        decode_o_group_1_repeat_not_equal;
+logic        decode_o_group_1_repeat_equal;
+logic        decode_o_group_1_bound;
+logic        decode_o_group_2_segment_override;
+logic        decode_o_group_2_hint_branch_not_taken;
+logic        decode_o_group_2_hint_branch_taken;
+logic        decode_o_group_3_operand_size;
+logic        decode_o_group_4_address_size;
+logic [ 2:0] decode_o_segment_override_index;
+logic        decode_o_consume_bytes_prefix_1;
+logic        decode_o_consume_bytes_prefix_2;
+logic        decode_o_consume_bytes_prefix_3;
+logic        decode_o_consume_bytes_prefix_4;
+logic        decode_o_error_stage_1;
+logic        decode_o_x86_ADC_reg_1_to_reg_2;
+logic        decode_o_x86_ADC_reg_2_to_reg_1;
+logic        decode_o_x86_ADC_mem_to_reg;
+logic        decode_o_x86_ADC_reg_to_mem;
+logic        decode_o_x86_ADC_imm_to_reg;
+logic        decode_o_x86_ADC_imm_to_acc;
+logic        decode_o_x86_ADC_imm_to_mem;
+logic        decode_o_error_stage_2;
 logic [ 2:0] decode_o_index_reg_gen [0:2];
+logic        decode_o_index_reg_gen_is_present;
 logic [ 2:0] decode_o_index_reg_seg;
-logic [ 2:0] decode_o_index_reg_base;
+logic        decode_o_index_reg_seg_is_present;
+logic        decode_o_w_is_present;
+logic        decode_o_w;
+logic        decode_o_s_is_present;
+logic        decode_o_s;
+logic        decode_o_mod_rm_is_present;
+logic [ 1:0] decode_o_mod;
+logic [ 2:0] decode_o_rm;
+logic        decode_o_immediate_size_f;
+logic        decode_o_consume_bytes_opcode_1;
+logic        decode_o_consume_bytes_opcode_2;
+logic        decode_o_consume_bytes_opcode_3;
+logic        decode_o_error_stage_3;
+logic [ 2:0] decode_o_segment_reg_index;
+logic        decode_o_base_reg_is_present;
+logic [ 2:0] decode_o_base_reg_index;
+logic        decode_o_index_reg_is_present;
 logic [ 2:0] decode_o_index_reg_index;
-logic [ 1:0] decode_o_index_scale_factor;
+logic        decode_o_displacement_size_1;
+logic        decode_o_displacement_size_2;
+logic        decode_o_displacement_size_4;
+logic        decode_o_sib_is_present;
+logic [ 1:0] decode_o_scale_factor;
+logic        decode_o_error_stage_4;
 logic [31:0] decode_o_displacement;
 logic [31:0] decode_o_immediate;
-logic        decode_o_error;
+logic [ 3:0] decode_o_consume_bytes;
+logic        decode_o_error_stage_5;
 
 decode core_decode (
-    .i_instruction ( instruction ),
-    .i_default_operand_size ( default_operand_size ),
-    .o_index_reg_gen ( decode_o_index_reg_gen ),
-    .o_index_reg_seg ( decode_o_index_reg_seg ),
-    .o_index_reg_base ( decode_o_index_reg_base ),
-    .o_index_reg_index ( decode_o_index_reg_index ),
-    .o_index_scale_factor ( decode_o_index_scale_factor ),
-    .o_displacement ( decode_o_displacement ),
-    .o_immediate ( decode_o_immediate ),
-    .o_error ( decode_o_error )
 );
 
 // logic        instruction_ready;

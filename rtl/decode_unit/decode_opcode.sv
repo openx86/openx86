@@ -10,7 +10,7 @@ description: decode opcode selection signal from instruction
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
 
 module decode_opcode (
-    input  logic [ 7:0] i_instruction [0:15],
+    input  logic [ 7:0] i_instruction [0:3],
     output logic        o_x86_ADC_reg_1_to_reg_2,
     output logic        o_x86_ADC_reg_2_to_reg_1,
     output logic        o_x86_ADC_mem_to_reg,

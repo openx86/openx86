@@ -18,12 +18,13 @@ module decode_sib (
     input  logic [ 7:0] i_sib,
     input  logic [ 1:0] i_mod,
     output logic [ 1:0] o_scale_factor,
+    output logic [ 2:0] o_segment_reg_index,
     output logic        o_index_reg_is_present,
     output logic [ 2:0] o_index_reg_index,
     output logic        o_base_reg_is_present,
     output logic [ 2:0] o_base_reg_index,
-    output logic        o_displacement_size__8,
-    output logic        o_displacement_size_32,
+    output logic        o_displacement_size_1,
+    output logic        o_displacement_size_4,
     output logic        o_effecitve_address_undefined
 );
 
@@ -45,6 +46,13 @@ wire base_101 = (sib_2_0 == 3'b101);
 wire base_110 = (sib_2_0 == 3'b110);
 wire base_111 = (sib_2_0 == 3'b111);
 
+wire seg_SS_mod_00 = mod_00 & base_100;
+wire seg_SS_mod_01 = mod_01 & (base_100 | base_101);
+wire seg_SS_mod_10 = mod_10 & (base_100 | base_101);
+wire seg_SS_mod_xx = seg_SS_mod_00 | seg_SS_mod_01 | seg_SS_mod_10;
+
+assign o_segment_reg_index = seg_SS_mod_xx ? `index_reg_seg__SS : `index_reg_seg__DS;
+
 assign o_scale_factor    = sib_7_6;
 assign o_index_reg_index = sib_5_3;
 assign o_base_reg_index  = sib_2_0;
@@ -54,8 +62,8 @@ assign o_base_reg_is_present   = ~(mod_00 & base_101);
 
 // displacement
 // assign o_displacement_size__0 = mod_00 & ~base_101;
-assign o_displacement_size__8 = mod_01;
-assign o_displacement_size_32 = mod_10 | (mod_00 & base_101);
+assign o_displacement_size_1 = mod_01;
+assign o_displacement_size_4 = mod_10 | (mod_00 & base_101);
 
 /*
 **IMPORTANT NOTE:
