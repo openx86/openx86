@@ -58,17 +58,24 @@ addressing modes.
 `include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
 
 module decode_mod_rm (
+    // ports
     input  logic [ 1:0] i_mod,
     input  logic [ 2:0] i_rm,
+    input  logic        i_w_is_present,
+    input  logic        i_w,
     input  logic        i_default_operand_size,
     output logic [ 2:0] o_segment_reg_index,
     output logic        o_base_reg_is_present,
     output logic [ 2:0] o_base_reg_index,
     output logic        o_index_reg_is_present,
     output logic [ 2:0] o_index_reg_index,
-    output logic        o_displacement_size_1,
-    output logic        o_displacement_size_2,
-    output logic        o_displacement_size_4,
+    output logic        o_gen_reg_is_present,
+    output logic [ 2:0] o_gen_reg_index,
+    output logic [ 2:0] o_gen_reg_bit_width,
+    output logic        o_displacement_is_present,
+    output logic        o_displacement_size_8,
+    output logic        o_displacement_size_16,
+    output logic        o_displacement_size_32,
     output logic        o_sib_is_present
 );
 
@@ -124,9 +131,10 @@ always_comb begin
     unique case (1'b1)
         segment_reg_index_DS: o_segment_reg_index <= `index_reg_seg__DS;
         segment_reg_index_SS: o_segment_reg_index <= `index_reg_seg__SS;
-        default             : o_segment_reg_index <= 3'bzzz;
+        default             : o_segment_reg_index <= 3'b0;
     endcase
 end
+// assign segment_reg_index = segment_reg_index_DS ? `index_reg_seg__DS : `index_reg_seg__SS;
 
 
 // scale-index-base is present
@@ -169,6 +177,7 @@ wire index_mod_xx_EBP = (mod_01 | mod_10) & rm_101;
 wire index_mod_xx_ESI = ~mod_11 & rm_110;
 wire index_mod_xx_EDI = ~mod_11 & rm_111;
 
+// TODO: reg index
 always_comb begin
     unique case (1'b1)
         index_mod_xx__SI: o_index_reg_index <= `index_reg_gpr__SI;
@@ -198,10 +207,41 @@ wire index_reg_size_32 = default_operation_size_32 & (
 0);
 assign o_index_reg_is_present = index_reg_size_16 | index_reg_size_32;
 
+
 // displacement_length
-assign o_displacement_size_1 = mod_01;
-assign o_displacement_size_2 = default_operation_size_16 & ((mod_00 & rm_110) | mod_10);
-assign o_displacement_size_4 = default_operation_size_32 & ((mod_00 & rm_110) | mod_10);
-// assign o_displacement_is_present = o_displacement_size_8 | o_displacement_size_16 | o_displacement_size_32;
+assign o_displacement_size_8  = mod_01;
+assign o_displacement_size_16 = default_operation_size_16 & ((mod_00 & rm_110) | mod_10);
+assign o_displacement_size_32 = default_operation_size_32 & ((mod_00 & rm_110) | mod_10);
+assign o_displacement_is_present = o_displacement_size_8 | o_displacement_size_16 | o_displacement_size_32;
+
+// always_comb begin
+//     unique case (1'b1)
+//         displacement_length__8: displacement_length <= `length_displacement__8;
+//         displacement_length_16: displacement_length <= `length_displacement_16;
+//         displacement_length_32: displacement_length <= `length_displacement_32;
+//         default               : displacement_length <= `length_displacement__0;
+//     endcase
+// end
+
+// general propose register
+assign o_gen_reg_is_present = mod_11;
+assign o_gen_reg_index = i_rm;
+
+// refer to 6.2.3.2 ENCODING OF THE GENERAL REGISTER (reg) FIELD
+// The general register is specified by the reg field,
+// which may appear in the primary opcode bytes, or as
+// the reg field of the ``mod r/m'' byte, or as the r/m
+// field of the ``mod r/m'' byte.
+wire gpr_reg_bit_width__8 = i_w_is_present ? (~i_w) : 1'b0;
+wire gpr_reg_bit_width_16 = i_w_is_present ? (i_w & default_operation_size_16) : default_operation_size_16;
+wire gpr_reg_bit_width_32 = i_w_is_present ? (i_w & default_operation_size_32) : default_operation_size_32;
+always_comb begin
+    unique case (1'b1)
+        gpr_reg_bit_width__8: o_gen_reg_bit_width <= `bit_width_gpr__8;
+        gpr_reg_bit_width_16: o_gen_reg_bit_width <= `bit_width_gpr_16;
+        gpr_reg_bit_width_32: o_gen_reg_bit_width <= `bit_width_gpr_32;
+        default             : o_gen_reg_bit_width <= `bit_width_gpr__0;
+    endcase
+end
 
 endmodule
