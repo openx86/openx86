@@ -80,7 +80,7 @@ module decode_field (
     input  logic        i_opcode_x86_INT_interrupt_type_4,
     input  logic        i_opcode_x86_INVD_invalidate_cache,
     input  logic        i_opcode_x86_INVLPG_invalidate_TLB_entry,
-    input  logic        i_opcode_x86_INVPCID_invalidate_process_ctx_id,
+    input  logic        i_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size,
     input  logic        i_opcode_x86_IRET_interrupt_return,
     input  logic        i_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp,
     input  logic        i_opcode_x86_Jcc_jump_if_cond_is_met_full_disp,
@@ -584,15 +584,12 @@ wire   mod_rm_at_3 =
 i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_mem_to_reg |
 i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem |
 i_opcode_x86_SGDT_store_global_descriptor_table_register |
-0;
-wire   mod_rm_at_4 =
-i_opcode_x86_INVPCID_invalidate_process_ctx_id |
+i_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size |
 0;
 assign o_mod_rm_is_present =
 mod_rm_at_1 |
 mod_rm_at_2 |
 mod_rm_at_3 |
-mod_rm_at_4 |
 0;
 logic [7:0] mod_rm_instruction;
 assign { o_mod, o_rm } = { mod_rm_instruction[7:6], mod_rm_instruction[2:0] };
@@ -601,7 +598,6 @@ always_comb begin
         mod_rm_at_1: mod_rm_instruction <= i_instruction[1];
         mod_rm_at_2: mod_rm_instruction <= i_instruction[2];
         mod_rm_at_3: mod_rm_instruction <= i_instruction[3];
-        mod_rm_at_4: mod_rm_instruction <= i_instruction[4];
         default    : mod_rm_instruction <= 8'bzzzz_zzzz;
     endcase
 end
@@ -895,7 +891,7 @@ i_opcode_x86_WRMSR_write_to_model_specific_register |
 i_opcode_x86_XADD_exchange_and_add |
 0;
 assign o_primary_opcode_byte_3 =
-i_opcode_x86_INVPCID_invalidate_process_ctx_id |
+i_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size |
 i_opcode_x86_MOV_CR_from_reg |
 i_opcode_x86_MOV_reg_from_CR |
 i_opcode_x86_MOV_DR_from_reg |

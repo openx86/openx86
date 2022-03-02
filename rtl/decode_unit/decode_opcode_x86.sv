@@ -81,7 +81,7 @@ module decode_opcode_x86 (
     output logic        o_opcode_x86_INT_interrupt_type_4,
     output logic        o_opcode_x86_INVD_invalidate_cache,
     output logic        o_opcode_x86_INVLPG_invalidate_TLB_entry,
-    output logic        o_opcode_x86_INVPCID_invalidate_process_ctx_id,
+    output logic        o_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size,
     output logic        o_opcode_x86_IRET_interrupt_return,
     output logic        o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp,
     output logic        o_opcode_x86_Jcc_jump_if_cond_is_met_full_disp,

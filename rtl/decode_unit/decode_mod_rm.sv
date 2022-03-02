@@ -101,7 +101,7 @@ wire default_operation_size_32 = (i_default_operand_size == `default_operation_s
 
 
 // segment register
-assign segment_reg_used = ~mod_11;
+// assign segment_reg_used = ~mod_11;
 
 wire mod_00_DS_16_bit = mod_00 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_110 | rm_111);
 wire mod_01_DS_16_bit = mod_01 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_111);
