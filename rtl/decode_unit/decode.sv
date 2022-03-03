@@ -236,6 +236,22 @@ module decode (
     output logic        o_opcode_x86_XOR_reg_mem_to_reg,
     output logic        o_opcode_x86_XOR_imm_to_reg_mem,
     output logic        o_opcode_x86_XOR_imm_to_acc,
+    output logic [ 3:0] o_tttn,
+    output logic [ 2:0] o_eee,
+    output logic        o_gen_reg_index_is_present,
+    output logic [ 2:0] o_gen_reg_index,
+    output logic        o_seg_reg_index_is_present,
+    output logic [ 2:0] o_seg_reg_index,
+    output logic [ 2:0] o_segment_reg_index,
+    output logic        o_base_reg_is_present,
+    output logic [ 2:0] o_base_reg_index,
+    output logic        o_index_reg_is_present,
+    output logic [ 2:0] o_index_reg_index,
+    output logic        o_gen_reg_is_present_from_mod_rm,
+    output logic [ 2:0] o_gen_reg_index_from_mod_rm,
+    output logic [ 2:0] o_gen_reg_bit_width_from_mod_rm,
+    output logic [31:0] o_displacement,
+    output logic [31:0] o_immediate,
     output logic        o_error
 );
 
@@ -282,6 +298,16 @@ decode_prefix_all (
     .o_consume_bytes_prefix_4 ( prefix_o_consume_bytes_prefix_4 ),
     .o_error ( prefix_o_error )
 );
+logic [ 3:0] offset_opcode;
+always_comb begin
+    unique case (1'b1)
+        prefix_o_consume_bytes_prefix_1: offset_opcode <= 4'h1;
+        prefix_o_consume_bytes_prefix_2: offset_opcode <= 4'h2;
+        prefix_o_consume_bytes_prefix_3: offset_opcode <= 4'h3;
+        prefix_o_consume_bytes_prefix_4: offset_opcode <= 4'h4;
+        default                        : offset_opcode <= 4'h0;
+    endcase
+end
 
 logic [ 7:0] opcode_instruction [0:3];
 always_comb begin
@@ -798,5 +824,176 @@ decode_field (
     .o_primary_opcode_byte_3 ( field_o_primary_opcode_byte_3 ),
     .o_error ( field_o_error )
 );
+logic [ 3:0] offset_mod_rm;
+always_comb begin
+    unique case (1'b1)
+        field_o_primary_opcode_byte_1: offset_mod_rm <= offset_opcode + 4'h1;
+        field_o_primary_opcode_byte_2: offset_mod_rm <= offset_opcode + 4'h2;
+        field_o_primary_opcode_byte_3: offset_mod_rm <= offset_opcode + 4'h3;
+        default                      : offset_mod_rm <= offset_opcode + 4'h0;
+    endcase
+end
+
+logic [ 1:0] mod_rm_i_mod;
+logic [ 2:0] mod_rm_i_rm;
+logic        mod_rm_i_w_is_present;
+logic        mod_rm_i_w;
+logic        mod_rm_i_default_operand_size;
+logic [ 2:0] mod_rm_o_segment_reg_index;
+logic        mod_rm_o_base_reg_is_present;
+logic [ 2:0] mod_rm_o_base_reg_index;
+logic        mod_rm_o_index_reg_is_present;
+logic [ 2:0] mod_rm_o_index_reg_index;
+logic        mod_rm_o_gen_reg_is_present;
+logic [ 2:0] mod_rm_o_gen_reg_index;
+logic [ 2:0] mod_rm_o_gen_reg_bit_width;
+logic        mod_rm_o_displacement_is_present;
+logic        mod_rm_o_displacement_size_8;
+logic        mod_rm_o_displacement_size_16;
+logic        mod_rm_o_displacement_size_32;
+logic        mod_rm_o_sib_is_present;
+assign mod_rm_i_mod = field_o_mod;
+assign mod_rm_i_rm = field_o_rm;
+assign mod_rm_i_w_is_present = field_o_w_is_present;
+assign mod_rm_i_w = field_o_w;
+assign mod_rm_i_default_operand_size = i_default_operand_size;
+decode_mod_rm (
+    .i_mod ( mod_rm_i_mod ),
+    .i_rm ( mod_rm_i_rm ),
+    .i_w_is_present ( mod_rm_i_w_is_present ),
+    .i_w ( mod_rm_i_w ),
+    .i_default_operand_size ( mod_rm_i_default_operand_size ),
+    .o_segment_reg_index ( mod_rm_o_segment_reg_index ),
+    .o_base_reg_is_present ( mod_rm_o_base_reg_is_present ),
+    .o_base_reg_index ( mod_rm_o_base_reg_index ),
+    .o_index_reg_is_present ( mod_rm_o_index_reg_is_present ),
+    .o_index_reg_index ( mod_rm_o_index_reg_index ),
+    .o_gen_reg_is_present ( mod_rm_o_gen_reg_is_present ),
+    .o_gen_reg_index ( mod_rm_o_gen_reg_index ),
+    .o_gen_reg_bit_width ( mod_rm_o_gen_reg_bit_width ),
+    .o_displacement_is_present ( mod_rm_o_displacement_is_present ),
+    .o_displacement_size_8 ( mod_rm_o_displacement_size_8 ),
+    .o_displacement_size_16 ( mod_rm_o_displacement_size_16 ),
+    .o_displacement_size_32 ( mod_rm_o_displacement_size_32 ),
+    .o_sib_is_present ( mod_rm_o_sib_is_present )
+);
+logic [ 3:0] offset_sib;
+always_comb begin
+    offset_sib <= offset_mod_rm + 4'h1;
+end
+
+logic [ 7:0] sib_i_sib;
+logic [ 1:0] sib_i_mod;
+logic [ 1:0] sib_o_scale_factor;
+logic [ 2:0] sib_o_segment_reg_index;
+logic        sib_o_index_reg_is_present;
+logic [ 2:0] sib_o_index_reg_index;
+logic        sib_o_base_reg_is_present;
+logic [ 2:0] sib_o_base_reg_index;
+logic        sib_o_displacement_size_1;
+logic        sib_o_displacement_size_4;
+logic        sib_o_effecitve_address_undefined;
+assign sib_i_sib = i_instruction[offset_sib];
+assign sib_i_mod = mod_rm_i_mod;
+// always_comb begin
+//     unique case (offset_sib)
+//         4'h2: sib_i_sib <= i_instruction[2];
+//         4'h3: sib_i_sib <= i_instruction[3];
+//         4'h4: sib_i_sib <= i_instruction[4];
+//         4'h5: sib_i_sib <= i_instruction[5];
+//         4'h6: sib_i_sib <= i_instruction[6];
+//         4'h7: sib_i_sib <= i_instruction[7];
+//         4'h8: sib_i_sib <= i_instruction[8];
+//         default: sib_i_sib <= 8'bzzzz_zzzz;
+//     endcase
+// end
+decode_sib (
+    .i_sib ( sib_i_sib ),
+    .i_mod ( sib_i_mod ),
+    .o_scale_factor ( sib_o_scale_factor ),
+    .o_segment_reg_index ( sib_o_segment_reg_index ),
+    .o_index_reg_is_present ( sib_o_index_reg_is_present ),
+    .o_index_reg_index ( sib_o_index_reg_index ),
+    .o_base_reg_is_present ( sib_o_base_reg_is_present ),
+    .o_base_reg_index ( sib_o_base_reg_index ),
+    .o_displacement_size_1 ( sib_o_displacement_size_1 ),
+    .o_displacement_size_4 ( sib_o_displacement_size_4 ),
+    .o_effecitve_address_undefined ( sib_o_effecitve_address_undefined )
+);
+logic [ 3:0] offset_disp_imm, offset_disp_imm_end;
+always_comb begin
+    if (field_o_mod_rm_is_present) begin
+        if (mod_rm_o_sib_is_present) begin
+            offset_disp_imm <= offset_mod_rm + 4'h2;
+        end else begin
+            offset_disp_imm <= offset_mod_rm + 4'h1;
+        end
+    end else begin
+        offset_disp_imm <= offset_mod_rm + 4'h0;
+    end
+    offset_disp_imm_end <= offset_disp_imm_end + 4'h8;
+end
+
+logic [ 7:0] disp_imm_i_instruction [0:7];
+logic        disp_imm_i_displacement_size_1;
+logic        disp_imm_i_displacement_size_2;
+logic        disp_imm_i_displacement_size_4;
+logic        disp_imm_i_immediate_size_1;
+logic        disp_imm_i_immediate_size_2;
+logic        disp_imm_i_immediate_size_4;
+logic        disp_imm_i_immediate_size_f;
+logic [31:0] disp_imm_o_displacement;
+logic [31:0] disp_imm_o_immediate;
+logic [ 3:0] disp_imm_o_consume_bytes;
+logic        disp_imm_o_error;
+// assign disp_imm_i_instruction = i_instruction[offset_disp_imm:+7];
+assign disp_imm_i_instruction = '{
+    i_instruction[offset_disp_imm + 0],
+    i_instruction[offset_disp_imm + 1],
+    i_instruction[offset_disp_imm + 2],
+    i_instruction[offset_disp_imm + 3],
+    i_instruction[offset_disp_imm + 4],
+    i_instruction[offset_disp_imm + 5],
+    i_instruction[offset_disp_imm + 6],
+    i_instruction[offset_disp_imm + 7]
+};
+assign disp_imm_i_displacement_size_1 = mod_rm_o_sib_is_present ? sib_o_displacement_size_1 : mod_rm_o_displacement_size_8;
+assign disp_imm_i_displacement_size_2 = mod_rm_o_sib_is_present ? mod_rm_o_displacement_size_16 : mod_rm_o_displacement_size_16;
+assign disp_imm_i_displacement_size_4 = mod_rm_o_sib_is_present ? sib_o_displacement_size_4 : mod_rm_o_displacement_size_32;
+assign disp_imm_i_immediate_size_1 = field_o_immediate_size_8;
+assign disp_imm_i_immediate_size_2 = field_o_immediate_size_16;
+assign disp_imm_i_immediate_size_4 = field_o_immediate_size_full;
+assign disp_imm_i_immediate_size_f = field_o_immediate_size_full;
+decode_disp_imm (
+    .i_instruction ( disp_imm_i_instruction ),
+    .i_displacement_size_1 ( disp_imm_i_displacement_size_1 ),
+    .i_displacement_size_2 ( disp_imm_i_displacement_size_2 ),
+    .i_displacement_size_4 ( disp_imm_i_displacement_size_4 ),
+    .i_immediate_size_1 ( disp_imm_i_immediate_size_1 ),
+    .i_immediate_size_2 ( disp_imm_i_immediate_size_2 ),
+    .i_immediate_size_4 ( disp_imm_i_immediate_size_4 ),
+    .i_immediate_size_f ( disp_imm_i_immediate_size_f ),
+    .o_displacement ( disp_imm_o_displacement ),
+    .o_immediate ( disp_imm_o_immediate ),
+    .o_consume_bytes ( disp_imm_o_consume_bytes ),
+    .o_error ( disp_imm_o_error )
+);
+
+assign o_tttn = field_o_tttn;
+assign o_eee = field_o_eee;
+assign o_gen_reg_index_is_present = field_o_gen_reg_index_is_present;
+assign o_gen_reg_index = field_o_gen_reg_index;
+assign o_seg_reg_index_is_present = field_o_seg_reg_index_is_present;
+assign o_seg_reg_index = field_o_seg_reg_index;
+assign o_segment_reg_index = mod_rm_o_sib_is_present ? sib_o_segment_reg_index : mod_rm_o_segment_reg_index;
+assign o_base_reg_is_present = mod_rm_o_sib_is_present ? sib_o_index_reg_is_present : mod_rm_o_index_reg_is_present;
+assign o_base_reg_index = mod_rm_o_sib_is_present ? sib_o_index_reg_index : mod_rm_o_index_reg_index;
+assign o_index_reg_is_present = mod_rm_o_sib_is_present ? sib_o_base_reg_is_present : mod_rm_o_base_reg_is_present;
+assign o_index_reg_index = mod_rm_o_sib_is_present ? sib_o_base_reg_index : mod_rm_o_base_reg_index;
+assign o_gen_reg_is_present_from_mod_rm = mod_rm_o_gen_reg_is_present;
+assign o_gen_reg_index_from_mod_rm = mod_rm_o_gen_reg_index;
+assign o_gen_reg_bit_width_from_mod_rm = mod_rm_o_gen_reg_bit_width;
+assign o_displacement = disp_imm_o_displacement;
+assign o_immediate = disp_imm_o_immediate;
 
 endmodule
