@@ -41,7 +41,7 @@ module decode_field (
     input  logic        i_opcode_x86_BTS_reg_mem_with_imm,
     input  logic        i_opcode_x86_BTS_reg_mem_with_reg,
     input  logic        i_opcode_x86_CALL_in_same_segment_direct,
-    input  logic        i_opcode_x86_CALL_in_same_segment_indirec,
+    input  logic        i_opcode_x86_CALL_in_same_segment_indirect,
     input  logic        i_opcode_x86_CALL_in_other_segment_direct,
     input  logic        i_opcode_x86_CALL_in_other_segment_indirect,
     input  logic        i_opcode_x86_CBW_convert_byte_to_word,
@@ -160,7 +160,7 @@ module decode_field (
     input  logic        i_opcode_x86_RCR_reg_mem_by_CL,
     input  logic        i_opcode_x86_RCR_reg_mem_by_imm,
     input  logic        i_opcode_x86_RDMSR_read_from_model_specific_reg,
-    input  logic        i_opcode_x86_RDPCM_read_performance_monitoring_counters,
+    input  logic        i_opcode_x86_RDPMC_read_performance_monitoring_counters,
     input  logic        i_opcode_x86_RDTSC_read_time_stamp_counter,
     input  logic        i_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id,
     input  logic        i_opcode_x86_REP_INS_input_string,
@@ -483,7 +483,7 @@ i_opcode_x86_ADD_imm_to_reg_mem |
 i_opcode_x86_AND_imm_to_reg_mem |
 i_opcode_x86_ARPL_adjust_RPL_field_of_selector |
 i_opcode_x86_BOUND_check_array_against_bounds |
-i_opcode_x86_CALL_in_same_segment_indirec |
+i_opcode_x86_CALL_in_same_segment_indirect |
 i_opcode_x86_CALL_in_other_segment_indirect |
 i_opcode_x86_CMP_mem_with_reg |
 i_opcode_x86_CMP_reg_with_mem |
@@ -697,7 +697,7 @@ i_opcode_x86_ARPL_adjust_RPL_field_of_selector |
 i_opcode_x86_BOUND_check_array_against_bounds |
 i_opcode_x86_BSWAP_byte_swap |
 i_opcode_x86_CALL_in_same_segment_direct |
-i_opcode_x86_CALL_in_same_segment_indirec |
+i_opcode_x86_CALL_in_same_segment_indirect |
 i_opcode_x86_CALL_in_other_segment_direct |
 i_opcode_x86_CALL_in_other_segment_indirect |
 i_opcode_x86_CBW_convert_byte_to_word |
@@ -859,7 +859,7 @@ i_opcode_x86_NOP_no_operation_multi_byte |
 i_opcode_x86_POP_sreg_3 |
 i_opcode_x86_PUSH_sreg_3 |
 i_opcode_x86_RDMSR_read_from_model_specific_reg |
-i_opcode_x86_RDPCM_read_performance_monitoring_counters |
+i_opcode_x86_RDPMC_read_performance_monitoring_counters |
 i_opcode_x86_RDTSC_read_time_stamp_counter |
 i_opcode_x86_REP_INS_input_string |
 i_opcode_x86_REP_LODS_load_string |

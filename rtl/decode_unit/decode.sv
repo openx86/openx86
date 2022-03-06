@@ -42,7 +42,7 @@ module decode (
     output logic        o_opcode_x86_BTS_reg_mem_with_imm,
     output logic        o_opcode_x86_BTS_reg_mem_with_reg,
     output logic        o_opcode_x86_CALL_in_same_segment_direct,
-    output logic        o_opcode_x86_CALL_in_same_segment_indirec,
+    output logic        o_opcode_x86_CALL_in_same_segment_indirect,
     output logic        o_opcode_x86_CALL_in_other_segment_direct,
     output logic        o_opcode_x86_CALL_in_other_segment_indirect,
     output logic        o_opcode_x86_CBW_convert_byte_to_word,
@@ -161,7 +161,7 @@ module decode (
     output logic        o_opcode_x86_RCR_reg_mem_by_CL,
     output logic        o_opcode_x86_RCR_reg_mem_by_imm,
     output logic        o_opcode_x86_RDMSR_read_from_model_specific_reg,
-    output logic        o_opcode_x86_RDPCM_read_performance_monitoring_counters,
+    output logic        o_opcode_x86_RDPMC_read_performance_monitoring_counters,
     output logic        o_opcode_x86_RDTSC_read_time_stamp_counter,
     output logic        o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id,
     output logic        o_opcode_x86_REP_INS_input_string,
@@ -252,6 +252,7 @@ module decode (
     output logic [ 2:0] o_gen_reg_bit_width_from_mod_rm,
     output logic [31:0] o_displacement,
     output logic [31:0] o_immediate,
+    output logic [ 3:0] o_consume_bytes,
     output logic        o_error
 );
 
@@ -276,7 +277,7 @@ logic        prefix_o_consume_bytes_prefix_3;
 logic        prefix_o_consume_bytes_prefix_4;
 logic        prefix_o_error;
 assign prefix_instruction = i_instruction[0:3];
-decode_prefix_all (
+decode_prefix_all deocde_decode_prefix_all (
     .i_instruction ( prefix_instruction ),
     .o_group_1_lock_bus ( prefix_o_group_1_lock_bus ),
     .o_group_1_repeat_not_equal ( prefix_o_group_1_repeat_not_equal ),
@@ -319,7 +320,7 @@ always_comb begin
         default                        : opcode_instruction <= i_instruction[0:0+3];
     endcase
 end
-decode_opcode_x86 (
+decode_opcode_x86 deocde_decode_opcode_x86 (
     .o_opcode_x86_AAA_ASCII_adjust_after_add ( o_opcode_x86_AAA_ASCII_adjust_after_add ),
     .o_opcode_x86_AAD_ASCII_AX_before_div ( o_opcode_x86_AAD_ASCII_AX_before_div ),
     .o_opcode_x86_AAM_ASCII_AX_after_mul ( o_opcode_x86_AAM_ASCII_AX_after_mul ),
@@ -350,7 +351,7 @@ decode_opcode_x86 (
     .o_opcode_x86_BTS_reg_mem_with_imm ( o_opcode_x86_BTS_reg_mem_with_imm ),
     .o_opcode_x86_BTS_reg_mem_with_reg ( o_opcode_x86_BTS_reg_mem_with_reg ),
     .o_opcode_x86_CALL_in_same_segment_direct ( o_opcode_x86_CALL_in_same_segment_direct ),
-    .o_opcode_x86_CALL_in_same_segment_indirec ( o_opcode_x86_CALL_in_same_segment_indirec ),
+    .o_opcode_x86_CALL_in_same_segment_indirect ( o_opcode_x86_CALL_in_same_segment_indirect ),
     .o_opcode_x86_CALL_in_other_segment_direct ( o_opcode_x86_CALL_in_other_segment_direct ),
     .o_opcode_x86_CALL_in_other_segment_indirect ( o_opcode_x86_CALL_in_other_segment_indirect ),
     .o_opcode_x86_CBW_convert_byte_to_word ( o_opcode_x86_CBW_convert_byte_to_word ),
@@ -469,7 +470,7 @@ decode_opcode_x86 (
     .o_opcode_x86_RCR_reg_mem_by_CL ( o_opcode_x86_RCR_reg_mem_by_CL ),
     .o_opcode_x86_RCR_reg_mem_by_imm ( o_opcode_x86_RCR_reg_mem_by_imm ),
     .o_opcode_x86_RDMSR_read_from_model_specific_reg ( o_opcode_x86_RDMSR_read_from_model_specific_reg ),
-    .o_opcode_x86_RDPCM_read_performance_monitoring_counters ( o_opcode_x86_RDPCM_read_performance_monitoring_counters ),
+    .o_opcode_x86_RDPMC_read_performance_monitoring_counters ( o_opcode_x86_RDPMC_read_performance_monitoring_counters ),
     .o_opcode_x86_RDTSC_read_time_stamp_counter ( o_opcode_x86_RDTSC_read_time_stamp_counter ),
     .o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id ( o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id ),
     .o_opcode_x86_REP_INS_input_string ( o_opcode_x86_REP_INS_input_string ),
@@ -573,7 +574,7 @@ logic        field_o_primary_opcode_byte_2;
 logic        field_o_primary_opcode_byte_3;
 logic        field_o_error;
 assign field_instruction = opcode_instruction;
-decode_field (
+decode_field deocde_decode_field (
     .i_instruction ( field_instruction ),
     .i_opcode_x86_AAA_ASCII_adjust_after_add ( o_opcode_x86_AAA_ASCII_adjust_after_add ),
     .i_opcode_x86_AAD_ASCII_AX_before_div ( o_opcode_x86_AAD_ASCII_AX_before_div ),
@@ -605,7 +606,7 @@ decode_field (
     .i_opcode_x86_BTS_reg_mem_with_imm ( o_opcode_x86_BTS_reg_mem_with_imm ),
     .i_opcode_x86_BTS_reg_mem_with_reg ( o_opcode_x86_BTS_reg_mem_with_reg ),
     .i_opcode_x86_CALL_in_same_segment_direct ( o_opcode_x86_CALL_in_same_segment_direct ),
-    .i_opcode_x86_CALL_in_same_segment_indirec ( o_opcode_x86_CALL_in_same_segment_indirec ),
+    .i_opcode_x86_CALL_in_same_segment_indirect ( o_opcode_x86_CALL_in_same_segment_indirect ),
     .i_opcode_x86_CALL_in_other_segment_direct ( o_opcode_x86_CALL_in_other_segment_direct ),
     .i_opcode_x86_CALL_in_other_segment_indirect ( o_opcode_x86_CALL_in_other_segment_indirect ),
     .i_opcode_x86_CBW_convert_byte_to_word ( o_opcode_x86_CBW_convert_byte_to_word ),
@@ -724,7 +725,7 @@ decode_field (
     .i_opcode_x86_RCR_reg_mem_by_CL ( o_opcode_x86_RCR_reg_mem_by_CL ),
     .i_opcode_x86_RCR_reg_mem_by_imm ( o_opcode_x86_RCR_reg_mem_by_imm ),
     .i_opcode_x86_RDMSR_read_from_model_specific_reg ( o_opcode_x86_RDMSR_read_from_model_specific_reg ),
-    .i_opcode_x86_RDPCM_read_performance_monitoring_counters ( o_opcode_x86_RDPCM_read_performance_monitoring_counters ),
+    .i_opcode_x86_RDPMC_read_performance_monitoring_counters ( o_opcode_x86_RDPMC_read_performance_monitoring_counters ),
     .i_opcode_x86_RDTSC_read_time_stamp_counter ( o_opcode_x86_RDTSC_read_time_stamp_counter ),
     .i_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id ( o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id ),
     .i_opcode_x86_REP_INS_input_string ( o_opcode_x86_REP_INS_input_string ),
@@ -857,7 +858,7 @@ assign mod_rm_i_rm = field_o_rm;
 assign mod_rm_i_w_is_present = field_o_w_is_present;
 assign mod_rm_i_w = field_o_w;
 assign mod_rm_i_default_operand_size = i_default_operand_size;
-decode_mod_rm (
+decode_mod_rm deocde_decode_mod_rm (
     .i_mod ( mod_rm_i_mod ),
     .i_rm ( mod_rm_i_rm ),
     .i_w_is_present ( mod_rm_i_w_is_present ),
@@ -907,7 +908,7 @@ assign sib_i_mod = mod_rm_i_mod;
 //         default: sib_i_sib <= 8'bzzzz_zzzz;
 //     endcase
 // end
-decode_sib (
+decode_sib deocde_decode_sib (
     .i_sib ( sib_i_sib ),
     .i_mod ( sib_i_mod ),
     .o_scale_factor ( sib_o_scale_factor ),
@@ -964,7 +965,7 @@ assign disp_imm_i_immediate_size_1 = field_o_immediate_size_8;
 assign disp_imm_i_immediate_size_2 = field_o_immediate_size_16;
 assign disp_imm_i_immediate_size_4 = field_o_immediate_size_full;
 assign disp_imm_i_immediate_size_f = field_o_immediate_size_full;
-decode_disp_imm (
+decode_disp_imm deocde_decode_disp_imm (
     .i_instruction ( disp_imm_i_instruction ),
     .i_displacement_size_1 ( disp_imm_i_displacement_size_1 ),
     .i_displacement_size_2 ( disp_imm_i_displacement_size_2 ),
@@ -978,6 +979,10 @@ decode_disp_imm (
     .o_consume_bytes ( disp_imm_o_consume_bytes ),
     .o_error ( disp_imm_o_error )
 );
+
+always_comb begin
+
+end
 
 assign o_tttn = field_o_tttn;
 assign o_eee = field_o_eee;
@@ -995,5 +1000,6 @@ assign o_gen_reg_index_from_mod_rm = mod_rm_o_gen_reg_index;
 assign o_gen_reg_bit_width_from_mod_rm = mod_rm_o_gen_reg_bit_width;
 assign o_displacement = disp_imm_o_displacement;
 assign o_immediate = disp_imm_o_immediate;
+assign o_consume_bytes = offset_disp_imm + disp_imm_o_consume_bytes;
 
 endmodule

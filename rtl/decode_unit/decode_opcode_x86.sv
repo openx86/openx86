@@ -42,7 +42,7 @@ module decode_opcode_x86 (
     output logic        o_opcode_x86_BTS_reg_mem_with_imm,
     output logic        o_opcode_x86_BTS_reg_mem_with_reg,
     output logic        o_opcode_x86_CALL_in_same_segment_direct,
-    output logic        o_opcode_x86_CALL_in_same_segment_indirec,
+    output logic        o_opcode_x86_CALL_in_same_segment_indirect,
     output logic        o_opcode_x86_CALL_in_other_segment_direct,
     output logic        o_opcode_x86_CALL_in_other_segment_indirect,
     output logic        o_opcode_x86_CBW_convert_byte_to_word,
@@ -161,7 +161,7 @@ module decode_opcode_x86 (
     output logic        o_opcode_x86_RCR_reg_mem_by_CL,
     output logic        o_opcode_x86_RCR_reg_mem_by_imm,
     output logic        o_opcode_x86_RDMSR_read_from_model_specific_reg,
-    output logic        o_opcode_x86_RDPCM_read_performance_monitoring_counters,
+    output logic        o_opcode_x86_RDPMC_read_performance_monitoring_counters,
     output logic        o_opcode_x86_RDTSC_read_time_stamp_counter,
     output logic        o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id,
     output logic        o_opcode_x86_REP_INS_input_string,
@@ -285,7 +285,7 @@ assign o_opcode_x86_BTS_reg_mem_with_imm                                        
 assign o_opcode_x86_BTS_reg_mem_with_reg                                        = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b1010_1011);
 
 assign o_opcode_x86_CALL_in_same_segment_direct                                 = (i_instruction[0][7:0] == 8'b1110_1000);
-assign o_opcode_x86_CALL_in_same_segment_indirec                                = (i_instruction[0][7:1] == 8'b1111_1111) & (i_instruction[1][5:3] == 3'b010);
+assign o_opcode_x86_CALL_in_same_segment_indirect                               = (i_instruction[0][7:1] == 8'b1111_1111) & (i_instruction[1][5:3] == 3'b010);
 assign o_opcode_x86_CALL_in_other_segment_direct                                = (i_instruction[0][7:0] == 8'b1001_1010);
 assign o_opcode_x86_CALL_in_other_segment_indirect                              = (i_instruction[0][7:0] == 8'b1111_1111) & (i_instruction[1][5:3] == 3'b011);
 
@@ -470,7 +470,7 @@ assign o_opcode_x86_RCR_reg_mem_by_CL                                           
 assign o_opcode_x86_RCR_reg_mem_by_imm                                          = (i_instruction[0][7:1] == 7'b1100_000 ) & (i_instruction[1][5:3] == 3'b011);
 
 assign o_opcode_x86_RDMSR_read_from_model_specific_reg                          = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_0010);
-assign o_opcode_x86_RDPCM_read_performance_monitoring_counters                  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_0011);
+assign o_opcode_x86_RDPMC_read_performance_monitoring_counters                  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_0011);
 assign o_opcode_x86_RDTSC_read_time_stamp_counter                               = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_0001);
 assign o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id              = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_0001) & (i_instruction[2][7:0] == 8'b1111_1001);
 
