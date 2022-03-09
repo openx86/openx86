@@ -163,15 +163,6 @@ module decode_field (
     input  logic        i_opcode_x86_RDPMC_read_performance_monitoring_counters,
     input  logic        i_opcode_x86_RDTSC_read_time_stamp_counter,
     input  logic        i_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id,
-    input  logic        i_opcode_x86_REP_INS_input_string,
-    input  logic        i_opcode_x86_REP_LODS_load_string,
-    input  logic        i_opcode_x86_REP_MOVS_move_string,
-    input  logic        i_opcode_x86_REP_OUTS_output_string,
-    input  logic        i_opcode_x86_REP_STOS_store_string,
-    input  logic        i_opcode_x86_REPE_CMPS_compare_string,
-    input  logic        i_opcode_x86_REPE_SCAS_scan_string,
-    input  logic        i_opcode_x86_REPNE_CMPS_compare_string,
-    input  logic        i_opcode_x86_REPNE_SCAS_scan_string,
     input  logic        i_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument,
     input  logic        i_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP,
     input  logic        i_opcode_x86_RET_return_from_procedure_to_other_segment_no_argument,
@@ -430,15 +421,6 @@ wire w_at_1_0 =
 i_opcode_x86_CMPXCHG_compare_and_exchange |
 i_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg |
 i_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg |
-i_opcode_x86_REP_INS_input_string |
-i_opcode_x86_REP_LODS_load_string |
-i_opcode_x86_REP_MOVS_move_string |
-i_opcode_x86_REP_OUTS_output_string |
-i_opcode_x86_REP_STOS_store_string |
-i_opcode_x86_REPE_CMPS_compare_string |
-i_opcode_x86_REPE_SCAS_scan_string |
-i_opcode_x86_REPNE_CMPS_compare_string |
-i_opcode_x86_REPNE_SCAS_scan_string |
 i_opcode_x86_XADD_exchange_and_add |
 0;
 assign o_w_is_present =
@@ -861,15 +843,6 @@ i_opcode_x86_PUSH_sreg_3 |
 i_opcode_x86_RDMSR_read_from_model_specific_reg |
 i_opcode_x86_RDPMC_read_performance_monitoring_counters |
 i_opcode_x86_RDTSC_read_time_stamp_counter |
-i_opcode_x86_REP_INS_input_string |
-i_opcode_x86_REP_LODS_load_string |
-i_opcode_x86_REP_MOVS_move_string |
-i_opcode_x86_REP_OUTS_output_string |
-i_opcode_x86_REP_STOS_store_string |
-i_opcode_x86_REPE_CMPS_compare_string |
-i_opcode_x86_REPE_SCAS_scan_string |
-i_opcode_x86_REPNE_CMPS_compare_string |
-i_opcode_x86_REPNE_SCAS_scan_string |
 i_opcode_x86_RSM_resume_from_system_management_mode |
 i_opcode_x86_SETcc_byte_set_on_condition |
 i_opcode_x86_SGDT_store_global_descriptor_table_register |

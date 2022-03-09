@@ -210,15 +210,6 @@ initial begin
     #2; instruction[0:6] = {8'h0F, 8'h33, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("RDPMC");
     #2; instruction[0:6] = {8'h0F, 8'h31, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("RDTSC");
     #2; instruction[0:6] = {8'h0F, 8'h01, 8'hF9, 8'h00, 8'h00, 8'h00, 8'h00}; $display("RDTSCP");
-    #2; instruction[0:6] = {8'hF3, 8'h66, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP INSD");
-    #2; instruction[0:6] = {8'hF3, 8'h66, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP LODSD");
-    #2; instruction[0:6] = {8'hF3, 8'h66, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP MOVSD");
-    #2; instruction[0:6] = {8'hF3, 8'h66, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP OUTSD");
-    #2; instruction[0:6] = {8'hF3, 8'h66, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP STOSD");
-    #2; instruction[0:6] = {8'hF3, 8'h66, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REPE CMPSD");
-    #2; instruction[0:6] = {8'hF3, 8'h66, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REPE SCASD");
-    #2; instruction[0:6] = {8'hF2, 8'h66, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REPNE CMPSD");
-    #2; instruction[0:6] = {8'hF2, 8'h66, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REPNE SCASD");
     #2; instruction[0:6] = {8'hC3, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("RET");
     #2; instruction[0:6] = {8'hC2, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("RET 1");
     #2; instruction[0:6] = {8'hCB, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("RETF");

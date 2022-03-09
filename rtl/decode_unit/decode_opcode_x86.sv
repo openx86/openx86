@@ -164,15 +164,6 @@ module decode_opcode_x86 (
     output logic        o_opcode_x86_RDPMC_read_performance_monitoring_counters,
     output logic        o_opcode_x86_RDTSC_read_time_stamp_counter,
     output logic        o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id,
-    output logic        o_opcode_x86_REP_INS_input_string,
-    output logic        o_opcode_x86_REP_LODS_load_string,
-    output logic        o_opcode_x86_REP_MOVS_move_string,
-    output logic        o_opcode_x86_REP_OUTS_output_string,
-    output logic        o_opcode_x86_REP_STOS_store_string,
-    output logic        o_opcode_x86_REPE_CMPS_compare_string,
-    output logic        o_opcode_x86_REPE_SCAS_scan_string,
-    output logic        o_opcode_x86_REPNE_CMPS_compare_string,
-    output logic        o_opcode_x86_REPNE_SCAS_scan_string,
     output logic        o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument,
     output logic        o_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP,
     output logic        o_opcode_x86_RET_return_from_procedure_to_other_segment_no_argument,
@@ -270,7 +261,7 @@ assign o_opcode_x86_BSF_bit_scan_forward                                        
 
 assign o_opcode_x86_BSR_bit_scan_reverse                                        = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b1011_1101);
 
-assign o_opcode_x86_BSWAP_byte_swap                                             = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][5:3] == 3'b001);
+assign o_opcode_x86_BSWAP_byte_swap                                             = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:3] == 5'b1100_1);
 
 assign o_opcode_x86_BT_reg_mem_with_imm                                         = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b1011_1010) & (i_instruction[2][5:3] == 3'b100);
 assign o_opcode_x86_BT_reg_mem_with_reg                                         = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b1010_0011);
@@ -349,14 +340,14 @@ assign o_opcode_x86_INT_interrupt_type_4                                        
 
 assign o_opcode_x86_INVD_invalidate_cache                                       = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_1000);
 
-assign o_opcode_x86_INVLPG_invalidate_TLB_entry                                 = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_0001);
+assign o_opcode_x86_INVLPG_invalidate_TLB_entry                                 = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_0001) & (i_instruction[2][5:3] == 3'b111);
 
 assign o_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_1000) & (i_instruction[2][7:0] == 8'b1000_0010);
 
 assign o_opcode_x86_IRET_interrupt_return                                       = (i_instruction[0][7:0] == 8'b1100_1111);
 
 assign o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp                          = (i_instruction[0][7:4] == 4'b0111);
-assign o_opcode_x86_Jcc_jump_if_cond_is_met_full_disp                           = (i_instruction[0][7:0] == 8'b0000_1111);
+assign o_opcode_x86_Jcc_jump_if_cond_is_met_full_disp                           = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:4] == 4'b1000);
 
 assign o_opcode_x86_JCXZ_jump_on_CX_zero                                        = (i_instruction[0][7:0] == 8'b1110_0011); // (JCXZ and JECXZ: Address Size Prefix Differentiates JCXZ from JECXZ)
 
@@ -447,14 +438,14 @@ assign o_opcode_x86_OUTS_output_string                                          
 assign o_opcode_x86_POP_reg_mem                                                 = (i_instruction[0][7:0] == 8'b1000_1111) & (i_instruction[1][5:3] == 3'b000);
 assign o_opcode_x86_POP_reg                                                     = (i_instruction[0][7:3] == 5'b0101_1   );
 assign o_opcode_x86_POP_sreg_2                                                  = (i_instruction[0][7:5] == 3'b000      ) & (i_instruction[0][4:3] != 2'b01) & (i_instruction[0][2:0] == 3'b111) & (i_instruction[1][5:3] != 3'b110) & (i_instruction[1][5:3] != 3'b111);
-assign o_opcode_x86_POP_sreg_3                                                  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:6] == 2'b10) & (i_instruction[1][5] == 1'b1) & (i_instruction[1][2:0] == 3'b001);
+assign o_opcode_x86_POP_sreg_3                                                  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:6] == 2'b10) & (i_instruction[1][5:4] == 2'b10) & (i_instruction[1][2:0] == 3'b001);
 assign o_opcode_x86_POPA_pop_all_general_registers                              = (i_instruction[0][7:0] == 8'b0110_0001);
 assign o_opcode_x86_POPF_pop_stack_into_FLAGS_or_EFLAGS                         = (i_instruction[0][7:0] == 8'b1001_1101);
 
 assign o_opcode_x86_PUSH_reg_mem                                                = (i_instruction[0][7:0] == 8'b1111_1111) & (i_instruction[1][5:3] == 3'b110);
 assign o_opcode_x86_PUSH_reg                                                    = (i_instruction[0][7:3] == 5'b0101_0   );
 assign o_opcode_x86_PUSH_sreg_2                                                 = (i_instruction[0][7:5] == 3'b000      ) & (i_instruction[0][2:0] == 3'b110);
-assign o_opcode_x86_PUSH_sreg_3                                                 = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:6] == 2'b10) & (i_instruction[1][5] == 1'b1) & (i_instruction[1][2:0] == 3'b000);
+assign o_opcode_x86_PUSH_sreg_3                                                 = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:6] == 2'b10) & (i_instruction[1][5:4] == 2'b10) & (i_instruction[1][2:0] == 3'b000);
 assign o_opcode_x86_PUSH_imm                                                    = (i_instruction[0][7:2] == 6'b0110_10  ) & (i_instruction[0][0] == 1'b0);
 assign o_opcode_x86_PUSH_all_general_registers                                  = (i_instruction[0][7:0] == 8'b0110_0000);
 assign o_opcode_x86_PUSHF_push_flags_onto_stack                                 = (i_instruction[0][7:0] == 8'b1001_1100);
@@ -471,16 +462,6 @@ assign o_opcode_x86_RDMSR_read_from_model_specific_reg                          
 assign o_opcode_x86_RDPMC_read_performance_monitoring_counters                  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_0011);
 assign o_opcode_x86_RDTSC_read_time_stamp_counter                               = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_0001);
 assign o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id              = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_0001) & (i_instruction[2][7:0] == 8'b1111_1001);
-
-assign o_opcode_x86_REP_INS_input_string                                        = (i_instruction[0][7:0] == 8'b1111_0011) & (i_instruction[1][7:1] == 7'b0110_110 );
-assign o_opcode_x86_REP_LODS_load_string                                        = (i_instruction[0][7:0] == 8'b1111_0011) & (i_instruction[1][7:1] == 7'b1010_110 );
-assign o_opcode_x86_REP_MOVS_move_string                                        = (i_instruction[0][7:0] == 8'b1111_0011) & (i_instruction[1][7:1] == 7'b1010_010 );
-assign o_opcode_x86_REP_OUTS_output_string                                      = (i_instruction[0][7:0] == 8'b1111_0011) & (i_instruction[1][7:1] == 7'b0110_111 );
-assign o_opcode_x86_REP_STOS_store_string                                       = (i_instruction[0][7:0] == 8'b1111_0011) & (i_instruction[1][7:1] == 7'b1010_101 );
-assign o_opcode_x86_REPE_CMPS_compare_string                                    = (i_instruction[0][7:0] == 8'b1111_0011) & (i_instruction[1][7:1] == 7'b1010_011 );
-assign o_opcode_x86_REPE_SCAS_scan_string                                       = (i_instruction[0][7:0] == 8'b1111_0011) & (i_instruction[1][7:1] == 7'b1010_111 );
-assign o_opcode_x86_REPNE_CMPS_compare_string                                   = (i_instruction[0][7:0] == 8'b1111_0010) & (i_instruction[1][7:1] == 7'b1010_011 );
-assign o_opcode_x86_REPNE_SCAS_scan_string                                      = (i_instruction[0][7:0] == 8'b1111_0010) & (i_instruction[1][7:1] == 7'b1010_111 );
 
 assign o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument       = (i_instruction[0][7:0] == 8'b1100_0011);
 assign o_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP  = (i_instruction[0][7:0] == 8'b1100_0010);
