@@ -276,7 +276,7 @@ assign o_opcode_x86_BTS_reg_mem_with_imm                                        
 assign o_opcode_x86_BTS_reg_mem_with_reg                                        = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b1010_1011);
 
 assign o_opcode_x86_CALL_in_same_segment_direct                                 = (i_instruction[0][7:0] == 8'b1110_1000);
-assign o_opcode_x86_CALL_in_same_segment_indirect                               = (i_instruction[0][7:1] == 8'b1111_1111) & (i_instruction[1][5:3] == 3'b010);
+assign o_opcode_x86_CALL_in_same_segment_indirect                               = (i_instruction[0][7:0] == 8'b1111_1111) & (i_instruction[1][5:3] == 3'b010);
 assign o_opcode_x86_CALL_in_other_segment_direct                                = (i_instruction[0][7:0] == 8'b1001_1010);
 assign o_opcode_x86_CALL_in_other_segment_indirect                              = (i_instruction[0][7:0] == 8'b1111_1111) & (i_instruction[1][5:3] == 3'b011);
 
@@ -340,7 +340,7 @@ assign o_opcode_x86_INT_interrupt_type_4                                        
 
 assign o_opcode_x86_INVD_invalidate_cache                                       = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_1000);
 
-assign o_opcode_x86_INVLPG_invalidate_TLB_entry                                 = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_0001) & (i_instruction[2][5:3] == 3'b111);
+assign o_opcode_x86_INVLPG_invalidate_TLB_entry                                 = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_0001) & (i_instruction[2][7:6] != 2'b11) & (i_instruction[2][5:3] == 3'b111);
 
 assign o_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_1000) & (i_instruction[2][7:0] == 8'b1000_0010);
 
@@ -412,6 +412,8 @@ assign o_opcode_x86_MOV_sreg_to_reg_mem                                         
 
 assign o_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_mem_to_reg         = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_1000) & (i_instruction[2][7:0] == 8'b1111_0000);
 assign o_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem         = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_1000) & (i_instruction[2][7:0] == 8'b1111_0001);
+
+assign o_opcode_x86_MOVS_move_data_from_string_to_string                        = (i_instruction[0][7:1] == 7'b1010_010 );
 
 assign o_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg                  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:1] == 7'b1011_111);
 assign o_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg                  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:1] == 7'b1011_011);
@@ -493,7 +495,7 @@ assign o_opcode_x86_SCAS_scan_string                                            
 
 assign o_opcode_x86_SETcc_byte_set_on_condition                                 = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:4] == 4'b1001) & (i_instruction[2][5:3] == 3'b000);
 
-assign o_opcode_x86_SGDT_store_global_descriptor_table_register                 = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_0001);
+assign o_opcode_x86_SGDT_store_global_descriptor_table_register                 = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0000_0001) & (i_instruction[2][5:3] == 3'b000);
 
 assign o_opcode_x86_SHL_reg_mem_by_1                                            = (i_instruction[0][7:1] == 7'b1101_000 ) & (i_instruction[1][5:3] == 3'b100);
 assign o_opcode_x86_SHL_reg_mem_by_CL                                           = (i_instruction[0][7:1] == 7'b1101_001 ) & (i_instruction[1][5:3] == 3'b100);
