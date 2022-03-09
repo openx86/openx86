@@ -99,7 +99,7 @@ wire         error_repeat_group_3 = (sum_group_3 > 1) ? 1'b1 : 1'b0;
 wire         error_repeat_group_4 = (sum_group_4 > 1) ? 1'b1 : 1'b0;
 wire         error_repeat         = error_repeat_group_1 | error_repeat_group_2 | error_repeat_group_3 | error_repeat_group_4;
 
-wire  [ 2:0] bytes_consumed    = is_present[0] + is_present[1] + is_present[2] + is_present[3];
+// wire  [ 2:0] bytes_consumed    = is_present[0] + is_present[1] + is_present[2] + is_present[3];
 
 assign o_group_1_lock_bus              = group_1_lock_bus[0] | group_1_lock_bus[1] | group_1_lock_bus[2] | group_1_lock_bus[3];
 assign o_group_1_repeat_not_equal      = group_1_repeat_not_equal[0] | group_1_repeat_not_equal[1] | group_1_repeat_not_equal[2] | group_1_repeat_not_equal[3];
@@ -117,10 +117,14 @@ assign o_group_4_is_present            = group_4_is_present[0] | group_4_is_pres
 assign o_segment_override_index        = segment_override_index[0] | segment_override_index[1] | segment_override_index[2] | segment_override_index[3];
 // assign o_register_extension            = 1'b0; // Register EXtension(REX) IA-32e is ready!
 // assign o_consume_bytes_prefix_0        = bytes_consumed == 3'h0;
-assign o_consume_bytes_prefix_1        = bytes_consumed == 3'h1;
-assign o_consume_bytes_prefix_2        = bytes_consumed == 3'h2;
-assign o_consume_bytes_prefix_3        = bytes_consumed == 3'h3;
-assign o_consume_bytes_prefix_4        = bytes_consumed == 3'h4;
+// assign o_consume_bytes_prefix_1        = bytes_consumed == 3'h1;
+// assign o_consume_bytes_prefix_2        = bytes_consumed == 3'h2;
+// assign o_consume_bytes_prefix_3        = bytes_consumed == 3'h3;
+// assign o_consume_bytes_prefix_4        = bytes_consumed == 3'h4;
+assign o_consume_bytes_prefix_1 = (is_present == '{1'b1, 1'b0, 1'b0, 1'b0});
+assign o_consume_bytes_prefix_2 = (is_present == '{1'b1, 1'b1, 1'b0, 1'b0});
+assign o_consume_bytes_prefix_3 = (is_present == '{1'b1, 1'b1, 1'b1, 1'b0});
+assign o_consume_bytes_prefix_4 = (is_present == '{1'b1, 1'b1, 1'b1, 1'b1});
 assign o_error                         = error_repeat;
 
 decode_prefix decode_prefix_in_stage_0_from_instruction_0 (
