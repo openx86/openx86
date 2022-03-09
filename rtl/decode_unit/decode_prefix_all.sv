@@ -72,21 +72,21 @@ module decode_prefix_all (
     output logic        o_error
 );
 
-logic        group_1_lock_bus [4];
-logic        group_1_repeat_not_equal [4];
-logic        group_1_repeat_equal [4];
-logic        group_1_bound [4];
-logic        group_2_segment_override [4];
-logic        group_2_hint_branch_not_taken [4];
-logic        group_2_hint_branch_taken [4];
-logic        group_3_operand_size [4];
-logic        group_4_address_size [4];
-logic        group_1_is_present [4];
-logic        group_2_is_present [4];
-logic        group_3_is_present [4];
-logic        group_4_is_present [4];
-logic        is_present [4];
-logic [ 2:0] segment_override_index [4];
+logic        group_1_lock_bus [0:3];
+logic        group_1_repeat_not_equal [0:3];
+logic        group_1_repeat_equal [0:3];
+logic        group_1_bound [0:3];
+logic        group_2_segment_override [0:3];
+logic        group_2_hint_branch_not_taken [0:3];
+logic        group_2_hint_branch_taken [0:3];
+logic        group_3_operand_size [0:3];
+logic        group_4_address_size [0:3];
+logic        group_1_is_present [0:3];
+logic        group_2_is_present [0:3];
+logic        group_3_is_present [0:3];
+logic        group_4_is_present [0:3];
+logic        is_present [0:3];
+logic [ 2:0] segment_override_index [0:3];
 
 wire  [ 2:0] sum_group_1 = ({2'b0, group_1_is_present[0]} + {2'b0, group_1_is_present[1]} + {2'b0, group_1_is_present[2]} + {2'b0, group_1_is_present[3]});
 wire  [ 2:0] sum_group_2 = ({2'b0, group_2_is_present[0]} + {2'b0, group_2_is_present[1]} + {2'b0, group_2_is_present[2]} + {2'b0, group_2_is_present[3]});
@@ -121,10 +121,10 @@ assign o_segment_override_index        = segment_override_index[0] | segment_ove
 // assign o_consume_bytes_prefix_2        = bytes_consumed == 3'h2;
 // assign o_consume_bytes_prefix_3        = bytes_consumed == 3'h3;
 // assign o_consume_bytes_prefix_4        = bytes_consumed == 3'h4;
-assign o_consume_bytes_prefix_1 = (is_present == '{1'b1, 1'b0, 1'b0, 1'b0});
-assign o_consume_bytes_prefix_2 = (is_present == '{1'b1, 1'b1, 1'b0, 1'b0});
-assign o_consume_bytes_prefix_3 = (is_present == '{1'b1, 1'b1, 1'b1, 1'b0});
-assign o_consume_bytes_prefix_4 = (is_present == '{1'b1, 1'b1, 1'b1, 1'b1});
+assign o_consume_bytes_prefix_1 = (is_present[0:1] == '{1'b1, 1'b0});
+assign o_consume_bytes_prefix_2 = (is_present[0:2] == '{1'b1, 1'b1, 1'b0});
+assign o_consume_bytes_prefix_3 = (is_present[0:3] == '{1'b1, 1'b1, 1'b1, 1'b0});
+assign o_consume_bytes_prefix_4 = (is_present[0:3] == '{1'b1, 1'b1, 1'b1, 1'b1});
 assign o_error                         = error_repeat;
 
 decode_prefix decode_prefix_in_stage_0_from_instruction_0 (
