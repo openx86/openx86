@@ -62,9 +62,9 @@ initial begin
     #2; instruction[0:6] = {8'h0F, 8'hBA, 8'h2E, 8'h01, 8'h00, 8'h01, 8'h00}; $display("BTS WORD [1], 1");
     #2; instruction[0:6] = {8'h66, 8'h0F, 8'hAB, 8'h0E, 8'h01, 8'h00, 8'h00}; $display("BTS [1], ECX");
     #2; instruction[0:6] = {8'hE8, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("CALL 1");
-    #2; instruction[0:6] = {8'hFF, 8'h16, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00}; $display("CALL [1]");
+    #2; instruction[0:6] = {8'hFF, 8'h16, 8'h34, 8'h12, 8'h00, 8'h00, 8'h00}; $display("CALL [1234H]");
     #2; instruction[0:6] = {8'h9A, 8'h01, 8'h00, 8'h01, 8'h00, 8'h00, 8'h00}; $display("CALL 1:1");
-    #2; instruction[0:6] = {8'h67, 8'hFF, 8'h11, 8'h00, 8'h00, 8'h00, 8'h00}; $display("CALL [ECX]");
+    #2; instruction[0:6] = {8'h3E, 8'hFF, 8'h1E, 8'h34, 8'h12, 8'h00, 8'h00}; $display("CALL WORD FAR [WORD DS:1234H]");
     #2; instruction[0:6] = {8'h98, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("CBW");
     #2; instruction[0:6] = {8'h66, 8'h99, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("CDQ");
     #2; instruction[0:6] = {8'hF8, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("CLC");
@@ -76,6 +76,7 @@ initial begin
     #2; instruction[0:6] = {8'h66, 8'h3B, 8'h0E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("CMP ECX, [1]");
     #2; instruction[0:6] = {8'h66, 8'h83, 8'hF9, 8'h01, 8'h00, 8'h00, 8'h00}; $display("CMP ECX, 1");
     #2; instruction[0:6] = {8'h3C, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("CMP AX, 1");
+    #2; instruction[0:6] = {8'hF3, 8'hA6, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP CMPSB");
     #2; instruction[0:6] = {8'h66, 8'h0F, 8'hB1, 8'h0E, 8'h01, 8'h00, 8'h00}; $display("CMPXCHG [1], ECX");
     #2; instruction[0:6] = {8'h0F, 8'hA2, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("CPUID");
     #2; instruction[0:6] = {8'h99, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("CWD");
@@ -94,6 +95,7 @@ initial begin
     #2; instruction[0:6] = {8'hEC, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("IN AL, DX");
     #2; instruction[0:6] = {8'hFF, 8'h06, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00}; $display("INC WORD [1]");
     #2; instruction[0:6] = {8'h66, 8'h41, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("INC ECX");
+    #2; instruction[0:6] = {8'hF3, 8'h6C, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP INSB");
     #2; instruction[0:6] = {8'hCD, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("INT 1");
     #2; instruction[0:6] = {8'hCC, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("INT3");
     #2; instruction[0:6] = {8'hCE, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("INTO");
@@ -138,7 +140,7 @@ initial begin
     #2; instruction[0:6] = {8'hE9, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("JMP 1");
     #2; instruction[0:6] = {8'hFF, 8'hE3, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("JMP BX");
     #2; instruction[0:6] = {8'hEA, 8'h01, 8'h00, 8'h01, 8'h00, 8'h00, 8'h00}; $display("JMP 1:1");
-    #2; instruction[0:6] = {8'hFF, 8'h67, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00}; $display("JMP 1[BX]");
+    #2; instruction[0:6] = {8'h3E, 8'hFF, 8'h2E, 8'h34, 8'h12, 8'h00, 8'h00}; $display("JMP WORD FAR [WORD DS:1234H]");
     #2; instruction[0:6] = {8'h9F, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("LAHF");
     #2; instruction[0:6] = {8'h66, 8'h0F, 8'h02, 8'h0E, 8'h01, 8'h00, 8'h00}; $display("LAR ECX, [1]");
     #2; instruction[0:6] = {8'h66, 8'hC5, 8'h0E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("LDS ECX, [1]");
@@ -151,6 +153,7 @@ initial begin
     #2; instruction[0:6] = {8'h0F, 8'h01, 8'h1E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("LIDT [1]");
     #2; instruction[0:6] = {8'h0F, 8'h00, 8'h16, 8'h01, 8'h00, 8'h00, 8'h00}; $display("LLDT [1]");
     #2; instruction[0:6] = {8'h0F, 8'h01, 8'h36, 8'h01, 8'h00, 8'h00, 8'h00}; $display("LMSW [1]");
+    #2; instruction[0:6] = {8'hF3, 8'hAC, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP LODSB");
     #2; instruction[0:6] = {8'hE2, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("LOOP 1");
     #2; instruction[0:6] = {8'hE1, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("LOOPZ 1");
     #2; instruction[0:6] = {8'hE0, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("LOOPNZ 1");
@@ -173,6 +176,7 @@ initial begin
     #2; instruction[0:6] = {8'h8C, 8'h1E, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00}; $display("MOV [1], DS");
     #2; instruction[0:6] = {8'h66, 8'h0F, 8'h38, 8'hF0, 8'h0E, 8'h01, 8'h00}; $display("MOVBE ECX, [1]");
     #2; instruction[0:6] = {8'h66, 8'h0F, 8'h38, 8'hF1, 8'h0E, 8'h01, 8'h00}; $display("MOVBE [1], ECX");
+    #2; instruction[0:6] = {8'hF3, 8'hA4, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP MOVSB");
     #2; instruction[0:6] = {8'h0F, 8'hBE, 8'h0E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("MOVSX WORD CX, [1]");
     #2; instruction[0:6] = {8'h0F, 8'hB6, 8'h0E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("MOVZX WORD CX, [1]");
     #2; instruction[0:6] = {8'hF7, 8'h26, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00}; $display("MUL WORD [1]");
@@ -187,6 +191,7 @@ initial begin
     #2; instruction[0:6] = {8'h0C, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("OR AX, 1");
     #2; instruction[0:6] = {8'hE6, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("OUT 1, AL");
     #2; instruction[0:6] = {8'hEF, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("OUT DX, AX");
+    #2; instruction[0:6] = {8'hF3, 8'h6E, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP OUTSB");
     #2; instruction[0:6] = {8'h8F, 8'h06, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00}; $display("POP WORD [1]");
     #2; instruction[0:6] = {8'h66, 8'h59, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("POP ECX");
     #2; instruction[0:6] = {8'h1F, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("POP DS");
@@ -229,6 +234,7 @@ initial begin
     #2; instruction[0:6] = {8'h66, 8'h1B, 8'h0E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("SBB ECX, [1]");
     #2; instruction[0:6] = {8'h66, 8'h83, 8'hD9, 8'h01, 8'h00, 8'h00, 8'h00}; $display("SBB ECX, 1");
     #2; instruction[0:6] = {8'h1C, 8'h01, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("SBB AX, 1");
+    #2; instruction[0:6] = {8'hF3, 8'hAE, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP SCASB");
     #2; instruction[0:6] = {8'h0F, 8'h90, 8'hC2, 8'h00, 8'h00, 8'h00, 8'h00}; $display("SETO DL");
     #2; instruction[0:6] = {8'h0F, 8'h91, 8'hC2, 8'h00, 8'h00, 8'h00, 8'h00}; $display("SETNO DL");
     #2; instruction[0:6] = {8'h0F, 8'h92, 8'hC2, 8'h00, 8'h00, 8'h00, 8'h00}; $display("SETB DL");
@@ -262,6 +268,7 @@ initial begin
     #2; instruction[0:6] = {8'hF9, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("STC");
     #2; instruction[0:6] = {8'hFD, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("STD");
     #2; instruction[0:6] = {8'hFB, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("STI");
+    #2; instruction[0:6] = {8'hF3, 8'hAA, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00}; $display("REP STOSB");
     #2; instruction[0:6] = {8'h0F, 8'h00, 8'h0E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("STR [1]");
     #2; instruction[0:6] = {8'h66, 8'h29, 8'h0E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("SUB [1], ECX");
     #2; instruction[0:6] = {8'h66, 8'h2B, 8'h0E, 8'h01, 8'h00, 8'h00, 8'h00}; $display("SUB ECX, [1]");
