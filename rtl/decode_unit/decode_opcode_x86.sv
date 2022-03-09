@@ -419,10 +419,8 @@ assign o_opcode_x86_MOV_reg_from_TR                                             
 assign o_opcode_x86_MOV_reg_mem_to_sreg                                         = (i_instruction[0][7:0] == 8'b1000_1110);
 assign o_opcode_x86_MOV_sreg_to_reg_mem                                         = (i_instruction[0][7:0] == 8'b1000_1100);
 
-assign o_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_mem_to_reg         = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_1000) & (i_instruction[2][7:0] == 8'b1111_1000);
-assign o_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem         = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_1000) & (i_instruction[2][7:0] == 8'b1111_1001);
-
-assign o_opcode_x86_MOVS_move_data_from_string_to_string                        = (i_instruction[0][7:1] == 7'b1010_010 );
+assign o_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_mem_to_reg         = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_1000) & (i_instruction[2][7:0] == 8'b1111_0000);
+assign o_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem         = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:0] == 8'b0011_1000) & (i_instruction[2][7:0] == 8'b1111_0001);
 
 assign o_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg                  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:1] == 7'b1011_111);
 assign o_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg                  = (i_instruction[0][7:0] == 8'b0000_1111) & (i_instruction[1][7:1] == 7'b1011_011);
