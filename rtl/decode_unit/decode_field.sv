@@ -275,7 +275,7 @@ always_comb begin
     case (1'b1)
         sreg3_at_1_5_3: o_seg_reg_index <= i_instruction[1][5:3];
         sreg2_at_0_4_3: o_seg_reg_index <= {1'b0, i_instruction[0][4:3]};
-        default       : o_seg_reg_index <= 3'bzzz;
+        default       : o_seg_reg_index <= 3'b0;
     endcase
 end
 
@@ -328,7 +328,7 @@ always_comb begin
         reg_1_at_1_5_3 : o_gen_reg_index <= i_instruction[1][5:3];
         reg_1_at_1_2_0 : o_gen_reg_index <= i_instruction[1][2:0];
         reg_1_at_2_2_0 : o_gen_reg_index <= i_instruction[2][2:0];
-        default        : o_gen_reg_index <= 3'bzzz;
+        default        : o_gen_reg_index <= 3'b000;
     endcase
 end
 
@@ -433,7 +433,7 @@ always_comb begin
         w_at_0_0: o_w <= i_instruction[0][0];
         w_at_0_3: o_w <= i_instruction[0][3];
         w_at_1_0: o_w <= i_instruction[1][0];
-        default : o_w <= 1'bz;
+        default : o_w <= 1'b0;
     endcase
 end
 
@@ -455,7 +455,7 @@ s_at_0_1 |
 always_comb begin
     case (1'b1)
         s_at_0_1: o_s <= i_instruction[0][1];
-        default : o_s <= 1'bz;
+        default : o_s <= 1'b0;
     endcase
 end
 
@@ -580,7 +580,7 @@ always_comb begin
         mod_rm_at_1: mod_rm_instruction <= i_instruction[1];
         mod_rm_at_2: mod_rm_instruction <= i_instruction[2];
         mod_rm_at_3: mod_rm_instruction <= i_instruction[3];
-        default    : mod_rm_instruction <= 8'bzzzz_zzzz;
+        default    : mod_rm_instruction <= 8'b0;
     endcase
 end
 

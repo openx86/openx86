@@ -177,7 +177,6 @@ wire index_mod_xx_EBP = (mod_01 | mod_10) & rm_101;
 wire index_mod_xx_ESI = ~mod_11 & rm_110;
 wire index_mod_xx_EDI = ~mod_11 & rm_111;
 
-// TODO: reg index
 always_comb begin
     unique case (1'b1)
         index_mod_xx__SI: o_index_reg_index <= `index_reg_gpr__SI;

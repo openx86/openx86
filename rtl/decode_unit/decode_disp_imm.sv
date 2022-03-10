@@ -36,7 +36,7 @@ always_comb begin
         i_displacement_size_1: begin instruction_for_immediate <= i_instruction[1:1+3]; o_displacement <= {24'b0, i_instruction[0][7:0]}; end
         i_displacement_size_2: begin instruction_for_immediate <= i_instruction[2:2+3]; o_displacement <= {16'b0, i_instruction[1][7:0], i_instruction[0][7:0]}; end
         i_displacement_size_4: begin instruction_for_immediate <= i_instruction[4:4+3]; o_displacement <= {       i_instruction[3][7:0], i_instruction[2][7:0], i_instruction[1][7:0], i_instruction[0][7:0]}; end
-        default              : begin instruction_for_immediate <= i_instruction[0:0+3]; o_displacement <= 32'bzzzz_zzzz_zzzz_zzzz; end
+        default              : begin instruction_for_immediate <= i_instruction[0:0+3]; o_displacement <= 32'b0; end
     endcase
 end
 
@@ -46,7 +46,7 @@ always_comb begin
         i_immediate_size_2: o_immediate <= {16'b0, instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
         i_immediate_size_4: o_immediate <= {       instruction_for_immediate[3][7:0], instruction_for_immediate[2][7:0], instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
         i_immediate_size_f: o_immediate <= {       instruction_for_immediate[3][7:0], instruction_for_immediate[2][7:0], instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
-        default:               o_immediate <= 32'bzzzz_zzzz_zzzz_zzzz;
+        default:               o_immediate <= 32'b0;
     endcase
 end
 
