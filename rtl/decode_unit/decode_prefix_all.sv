@@ -101,31 +101,116 @@ wire         error_repeat         = error_repeat_group_1 | error_repeat_group_2 
 
 // wire  [ 2:0] bytes_consumed    = is_present[0] + is_present[1] + is_present[2] + is_present[3];
 
-assign o_group_1_lock_bus              = group_1_lock_bus[0] | group_1_lock_bus[1] | group_1_lock_bus[2] | group_1_lock_bus[3];
-assign o_group_1_repeat_not_equal      = group_1_repeat_not_equal[0] | group_1_repeat_not_equal[1] | group_1_repeat_not_equal[2] | group_1_repeat_not_equal[3];
-assign o_group_1_repeat_equal          = group_1_repeat_equal[0] | group_1_repeat_equal[1] | group_1_repeat_equal[2] | group_1_repeat_equal[3];
-assign o_group_1_bound                 = group_1_bound[0] | group_1_bound[1] | group_1_bound[2] | group_1_bound[3];
-assign o_group_2_segment_override      = group_2_segment_override[0] | group_2_segment_override[1] | group_2_segment_override[2] | group_2_segment_override[3];
-assign o_group_2_hint_branch_not_taken = group_2_hint_branch_not_taken[0] | group_2_hint_branch_not_taken[1] | group_2_hint_branch_not_taken[2] | group_2_hint_branch_not_taken[3];
-assign o_group_2_hint_branch_taken     = group_2_hint_branch_taken[0] | group_2_hint_branch_taken[1] | group_2_hint_branch_taken[2] | group_2_hint_branch_taken[3];
-assign o_group_3_operand_size          = group_3_operand_size[0] | group_3_operand_size[1] | group_3_operand_size[2] | group_3_operand_size[3];
-assign o_group_4_address_size          = group_4_address_size[0] | group_4_address_size[1] | group_4_address_size[2] | group_4_address_size[3];
-assign o_group_1_is_present            = group_1_is_present[0] | group_1_is_present[1] | group_1_is_present[2] | group_1_is_present[3];
-assign o_group_2_is_present            = group_2_is_present[0] | group_2_is_present[1] | group_2_is_present[2] | group_2_is_present[3];
-assign o_group_3_is_present            = group_3_is_present[0] | group_3_is_present[1] | group_3_is_present[2] | group_3_is_present[3];
-assign o_group_4_is_present            = group_4_is_present[0] | group_4_is_present[1] | group_4_is_present[2] | group_4_is_present[3];
-assign o_segment_override_index        = segment_override_index[0] | segment_override_index[1] | segment_override_index[2] | segment_override_index[3];
+// assign o_group_1_lock_bus              = group_1_lock_bus[0] | group_1_lock_bus[1] | group_1_lock_bus[2] | group_1_lock_bus[3];
+// assign o_group_1_repeat_not_equal      = group_1_repeat_not_equal[0] | group_1_repeat_not_equal[1] | group_1_repeat_not_equal[2] | group_1_repeat_not_equal[3];
+// assign o_group_1_repeat_equal          = group_1_repeat_equal[0] | group_1_repeat_equal[1] | group_1_repeat_equal[2] | group_1_repeat_equal[3];
+// assign o_group_1_bound                 = group_1_bound[0] | group_1_bound[1] | group_1_bound[2] | group_1_bound[3];
+// assign o_group_2_segment_override      = group_2_segment_override[0] | group_2_segment_override[1] | group_2_segment_override[2] | group_2_segment_override[3];
+// assign o_group_2_hint_branch_not_taken = group_2_hint_branch_not_taken[0] | group_2_hint_branch_not_taken[1] | group_2_hint_branch_not_taken[2] | group_2_hint_branch_not_taken[3];
+// assign o_group_2_hint_branch_taken     = group_2_hint_branch_taken[0] | group_2_hint_branch_taken[1] | group_2_hint_branch_taken[2] | group_2_hint_branch_taken[3];
+// assign o_group_3_operand_size          = group_3_operand_size[0] | group_3_operand_size[1] | group_3_operand_size[2] | group_3_operand_size[3];
+// assign o_group_4_address_size          = group_4_address_size[0] | group_4_address_size[1] | group_4_address_size[2] | group_4_address_size[3];
+// assign o_group_1_is_present            = group_1_is_present[0] | group_1_is_present[1] | group_1_is_present[2] | group_1_is_present[3];
+// assign o_group_2_is_present            = group_2_is_present[0] | group_2_is_present[1] | group_2_is_present[2] | group_2_is_present[3];
+// assign o_group_3_is_present            = group_3_is_present[0] | group_3_is_present[1] | group_3_is_present[2] | group_3_is_present[3];
+// assign o_group_4_is_present            = group_4_is_present[0] | group_4_is_present[1] | group_4_is_present[2] | group_4_is_present[3];
+// assign o_segment_override_index        = segment_override_index[0] | segment_override_index[1] | segment_override_index[2] | segment_override_index[3];
 // assign o_register_extension            = 1'b0; // Register EXtension(REX) IA-32e is ready!
 // assign o_consume_bytes_prefix_0        = bytes_consumed == 3'h0;
 // assign o_consume_bytes_prefix_1        = bytes_consumed == 3'h1;
 // assign o_consume_bytes_prefix_2        = bytes_consumed == 3'h2;
 // assign o_consume_bytes_prefix_3        = bytes_consumed == 3'h3;
 // assign o_consume_bytes_prefix_4        = bytes_consumed == 3'h4;
-assign o_consume_bytes_prefix_1 = (is_present[0:1] == '{1'b1, 1'b0});
-assign o_consume_bytes_prefix_2 = (is_present[0:2] == '{1'b1, 1'b1, 1'b0});
-assign o_consume_bytes_prefix_3 = (is_present[0:3] == '{1'b1, 1'b1, 1'b1, 1'b0});
-assign o_consume_bytes_prefix_4 = (is_present[0:3] == '{1'b1, 1'b1, 1'b1, 1'b1});
+assign o_consume_bytes_prefix_1 = (is_present[0] == 1 & is_present[1] == 0);
+assign o_consume_bytes_prefix_2 = (is_present[0] == 1 & is_present[1] == 1 & is_present[2] == 0);
+assign o_consume_bytes_prefix_3 = (is_present[0] == 1 & is_present[1] == 1 & is_present[2] == 1 & is_present[3] == 0);
+assign o_consume_bytes_prefix_4 = (is_present[0] == 1 & is_present[1] == 1 & is_present[2] == 1 & is_present[3] == 1);
 assign o_error                         = error_repeat;
+
+always_comb begin
+    unique case (1'b1)
+        o_consume_bytes_prefix_1: begin
+            o_group_1_lock_bus              = group_1_lock_bus[0];
+            o_group_1_repeat_not_equal      = group_1_repeat_not_equal[0];
+            o_group_1_repeat_equal          = group_1_repeat_equal[0];
+            o_group_1_bound                 = group_1_bound[0];
+            o_group_2_segment_override      = group_2_segment_override[0];
+            o_group_2_hint_branch_not_taken = group_2_hint_branch_not_taken[0];
+            o_group_2_hint_branch_taken     = group_2_hint_branch_taken[0];
+            o_group_3_operand_size          = group_3_operand_size[0];
+            o_group_4_address_size          = group_4_address_size[0];
+            o_group_1_is_present            = group_1_is_present[0];
+            o_group_2_is_present            = group_2_is_present[0];
+            o_group_3_is_present            = group_3_is_present[0];
+            o_group_4_is_present            = group_4_is_present[0];
+            o_segment_override_index        = segment_override_index[0];
+        end
+        o_consume_bytes_prefix_2: begin
+            o_group_1_lock_bus              = group_1_lock_bus[0] | group_1_lock_bus[1];
+            o_group_1_repeat_not_equal      = group_1_repeat_not_equal[0] | group_1_repeat_not_equal[1];
+            o_group_1_repeat_equal          = group_1_repeat_equal[0] | group_1_repeat_equal[1];
+            o_group_1_bound                 = group_1_bound[0] | group_1_bound[1];
+            o_group_2_segment_override      = group_2_segment_override[0] | group_2_segment_override[1];
+            o_group_2_hint_branch_not_taken = group_2_hint_branch_not_taken[0] | group_2_hint_branch_not_taken[1];
+            o_group_2_hint_branch_taken     = group_2_hint_branch_taken[0] | group_2_hint_branch_taken[1];
+            o_group_3_operand_size          = group_3_operand_size[0] | group_3_operand_size[1];
+            o_group_4_address_size          = group_4_address_size[0] | group_4_address_size[1];
+            o_group_1_is_present            = group_1_is_present[0] | group_1_is_present[1];
+            o_group_2_is_present            = group_2_is_present[0] | group_2_is_present[1];
+            o_group_3_is_present            = group_3_is_present[0] | group_3_is_present[1];
+            o_group_4_is_present            = group_4_is_present[0] | group_4_is_present[1];
+            o_segment_override_index        = segment_override_index[0] | segment_override_index[1];
+        end
+        o_consume_bytes_prefix_3: begin
+            o_group_1_lock_bus              = group_1_lock_bus[0] | group_1_lock_bus[1] | group_1_lock_bus[2];
+            o_group_1_repeat_not_equal      = group_1_repeat_not_equal[0] | group_1_repeat_not_equal[1] | group_1_repeat_not_equal[2];
+            o_group_1_repeat_equal          = group_1_repeat_equal[0] | group_1_repeat_equal[1] | group_1_repeat_equal[2];
+            o_group_1_bound                 = group_1_bound[0] | group_1_bound[1] | group_1_bound[2];
+            o_group_2_segment_override      = group_2_segment_override[0] | group_2_segment_override[1] | group_2_segment_override[2];
+            o_group_2_hint_branch_not_taken = group_2_hint_branch_not_taken[0] | group_2_hint_branch_not_taken[1] | group_2_hint_branch_not_taken[2];
+            o_group_2_hint_branch_taken     = group_2_hint_branch_taken[0] | group_2_hint_branch_taken[1] | group_2_hint_branch_taken[2];
+            o_group_3_operand_size          = group_3_operand_size[0] | group_3_operand_size[1] | group_3_operand_size[2];
+            o_group_4_address_size          = group_4_address_size[0] | group_4_address_size[1] | group_4_address_size[2];
+            o_group_1_is_present            = group_1_is_present[0] | group_1_is_present[1] | group_1_is_present[2];
+            o_group_2_is_present            = group_2_is_present[0] | group_2_is_present[1] | group_2_is_present[2];
+            o_group_3_is_present            = group_3_is_present[0] | group_3_is_present[1] | group_3_is_present[2];
+            o_group_4_is_present            = group_4_is_present[0] | group_4_is_present[1] | group_4_is_present[2];
+            o_segment_override_index        = segment_override_index[0] | segment_override_index[1] | segment_override_index[2];
+        end
+        o_consume_bytes_prefix_4: begin
+            o_group_1_lock_bus              = group_1_lock_bus[0] | group_1_lock_bus[1] | group_1_lock_bus[2] | group_1_lock_bus[3];
+            o_group_1_repeat_not_equal      = group_1_repeat_not_equal[0] | group_1_repeat_not_equal[1] | group_1_repeat_not_equal[2] | group_1_repeat_not_equal[3];
+            o_group_1_repeat_equal          = group_1_repeat_equal[0] | group_1_repeat_equal[1] | group_1_repeat_equal[2] | group_1_repeat_equal[3];
+            o_group_1_bound                 = group_1_bound[0] | group_1_bound[1] | group_1_bound[2] | group_1_bound[3];
+            o_group_2_segment_override      = group_2_segment_override[0] | group_2_segment_override[1] | group_2_segment_override[2] | group_2_segment_override[3];
+            o_group_2_hint_branch_not_taken = group_2_hint_branch_not_taken[0] | group_2_hint_branch_not_taken[1] | group_2_hint_branch_not_taken[2] | group_2_hint_branch_not_taken[3];
+            o_group_2_hint_branch_taken     = group_2_hint_branch_taken[0] | group_2_hint_branch_taken[1] | group_2_hint_branch_taken[2] | group_2_hint_branch_taken[3];
+            o_group_3_operand_size          = group_3_operand_size[0] | group_3_operand_size[1] | group_3_operand_size[2] | group_3_operand_size[3];
+            o_group_4_address_size          = group_4_address_size[0] | group_4_address_size[1] | group_4_address_size[2] | group_4_address_size[3];
+            o_group_1_is_present            = group_1_is_present[0] | group_1_is_present[1] | group_1_is_present[2] | group_1_is_present[3];
+            o_group_2_is_present            = group_2_is_present[0] | group_2_is_present[1] | group_2_is_present[2] | group_2_is_present[3];
+            o_group_3_is_present            = group_3_is_present[0] | group_3_is_present[1] | group_3_is_present[2] | group_3_is_present[3];
+            o_group_4_is_present            = group_4_is_present[0] | group_4_is_present[1] | group_4_is_present[2] | group_4_is_present[3];
+            o_segment_override_index        = segment_override_index[0] | segment_override_index[1] | segment_override_index[2] | segment_override_index[3];
+        end
+        default: begin
+            o_group_1_lock_bus              = 0;
+            o_group_1_repeat_not_equal      = 0;
+            o_group_1_repeat_equal          = 0;
+            o_group_1_bound                 = 0;
+            o_group_2_segment_override      = 0;
+            o_group_2_hint_branch_not_taken = 0;
+            o_group_2_hint_branch_taken     = 0;
+            o_group_3_operand_size          = 0;
+            o_group_4_address_size          = 0;
+            o_group_1_is_present            = 0;
+            o_group_2_is_present            = 0;
+            o_group_3_is_present            = 0;
+            o_group_4_is_present            = 0;
+            o_segment_override_index        = 0;
+        end
+    endcase
+end
 
 decode_prefix decode_prefix_in_stage_0_from_instruction_0 (
     .i_instruction                   ( i_instruction                [0] ),
