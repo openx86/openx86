@@ -459,34 +459,75 @@ always_comb begin
     endcase
 end
 
-wire mod_rm_at_1 =
+assign o_mod_rm_is_present =
+i_opcode_x86_ADC_reg_to_reg_mem |
+i_opcode_x86_ADC_reg_mem_to_reg |
 i_opcode_x86_ADC_imm_to_reg_mem |
+i_opcode_x86_ADD_reg_to_reg_mem |
+i_opcode_x86_ADD_reg_mem_to_reg |
 i_opcode_x86_ADD_imm_to_reg_mem |
+i_opcode_x86_AND_reg_to_reg_mem |
+i_opcode_x86_AND_reg_mem_to_reg |
 i_opcode_x86_AND_imm_to_reg_mem |
 i_opcode_x86_ARPL_adjust_RPL_field_of_selector |
 i_opcode_x86_BOUND_check_array_against_bounds |
+i_opcode_x86_BSF_bit_scan_forward |
+i_opcode_x86_BSR_bit_scan_reverse |
+i_opcode_x86_BT_reg_mem_with_imm |
+i_opcode_x86_BT_reg_mem_with_reg |
+i_opcode_x86_BTC_reg_mem_with_imm |
+i_opcode_x86_BTC_reg_mem_with_reg |
+i_opcode_x86_BTR_reg_mem_with_imm |
+i_opcode_x86_BTR_reg_mem_with_reg |
+i_opcode_x86_BTS_reg_mem_with_imm |
+i_opcode_x86_BTS_reg_mem_with_reg |
 i_opcode_x86_CALL_in_same_segment_indirect |
 i_opcode_x86_CALL_in_other_segment_indirect |
 i_opcode_x86_CMP_mem_with_reg |
 i_opcode_x86_CMP_reg_with_mem |
+i_opcode_x86_CMP_imm_with_reg_mem |
+i_opcode_x86_CMPXCHG_compare_and_exchange |
 i_opcode_x86_DEC_reg_mem |
 i_opcode_x86_DIV_acc_by_reg_mem |
 i_opcode_x86_IDIV_acc_by_reg_mem |
 i_opcode_x86_IMUL_acc_with_reg_mem |
+i_opcode_x86_IMUL_reg_with_reg_mem |
 i_opcode_x86_IMUL_reg_mem_with_imm_to_reg |
-i_opcode_x86_INC_reg_mem |
+i_opcode_x86_INVLPG_invalidate_TLB_entry |
+i_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size |
 i_opcode_x86_JMP_to_same_segment_indirect |
 i_opcode_x86_JMP_to_other_segment_indirect |
+i_opcode_x86_LAR_load_access_rights_byte |
 i_opcode_x86_LDS_load_pointer_to_DS |
 i_opcode_x86_LEA_load_effective_adddress_to_reg |
 i_opcode_x86_LES_load_pointer_to_ES |
+i_opcode_x86_LFS_load_pointer_to_FS |
+i_opcode_x86_LGDT_load_global_desciptor_table_reg |
+i_opcode_x86_LGS_load_pointer_to_GS |
+i_opcode_x86_LIDT_load_interrupt_desciptor_table_reg |
+i_opcode_x86_LLDT_load_local_desciptor_table_reg |
+i_opcode_x86_LMSW_load_status_word |
+i_opcode_x86_LSL_load_segment_limit |
+i_opcode_x86_LSS_load_pointer_to_SS |
+i_opcode_x86_LTR_load_task_register |
 i_opcode_x86_MOV_reg_to_reg_mem |
 i_opcode_x86_MOV_reg_mem_to_reg |
 i_opcode_x86_MOV_imm_to_reg_mem |
+i_opcode_x86_MOV_CR_from_reg |
+i_opcode_x86_MOV_reg_from_CR |
+i_opcode_x86_MOV_DR_from_reg |
+i_opcode_x86_MOV_reg_from_DR |
+i_opcode_x86_MOV_TR_from_reg |
+i_opcode_x86_MOV_reg_from_TR |
 i_opcode_x86_MOV_reg_mem_to_sreg |
 i_opcode_x86_MOV_sreg_to_reg_mem |
+i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_mem_to_reg |
+i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem |
+i_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg |
+i_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg |
 i_opcode_x86_MUL_acc_with_reg_mem |
 i_opcode_x86_NEG_two_s_complement_negation |
+i_opcode_x86_NOP_no_operation_multi_byte |
 i_opcode_x86_NOT_one_s_complement_negation |
 i_opcode_x86_OR_reg_to_reg_mem |
 i_opcode_x86_OR_reg_mem_to_reg |
@@ -508,79 +549,46 @@ i_opcode_x86_ROR_reg_mem_by_imm |
 i_opcode_x86_SAR_reg_mem_by_1 |
 i_opcode_x86_SAR_reg_mem_by_CL |
 i_opcode_x86_SAR_reg_mem_by_imm |
+i_opcode_x86_SBB_reg_to_reg_mem |
+i_opcode_x86_SBB_reg_mem_to_reg |
+i_opcode_x86_SBB_imm_to_reg_mem |
+i_opcode_x86_SETcc_byte_set_on_condition |
+i_opcode_x86_SGDT_store_global_descriptor_table_register |
 i_opcode_x86_SHL_reg_mem_by_1 |
 i_opcode_x86_SHL_reg_mem_by_CL |
 i_opcode_x86_SHL_reg_mem_by_imm |
-i_opcode_x86_SUB_reg_to_reg_mem |
-i_opcode_x86_SUB_reg_mem_to_reg |
-i_opcode_x86_SUB_imm_to_reg_mem |
-i_opcode_x86_TEST_reg_mem_and_reg |
-i_opcode_x86_TEST_imm_and_reg_mem |
-i_opcode_x86_XCHG_reg_mem_with_reg |
-i_opcode_x86_XOR_reg_to_reg_mem |
-i_opcode_x86_XOR_reg_mem_to_reg |
-i_opcode_x86_XOR_imm_to_reg_mem |
-0;
-wire mod_rm_at_2 =
-i_opcode_x86_BSF_bit_scan_forward |
-i_opcode_x86_BSR_bit_scan_reverse |
-i_opcode_x86_BT_reg_mem_with_imm |
-i_opcode_x86_BT_reg_mem_with_reg |
-i_opcode_x86_BTC_reg_mem_with_imm |
-i_opcode_x86_BTC_reg_mem_with_reg |
-i_opcode_x86_BTR_reg_mem_with_imm |
-i_opcode_x86_BTR_reg_mem_with_reg |
-i_opcode_x86_BTS_reg_mem_with_imm |
-i_opcode_x86_BTS_reg_mem_with_reg |
-i_opcode_x86_CMPXCHG_compare_and_exchange |
-i_opcode_x86_IMUL_reg_with_reg_mem |
-i_opcode_x86_INVLPG_invalidate_TLB_entry |
-i_opcode_x86_LAR_load_access_rights_byte |
-i_opcode_x86_LES_load_pointer_to_ES |
-i_opcode_x86_LFS_load_pointer_to_FS |
-i_opcode_x86_LGDT_load_global_desciptor_table_reg |
-i_opcode_x86_LGS_load_pointer_to_GS |
-i_opcode_x86_LIDT_load_interrupt_desciptor_table_reg |
-i_opcode_x86_LLDT_load_local_desciptor_table_reg |
-i_opcode_x86_LMSW_load_status_word |
-i_opcode_x86_LSL_load_segment_limit |
-i_opcode_x86_LSS_load_pointer_to_SS |
-i_opcode_x86_LTR_load_task_register |
-i_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg |
-i_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg |
-i_opcode_x86_NOP_no_operation_multi_byte |
-i_opcode_x86_SETcc_byte_set_on_condition |
 i_opcode_x86_SHLD_reg_mem_by_imm |
 i_opcode_x86_SHLD_reg_mem_by_CL |
+i_opcode_x86_SHR_reg_mem_by_1 |
+i_opcode_x86_SHR_reg_mem_by_CL |
+i_opcode_x86_SHR_reg_mem_by_imm |
 i_opcode_x86_SHRD_reg_mem_by_imm |
 i_opcode_x86_SHRD_reg_mem_by_CL |
 i_opcode_x86_SIDT_store_interrupt_desciptor_table_register |
 i_opcode_x86_SLDT_store_local_desciptor_table_register |
 i_opcode_x86_SMSW_store_machine_status_word |
 i_opcode_x86_STR_store_task_register |
+i_opcode_x86_SUB_reg_to_reg_mem |
+i_opcode_x86_SUB_reg_mem_to_reg |
+i_opcode_x86_SUB_imm_to_reg_mem |
+i_opcode_x86_TEST_reg_mem_and_reg |
+i_opcode_x86_TEST_imm_and_reg_mem |
 i_opcode_x86_VERR_verify_a_segment_for_reading |
 i_opcode_x86_VERW_verify_a_segment_for_writing |
 i_opcode_x86_XADD_exchange_and_add |
-0;
-wire   mod_rm_at_3 =
-i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_mem_to_reg |
-i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem |
-i_opcode_x86_SGDT_store_global_descriptor_table_register |
-i_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size |
-0;
-assign o_mod_rm_is_present =
-mod_rm_at_1 |
-mod_rm_at_2 |
-mod_rm_at_3 |
+i_opcode_x86_XCHG_reg_mem_with_reg |
+i_opcode_x86_XOR_reg_to_reg_mem |
+i_opcode_x86_XOR_reg_mem_to_reg |
+i_opcode_x86_XOR_imm_to_reg_mem |
 0;
 logic [7:0] mod_rm_instruction;
 assign { o_mod, o_rm } = { mod_rm_instruction[7:6], mod_rm_instruction[2:0] };
 always_comb begin
     case (1'b1)
-        mod_rm_at_1: mod_rm_instruction <= i_instruction[1];
-        mod_rm_at_2: mod_rm_instruction <= i_instruction[2];
-        mod_rm_at_3: mod_rm_instruction <= i_instruction[3];
-        default    : mod_rm_instruction <= 8'b0;
+        o_primary_opcode_byte_1: mod_rm_instruction <= i_instruction[1];
+        o_primary_opcode_byte_2: mod_rm_instruction <= i_instruction[2];
+        o_primary_opcode_byte_3: mod_rm_instruction <= i_instruction[3];
+        default                : mod_rm_instruction <= 8'b0;
     endcase
 end
 
