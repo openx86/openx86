@@ -30,7 +30,7 @@ assign o_data_data_read = i_bus_data_read;
 
 assign o_bus_data_write = i_data_data_write;
 
-logic [3:0] enum {
+enum logic [3:0] {
     STATE_WAIT_FOR_CODE_READY = 4'h1,
     STATE_WAIT_FOR_DATA_READY = 4'h2,
     STATE_WAIT_FOR_VAILD = 4'h0
@@ -44,21 +44,21 @@ always_ff @(posedge i_clock or posedge i_reset) begin
             STATE_WAIT_FOR_VAILD: begin
                 if (i_code_vaild) begin
                     state <= STATE_WAIT_FOR_CODE_READY;
-                end else if (i_code_vaild) begin
+                end else if (i_data_vaild) begin
                     state <= STATE_WAIT_FOR_DATA_READY;
                 end else begin
                     state <= STATE_WAIT_FOR_VAILD;
                 end
             end
             STATE_WAIT_FOR_CODE_READY: begin
-                if (o_code_ready) begin
+                if (i_bus_ready) begin
                     state <= STATE_WAIT_FOR_VAILD;
                 end else begin
                     state <= STATE_WAIT_FOR_CODE_READY;
                 end
             end
             STATE_WAIT_FOR_DATA_READY: begin
-                if (o_data_ready) begin
+                if (i_bus_ready) begin
                     state <= STATE_WAIT_FOR_VAILD;
                 end else begin
                     state <= STATE_WAIT_FOR_DATA_READY;
