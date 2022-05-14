@@ -1,27 +1,28 @@
 module bus_controller (
-    output logic        bus_vaild,
-    input  logic        bus_ready,
-    input  logic        bus_busy,
-    output logic        bus_write_enable,
-    output logic [31:0] bus_address,
-    input  logic [31:0] bus_data_read,
-    output logic [31:0] bus_data_write,
-    input  logic        clock,
-    input  logic        reset
+    // bus
+    input  logic        i_bus_vaild,
+    output logic        o_bus_ready,
+    output logic        o_bus_busy,
+    input  logic        i_bus_write_enable,
+    input  logic [31:0] i_bus_address,
+    output logic [31:0] o_bus_data_read,
+    input  logic [31:0] i_bus_data_write,
+    // common
+    input  logic        i_clock, i_reset
 );
 
 // TODO: use BIOS ROM data
-assign bus_data = 32'hABCD_EF01;
-assign bus_busy = 0;
+assign o_bus_ready = 1;
+assign o_bus_data_read = 32'hABCD_EF01;
+assign o_bus_busy = 0;
+assign o_bus_ready = i_bus_vaild;
 // rom u_rom (
 //     // .data    (_connected_to_data_),    //   input,  width = 32,    data.datain
-//     .q       (bus_read_data),       //  output,  width = 32,       q.dataout
+//     .q       (bus_read_data),       //  input,  width = 32,       q.dataout
 //     .address (bus_read_address[7:0]), //   input,  width = 8, address.address
 //     // .wren    (_connected_to_wren_),    //   input,   width = 1,    wren.wren
 //     .clock   (clock)    //   input,   width = 1,   clock.clk
 // );
-
-assign bus_read_ready = bus_read_vaild;
 
 // logic bus_read_vaild_pos_edge;
 // edge_detect edge_detect_inst (
