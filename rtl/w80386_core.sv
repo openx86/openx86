@@ -1,9 +1,13 @@
 module w80386_core (
-    output logic        bus_vaild,
-    input  logic        bus_ready,
-    output logic        bus_write_enable,
-    output logic [31:0] bus_address,
-    input  logic [31:0] bus_data,
+    // bus
+    output logic        o_bus_vaild,
+    input  logic        i_bus_ready,
+    input  logic        i_bus_busy,
+    output logic        o_bus_write_enable,
+    output logic [31:0] o_bus_address,
+    input  logic [31:0] i_bus_data_read,
+    output logic [31:0] o_bus_data_write,
+    // common
     input  logic        clock,
     input  logic        reset
 );
@@ -15,7 +19,7 @@ logic [31:0] write_data;
 logic [31:0] GPR_read__8 [0:7];
 logic [31:0] GPR_read_16 [0:7];
 logic [31:0] GPR_read_32 [0:7];
-general_propose_register general_propose_register_in_core (
+general_propose_register general_propose_register (
     .write_enable ( write_enable ),
     .write_index ( write_index ),
     .write_data ( write_data ),
@@ -32,7 +36,7 @@ logic [15:0] SREG_write_selector;
 logic [63:0] SREG_write_descriptor;
 logic [15:0] segment_selector [0:5];
 logic [63:0] descriptor_cache [0:5];
-segment_register u_segment_register_in_core (
+segment_register core_segment_register (
     .write_enable ( SREG_write_enable ),
     .write_index ( SREG_write_index ),
     .write_selector ( SREG_write_selector ),
@@ -60,7 +64,7 @@ logic        RF;
 logic        VM;
 logic        EFLAGS;
 logic        FLAGS;
-flags_register u_flags_register_in_core (
+flags_register core_flags_register (
     .write_enable ( FLAGS_write_enable ),
     .write_data ( FLAGS_write_data ),
     .CF ( CF ),
@@ -86,7 +90,7 @@ logic        IP_write_enable;
 logic [31:0] IP_write_data;
 logic [15:0] IP;
 logic [31:0] EIP;
-instruction_point_register u_instruction_point_register_in_core (
+instruction_point_register core_instruction_point_register (
     .write_enable ( IP_write_enable ),
     .write_data ( IP_write_data ),
     .IP ( IP ),
@@ -110,7 +114,7 @@ instruction_point_register u_instruction_point_register_in_core (
 // logic [63:0] ES_descriptor;
 // logic [63:0] FS_descriptor;
 // logic [63:0] GS_descriptor;
-// segment_register u_segment_register (
+// segment_register core_segment_register (
 //     .write_enable ( seg_reg_write_enable ),
 //     .write_index ( seg_reg_write_index ),
 //     .write_data ( seg_reg_write_data ),
@@ -141,7 +145,7 @@ logic         TS;
 logic         R;
 logic         PG;
 logic [19: 0] page_directory_base;
-control_register u_control_register_in_core (
+control_register core_control_register (
     .write_enable ( CR_write_enable ),
     .write_index ( CR_write_index ),
     .write_data ( CR_write_data ),
@@ -161,7 +165,7 @@ logic         DR_write_enable;
 logic [ 2: 0] DR_write_index;
 logic [31: 0] DR_write_data;
 logic [31: 0] DR [0:7];
-debug_register u_debug_register_in_core (
+debug_register core_debug_register (
     .write_enable ( DR_write_enable ),
     .write_index ( DR_write_index ),
     .write_data ( DR_write_data ),
@@ -174,7 +178,7 @@ logic         TR_write_enable;
 logic [ 2: 0] TR_write_index;
 logic [31: 0] TR_write_data;
 logic [31: 0] TR [0:7];
-test_register u_test_register_in_core (
+test_register core_test_register (
     .write_enable ( TR_write_enable ),
     .write_index ( TR_write_index ),
     .write_data ( TR_write_data ),
@@ -188,7 +192,7 @@ logic [15:0] GDTR_write_data_limit;
 logic [31:0] GDTR_write_data_base;
 logic [15:0] GDTR_limit;
 logic [31:0] GDTR_base;
-global_descriptor_table_register u_global_descriptor_table_register_in_core (
+global_descriptor_table_register core_global_descriptor_table_register (
     .GDTR_write_enable ( GDTR_write_enable ),
     .GDTR_write_data_limit ( GDTR_write_data_limit ),
     .GDTR_write_data_base ( GDTR_write_data_base ),
@@ -203,7 +207,7 @@ logic [15:0] IDTR_write_data_limit;
 logic [31:0] IDTR_write_data_base;
 logic [15:0] IDTR_limit;
 logic [31:0] IDTR_base;
-interrupt_descriptor_table_register u_interrupt_descriptor_table_register_in_core (
+interrupt_descriptor_table_register core_interrupt_descriptor_table_register (
     .IDTR_write_enable ( IDTR_write_enable ),
     .IDTR_write_data_limit ( IDTR_write_data_limit ),
     .IDTR_write_data_base ( IDTR_write_data_base ),
@@ -211,6 +215,59 @@ interrupt_descriptor_table_register u_interrupt_descriptor_table_register_in_cor
     .IDTR_base ( IDTR_base ),
     .clock ( clock ),
     .reset ( reset )
+);
+
+logic        code_vaild;
+logic        code_ready;
+logic [31:0] code_address;
+logic [31:0] code_data_read;
+logic        data_vaild;
+logic        data_ready;
+logic        data_write_enable;
+logic [31:0] data_address;
+logic [31:0] data_data_read;
+logic [31:0] data_data_write;
+
+bus_interface_unit core_bus_interface_unit (
+    .i_code_vaild ( code_vaild ),
+    .o_code_ready ( code_ready ),
+    .i_code_address ( code_address ),
+    .o_code_data_read ( code_data_read ),
+    .i_data_vaild ( data_vaild ),
+    .o_data_ready ( data_ready ),
+    .i_data_write_enable ( data_write_enable ),
+    .i_data_address ( data_address ),
+    .o_data_data_read ( data_data_read ),
+    .i_data_data_write ( data_data_write ),
+    .o_bus_vaild ( o_bus_vaild ),
+    .i_bus_ready ( i_bus_ready ),
+    .i_bus_busy ( i_bus_busy ),
+    .o_bus_write_enable ( o_bus_write_enable ),
+    .o_bus_address ( o_bus_address ),
+    .i_bus_data_read ( i_bus_data_read ),
+    .o_bus_data_write ( o_bus_data_write ),
+    .i_clock ( clock ),
+    .i_reset ( reset )
+);
+
+logic         IP_vaild;
+logic [ 7: 0] instruction [0:15];
+logic         instruction_ready;
+instruction_fetch core_instruction_fetch (
+    .o_code_vaild ( code_vaild ),
+    .i_code_ready ( code_ready ),
+    .o_code_address ( code_address ),
+    .i_code_data_read ( code_data_read ),
+    .i_IP_vaild ( IP_vaild ),
+    .o_instruction ( instruction[0:15] ),
+    .o_instruction_ready ( instruction_ready ),
+    .EIP ( EIP ),
+    .clock ( clock ),
+    .reset ( reset )
+);
+
+decode core_decode (
+    .i_instruction ( instruction[0:15] )
 );
 
 // logic [31:0] code_base;
@@ -224,7 +281,7 @@ interrupt_descriptor_table_register u_interrupt_descriptor_table_register_in_cor
 // logic        code_date_or_code_segment_executable;
 // logic        code_code_segment_conforming;
 // logic        code_code_segment_readable;
-// segment_descriptor_decode u_code_segment_descriptor_decode (
+// segment_descriptor_decode core_code_segment_descriptor_decode (
 //     .base ( code_base ),
 //     .limit ( code_limit ),
 //     .present ( code_present ),
@@ -243,12 +300,9 @@ interrupt_descriptor_table_register u_interrupt_descriptor_table_register_in_cor
 // logic [ 7:0] instruction [0:15];
 // wire  default_operand_size = 1;
 
-decode core_decode (
-);
-
 // logic        instruction_ready;
 // logic [`info_bit_width_len-1:0] bit_width;
-// fetch u_fetch (
+// fetch core_fetch (
 //     .PE ( PE ),
 //     .IP ( IP ),
 //     .EIP ( EIP ),
@@ -296,7 +350,7 @@ decode core_decode (
 // logic [ 4:0] decode_o_bytes_consumed;
 // logic        decode_o_error;
 //
-// decode decode_in_core (
+// decode decode (
 //     .i_instruction                  ( decode_i_instruction ),
 //     .i_default_operand_size         ( decode_i_default_operand_size ),
 //     .o_prefix_lock_bus              ( decode_o_prefix_lock_bus ),
