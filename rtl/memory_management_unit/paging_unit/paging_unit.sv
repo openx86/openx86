@@ -54,9 +54,9 @@ module paging_unit (
     input  logic         clock, reset
 );
 
-wire  [ 9:0] page_directory_index = i_linear_address[31:22];
-wire  [ 9:0] page_table_index     = i_linear_address[21:12];
-wire  [11:0] page_frame_offset    = i_linear_address[11: 0];
+wire  [ 9: 0] page_directory_index = i_linear_address[31:22];
+wire  [ 9: 0] page_table_index     = i_linear_address[21:12];
+wire  [11: 0] page_frame_offset    = i_linear_address[11: 0];
 
 wire  [31: 0] page_directory_offset = i_page_directory_base + (page_directory_index << 12);
 logic [31: 0] page_table_base;
