@@ -8,7 +8,7 @@ description: segmentation_unit
 */
 
 module segmentation_unit #(
-    read_from_fetch
+    read_from_fetch = 0
 ) (
     input  logic        i_protected_mode, // from CR0.PE (CR[0][0])
     input  logic [15:0] i_segment_selector [6], // from segment register file

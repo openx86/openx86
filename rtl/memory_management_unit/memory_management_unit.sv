@@ -7,7 +7,9 @@ create at: 2022-02-04 23:34:40
 description: memory_management_unit
 */
 
-module memory_management_unit (
+module memory_management_unit #(
+    read_from_fetch = 0
+) (
     // handshake
     input  logic         i_vaild,
     output logic         o_ready,
@@ -31,7 +33,9 @@ logic [31: 0] physical_address;
 logic         paging_vaild;
 logic         paging_ready;
 
-segmentation_unit mmu_segmentation_unit (
+segmentation_unit #(
+    .read_from_fetch ( read_from_fetch )
+) mmu_segmentation_unit (
     .i_protected_mode ( i_protected_mode ),
     .i_segment_selector ( i_segment_selector ),
     .i_current_privilege_level ( i_current_privilege_level ),
@@ -54,9 +58,9 @@ paging_unit mmu_paging_unit (
 
 
 enum logic [1:0] {
-    STATE_WAIT_FOR_PAGING_UNIT_READY = 1,
-    STATE_OUTPUT_LINEAR_ADDRESS = 2,
-    STATE_WAIT_FOR_VAILD = 0
+    STATE_WAIT_FOR_PAGING_UNIT_READY = 2'h1,
+    STATE_OUTPUT_LINEAR_ADDRESS = 2'h2,
+    STATE_WAIT_FOR_VAILD = 2'h0
 } state;
 
 always_ff @(posedge clock or posedge reset) begin
