@@ -42,7 +42,7 @@ module paging_unit (
     // signal
     input  logic [31: 0] i_linear_address,
     input  logic [31: 0] i_page_directory_base,
-    output logic [31: 0] o_page_phycial_address,
+    output logic [31: 0] o_physical_address,
     // signal from bus_interface_unit
     output logic        o_bus_vaild,
     input  logic        i_bus_ready,
