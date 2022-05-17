@@ -65,9 +65,9 @@ logic [31: 0] page_frame_address_offset;
 assign o_physical_address = page_frame_address_offset + page_frame_offset;
 
 enum logic [1:0] {
-    STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY = 1,
-    STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID = 2,
-    STATE_WAIT_FOR_VAILD = 0
+    STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY = 2'h1,
+    STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID = 2'h2,
+    STATE_WAIT_FOR_VAILD = 2'h0
 } state;
 
 always_ff @(posedge clock or posedge reset) begin
