@@ -1,6 +1,4 @@
-module bus_interface_unit #(
-    //
-) (
+module bus_interface_unit (
     // code
     input  logic        i_code_vaild,
     output logic        o_code_ready,
