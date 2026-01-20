@@ -25,29 +25,10 @@ module vga_top (
     input  logic        reset
 );
 
-    // ------------------------------------------------------------------------
-    // 常量与参数（基于 IBM VGA 640x480@60Hz 标准时序）
-    // ------------------------------------------------------------------------
-    // 640x480 @ 60Hz, 像素时钟 25.175MHz，对应的典型时序参数如下：
-    //  - 水平：可见 640, 前沿 16, 同步 96, 后沿 48 → 总计 800
-    //  - 垂直：可见 480, 前沿 10, 同步 2,  后沿 33 → 总计 525
-
-    localparam int H_VISIBLE   = 640;
-    localparam int H_FRONT_POR = 16;
-    localparam int H_SYNC      = 96;
-    localparam int H_BACK_POR  = 48;
-    localparam int H_TOTAL     = H_VISIBLE + H_FRONT_POR + H_SYNC + H_BACK_POR; // 800
-
-    localparam int V_VISIBLE   = 480;
-    localparam int V_FRONT_POR = 10;
-    localparam int V_SYNC      = 2;
-    localparam int V_BACK_POR  = 33;
-    localparam int V_TOTAL     = V_VISIBLE + V_FRONT_POR + V_SYNC + V_BACK_POR; // 525
-
     // VGA VRAM 容量：307 KB = 314,368 字节
     localparam int VRAM_SIZE_BYTES = 640 * 480;  // 307,200 字节
     localparam int VRAM_ADDR_WIDTH = 8;          // 地址宽度
-    localparam int VRAM_DEPTH      = VRAM_SIZE_BYTES;  // 实际深度：314,368
+    localparam int VRAM_DEPTH      = VRAM_SIZE_BYTES;  // 实际深度：307,200
 
     // 简化的 I/O 端口定义（参考 IBM VGA 端口，但只实现子集）
     // 我们实现几个常用寄存器示意：
@@ -62,10 +43,10 @@ module vga_top (
     logic [7:0] misc_out_reg;
 
     // ------------------------------------------------------------------------
-    // VRAM：使用双口RAM，CPU 写入（端口A）+ VGA 读出（端口B）
+    // VRAM：使用读写信号分离的RAM，CPU 写入 + VGA 读取
     // ------------------------------------------------------------------------
 
-    // VGA 读 VRAM 使用的线性帧地址
+    // VGA 读 VRAM 接口（连接到 vga_port）
     logic [VRAM_ADDR_WIDTH-1:0] vram_rd_addr;
     logic [7:0]                 vram_rd_data;
 
@@ -75,136 +56,40 @@ module vga_top (
     // 地址截断逻辑
     assign vram_wr_addr = mem_addr[VRAM_ADDR_WIDTH-1:0];
 
-    // 双口RAM实例：端口A用于CPU写，端口B用于VGA读
-    dual_port_ram #(
+    // 简单双口RAM实例：写端口给CPU，读端口给VGA
+    simple_dual_port_ram #(
         .DATA_WIDTH ( 8                ),
         .ADDR_WIDTH ( VRAM_ADDR_WIDTH  ),
         .DEPTH      ( VRAM_DEPTH       )
     ) vram_inst (
-        .clock  ( clock           ),
-        .reset  ( reset           ),
-        // 端口A：CPU写
-        .wea    ( mem_en_w        ),
-        .addra  ( vram_wr_addr    ),
-        .wdataa ( mem_data_w      ),
-        .rdataa (                 ),  // CPU暂不读VRAM
-        // 端口B：VGA读
-        .web    ( 1'b0            ),  // VGA只读不写
-        .addrb  ( vram_rd_addr   ),
-        .wdatab ( 8'h0           ),  // 不使用
-        .rdatab ( vram_rd_data   )
+        // 写端口（CPU）
+        .we    ( mem_en_w        ),
+        .waddr ( vram_wr_addr    ),
+        .wdata ( mem_data_w      ),
+        // 读端口（VGA）
+        .re    ( 1'b1            ),  // VGA 持续读取
+        .raddr ( vram_rd_addr    ),
+        .rdata ( vram_rd_data    ),
+        // 时钟与复位
+        .clock ( clock           ),
+        .reset ( reset           )
     );
 
     // ------------------------------------------------------------------------
-    // VGA 时序发生器（640x480@60Hz）
+    // VGA 端口：读取VRAM并输出VGA信号
     // ------------------------------------------------------------------------
 
-    logic [$clog2(H_TOTAL)-1:0] h_count;
-    logic [$clog2(V_TOTAL)-1:0] v_count;
-
-    logic h_visible;
-    logic v_visible;
-    logic video_active;
-
-    // 像素/行/帧计数
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
-            h_count <= '0;
-            v_count <= '0;
-        end else begin
-            if (h_count == H_TOTAL - 1) begin
-                h_count <= '0;
-                if (v_count == V_TOTAL - 1) begin
-                    v_count <= '0;
-                end else begin
-                    v_count <= v_count + 1;
-                end
-            end else begin
-                h_count <= h_count + 1;
-            end
-        end
-    end
-
-    // 可见区域
-    assign h_visible    = (h_count < H_VISIBLE);
-    assign v_visible    = (v_count < V_VISIBLE);
-    assign video_active = h_visible && v_visible;
-
-    // 同步信号（VGA 标准为负极性）
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
-            vga_hsync <= 1'b1;
-            vga_vsync <= 1'b1;
-        end else begin
-            // HSYNC：在可见区之后，前沿 + 同步 + 后沿 中的同步区为 0
-            if (h_count >= (H_VISIBLE + H_FRONT_POR) &&
-                h_count <  (H_VISIBLE + H_FRONT_POR + H_SYNC)) begin
-                vga_hsync <= 1'b0;
-            end else begin
-                vga_hsync <= 1'b1;
-            end
-
-            // VSYNC：在可见区之后，前沿 + 同步 + 后沿 中的同步区为 0
-            if (v_count >= (V_VISIBLE + V_FRONT_POR) &&
-                v_count <  (V_VISIBLE + V_FRONT_POR + V_SYNC)) begin
-                vga_vsync <= 1'b0;
-            end else begin
-                vga_vsync <= 1'b1;
-            end
-        end
-    end
-
-    // ------------------------------------------------------------------------
-    // 帧缓冲读地址生成（线性、逐像素递增）
-    // ------------------------------------------------------------------------
-
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
-            vram_rd_addr <= '0;
-        end else begin
-            if (video_active) begin
-                // 在整个可见区域内，线性递增地址
-                if (h_count == 0 && v_count == 0) begin
-                    vram_rd_addr <= '0;
-                end else begin
-                    vram_rd_addr <= vram_rd_addr + 1'b1;
-                end
-            end else if (h_count == 0 && v_count == 0) begin
-                // 每帧开始时重置
-                vram_rd_addr <= '0;
-            end
-        end
-    end
-
-    // VRAM 读：由双口RAM模块在时钟上升沿后输出，这里不需要额外逻辑
-    // vram_rd_data 直接从 dual_port_ram 的 rdatab 端口输出
-
-    // ------------------------------------------------------------------------
-    // 简化的调色板 / 像素格式
-    // ------------------------------------------------------------------------
-    // 这里假设 VRAM 中每个字节为 8bit 直接颜色：RRRGGGBB
-    //   - R: [7:5]
-    //   - G: [4:2]
-    //   - B: [1:0]
-    // 对应扩展到 4bit VGA R/G/B 输出。
-
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
-            vga_r <= 4'h0;
-            vga_g <= 4'h0;
-            vga_b <= 4'h0;
-        end else begin
-            if (video_active) begin
-                vga_r <= {vram_rd_data[7:5], 1'b0};
-                vga_g <= {vram_rd_data[4:2], 1'b0};
-                vga_b <= {vram_rd_data[1:0], vram_rd_data[1:0]};
-            end else begin
-                vga_r <= 4'h0;
-                vga_g <= 4'h0;
-                vga_b <= 4'h0;
-            end
-        end
-    end
+    vga_port vga_port_inst (
+        .vram_rd_addr ( vram_rd_addr ),
+        .vram_rd_data ( vram_rd_data ),
+        .vga_hsync    ( vga_hsync    ),
+        .vga_vsync    ( vga_vsync    ),
+        .vga_r        ( vga_r        ),
+        .vga_g        ( vga_g        ),
+        .vga_b        ( vga_b        ),
+        .clock        ( clock        ),
+        .reset        ( reset        )
+    );
 
     // ------------------------------------------------------------------------
     // CPU I/O 端口访问（简化版 VGA 寄存器）
