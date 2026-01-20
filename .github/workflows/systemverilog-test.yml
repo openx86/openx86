@@ -1,0 +1,48 @@
+name: SystemVerilog Tests
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  test:
+    name: Run SystemVerilog Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install iverilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          
+      - name: Verify iverilog installation
+        run: |
+          iverilog -v
+          vvp -v
+          
+      - name: Check syntax (all SystemVerilog and Verilog files)
+        run: |
+          chmod +x check_syntax.sh
+          ./check_syntax.sh
+          
+      - name: Run all testbenches
+        run: |
+          chmod +x test_all_modules.sh
+          ./test_all_modules.sh
+          
+      - name: Upload test logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: |
+            *_compile.log
+            *_run.log
+          retention-days: 7
