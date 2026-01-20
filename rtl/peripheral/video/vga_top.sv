@@ -38,9 +38,18 @@ module vga_top (
 
     localparam logic [15:0] PORT_MISC_OUT  = 16'h03C2;
     localparam logic [15:0] PORT_STATUS1   = 16'h03DA;
+    localparam logic [15:0] PORT_MODE_REG  = 16'h03C0;  // 模式选择寄存器（简化）
+
+    // 模式定义
+    localparam logic [1:0] MODE_GRAPHICS = 2'b00;  // 图形模式
+    localparam logic [1:0] MODE_TEXT_COLOR = 2'b01;  // 彩色文本模式
+    localparam logic [1:0] MODE_TEXT_INTENSE = 2'b10;  // 淡色文本模式
 
     // MISC 输出寄存器
     logic [7:0] misc_out_reg;
+    
+    // 模式选择寄存器
+    logic [1:0] vga_mode;
 
     // ------------------------------------------------------------------------
     // VRAM：使用读写信号分离的RAM，CPU 写入 + VGA 读取
@@ -76,20 +85,155 @@ module vga_top (
     );
 
     // ------------------------------------------------------------------------
-    // VGA 端口：读取VRAM并输出VGA信号
+    // VGA 时序生成（共享）
     // ------------------------------------------------------------------------
-
+    
+    // 时序信号（从 vga_port 或文本模式模块获取）
+    logic [$clog2(800)-1:0] h_count;
+    logic [$clog2(525)-1:0] v_count;
+    logic video_active;
+    
+    // 图形模式输出
+    logic [3:0] vga_r_graphics;
+    logic [3:0] vga_g_graphics;
+    logic [3:0] vga_b_graphics;
+    
+    // 文本模式输出
+    logic [3:0] vga_r_text;
+    logic [3:0] vga_g_text;
+    logic [3:0] vga_b_text;
+    
+    // 文本模式 VRAM 接口
+    logic [12:0] text_vram_addr;
+    logic [7:0]  text_vram_char_data;
+    logic [7:0]  text_vram_attr_data;
+    
+    // 文本模式 VRAM 地址映射（文本模式使用 VRAM 的前 4000 字节）
+    logic [VRAM_ADDR_WIDTH-1:0] text_vram_rd_addr_char;
+    logic [VRAM_ADDR_WIDTH-1:0] text_vram_rd_addr_attr;
+    
+    // 文本模式 VRAM 读取地址选择
+    assign text_vram_rd_addr_char = text_vram_addr[12:1];  // 字符码地址（偶数地址）
+    assign text_vram_rd_addr_attr = text_vram_addr[12:1] + 1;  // 属性地址（奇数地址）
+    
+    // 文本模式 VRAM 数据（需要两次读取，使用流水线）
+    logic [7:0] text_vram_char_data_reg;
+    logic [7:0] text_vram_attr_data_reg;
+    
+    // 文本模式 VRAM 读取流水线
+    always_ff @(posedge clock) begin
+        if (vga_mode != MODE_GRAPHICS) begin
+            // 第一级：读取字符码
+            if (text_vram_rd_addr_char < 4000) begin
+                text_vram_char_data_reg <= vram_rd_data;
+            end
+            // 第二级：读取属性（延迟一个时钟周期）
+            if (text_vram_rd_addr_attr < 4000) begin
+                text_vram_attr_data_reg <= vram_rd_data;
+            end
+        end
+    end
+    
+    assign text_vram_char_data = text_vram_char_data_reg;
+    assign text_vram_attr_data = text_vram_attr_data_reg;
+    
+    // 字符生成器接口
+    logic [7:0] font_char_code;
+    logic [3:0] font_row_index;
+    logic [7:0] font_data;
+    
+    // VGA 端口（图形模式）
     vga_port vga_port_inst (
         .vram_rd_addr ( vram_rd_addr ),
         .vram_rd_data ( vram_rd_data ),
         .vga_hsync    ( vga_hsync    ),
         .vga_vsync    ( vga_vsync    ),
-        .vga_r        ( vga_r        ),
-        .vga_g        ( vga_g        ),
-        .vga_b        ( vga_b        ),
-        .clock        ( clock        ),
-        .reset        ( reset        )
+        .vga_r        ( vga_r_graphics ),
+        .vga_g        ( vga_g_graphics ),
+        .vga_b        ( vga_b_graphics ),
+        .h_count      ( h_count       ),
+        .v_count      ( v_count       ),
+        .video_active ( video_active  ),
+        .clock        ( clock         ),
+        .reset        ( reset         )
     );
+    
+    // 字符生成器
+    vga_font_rom font_rom_inst (
+        .char_code  ( font_char_code ),
+        .row_index  ( font_row_index ),
+        .font_data  ( font_data       )
+    );
+    
+    // 文本模式模块（根据模式选择）
+    logic [3:0] vga_r_text_color;
+    logic [3:0] vga_g_text_color;
+    logic [3:0] vga_b_text_color;
+    logic [3:0] vga_r_text_intense;
+    logic [3:0] vga_g_text_intense;
+    logic [3:0] vga_b_text_intense;
+    
+    // 彩色文本模式
+    vga_text_color text_color_inst (
+        .vram_rd_addr  ( text_vram_addr      ),
+        .vram_char_data( text_vram_char_data ),
+        .vram_attr_data( text_vram_attr_data ),
+        .font_char_code( font_char_code      ),
+        .font_row_index( font_row_index      ),
+        .font_data    ( font_data            ),
+        .vga_r        ( vga_r_text_color     ),
+        .vga_g        ( vga_g_text_color     ),
+        .vga_b        ( vga_b_text_color     ),
+        .h_count      ( h_count              ),
+        .v_count      ( v_count              ),
+        .video_active ( video_active         ),
+        .clock        ( clock                ),
+        .reset        ( reset                )
+    );
+    
+    // 淡色文本模式
+    vga_text_intense text_intense_inst (
+        .vram_rd_addr  ( text_vram_addr      ),
+        .vram_char_data( text_vram_char_data ),
+        .vram_attr_data( text_vram_attr_data ),
+        .font_char_code( font_char_code      ),
+        .font_row_index( font_row_index      ),
+        .font_data    ( font_data            ),
+        .vga_r        ( vga_r_text_intense   ),
+        .vga_g        ( vga_g_text_intense   ),
+        .vga_b        ( vga_b_text_intense   ),
+        .h_count      ( h_count              ),
+        .v_count      ( v_count              ),
+        .video_active ( video_active         ),
+        .clock        ( clock                ),
+        .reset        ( reset                )
+    );
+    
+    // 模式选择输出
+    always_comb begin
+        unique case (vga_mode)
+            MODE_GRAPHICS: begin
+                vga_r = vga_r_graphics;
+                vga_g = vga_g_graphics;
+                vga_b = vga_b_graphics;
+            end
+            MODE_TEXT_COLOR: begin
+                vga_r = vga_r_text_color;
+                vga_g = vga_g_text_color;
+                vga_b = vga_b_text_color;
+            end
+            MODE_TEXT_INTENSE: begin
+                vga_r = vga_r_text_intense;
+                vga_g = vga_g_text_intense;
+                vga_b = vga_b_text_intense;
+            end
+            default: begin
+                vga_r = vga_r_graphics;
+                vga_g = vga_g_graphics;
+                vga_b = vga_b_graphics;
+            end
+        endcase
+    end
 
     // ------------------------------------------------------------------------
     // CPU I/O 端口访问（简化版 VGA 寄存器）
@@ -98,11 +242,16 @@ module vga_top (
     always_ff @(posedge clock or posedge reset) begin
         if (reset) begin
             misc_out_reg <= 8'h01; // 默认启用显示、选择合适极性等（具体含义参考 VGA 标准）
+            vga_mode <= MODE_GRAPHICS; // 默认图形模式
         end else begin
             if (io_en_w) begin
                 unique case (io_addr)
                     PORT_MISC_OUT: begin
                         misc_out_reg <= io_data_w;
+                    end
+                    PORT_MODE_REG: begin
+                        // 模式选择寄存器：bit[1:0] 选择模式
+                        vga_mode <= io_data_w[1:0];
                     end
                     default: begin
                         // 其他端口尚未实现

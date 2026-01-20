@@ -10,6 +10,11 @@ module vga_port (
     output logic [3:0]              vga_g,
     output logic [3:0]              vga_b,
     
+    // 时序输出（供其他模块使用）
+    output logic [$clog2(800)-1:0] h_count,
+    output logic [$clog2(525)-1:0] v_count,
+    output logic                    video_active,
+    
     // 时钟和复位（放在末尾）
     input  logic                    clock,
     input  logic                    reset
@@ -38,12 +43,10 @@ module vga_port (
     // VGA 时序发生器（640x480@60Hz）
     // ------------------------------------------------------------------------
 
-    logic [$clog2(H_TOTAL)-1:0] h_count;
-    logic [$clog2(V_TOTAL)-1:0] v_count;
+    // h_count 和 v_count 现在是输出端口
 
     logic h_visible;
     logic v_visible;
-    logic video_active;
 
     // 像素/行/帧计数
     always_ff @(posedge clock or posedge reset) begin
