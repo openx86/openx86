@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-`include "rtl/definition.h"
+`include "rtl/definition.h.sv"
 
 module decode_disp_imm_tb;
 

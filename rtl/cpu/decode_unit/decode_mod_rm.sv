@@ -55,7 +55,7 @@ of all 16-bit addressing modes and 32-bit
 addressing modes.
 */
 
-`include "rtl/definition.h"
+`include "rtl/definition.h.sv"
 
 module decode_mod_rm (
     // ports

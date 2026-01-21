@@ -7,7 +7,7 @@ create at: 2022-02-20 09:24:27
 description: decode prefix from instruction
 */
 
-`include "rtl/definition.h"
+`include "rtl/definition.h.sv"
 module decode_prefix (
     input  logic [ 7:0] i_instruction,
     output logic        o_group_1_lock_bus,

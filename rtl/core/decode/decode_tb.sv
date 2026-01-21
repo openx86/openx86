@@ -6,7 +6,7 @@
 // description: test decode module
 
 `timescale 1ns/1ns
-`include "rtl/definition.h"
+`include "rtl/definition.h.sv"
 module decode_tb #(
     // parameters
 ) (

@@ -7,7 +7,7 @@ create at: 2022-02-25 02:54:27
 description: decode fileds include w, s, reg, mod_r/m, imm, disp
 */
 
-`include "rtl/definition.h"
+`include "rtl/definition.h.sv"
 
 module decode_field (
     input  logic [ 7:0] i_instruction [0:3],

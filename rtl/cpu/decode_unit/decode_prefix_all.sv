@@ -48,7 +48,7 @@ This 2002 Hot Chips presentation by AMD expands the acronym on slide 10: "REX (R
 Kevin McGrath and Dave Christie, "The AMD x86-64 Architecture: Extending the x86 to 64 bits", Hot Chips 14, August 2002.
 */
 
-`include "rtl/definition.h"
+`include "rtl/definition.h.sv"
 module decode_prefix_all (
     input  logic [ 7:0] i_instruction [0:3],
     output logic        o_group_1_lock_bus,

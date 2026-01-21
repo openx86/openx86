@@ -7,7 +7,7 @@ create at: 2022-01-04 03:27:51
 description: decode unit module
 */
 
-`include "rtl/definition.h"
+`include "rtl/definition.h.sv"
 
 module decode (
     input  logic [ 7:0] i_instruction [0:15],

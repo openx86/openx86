@@ -12,7 +12,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 6.2.3.4 ENCODING OF ADDRESS MODE
 */
 
-`include "rtl/definition.h"
+`include "rtl/definition.h.sv"
 
 module decode_sib (
     input  logic [ 7:0] i_sib,
