@@ -5,7 +5,7 @@
 // create at: 2021-12-28 15:31:24
 // description: instruction fetch module
 
-`include "D:/GitHub/openx86/w80386dx/rtl/definition.h"
+`include "rtl/definition.h"
 module instruction_fetch (
     // signal from bus_interface_unit
     output logic        o_code_vaild,

@@ -894,7 +894,7 @@ decode_sib deocde_decode_sib (
     .o_displacement_size_4 ( sib_o_displacement_size_4 ),
     .o_effecitve_address_undefined ( sib_o_effecitve_address_undefined )
 );
-logic [ 3:0] offset_disp_imm, offset_disp_imm_end;
+logic [ 3:0] offset_disp_imm;
 always_comb begin
     if (field_o_mod_rm_is_present) begin
         if (mod_rm_o_sib_is_present) begin
@@ -905,7 +905,6 @@ always_comb begin
     end else begin
         offset_disp_imm <= offset_mod_rm + 4'h0;
     end
-    offset_disp_imm_end <= offset_disp_imm_end + 4'h8;
 end
 
 logic [ 7:0] disp_imm_i_instruction [0:7];
@@ -964,10 +963,12 @@ assign o_gen_reg_index = field_o_gen_reg_index;
 assign o_seg_reg_index_is_present = field_o_seg_reg_index_is_present;
 assign o_seg_reg_index = field_o_seg_reg_index;
 assign o_segment_reg_index = mod_rm_o_sib_is_present ? sib_o_segment_reg_index : mod_rm_o_segment_reg_index;
-assign o_base_reg_is_present = mod_rm_o_sib_is_present ? sib_o_index_reg_is_present : mod_rm_o_index_reg_is_present;
-assign o_base_reg_index = mod_rm_o_sib_is_present ? sib_o_index_reg_index : mod_rm_o_index_reg_index;
-assign o_index_reg_is_present = mod_rm_o_sib_is_present ? sib_o_base_reg_is_present : mod_rm_o_base_reg_is_present;
-assign o_index_reg_index = mod_rm_o_sib_is_present ? sib_o_base_reg_index : mod_rm_o_base_reg_index;
+// When SIB is present, base comes from SIB.base and index from SIB.index.
+// Without SIB, base/index come directly from decode_mod_rm.
+assign o_base_reg_is_present  = mod_rm_o_sib_is_present ? sib_o_base_reg_is_present  : mod_rm_o_base_reg_is_present;
+assign o_base_reg_index       = mod_rm_o_sib_is_present ? sib_o_base_reg_index       : mod_rm_o_base_reg_index;
+assign o_index_reg_is_present = mod_rm_o_sib_is_present ? sib_o_index_reg_is_present : mod_rm_o_index_reg_is_present;
+assign o_index_reg_index      = mod_rm_o_sib_is_present ? sib_o_index_reg_index      : mod_rm_o_index_reg_index;
 assign o_gen_reg_is_present_from_mod_rm = mod_rm_o_gen_reg_is_present;
 assign o_gen_reg_index_from_mod_rm = mod_rm_o_gen_reg_index;
 assign o_gen_reg_bit_width_from_mod_rm = mod_rm_o_gen_reg_bit_width;

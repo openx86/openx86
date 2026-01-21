@@ -112,10 +112,12 @@ wire mod_01_SS_16_bit = mod_01 & (rm_010 | rm_011 | rm_110);
 wire mod_10_SS_16_bit = mod_10 & (rm_010 | rm_011 | rm_110);
 
 wire mod_00_DS_32_bit = mod_00;
-wire mod_01_DS_32_bit = mod_01 & ~rm_101;
-wire mod_10_DS_32_bit = mod_01 & ~rm_101;
+// In 32-bit addressing, default segment is DS except when base register is ESP/EBP,
+// where SS is used. For mod=01/10, r/m=100 (ESP) or 101 (EBP) use SS.
+wire mod_01_DS_32_bit = mod_01 & ~(rm_100 | rm_101);
+wire mod_10_DS_32_bit = mod_10 & ~(rm_100 | rm_101);
 
-wire mod_00_SS_32_bit = mod_00;
+wire mod_00_SS_32_bit = mod_00 &   1'b0;
 wire mod_01_SS_32_bit = mod_01 & rm_101;
 wire mod_10_SS_32_bit = mod_01 & rm_101;
 
