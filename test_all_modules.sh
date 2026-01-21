@@ -87,6 +87,29 @@ get_dependencies() {
         deps="$deps $RTL_DIR/common/simple_dual_port_ram.sv"
     fi
     
+    # 添加decode相关模块的依赖
+    if grep -q "decode_opcode_x86" "$module_file"; then
+        deps="$deps $RTL_DIR/core/decode/decode_opcode_x86.sv"
+    fi
+    if grep -q "decode_mod_rm" "$module_file"; then
+        deps="$deps $RTL_DIR/core/decode/decode_mod_rm.sv"
+    fi
+    if grep -q "decode_sib" "$module_file"; then
+        deps="$deps $RTL_DIR/core/decode/decode_sib.sv"
+    fi
+    if grep -q "decode_disp_imm" "$module_file"; then
+        deps="$deps $RTL_DIR/core/decode/decode_disp_imm.sv"
+    fi
+    if grep -q "decode_prefix" "$module_file"; then
+        deps="$deps $RTL_DIR/core/decode/decode_prefix.sv"
+    fi
+    if grep -q "decode_prefix_all" "$module_file"; then
+        deps="$deps $RTL_DIR/core/decode/decode_prefix_all.sv"
+    fi
+    if grep -q "decode_field" "$module_file"; then
+        deps="$deps $RTL_DIR/core/decode/decode_field.sv"
+    fi
+    
     echo "$deps"
 }
 
@@ -116,32 +139,51 @@ run_test() {
             compile_cmd="$compile_cmd $deps"
         fi
         
+        # 自动查找并添加对应的模块文件（如果testbench名称匹配）
+        local module_file=$(echo "$testbench" | sed 's/_tb\.sv$/.sv/')
+        if [ -f "$module_file" ] && [ "$module_file" != "$testbench" ]; then
+            compile_cmd="$compile_cmd $module_file"
+        fi
+        
         # 添加include路径
         compile_cmd="$compile_cmd -I$RTL_DIR"
         
         # 编译
         if eval "$compile_cmd" 2>&1 | tee "${module_name}_compile.log"; then
+            # 检查编译日志中是否有错误
+            if grep -qiE "error|Error|ERROR" "${module_name}_compile.log"; then
+                echo -e "${RED}编译失败: $module_name (发现编译错误)${NC}"
+                cat "${module_name}_compile.log" | tail -20
+                FAILED=$((FAILED + 1))
+                return 1
+            fi
+            
             # 运行仿真
             if vvp "${module_name}_sim" 2>&1 | tee "${module_name}_run.log"; then
-                # 检查是否有错误
-                if grep -qi "错误\|ERROR\|error" "${module_name}_run.log"; then
-                    echo -e "${RED}测试失败: $module_name${NC}"
+                # 检查是否有错误（包括中文和英文错误信息）
+                if grep -qiE "错误|ERROR|error|FAIL|失败" "${module_name}_run.log"; then
+                    echo -e "${RED}测试失败: $module_name (发现运行时错误)${NC}"
+                    cat "${module_name}_run.log" | grep -iE "错误|ERROR|error|FAIL|失败" | head -10
                     FAILED=$((FAILED + 1))
                     return 1
                 else
                     echo -e "${GREEN}测试通过: $module_name${NC}"
                     PASSED=$((PASSED + 1))
-                    # 清理临时文件
+                    # 清理临时文件（仅在成功时）
                     rm -f "${module_name}_sim" "${module_name}_compile.log" "${module_name}_run.log"
                     return 0
                 fi
             else
-                echo -e "${RED}仿真运行失败: $module_name${NC}"
+                echo -e "${RED}仿真运行失败: $module_name (vvp返回非零退出码)${NC}"
+                cat "${module_name}_run.log" | tail -20
                 FAILED=$((FAILED + 1))
                 return 1
             fi
         else
-            echo -e "${RED}编译失败: $module_name${NC}"
+            echo -e "${RED}编译失败: $module_name (iverilog返回非零退出码)${NC}"
+            if [ -f "${module_name}_compile.log" ]; then
+                cat "${module_name}_compile.log" | tail -20
+            fi
             FAILED=$((FAILED + 1))
             return 1
         fi
@@ -200,9 +242,13 @@ fi
 # 运行所有testbench
 for tb in $testbenches; do
     if [ -f "$tb" ]; then
-        run_test "$tb"
+        if ! run_test "$tb"; then
+            # 测试失败，但继续运行其他测试
+            echo -e "${YELLOW}继续运行其他测试...${NC}"
+        fi
     else
         echo -e "${RED}警告: 未找到 $tb${NC}"
+        FAILED=$((FAILED + 1))
     fi
 done
 

@@ -4,14 +4,19 @@ on:
   push:
     branches:
       - develop
+      - main
+      - master
   pull_request:
     branches:
       - develop
+      - main
+      - master
 
 jobs:
   test:
     name: Run SystemVerilog Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
       - name: Checkout code
@@ -26,16 +31,35 @@ jobs:
         run: |
           which iverilog
           which vvp
+          iverilog -V
+          vvp -v
+          
+      - name: List all testbenches
+        run: |
+          echo "查找所有testbench文件:"
+          find rtl -name "*_tb.sv" -type f | sort
+          echo ""
+          echo "testbench总数: $(find rtl -name "*_tb.sv" -type f | wc -l)"
           
       - name: Check syntax (all SystemVerilog and Verilog files)
+        continue-on-error: false
         run: |
           chmod +x check_syntax.sh
-          ./check_syntax.sh
+          ./check_syntax.sh || {
+            echo "语法检查失败！"
+            exit 1
+          }
           
       - name: Run all testbenches
+        continue-on-error: false
         run: |
           chmod +x test_all_modules.sh
-          ./test_all_modules.sh
+          ./test_all_modules.sh || {
+            echo "测试失败！"
+            echo "失败的测试日志:"
+            ls -la *_compile.log *_run.log 2>/dev/null || true
+            exit 1
+          }
           
       - name: Upload test logs (on failure)
         if: failure()
@@ -46,3 +70,14 @@ jobs:
             *_compile.log
             *_run.log
           retention-days: 7
+          
+      - name: Upload test logs (on success)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-success
+          path: |
+            *_compile.log
+            *_run.log
+          retention-days: 1
+          if-no-files-found: ignore
