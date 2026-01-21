@@ -37,9 +37,30 @@ module general_propose_register (
     input  logic        write_enable,
     input  logic [ 2:0] write_index,
     input  logic [31:0] write_data,
-    output logic [31:0] read__8 [0:7],
-    output logic [31:0] read_16 [0:7],
-    output logic [31:0] read_32 [0:7],
+    output logic [ 7:0]  AL,
+    output logic [ 7:0]  BL,
+    output logic [ 7:0]  CL,
+    output logic [ 7:0]  DL,
+    output logic [ 7:0]  AH,
+    output logic [ 7:0]  BH,
+    output logic [ 7:0]  CH,
+    output logic [ 7:0]  DH,
+    output logic [31:0]  AX,
+    output logic [31:0]  CX,
+    output logic [31:0]  DX,
+    output logic [31:0]  BX,
+    output logic [31:0]  SP,
+    output logic [15:0]  BP,
+    output logic [15:0]  SI,
+    output logic [15:0]  DI,
+    output logic [31:0] EAX,
+    output logic [31:0] ECX,
+    output logic [31:0] EDX,
+    output logic [31:0] EBX,
+    output logic [31:0] ESP,
+    output logic [31:0] EBP,
+    output logic [31:0] ESI,
+    output logic [31:0] EDI,
     input  logic        clock, reset
 );
 
@@ -66,54 +87,29 @@ always_ff @( posedge clock or posedge reset ) begin : ff_basic_register
 end
 
 // below signal is generated for debug
-wire [ 7:0]  AL  = general_register[0][ 7:0];
-wire [ 7:0]  BL  = general_register[1][ 7:0];
-wire [ 7:0]  CL  = general_register[2][ 7:0];
-wire [ 7:0]  DL  = general_register[3][ 7:0];
-wire [ 7:0]  AH  = general_register[0][15:8];
-wire [ 7:0]  BH  = general_register[1][15:8];
-wire [ 7:0]  CH  = general_register[2][15:8];
-wire [ 7:0]  DH  = general_register[3][15:8];
-wire [31:0]  AX  = general_register[0][31:0];
-wire [31:0]  CX  = general_register[1][31:0];
-wire [31:0]  DX  = general_register[2][31:0];
-wire [31:0]  BX  = general_register[3][31:0];
-wire [31:0]  SP  = general_register[4][15:0];
-wire [15:0]  BP  = general_register[5][15:0];
-wire [15:0]  SI  = general_register[6][15:0];
-wire [15:0]  DI  = general_register[7][15:0];
-wire [31:0] EAX  = general_register[0][31:0];
-wire [31:0] ECX  = general_register[1][31:0];
-wire [31:0] EDX  = general_register[2][31:0];
-wire [31:0] EBX  = general_register[3][31:0];
-wire [31:0] ESP  = general_register[4][31:0];
-wire [31:0] EBP  = general_register[5][31:0];
-wire [31:0] ESI  = general_register[6][31:0];
-wire [31:0] EDI  = general_register[7][31:0];
-
-assign read__8[0] =  AL;
-assign read__8[1] =  BL;
-assign read__8[2] =  CL;
-assign read__8[3] =  DL;
-assign read__8[4] =  AH;
-assign read__8[5] =  BH;
-assign read__8[6] =  CH;
-assign read__8[7] =  DH;
-assign read_16[0] =  AX;
-assign read_16[1] =  CX;
-assign read_16[2] =  DX;
-assign read_16[3] =  BX;
-assign read_16[4] =  SP;
-assign read_16[5] =  BP;
-assign read_16[6] =  SI;
-assign read_16[7] =  DI;
-assign read_32[0] = EAX;
-assign read_32[1] = ECX;
-assign read_32[2] = EDX;
-assign read_32[3] = EBX;
-assign read_32[4] = ESP;
-assign read_32[5] = EBP;
-assign read_32[6] = ESI;
-assign read_32[7] = EDI;
+assign  AL  = general_register[0][ 7:0];
+assign  BL  = general_register[1][ 7:0];
+assign  CL  = general_register[2][ 7:0];
+assign  DL  = general_register[3][ 7:0];
+assign  AH  = general_register[0][15:8];
+assign  BH  = general_register[1][15:8];
+assign  CH  = general_register[2][15:8];
+assign  DH  = general_register[3][15:8];
+assign  AX  = general_register[0][31:0];
+assign  CX  = general_register[1][31:0];
+assign  DX  = general_register[2][31:0];
+assign  BX  = general_register[3][31:0];
+assign  SP  = general_register[4][15:0];
+assign  BP  = general_register[5][15:0];
+assign  SI  = general_register[6][15:0];
+assign  DI  = general_register[7][15:0];
+assign EAX  = general_register[0][31:0];
+assign ECX  = general_register[1][31:0];
+assign EDX  = general_register[2][31:0];
+assign EBX  = general_register[3][31:0];
+assign ESP  = general_register[4][31:0];
+assign EBP  = general_register[5][31:0];
+assign ESI  = general_register[6][31:0];
+assign EDI  = general_register[7][31:0];
 
 endmodule
