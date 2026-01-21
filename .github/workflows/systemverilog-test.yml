@@ -24,8 +24,8 @@ jobs:
           
       - name: Verify iverilog installation
         run: |
-          where iverilog
-          where vvp
+          which iverilog
+          which vvp
           
       - name: Check syntax (all SystemVerilog and Verilog files)
         run: |
