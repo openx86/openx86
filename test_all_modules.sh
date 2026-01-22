@@ -58,9 +58,6 @@ get_dependencies() {
     if grep -q "single_port_ram" "$module_file"; then
         deps="$deps $RTL_DIR/common/single_port_ram.sv"
     fi
-    if grep -q "common_ram" "$module_file"; then
-        deps="$deps $RTL_DIR/common/common_ram.sv"
-    fi
     if grep -q "edge_detect" "$module_file"; then
         deps="$deps $RTL_DIR/common/edge_detect.sv"
     fi
