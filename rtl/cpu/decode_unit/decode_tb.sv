@@ -7,11 +7,7 @@
 
 `timescale 1ns/1ns
 `include "rtl/definition.h.sv"
-module decode_tb #(
-    // parameters
-) (
-    // ports
-);
+module decode_tb;
 
 logic  [7:0] instruction [0:15];
 // logic        clock, reset;

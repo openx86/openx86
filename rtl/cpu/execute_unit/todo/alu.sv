@@ -1,10 +1,7 @@
-module alu #(
-    // parameters
-) (
-    // port_list
+module alu (
     input  logic [31:0] operation,
     input  logic [31:0] operand[3],
-    output logic [31:0] result,
+    output logic [31:0] result
 );
 
 logic [31:0] result_add = operand[0] + operand[1];

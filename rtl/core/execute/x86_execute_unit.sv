@@ -33,7 +33,7 @@ module x86_execute_unit (
 );
 
     assign o_uop_ready  = 1'b1; // single-cycle execute for now
-    assign o_gpr_rd_en  = i_uop_valid && (i_uop.kind == X86_UOP_ALU_ADD);
+    assign o_gpr_rd_en  = i_uop_valid && (i_uop.kind == `X86_UOP_ALU_ADD);
     assign o_gpr_rd_idx = i_uop.dst_gpr;
 
     always_ff @(posedge i_clock or posedge i_reset) begin
@@ -46,18 +46,18 @@ module x86_execute_unit (
             o_wb_valid <= 1'b0;
 
             if (i_uop_valid) begin
-                unique case (i_uop.kind)
-                    X86_UOP_WRITE_GPR: begin
+                case (i_uop.kind)
+                    `X86_UOP_WRITE_GPR: begin
                         o_wb_valid    <= 1'b1;
                         o_wb_gpr_idx  <= i_uop.dst_gpr;
                         o_wb_gpr_data <= i_uop.src_imm;
                     end
-                    X86_UOP_ALU_ADD: begin
+                    `X86_UOP_ALU_ADD: begin
                         o_wb_valid    <= 1'b1;
                         o_wb_gpr_idx  <= i_uop.dst_gpr;
                         o_wb_gpr_data <= i_gpr_rd_data + i_uop.src_imm;
                     end
-                    X86_UOP_HALT: begin
+                    `X86_UOP_HALT: begin
                         o_halted <= 1'b1;
                     end
                     default: begin

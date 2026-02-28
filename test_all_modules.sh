@@ -106,6 +106,29 @@ get_dependencies() {
     if grep -q "decode_field" "$module_file"; then
         deps="$deps $RTL_DIR/core/decode/decode_field.sv"
     fi
+
+    # x86 core unit dependencies
+    if grep -q "x86_core_top" "$module_file"; then
+        deps="$deps $RTL_DIR/core/register_file/x86_control_regs.sv"
+        deps="$deps $RTL_DIR/core/fetch/x86_fetch_unit.sv"
+        deps="$deps $RTL_DIR/core/decode/x86_decode_unit.sv"
+        deps="$deps $RTL_DIR/core/microcode/x86_microcode_translate.sv"
+        deps="$deps $RTL_DIR/core/register_file/x86_gpr_file.sv"
+        deps="$deps $RTL_DIR/core/execute/x86_execute_unit.sv"
+        deps="$deps $RTL_DIR/core/writeback/x86_writeback_unit.sv"
+    fi
+    if grep -q "x86_execute_unit" "$module_file"; then
+        deps="$deps $RTL_DIR/core/execute/x86_execute_unit.sv"
+    fi
+    if grep -q "x86_microcode_translate" "$module_file"; then
+        deps="$deps $RTL_DIR/core/microcode/x86_microcode_translate.sv"
+    fi
+    if grep -q "x86_fetch_unit" "$module_file"; then
+        deps="$deps $RTL_DIR/core/fetch/x86_fetch_unit.sv"
+    fi
+    if grep -q "x86_writeback_unit" "$module_file"; then
+        deps="$deps $RTL_DIR/core/writeback/x86_writeback_unit.sv"
+    fi
     
     echo "$deps"
 }
@@ -136,10 +159,12 @@ run_test() {
             compile_cmd="$compile_cmd $deps"
         fi
         
-        # 自动查找并添加对应的模块文件（如果testbench名称匹配）
+        # 自动查找并添加对应的模块文件（如果testbench名称匹配且不已在依赖中）
         local module_file=$(echo "$testbench" | sed 's/_tb\.sv$/.sv/')
         if [ -f "$module_file" ] && [ "$module_file" != "$testbench" ]; then
-            compile_cmd="$compile_cmd $module_file"
+            if ! echo "$deps" | grep -qF "$module_file"; then
+                compile_cmd="$compile_cmd $module_file"
+            fi
         fi
         
         # 添加include路径
@@ -155,8 +180,8 @@ run_test() {
                 return 1
             fi
             
-            # 运行仿真
-            if vvp "${module_name}_sim" 2>&1 | tee "${module_name}_run.log"; then
+            # 运行仿真 (超时60秒防止 $stop 挂起)
+            if timeout 60 vvp "${module_name}_sim" 2>&1 | tee "${module_name}_run.log"; then
                 # 检查是否有错误（包括中文和英文错误信息）
                 if grep -qiE "错误|ERROR|error|FAIL|失败" "${module_name}_run.log"; then
                     echo -e "${RED}测试失败: $module_name (发现运行时错误)${NC}"

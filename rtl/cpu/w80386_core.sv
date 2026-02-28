@@ -16,16 +16,10 @@ module w80386_core (
 logic        write_enable;
 logic [ 2:0] write_index;
 logic [31:0] write_data;
-logic [31:0] GPR_read__8 [0:7];
-logic [31:0] GPR_read_16 [0:7];
-logic [31:0] GPR_read_32 [0:7];
 general_propose_register general_propose_register (
     .write_enable ( write_enable ),
     .write_index ( write_index ),
     .write_data ( write_data ),
-    .read__8 ( GPR_read__8 ),
-    .read_16 ( GPR_read_16 ),
-    .read_32 ( GPR_read_32 ),
     .clock ( clock ),
     .reset ( reset )
 );
@@ -48,7 +42,7 @@ segment_register core_segment_register (
 );
 
 logic        FLAGS_write_enable;
-logic        FLAGS_write_data;
+logic [31:0] FLAGS_write_data;
 logic        CF;
 logic        PF;
 logic        AF;
@@ -62,8 +56,8 @@ logic [ 1:0] IOPL;
 logic        NT;
 logic        RF;
 logic        VM;
-logic        EFLAGS;
-logic        FLAGS;
+logic [31:0] EFLAGS;
+logic [15:0] FLAGS;
 flags_register core_flags_register (
     .write_enable ( FLAGS_write_enable ),
     .write_data ( FLAGS_write_data ),
@@ -258,6 +252,9 @@ instruction_fetch core_instruction_fetch (
     .i_code_ready ( code_ready ),
     .o_code_address ( code_address ),
     .i_code_data_read ( code_data_read ),
+    .i_protected_mode ( PE ),
+    .i_segment_selector ( segment_selector ),
+    .i_current_privilege_level ( IOPL ),
     .i_IP_vaild ( IP_vaild ),
     .o_instruction ( instruction[0:15] ),
     .o_instruction_ready ( instruction_ready ),

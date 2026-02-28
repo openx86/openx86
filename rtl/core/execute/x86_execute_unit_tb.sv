@@ -64,16 +64,14 @@ module x86_execute_unit_tb;
         // Test 1: UOP_WRITE_GPR
         $display("\n[测试1] UOP_WRITE_GPR (写立即数到GPR)");
         @(posedge clock);
-        uop.kind = UOP_WRITE_GPR;
+        uop.kind = `UOP_WRITE_GPR;
         uop.dst_gpr = 3'd2; // ECX
         uop.src_imm = 32'hDEAD_BEEF;
         uop.valid = 1'b1;
         uop.last = 1'b1;
         uop_valid = 1'b1;
-        #10;
-        @(posedge clock);
-        uop_valid = 1'b0;
-        #10;
+        @(posedge clock); // FF processes UOP at this edge
+        #1; // short delay for NBA propagation (stay within same clock cycle)
         if (wb_valid !== 1'b1) begin
             $display("  ERROR: 应该产生写回请求!");
             $finish;
@@ -85,26 +83,26 @@ module x86_execute_unit_tb;
             $display("  ERROR: 写回数据不正确!");
             $finish;
         end
+        uop_valid = 1'b0;
         $display("  通过: UOP_WRITE_GPR 执行正确");
 
         // Test 2: UOP_ALU_ADD
         $display("\n[测试2] UOP_ALU_ADD (加法运算)");
         @(posedge clock);
-        uop.kind = X86_UOP_ALU_ADD;
+        uop.kind = `X86_UOP_ALU_ADD;
         uop.dst_gpr = 3'd0; // EAX
         uop.src_imm = 32'h0000_0001;
         uop.valid = 1'b1;
         uop.last = 1'b1;
         uop_valid = 1'b1;
         gpr_rd_data = 32'h0000_1234; // EAX current value
-        #10;
+        #1; // short delay for combinational outputs to settle
         if (gpr_rd_en !== 1'b1 || gpr_rd_idx !== 3'd0) begin
             $display("  ERROR: 应该读取GPR!");
             $finish;
         end
-        @(posedge clock);
-        uop_valid = 1'b0;
-        #10;
+        @(posedge clock); // FF processes UOP at this edge
+        #1; // short delay for NBA propagation
         if (wb_valid !== 1'b1) begin
             $display("  ERROR: 应该产生写回请求!");
             $finish;
@@ -116,42 +114,41 @@ module x86_execute_unit_tb;
             $display("  ERROR: 加法结果不正确!");
             $finish;
         end
+        uop_valid = 1'b0;
         $display("  通过: UOP_ALU_ADD 执行正确");
 
         // Test 3: UOP_ALU_ADD with larger values
         $display("\n[测试3] UOP_ALU_ADD (大数值加法)");
         @(posedge clock);
-        uop.kind = X86_UOP_ALU_ADD;
+        uop.kind = `X86_UOP_ALU_ADD;
         uop.dst_gpr = 3'd1; // ECX
         uop.src_imm = 32'hFFFF_FFFF;
         uop.valid = 1'b1;
         uop.last = 1'b1;
         uop_valid = 1'b1;
         gpr_rd_data = 32'h0000_0001;
-        #10;
-        @(posedge clock);
-        uop_valid = 1'b0;
-        #10;
+        @(posedge clock); // FF processes UOP at this edge
+        #1; // short delay for NBA propagation
         $display("  Writeback data = 0x%08h (期望: 0x00000000, 溢出)", wb_gpr_data);
         if (wb_gpr_data !== 32'h0000_0000) begin
             $display("  ERROR: 加法结果不正确!");
             $finish;
         end
+        uop_valid = 1'b0;
         $display("  通过: UOP_ALU_ADD 溢出处理正确");
 
         // Test 4: UOP_HALT
         $display("\n[测试4] UOP_HALT (停机)");
         @(posedge clock);
-        uop.kind = UOP_HALT;
+        uop.kind = `UOP_HALT;
         uop.dst_gpr = 3'd0;
         uop.src_imm = 32'h0;
         uop.valid = 1'b1;
         uop.last = 1'b1;
         uop_valid = 1'b1;
-        #10;
-        @(posedge clock);
+        @(posedge clock); // FF processes HALT at this edge
         uop_valid = 1'b0;
-        #10;
+        #10; // halted is sticky - can check later
         if (halted !== 1'b1) begin
             $display("  ERROR: 应该设置halted标志!");
             $finish;
@@ -167,13 +164,12 @@ module x86_execute_unit_tb;
         // Test 5: UOP_NONE (no operation)
         $display("\n[测试5] UOP_NONE (无操作)");
         @(posedge clock);
-        uop.kind = X86_UOP_NONE;
+        uop.kind = `X86_UOP_NONE;
         uop.dst_gpr = 3'd0;
         uop.src_imm = 32'h0;
         uop.valid = 1'b1;
         uop.last = 1'b1;
         uop_valid = 1'b1;
-        #10;
         @(posedge clock);
         uop_valid = 1'b0;
         #10;
@@ -187,10 +183,9 @@ module x86_execute_unit_tb;
         // Test 6: Invalid uop (uop_valid = 0)
         $display("\n[测试6] 无效uop（uop_valid=0）");
         @(posedge clock);
-        uop.kind = UOP_WRITE_GPR;
+        uop.kind = `UOP_WRITE_GPR;
         uop.valid = 1'b0;
         uop_valid = 1'b0;
-        #10;
         @(posedge clock);
         #10;
         if (wb_valid !== 1'b0) begin
@@ -202,10 +197,10 @@ module x86_execute_unit_tb;
         // Test 7: Verify uop_ready is always 1
         $display("\n[测试7] 验证uop_ready始终为1");
         @(posedge clock);
-        uop.kind = UOP_WRITE_GPR;
+        uop.kind = `UOP_WRITE_GPR;
         uop.valid = 1'b1;
         uop_valid = 1'b1;
-        #10;
+        #1;
         if (uop_ready !== 1'b1) begin
             $display("  ERROR: uop_ready应该始终为1!");
             $finish;

@@ -8,6 +8,6 @@ module execute_shift_left #(
     output logic [BIT_WIDTH-1:0] result
 );
 
-assign result = {operand[BIT_WIDTH-count-1:count], count'b0};
+assign result = operand << count;
 
 endmodule

@@ -52,25 +52,30 @@ module x86_core_top_tb;
     // We'll model read as single-cycle ready.
     logic [7:0] rom [0:65535]; // 64KB at 0xF0000..0xFFFFF
 
+    // ROM initialisation (variables at module scope for iverilog compatibility)
+    integer rom_base;
+    integer rom_i;
+
     initial begin
-        for (int i = 0; i < 65536; i++) rom[i] = 8'h90; // NOP fill
+        for (rom_i = 0; rom_i < 65536; rom_i = rom_i + 1)
+            rom[rom_i] = 8'h90; // NOP fill
 
         // reset vector offset within 0xF0000 segment: 0xFFF0
-        int base = 16'hFFF0;
+        rom_base = 16'hFFF0;
         // mov eax,0x1234
-        rom[base + 0] = 8'hB8;
-        rom[base + 1] = 8'h34;
-        rom[base + 2] = 8'h12;
-        rom[base + 3] = 8'h00;
-        rom[base + 4] = 8'h00;
+        rom[rom_base + 0] = 8'hB8;
+        rom[rom_base + 1] = 8'h34;
+        rom[rom_base + 2] = 8'h12;
+        rom[rom_base + 3] = 8'h00;
+        rom[rom_base + 4] = 8'h00;
         // add eax,1
-        rom[base + 5] = 8'h05;
-        rom[base + 6] = 8'h01;
-        rom[base + 7] = 8'h00;
-        rom[base + 8] = 8'h00;
-        rom[base + 9] = 8'h00;
+        rom[rom_base + 5] = 8'h05;
+        rom[rom_base + 6] = 8'h01;
+        rom[rom_base + 7] = 8'h00;
+        rom[rom_base + 8] = 8'h00;
+        rom[rom_base + 9] = 8'h00;
         // hlt
-        rom[base + 10] = 8'hF4;
+        rom[rom_base + 10] = 8'hF4;
     end
 
     // bus model: only supports memory reads, always ready when valid
@@ -79,18 +84,26 @@ module x86_core_top_tb;
         bus_ready = bus_valid && !bus_we && !bus_io;
     end
 
+    // ROM address decode helper
+    logic [15:0] bus_offset;
+    assign bus_offset = bus_addr[15:0];
+
     always_comb begin
         bus_rdata = 32'hFFFF_FFFF;
         if (bus_valid && !bus_we && !bus_io) begin
             if (bus_addr >= 32'h000F_0000 && bus_addr <= 32'h000F_FFFF) begin
-                int o = bus_addr[15:0];
-                // return dword with [31:24]=byte0 as fetch expects
-                bus_rdata = {rom[o+0], rom[o+1], rom[o+2], rom[o+3]};
+                // return dword with byte[0] in [31:24] as fetch unit expects
+                bus_rdata = {rom[bus_offset+0], rom[bus_offset+1],
+                             rom[bus_offset+2], rom[bus_offset+3]};
             end else begin
                 bus_rdata = 32'h0000_0000;
             end
         end
     end
+
+    // Main test: module-level variables required by iverilog
+    integer cycles;
+    logic [31:0] eax;
 
     initial begin
         $display("=== x86_core_top_tb start ===");
@@ -101,23 +114,19 @@ module x86_core_top_tb;
         reset = 1'b0;
 
         // run until halted or timeout
-        int cycles = 0;
-        while (cycles < 500) begin
+        cycles = 0;
+        while (cycles < 500 && !dut.halted) begin
             @(posedge clock);
-            cycles++;
-            if (dut.halted) begin
-                $display("HALT observed at cycle=%0d", cycles);
-                break;
-            end
+            cycles = cycles + 1;
         end
 
         if (!dut.halted) begin
             $display("ERROR: timeout without halt");
             $finish;
         end
+        $display("HALT observed at cycle=%0d", cycles);
 
         // peek EAX (gpr[0]) through hierarchy
-        logic [31:0] eax;
         eax = dut.u_gpr.gpr[0];
         $display("EAX=0x%08h (expect 0x00001235)", eax);
         if (eax !== 32'h0000_1235) begin

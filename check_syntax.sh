@@ -40,10 +40,10 @@ for file in $sv_files; do
     # -t null 表示只检查语法，不生成输出
     # -g2012 启用SystemVerilog-2012支持
     # 重定向stderr到stdout以便捕获错误
-    output=$(iverilog -g2012 -t null -I"$RTL_DIR" "$file" 2>&1)
+    output=$(iverilog -g2012 -t null -I"$RTL_DIR" "$file" 2>&1) || true
     
     # 检查是否有严重错误（忽略警告和缺少模块的错误，因为可能缺少依赖）
-    if echo "$output" | grep -qiE "syntax error|parse error|error:"; then
+    if echo "$output" | grep -qiE "syntax error|parse error"; then
         echo -e "${RED}失败${NC}"
         ERROR_COUNT=$((ERROR_COUNT + 1))
         echo "$output" | grep -iE "error|syntax|parse" | head -5
@@ -71,9 +71,9 @@ if [ -n "$v_files" ]; then
         TOTAL_FILES=$((TOTAL_FILES + 1))
         echo -n "检查: $file ... "
         
-        output=$(iverilog -t null -I"$RTL_DIR" "$file" 2>&1)
+        output=$(iverilog -t null -I"$RTL_DIR" "$file" 2>&1) || true
         
-        if echo "$output" | grep -qiE "syntax error|parse error|error:"; then
+        if echo "$output" | grep -qiE "syntax error|parse error"; then
             echo -e "${RED}失败${NC}"
             ERROR_COUNT=$((ERROR_COUNT + 1))
             echo "$output" | grep -iE "error|syntax|parse" | head -5

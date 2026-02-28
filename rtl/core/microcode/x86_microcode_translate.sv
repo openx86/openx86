@@ -27,24 +27,24 @@ module x86_microcode_translate (
         v = i_macro_valid;
         u.valid = i_macro_valid;
         u.last  = 1'b1;
-        unique case (i_macro.kind)
-            X86_MACRO_MOVI: begin
-                u.kind    = X86_UOP_WRITE_GPR;
+        case (i_macro.kind)
+            `X86_MACRO_MOVI: begin
+                u.kind    = `X86_UOP_WRITE_GPR;
                 u.dst_gpr = i_macro.reg_idx;
                 u.src_imm = i_macro.imm;
             end
-            X86_MACRO_ADDI: begin
-                u.kind    = X86_UOP_ALU_ADD;
+            `X86_MACRO_ADDI: begin
+                u.kind    = `X86_UOP_ALU_ADD;
                 u.dst_gpr = i_macro.reg_idx; // EAX for now
                 u.src_imm = i_macro.imm;
             end
-            X86_MACRO_HLT: begin
-                u.kind    = X86_UOP_HALT;
+            `X86_MACRO_HLT: begin
+                u.kind    = `X86_UOP_HALT;
                 u.dst_gpr = 3'd0;
                 u.src_imm = 32'h0;
             end
             default: begin
-                u.kind    = X86_UOP_NONE;
+                u.kind    = `X86_UOP_NONE;
                 u.dst_gpr = 3'd0;
                 u.src_imm = 32'h0;
             end
