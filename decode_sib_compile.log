@@ -1,4 +1,0 @@
-/home/runner/work/openx86/openx86/rtl/core/decode/decode_sib.sv:17: error: 'decode_sib' has already been declared in this scope.
-/home/runner/work/openx86/openx86/rtl/core/decode/decode_sib.sv:17:      : It was declared here as a module.
-/home/runner/work/openx86/openx86/rtl/core/decode/decode_sib.sv:76: error: Module decode_sib was already declared here: /home/runner/work/openx86/openx86/rtl/core/decode/decode_sib.sv:17
-

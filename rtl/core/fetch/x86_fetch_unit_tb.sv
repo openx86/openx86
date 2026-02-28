@@ -65,24 +65,29 @@ module x86_fetch_unit_tb;
         end
     end
 
-    // Memory read
+    // Memory read - use always @(*) instead of always_comb to avoid iverilog
+    // "constant selects in always_* processes" hang during elaboration
     logic [15:0] mem_offset;
     assign mem_offset = bus_addr[15:0];
 
-    always_comb begin
-        bus_rdata = 32'h0;
-        if (bus_valid && !bus_we && !bus_io) begin
-            if (bus_addr < 32'h0001_0000) begin
-                bus_rdata = {mem[mem_offset+0], mem[mem_offset+1],
-                             mem[mem_offset+2], mem[mem_offset+3]};
-            end
+    reg [31:0] bus_rdata_r;
+    always @(bus_valid or bus_we or bus_io or mem_offset or
+             mem[mem_offset+0] or mem[mem_offset+1] or
+             mem[mem_offset+2] or mem[mem_offset+3] or bus_addr) begin
+        if (bus_valid && !bus_we && !bus_io &&
+            bus_addr < 32'h0001_0000) begin
+            bus_rdata_r = {mem[mem_offset+0], mem[mem_offset+1],
+                          mem[mem_offset+2], mem[mem_offset+3]};
+        end else begin
+            bus_rdata_r = 32'h0;
         end
     end
+    assign bus_rdata = bus_rdata_r;
 
     integer tb_i;
 
     // Test sequence
-    initial begin
+    initial begin : test_main
         $display("========================================");
         $display("x86_fetch_unit Testbench");
         $display("========================================");

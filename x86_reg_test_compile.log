@@ -1,5 +1,0 @@
-/home/runner/work/openx86/openx86/rtl/core/register_file/x86_reg_test_tb.sv:15: error: Unknown module type: x86_reg_test
-2 error(s) during elaboration.
-*** These modules were missing:
-        x86_reg_test referenced 1 times.
-***

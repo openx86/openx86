@@ -51,7 +51,7 @@ module x86_microcode_translate_tb;
         // Test 1: MACRO_MOVI -> UOP_WRITE_GPR
         $display("\n[测试1] MACRO_MOVI -> UOP_WRITE_GPR");
         @(posedge clock);
-        macro.kind = X86_MACRO_MOVI;
+        macro.kind = `X86_MACRO_MOVI;
         macro.reg_idx = 3'd2; // ECX
         macro.imm  = 32'hDEAD_BEEF;
         macro.valid = 1'b1;
@@ -67,7 +67,7 @@ module x86_microcode_translate_tb;
         $display("  UOP dst_gpr = %0d (期望: 2)", uop.dst_gpr);
         $display("  UOP src_imm = 0x%08h (期望: 0xDEADBEEF)", uop.src_imm);
         $display("  UOP last = %b (期望: 1)", uop.last);
-        if (uop.kind !== X86_UOP_WRITE_GPR || uop.dst_gpr !== 3'd2 || 
+        if (uop.kind !== `X86_UOP_WRITE_GPR || uop.dst_gpr !== 3'd2 || 
             uop.src_imm !== 32'hDEAD_BEEF || uop.last !== 1'b1) begin
             $display("  ERROR: 微码转换结果不正确!");
             $finish;
@@ -77,7 +77,7 @@ module x86_microcode_translate_tb;
         // Test 2: MACRO_ADDI -> UOP_ALU_ADD
         $display("\n[测试2] MACRO_ADDI -> UOP_ALU_ADD");
         @(posedge clock);
-        macro.kind = X86_MACRO_ADDI;
+        macro.kind = `X86_MACRO_ADDI;
         macro.reg_idx  = 3'd0; // EAX
         macro.imm  = 32'h0000_0001;
         macro.valid = 1'b1;
@@ -92,7 +92,7 @@ module x86_microcode_translate_tb;
         $display("  UOP kind = %0d (期望: UOP_ALU_ADD=2)", uop.kind);
         $display("  UOP dst_gpr = %0d (期望: 0)", uop.dst_gpr);
         $display("  UOP src_imm = 0x%08h (期望: 0x00000001)", uop.src_imm);
-        if (uop.kind !== X86_UOP_ALU_ADD || uop.dst_gpr !== 3'd0 || 
+        if (uop.kind !== `X86_UOP_ALU_ADD || uop.dst_gpr !== 3'd0 || 
             uop.src_imm !== 32'h0000_0001) begin
             $display("  ERROR: 微码转换结果不正确!");
             $finish;
@@ -102,7 +102,7 @@ module x86_microcode_translate_tb;
         // Test 3: MACRO_HLT -> UOP_HALT
         $display("\n[测试3] MACRO_HLT -> UOP_HALT");
         @(posedge clock);
-        macro.kind = X86_MACRO_HLT;
+        macro.kind = `X86_MACRO_HLT;
         macro.reg_idx  = 3'd0;
         macro.imm  = 32'h0;
         macro.valid = 1'b1;
@@ -115,7 +115,7 @@ module x86_microcode_translate_tb;
         while (!uop_valid) @(posedge clock);
         #10;
         $display("  UOP kind = %0d (期望: UOP_HALT=3)", uop.kind);
-        if (uop.kind !== UOP_HALT) begin
+        if (uop.kind !== `UOP_HALT) begin
             $display("  ERROR: 微码转换结果不正确!");
             $finish;
         end
@@ -124,7 +124,7 @@ module x86_microcode_translate_tb;
         // Test 4: MACRO_UNK -> UOP_NONE
         $display("\n[测试4] MACRO_UNK -> UOP_NONE");
         @(posedge clock);
-        macro.kind = X86_MACRO_UNK;
+        macro.kind = `X86_MACRO_UNK;
         macro.reg_idx  = 3'd0;
         macro.imm  = 32'h0;
         macro.valid = 1'b1;
@@ -137,7 +137,7 @@ module x86_microcode_translate_tb;
         while (!uop_valid) @(posedge clock);
         #10;
         $display("  UOP kind = %0d (期望: X86_UOP_NONE=0)", uop.kind);
-        if (uop.kind !== X86_UOP_NONE) begin
+        if (uop.kind !== `X86_UOP_NONE) begin
             $display("  ERROR: 微码转换结果不正确!");
             $finish;
         end
@@ -146,7 +146,7 @@ module x86_microcode_translate_tb;
         // Test 5: Valid/ready handshake (uop_ready = 0)
         $display("\n[测试5] 验证valid/ready握手（uop_ready=0）");
         @(posedge clock);
-        macro.kind = X86_MACRO_MOVI;
+        macro.kind = `X86_MACRO_MOVI;
         macro.reg_idx = 3'd1;
         macro.imm  = 32'h1234_5678;
         macro.valid = 1'b1;
@@ -170,7 +170,7 @@ module x86_microcode_translate_tb;
         // Test 6: Invalid macro (macro_valid = 0)
         $display("\n[测试6] 无效macro（macro_valid=0）");
         @(posedge clock);
-        macro.kind = X86_MACRO_MOVI;
+        macro.kind = `X86_MACRO_MOVI;
         macro.valid = 1'b0;
         macro_valid = 1'b0;
         #10;

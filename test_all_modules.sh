@@ -180,8 +180,8 @@ run_test() {
                 return 1
             fi
             
-            # 运行仿真
-            if vvp "${module_name}_sim" 2>&1 | tee "${module_name}_run.log"; then
+            # 运行仿真 (超时60秒防止 $stop 挂起)
+            if timeout 60 vvp "${module_name}_sim" 2>&1 | tee "${module_name}_run.log"; then
                 # 检查是否有错误（包括中文和英文错误信息）
                 if grep -qiE "错误|ERROR|error|FAIL|失败" "${module_name}_run.log"; then
                     echo -e "${RED}测试失败: $module_name (发现运行时错误)${NC}"

@@ -1,8 +1,0 @@
-/home/runner/work/openx86/openx86/rtl/core/x86_core_top_tb.sv:59: syntax error
-/home/runner/work/openx86/openx86/rtl/core/x86_core_top_tb.sv:59: Syntax in assignment statement l-value.
-/home/runner/work/openx86/openx86/rtl/core/x86_core_top_tb.sv:86: warning: Static variable initialization requires explicit lifetime in this context.
-/home/runner/work/openx86/openx86/rtl/core/x86_core_top_tb.sv:104: syntax error
-/home/runner/work/openx86/openx86/rtl/core/x86_core_top_tb.sv:104: Syntax in assignment statement l-value.
-/home/runner/work/openx86/openx86/rtl/core/x86_core_top_tb.sv:110: sorry: break statements not supported.
-/home/runner/work/openx86/openx86/rtl/core/x86_core_top_tb.sv:120: syntax error
-/home/runner/work/openx86/openx86/rtl/core/x86_core_top_tb.sv:120: error: Malformed statement

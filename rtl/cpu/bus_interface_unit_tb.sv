@@ -120,7 +120,7 @@ initial begin
 
     #(clock_period * 4);
 
-    $stop();
+    $finish();
 end
 
 bus_interface_unit tb_bus_interface_unit (

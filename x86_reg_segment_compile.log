@@ -1,5 +1,0 @@
-/home/runner/work/openx86/openx86/rtl/core/register_file/x86_reg_segment_tb.sv:17: error: Unknown module type: x86_reg_segment
-2 error(s) during elaboration.
-*** These modules were missing:
-        x86_reg_segment referenced 1 times.
-***

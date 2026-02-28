@@ -1,3 +1,0 @@
-/home/runner/work/openx86/openx86/rtl/core/fetch/x86_fetch_unit_tb.sv:73: warning: Static variable initialization requires explicit lifetime in this context.
-/home/runner/work/openx86/openx86/rtl/core/fetch/x86_fetch_unit.sv:55: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
-/home/runner/work/openx86/openx86/rtl/core/fetch/x86_fetch_unit.sv:83: vvp.tgt sorry: Case unique/unique0 qualities are ignored.

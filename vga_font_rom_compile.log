@@ -1,4 +1,0 @@
-/home/runner/work/openx86/openx86/rtl/peripheral/video/vga_font_rom.sv:5: error: 'vga_font_rom' has already been declared in this scope.
-/home/runner/work/openx86/openx86/rtl/peripheral/video/vga_font_rom.sv:5:      : It was declared here as a module.
-/home/runner/work/openx86/openx86/rtl/peripheral/video/vga_font_rom.sv:36: error: Module vga_font_rom was already declared here: /home/runner/work/openx86/openx86/rtl/peripheral/video/vga_font_rom.sv:5
-

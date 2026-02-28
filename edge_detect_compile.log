@@ -1,4 +1,0 @@
-/home/runner/work/openx86/openx86/rtl/common/edge_detect.sv:1: error: 'edge_detect' has already been declared in this scope.
-/home/runner/work/openx86/openx86/rtl/common/edge_detect.sv:1:      : It was declared here as a module.
-/home/runner/work/openx86/openx86/rtl/common/edge_detect.sv:24: error: Module edge_detect was already declared here: /home/runner/work/openx86/openx86/rtl/common/edge_detect.sv:1
-

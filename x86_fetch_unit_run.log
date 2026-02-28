@@ -1,9 +1,0 @@
-========================================
-x86_fetch_unit Testbench
-========================================
-
-[测试1] 实模式取指 CS:IP = 0000:0000
-  线性地址 = 0x00000000 (期望: 0x00000000)
-  取指完成，前4字节: xx xx xx xx
-  ERROR: 指令字节不正确!
-/home/runner/work/openx86/openx86/rtl/core/fetch/x86_fetch_unit_tb.sv:125: $finish called at 115 (1s)

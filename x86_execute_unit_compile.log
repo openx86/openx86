@@ -1,2 +1,0 @@
-./rtl/core/x86_types.sv:54 error: Type identifier `x86_macro_op_t` has already been declared in this scope at ./rtl/core/x86_types.sv:48.
-./rtl/core/x86_types.sv:69 error: Type identifier `x86_uop_t` has already been declared in this scope at ./rtl/core/x86_types.sv:63.

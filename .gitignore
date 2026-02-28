@@ -34,3 +34,8 @@
 sim
 
 .idea
+
+# iverilog simulation artifacts
+*_sim
+*_compile.log
+*_run.log
