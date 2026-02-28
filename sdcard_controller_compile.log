@@ -1,0 +1,7 @@
+/home/runner/work/openx86/openx86/rtl/peripheral/hard_disk/sdcard/sdcard_controller.sv:218: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/runner/work/openx86/openx86/rtl/peripheral/hard_disk/sdcard/sdcard_controller.sv:218: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/runner/work/openx86/openx86/rtl/peripheral/hard_disk/sdcard/sdcard_controller.sv:218: sorry: constant selects in always_* processes are not currently supported (all bits will be included).
+/home/runner/work/openx86/openx86/rtl/peripheral/hard_disk/sdcard/sdcard_controller_tb.sv:100: error: a blocking delay is not allowed in an always_comb, always_ff or always_latch process.
+/home/runner/work/openx86/openx86/rtl/peripheral/hard_disk/sdcard/sdcard_controller_tb.sv:102: error: a blocking delay is not allowed in an always_comb, always_ff or always_latch process.
+/home/runner/work/openx86/openx86/rtl/peripheral/hard_disk/sdcard/sdcard_controller_tb.sv:77: error: there must only be a single event control and no blocking delays in an always_ff process.
+Elaboration failed

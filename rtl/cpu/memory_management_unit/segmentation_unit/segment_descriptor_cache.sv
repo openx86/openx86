@@ -7,9 +7,7 @@ create at: 2022-01-27 12:56:29
 description: segment_descriptor_cache
 */
 
-module segment_descriptor_cache #(
-    // parameters
-) (
+module segment_descriptor_cache (
     // ports
     input  logic         protect_enable,
     input  logic [15: 0] write_data,
@@ -26,35 +24,36 @@ module segment_descriptor_cache #(
     output logic         writeable,
     output logic         executable,
     output logic         stack_size,
-    output logic         conforming_privilege,
+    output logic         conforming_privilege
 );
 
-segment_descriptor_encode u_segment_descriptor_encode (
-    .base (),
+// Stub implementation - connects internally to segment_descriptor_decode
+logic [15:0] segment_value;
+assign segment_value = write_data;
+
+logic [63:0] segment_descriptor;
+logic [31:0] segment_descriptor_base_address;
+
+segment_descriptor_decode u_segment_descriptor_decode (
+    .o_base                                ( base ),
+    .o_limit                               ( limit ),
+    .o_date_or_code_present                ( present[0] ),
+    .o_date_or_code_privilege_level        ( present[1:0] ),
+    .o_available_field                     ( accessed ),
+    .o_segment_type                        ( readable ),
+    .o_date_or_code_granularity            ( granularity ),
+    .o_date_or_code_default_operation_size ( stack_size ),
+    .o_date_or_code_executable             ( executable ),
+    .o_data_expansion_direction            ( expansion_direction ),
+    .o_data_writeable                      ( writeable ),
+    .o_code_conforming                     ( conforming_privilege ),
+    .o_code_readable                       ( privilege_level ),
+    .o_date_or_code_accessed               ( read_data ),
+    .i_descriptor                          ( segment_descriptor )
 );
 
 always_comb begin
-    if (protect_enable) begin
-        // protected mode
-
-    end else begin
-        // real mode
-        base <= segment_value;
-        limit <= 32'h0000_ffff;
-        present <= 1;
-        privilege_level <= 0;
-        accessed <= 1;
-        granularity <= `GRANULARITY_BYTE;
-    end
+    segment_descriptor = '0;
 end
-
-logic [31:0] segment_descriptor_base_address;
-segment_descriptor_decode u_segment_descriptor_decode (
-    .base ( segment_descriptor_base_address ),
-    .descriptor ( segment_descriptor ),
-);
-
-assign base_address_in_real_mode = segment_value << 4;
-assign base_address_in_protected_mode = segment_descriptor_base_address;
 
 endmodule

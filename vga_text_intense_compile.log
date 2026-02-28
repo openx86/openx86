@@ -1,0 +1,4 @@
+/home/runner/work/openx86/openx86/rtl/peripheral/video/vga_text_intense.sv:6: error: 'vga_text_intense' has already been declared in this scope.
+/home/runner/work/openx86/openx86/rtl/peripheral/video/vga_text_intense.sv:6:      : It was declared here as a module.
+/home/runner/work/openx86/openx86/rtl/peripheral/video/vga_text_intense.sv:152: error: Module vga_text_intense was already declared here: /home/runner/work/openx86/openx86/rtl/peripheral/video/vga_text_intense.sv:6
+

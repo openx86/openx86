@@ -74,13 +74,18 @@ module x86_fetch_unit (
             beat          <= 2'd0;
             o_bus_valid   <= 1'b0;
             o_instr_ready <= 1'b0;
-            for (int i = 0; i < 16; i++) begin
-                o_instruction[i] <= 8'h00;
-            end
+            o_instruction[ 0] <= 8'h00; o_instruction[ 1] <= 8'h00;
+            o_instruction[ 2] <= 8'h00; o_instruction[ 3] <= 8'h00;
+            o_instruction[ 4] <= 8'h00; o_instruction[ 5] <= 8'h00;
+            o_instruction[ 6] <= 8'h00; o_instruction[ 7] <= 8'h00;
+            o_instruction[ 8] <= 8'h00; o_instruction[ 9] <= 8'h00;
+            o_instruction[10] <= 8'h00; o_instruction[11] <= 8'h00;
+            o_instruction[12] <= 8'h00; o_instruction[13] <= 8'h00;
+            o_instruction[14] <= 8'h00; o_instruction[15] <= 8'h00;
         end else begin
             o_instr_ready <= 1'b0;
 
-            unique case (state)
+            case (state)
                 ST_IDLE: begin
                     beat        <= 2'd0;
                     o_bus_valid <= 1'b0;
@@ -92,11 +97,34 @@ module x86_fetch_unit (
 
                 ST_RD0, ST_RD1, ST_RD2_3: begin
                     if (i_bus_ready && o_bus_valid) begin
-                        // store current dword as 4 bytes, big-endian mapping consistent with existing bus_tb
-                        o_instruction[{beat, 2'b00} + 0] <= i_bus_data_read[31:24];
-                        o_instruction[{beat, 2'b00} + 1] <= i_bus_data_read[23:16];
-                        o_instruction[{beat, 2'b00} + 2] <= i_bus_data_read[15: 8];
-                        o_instruction[{beat, 2'b00} + 3] <= i_bus_data_read[ 7: 0];
+                        // store current dword as 4 bytes (big-endian bus mapping)
+                        // use explicit case to avoid iverilog variable-index limitation
+                        case (beat)
+                            2'd0: begin
+                                o_instruction[ 0] <= i_bus_data_read[31:24];
+                                o_instruction[ 1] <= i_bus_data_read[23:16];
+                                o_instruction[ 2] <= i_bus_data_read[15: 8];
+                                o_instruction[ 3] <= i_bus_data_read[ 7: 0];
+                            end
+                            2'd1: begin
+                                o_instruction[ 4] <= i_bus_data_read[31:24];
+                                o_instruction[ 5] <= i_bus_data_read[23:16];
+                                o_instruction[ 6] <= i_bus_data_read[15: 8];
+                                o_instruction[ 7] <= i_bus_data_read[ 7: 0];
+                            end
+                            2'd2: begin
+                                o_instruction[ 8] <= i_bus_data_read[31:24];
+                                o_instruction[ 9] <= i_bus_data_read[23:16];
+                                o_instruction[10] <= i_bus_data_read[15: 8];
+                                o_instruction[11] <= i_bus_data_read[ 7: 0];
+                            end
+                            default: begin
+                                o_instruction[12] <= i_bus_data_read[31:24];
+                                o_instruction[13] <= i_bus_data_read[23:16];
+                                o_instruction[14] <= i_bus_data_read[15: 8];
+                                o_instruction[15] <= i_bus_data_read[ 7: 0];
+                            end
+                        endcase
 
                         beat <= beat + 2'd1;
 
@@ -106,7 +134,6 @@ module x86_fetch_unit (
                             o_instr_ready <= 1'b1;
                             state         <= ST_IDLE;
                         end else begin
-                            // continue next beat (keep valid asserted)
                             state <= state; // stay
                         end
                     end

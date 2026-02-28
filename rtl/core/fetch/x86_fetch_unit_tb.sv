@@ -66,15 +66,20 @@ module x86_fetch_unit_tb;
     end
 
     // Memory read
+    logic [15:0] mem_offset;
+    assign mem_offset = bus_addr[15:0];
+
     always_comb begin
         bus_rdata = 32'h0;
         if (bus_valid && !bus_we && !bus_io) begin
             if (bus_addr < 32'h0001_0000) begin
-                int offset = bus_addr[15:0];
-                bus_rdata = {mem[offset+0], mem[offset+1], mem[offset+2], mem[offset+3]};
+                bus_rdata = {mem[mem_offset+0], mem[mem_offset+1],
+                             mem[mem_offset+2], mem[mem_offset+3]};
             end
         end
     end
+
+    integer tb_i;
 
     // Test sequence
     initial begin
@@ -83,8 +88,8 @@ module x86_fetch_unit_tb;
         $display("========================================");
 
         // Initialize memory with test pattern
-        for (int i = 0; i < 65536; i++) begin
-            mem[i] = i[7:0];
+        for (tb_i = 0; tb_i < 65536; tb_i = tb_i + 1) begin
+            mem[tb_i] = tb_i[7:0];
         end
 
         // Reset

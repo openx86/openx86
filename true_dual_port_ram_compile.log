@@ -1,0 +1,4 @@
+/home/runner/work/openx86/openx86/rtl/common/true_dual_port_ram.sv:1: error: 'true_dual_port_ram' has already been declared in this scope.
+/home/runner/work/openx86/openx86/rtl/common/true_dual_port_ram.sv:1:      : It was declared here as a module.
+/home/runner/work/openx86/openx86/rtl/common/true_dual_port_ram.sv:65: error: Module true_dual_port_ram was already declared here: /home/runner/work/openx86/openx86/rtl/common/true_dual_port_ram.sv:1
+

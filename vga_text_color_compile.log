@@ -1,0 +1,4 @@
+/home/runner/work/openx86/openx86/rtl/peripheral/video/vga_text_color.sv:5: error: 'vga_text_color' has already been declared in this scope.
+/home/runner/work/openx86/openx86/rtl/peripheral/video/vga_text_color.sv:5:      : It was declared here as a module.
+/home/runner/work/openx86/openx86/rtl/peripheral/video/vga_text_color.sv:157: error: Module vga_text_color was already declared here: /home/runner/work/openx86/openx86/rtl/peripheral/video/vga_text_color.sv:5
+

@@ -1,0 +1,5 @@
+/home/runner/work/openx86/openx86/rtl/soc_top.sv:6: error: Unknown module type: w80386_cpu
+2 error(s) during elaboration.
+*** These modules were missing:
+        w80386_cpu referenced 1 times.
+***

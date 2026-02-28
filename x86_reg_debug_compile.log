@@ -1,0 +1,3 @@
+/home/runner/work/openx86/openx86/rtl/core/register_file/x86_reg_debug_tb.sv:36: error: Unable to bind wire/reg/memory `wr_loop.iteration['sd2:'sd0]' in `x86_reg_debug_tb.wr_loop'
+/home/runner/work/openx86/openx86/rtl/core/register_file/x86_reg_debug_tb.sv:37: error: Unable to bind wire/reg/memory `wr_loop.iteration' in `x86_reg_debug_tb.wr_loop'
+2 error(s) during elaboration.

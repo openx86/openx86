@@ -18,18 +18,17 @@ module stack_segment_register (
     input  logic        SS_descriptor_write_enable,
     input  logic [63:0] SS_descriptor_write_data,
     output logic [63:0] SS_descriptor,
-    output logic [31:0] SS_descriptor_base
-    output logic [19:0] SS_descriptor_limit
-    output logic        SS_descriptor_present
-    output logic [ 1:0] SS_descriptor_privilege_level
-    output logic        SS_descriptor_available_field
-    output logic        SS_descriptor_segment_type
-    output logic        SS_descriptor_granularity
-    output logic        SS_descriptor_default_operation_size
-    output logic        SS_descriptor_segment_executable
-    output logic        SS_descriptor_accessed
-    output logic        SS_descriptor_system_segment_type
-    output logic        SS_descriptor_accesse,
+    output logic [31:0] SS_descriptor_base,
+    output logic [19:0] SS_descriptor_limit,
+    output logic        SS_descriptor_present,
+    output logic [ 1:0] SS_descriptor_privilege_level,
+    output logic        SS_descriptor_available_field,
+    output logic        SS_descriptor_segment_type,
+    output logic        SS_descriptor_granularity,
+    output logic        SS_descriptor_default_operation_size,
+    output logic        SS_descriptor_segment_executable,
+    output logic        SS_descriptor_accessed,
+    output logic        SS_descriptor_system_segment_type,
     input  logic        clock, reset
 );
 

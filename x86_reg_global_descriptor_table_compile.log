@@ -1,0 +1,5 @@
+/home/runner/work/openx86/openx86/rtl/core/register_file/system_address_register/x86_reg_global_descriptor_table_tb.sv:16: error: Unknown module type: x86_reg_global_descriptor_table
+2 error(s) during elaboration.
+*** These modules were missing:
+        x86_reg_global_descriptor_table referenced 1 times.
+***

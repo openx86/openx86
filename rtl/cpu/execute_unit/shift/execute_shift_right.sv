@@ -10,9 +10,9 @@ module execute_shift_right #(
 );
 
 assign result = is_signed ?
-{count'b0, operand[BIT_WIDTH-1:count]}
+    $signed(operand) >>> count
 :
-{count'{operand[BIT_WIDTH-1]}, operand[BIT_WIDTH-1:count]}
+    operand >> count
 ;
 
 endmodule

@@ -1,0 +1,4 @@
+/home/runner/work/openx86/openx86/rtl/common/single_port_rom.sv:1: error: 'single_port_rom' has already been declared in this scope.
+/home/runner/work/openx86/openx86/rtl/common/single_port_rom.sv:1:      : It was declared here as a module.
+/home/runner/work/openx86/openx86/rtl/common/single_port_rom.sv:40: error: Module single_port_rom was already declared here: /home/runner/work/openx86/openx86/rtl/common/single_port_rom.sv:1
+

@@ -18,18 +18,17 @@ module code_segment_register (
     input  logic        CS_descriptor_write_enable,
     input  logic [63:0] CS_descriptor_write_data,
     output logic [63:0] CS_descriptor,
-    output logic [31:0] CS_descriptor_base
-    output logic [19:0] CS_descriptor_limit
-    output logic        CS_descriptor_present
-    output logic [ 1:0] CS_descriptor_privilege_level
-    output logic        CS_descriptor_available_field
-    output logic        CS_descriptor_segment_type
-    output logic        CS_descriptor_granularity
-    output logic        CS_descriptor_default_operation_size
-    output logic        CS_descriptor_segment_executable
-    output logic        CS_descriptor_accessed
-    output logic        CS_descriptor_system_segment_type
-    output logic        CS_descriptor_accesse,
+    output logic [31:0] CS_descriptor_base,
+    output logic [19:0] CS_descriptor_limit,
+    output logic        CS_descriptor_present,
+    output logic [ 1:0] CS_descriptor_privilege_level,
+    output logic        CS_descriptor_available_field,
+    output logic        CS_descriptor_segment_type,
+    output logic        CS_descriptor_granularity,
+    output logic        CS_descriptor_default_operation_size,
+    output logic        CS_descriptor_segment_executable,
+    output logic        CS_descriptor_accessed,
+    output logic        CS_descriptor_system_segment_type,
     input  logic        clock, reset
 );
 

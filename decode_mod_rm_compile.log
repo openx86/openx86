@@ -1,0 +1,4 @@
+/home/runner/work/openx86/openx86/rtl/core/decode/decode_mod_rm.sv:60: error: 'decode_mod_rm' has already been declared in this scope.
+/home/runner/work/openx86/openx86/rtl/core/decode/decode_mod_rm.sv:60:      : It was declared here as a module.
+/home/runner/work/openx86/openx86/rtl/core/decode/decode_mod_rm.sv:248: error: Module decode_mod_rm was already declared here: /home/runner/work/openx86/openx86/rtl/core/decode/decode_mod_rm.sv:60
+

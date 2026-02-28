@@ -78,7 +78,7 @@ module x86_microcode_translate_tb;
         $display("\n[测试2] MACRO_ADDI -> UOP_ALU_ADD");
         @(posedge clock);
         macro.kind = X86_MACRO_ADDI;
-        macro.reg  = 3'd0; // EAX
+        macro.reg_idx  = 3'd0; // EAX
         macro.imm  = 32'h0000_0001;
         macro.valid = 1'b1;
         macro.length = 4'd5;
@@ -103,7 +103,7 @@ module x86_microcode_translate_tb;
         $display("\n[测试3] MACRO_HLT -> UOP_HALT");
         @(posedge clock);
         macro.kind = X86_MACRO_HLT;
-        macro.reg  = 3'd0;
+        macro.reg_idx  = 3'd0;
         macro.imm  = 32'h0;
         macro.valid = 1'b1;
         macro.length = 4'd1;
@@ -125,7 +125,7 @@ module x86_microcode_translate_tb;
         $display("\n[测试4] MACRO_UNK -> UOP_NONE");
         @(posedge clock);
         macro.kind = X86_MACRO_UNK;
-        macro.reg  = 3'd0;
+        macro.reg_idx  = 3'd0;
         macro.imm  = 32'h0;
         macro.valid = 1'b1;
         macro.length = 4'd1;

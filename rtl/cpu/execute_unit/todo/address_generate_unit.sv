@@ -12,9 +12,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 2.3.6 Control Registers
 */
 
-module address_generate_unit #(
-    // parameters
-) (
+module address_generate_unit (
     // ports
     input  logic [ 1:0] segment,
     input  logic [24:0] base,
@@ -24,10 +22,12 @@ module address_generate_unit #(
     output logic [ 3:0] physical_address
 );
 
-logic segment_physical_address = segment << 4;
+logic [28:0] segment_physical_address;
+assign segment_physical_address = {segment, 4'h0, 23'h0} >> (27 - 4);
 
 // TODO: index_physical_address is incorrect
-logic index_physical_address = index << scale;
+logic [28:0] index_physical_address;
+assign index_physical_address = index << scale;
 
 assign physical_address = segment_physical_address + base + imm;
 

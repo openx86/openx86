@@ -60,8 +60,8 @@ assign descriptor = {
     date_or_code_executable,
     data_expansion_direction_code_conforming,
     data_writeable_code_readable,
-    accessed,
-    base[23:16],
+    date_or_code_accessed,
+    base[23:16]
 };
 
 endmodule
