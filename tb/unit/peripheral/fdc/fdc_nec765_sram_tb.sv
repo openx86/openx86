@@ -18,8 +18,7 @@ module fdc_nec765_sram_tb;
         .CYLINDERS   ( 1 ),
         .HEADS       ( 1 ),
         .SECTORS_TRK ( 1 ),
-        .SECTOR_BYTES( 512 ),
-        .INIT_FILE   ( "" )
+        .SECTOR_BYTES( 512 )
     ) dut (
         .i_clock    ( clock ),
         .i_reset    ( reset ),
@@ -32,6 +31,18 @@ module fdc_nec765_sram_tb;
     );
 
     always #5 clock = ~clock;
+
+    initial begin
+        int i;
+        int nb = $size(dut.sram);
+        for (i = 0; i < nb; i++)
+            dut.sram[i] = 8'hE5;
+        if (nb > 2) begin
+            dut.sram[0] = 8'hEB;
+            dut.sram[1] = 8'h3C;
+            dut.sram[2] = 8'h90;
+        end
+    end
 
     task automatic wr(input logic [15:0] a, input logic [7:0] d);
         @(posedge clock);

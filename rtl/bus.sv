@@ -235,7 +235,6 @@ logic pic_intr_w;
 pc_chipset_io #(
     .USE_REAL_PS2 ( USE_REAL_PS2 ),
     .PS2_CLK_HZ   ( PS2_CLK_HZ ),
-    .DISK_ENABLE_PLUSARGS ( 1'b1 ),
     .USE_SDIO_DISK        ( USE_SDIO_DISK )
 ) u_chipset (
     .i_clock           ( i_clock ),

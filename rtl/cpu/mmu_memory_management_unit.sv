@@ -41,9 +41,9 @@ logic         paging_vaild;
 logic         paging_ready;
 
 // Bring-up：描述符缓存尚未接到 MMU 时，用全 0 占位（实模式/未保护路径）
-logic [63:0] segment_descriptor_stub [0:6];
+logic [63:0] segment_descriptor_stub [0:5];
 always_comb begin
-    for (int i = 0; i < 7; i++) begin
+    for (int i = 0; i < 6; i++) begin
         segment_descriptor_stub[i] = 64'h0;
     end
 end

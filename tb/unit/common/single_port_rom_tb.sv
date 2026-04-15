@@ -30,14 +30,10 @@ module single_port_rom_tb;
         test_data[DEPTH-1] = 8'hFF;
     end
 
-    // 使用单口ROM，通过INIT_FILE参数初始化
-    // 注意：由于无法在testbench中直接传递数组，我们使用默认初始化（全0）
-    // 实际使用时可以通过INIT_FILE参数从文件加载数据
     single_port_rom #(
         .DATA_WIDTH ( DATA_WIDTH ),
         .ADDR_WIDTH ( ADDR_WIDTH ),
-        .DEPTH      ( DEPTH      ),
-        .INIT_FILE  ( ""         )  // 可以从文件加载，这里使用默认初始化
+        .DEPTH      ( DEPTH      )
     ) dut (
         .addr   ( addr   ),
         .rdata  ( rdata  ),

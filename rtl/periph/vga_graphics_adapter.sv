@@ -163,7 +163,9 @@ module vga_graphics_adapter (
     vga_font_rom font_rom_inst (
         .char_code  ( font_char_code ),
         .row_index  ( font_row_index ),
-        .font_data  ( font_data       )
+        .font_data  ( font_data       ),
+        .clock      ( clock           ),
+        .reset      ( reset           )
     );
     
     // 文本模式模块（根据模式选择）

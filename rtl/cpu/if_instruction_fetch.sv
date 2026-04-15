@@ -14,7 +14,7 @@ module instruction_fetch (
     input  logic [31:0] i_code_data_read,
     // signal from outside
     input  logic        i_protected_mode,
-    input  logic [15:0] i_segment_selector [0:6],
+    input  logic [15:0] i_segment_selector [0:5],
     input  logic [ 1:0] i_current_privilege_level,
     input  logic        i_paging_enable,
     input  logic [31:0] i_page_directory_base,

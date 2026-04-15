@@ -242,15 +242,6 @@ logic [31:0] data_data_read;
 logic [31:0] data_data_write;
 wire         data_io_access = 1'b0;
 
-// instruction_fetch 期望 7 个选择子槽位；段寄存器文件目前提供 CS–GS（6 个）
-logic [15:0] fetch_segment_selector_ext [0:6];
-always_comb begin
-    for (int i = 0; i < 6; i++) begin
-        fetch_segment_selector_ext[i] = segment_selector[i];
-    end
-    fetch_segment_selector_ext[6] = 16'h0;
-end
-
 bus_interface_unit core_bus_interface_unit (
     .i_code_vaild ( code_vaild ),
     .o_code_ready ( code_ready ),
@@ -283,7 +274,7 @@ instruction_fetch core_instruction_fetch (
     .o_code_address ( code_address ),
     .i_code_data_read ( code_data_read ),
     .i_protected_mode ( PE ),
-    .i_segment_selector ( fetch_segment_selector_ext ),
+    .i_segment_selector ( segment_selector ),
     .i_current_privilege_level ( 2'b0 ),
     .i_paging_enable ( PG ),
     .i_page_directory_base ( page_directory_base ),

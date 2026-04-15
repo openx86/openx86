@@ -30,6 +30,11 @@ module disk_ram_8_tb;
         .o_rdata_b ( disk_b )
     );
 
+    initial begin
+        u_disk.mem[0] = 8'hA5;
+        u_disk.mem[1] = 8'h5A;
+    end
+
     wire ide_sector_req;
     ide_ata_pio #(
         .SECTOR_BYTES(512),

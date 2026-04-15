@@ -10,14 +10,12 @@
 // experiments; a full PC BIOS image will not fit.
 //
 // Data packing（32-bit 字）：低地址字节在 MSB — {b0,b1,b2,b3} -> 32'h{b0,b1,b2,b3}
+//
+// mem[] 内容不在本模块初始化；仿真/验证在 testbench 中装载或写入。
 // ============================================================================
 
 module pc_bios_24lc32 #(
-    parameter int    EEPROM_BYTES   = 4096,      // 24LC32 = 4096 bytes
-    parameter string INIT_FILE      = "",
-    parameter bit    INIT_IS_BINARY = 1'b0,
-    parameter bit    ENABLE_PLUSARGS = 1'b0,
-    parameter bit    INSTALL_DEFAULT_BOOTSTUB = 1'b1
+    parameter int EEPROM_BYTES = 4096      // 24LC32 = 4096 bytes
 ) (
     input  logic        clock,
     input  logic        reset,
@@ -37,72 +35,9 @@ module pc_bios_24lc32 #(
         return {mem[ba + 0], mem[ba + 1], mem[ba + 2], mem[ba + 3]};
     endfunction
 
-    task automatic load_raw_bin(input string path);
-        integer fh;
-        integer n;
-        fh = $fopen(path, "rb");
-        if (fh == 0) begin
-            $display("pc_bios_24lc32: cannot open bin %s", path);
-            return;
-        end
-        n = $fread(mem, fh);
-        $fclose(fh);
-        $display("pc_bios_24lc32: fread %0d bytes from %s", n, path);
-    endtask
-
-    task automatic apply_default_pc_bootstub();
-        int base;
-        // Reset vector is at F000:FFF0 -> bus sys window offset 0xFFF0.
-        // Mirror mapping into 4KiB => (128KiB + 0xFFF0) mod 4096 = 0x0FF0.
-        base = 16'h0FF0;
-        mem[base+0]  = 8'h66;
-        mem[base+1]  = 8'hB8;
-        mem[base+2]  = 8'h34;
-        mem[base+3]  = 8'h12;
-        mem[base+4]  = 8'h00;
-        mem[base+5]  = 8'h00;
-        mem[base+6]  = 8'h66;
-        mem[base+7]  = 8'h05;
-        mem[base+8]  = 8'h01;
-        mem[base+9]  = 8'h00;
-        mem[base+10] = 8'h00;
-        mem[base+11] = 8'h00;
-        mem[base+12] = 8'hF4;
-        mem[base+13] = 8'h90;
-        mem[base+14] = 8'h90;
-        mem[base+15] = 8'h90;
-    endtask
-
-    initial begin
-        automatic string p;
-        for (int i = 0; i < EEPROM_BYTES; i++) mem[i] = 8'hFF;
-
-        if (ENABLE_PLUSARGS) begin
-            if ($value$plusargs("SEABIOS_BIN=%s", p))
-                load_raw_bin(p);
-            else if ($value$plusargs("SEABIOS_HEX=%s", p))
-                $readmemh(p, mem);
-            else if (INIT_FILE != "") begin
-                if (INIT_IS_BINARY) load_raw_bin(INIT_FILE);
-                else $readmemh(INIT_FILE, mem);
-            end else if (INSTALL_DEFAULT_BOOTSTUB) begin
-                apply_default_pc_bootstub();
-            end
-        end else begin
-            if (INIT_FILE != "") begin
-                if (INIT_IS_BINARY) load_raw_bin(INIT_FILE);
-                else $readmemh(INIT_FILE, mem);
-            end else if (INSTALL_DEFAULT_BOOTSTUB) begin
-                apply_default_pc_bootstub();
-            end
-        end
-    end
-
-    // dword-aligned byte offsets inside windows
     wire [31:0] ext_dw_byte_full = {1'b0, i_ext_bios_byte_off[16:2], 2'b00};
     wire [31:0] sys_dw_byte_full = {2'b00, i_sys_bios_byte_off[15:2], 2'b00};
 
-    // Wrap into EEPROM_BYTES (assumed power-of-two in default 4096)
     wire [AW-1:0] ext_addr = ext_dw_byte_full[AW-1:0];
     wire [31:0]   sys_dw_plus_base = (sys_dw_byte_full + OFF_SYS_BASE_BYTES);
     wire [AW-1:0] sys_addr = sys_dw_plus_base[AW-1:0];
@@ -118,4 +53,3 @@ module pc_bios_24lc32 #(
     end
 
 endmodule
-

@@ -4,7 +4,7 @@
 // 目标：验证 IDE ATA PIO 控制器的寄存器访问与数据通路的基础行为。
 //
 // 该 DUT 通常会通过 `o_disk_raddr/i_disk_rdata` 与磁盘映像 RAM 交互；
-// 在系统级仿真中，还可通过 plusargs 指定磁盘镜像（见 pc_chipset_io 的 DISK_*）。
+// 系统级仿真中磁盘映像在 testbench 里对 `disk_ram_8.mem` 做装载（如 soc_top_tb 的 +DISK_BIN/+DISK_HEX）。
 // ============================================================================
 
 module ide_ata_pio_tb;

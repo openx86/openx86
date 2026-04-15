@@ -17,7 +17,10 @@ module execute_rotate_right #(
     output logic [BIT_WIDTH-1:0] result
 );
 
-assign result = (count != 0) ? {operand[count-1:0], operand[BIT_WIDTH-1:count]} : operand;
+    localparam int ShW = (BIT_WIDTH <= 1) ? 1 : $clog2(BIT_WIDTH);
+    wire [ShW-1:0] sh = count[ShW-1:0];
+
+    assign result = (operand >> sh) | (operand << (BIT_WIDTH - sh));
 
 endmodule
 

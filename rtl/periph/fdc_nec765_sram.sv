@@ -4,7 +4,7 @@
 //       0x3F0/0x3F1/0x3F3 占位
 // 不译码 0x3F6（留给 IDE 备用状态口）
 //
-// 默认几何：80×2×18×512（1.44MB 映像大小）；INIT_FILE 可选 $readmemh
+// 默认几何：80×2×18×512（1.44MB 映像大小）；sram[] 由 testbench 初始化
 // READ DATA：首字节低 5 位为 6（如 0xE6），共 9 字节命令；
 //            结果：7 字节状态 + 512 字节扇区（PIO 读 FIFO）
 // ============================================================================
@@ -13,8 +13,7 @@ module fdc_nec765_sram #(
     parameter int CYLINDERS    = 80,
     parameter int HEADS        = 2,
     parameter int SECTORS_TRK  = 18,
-    parameter int SECTOR_BYTES = 512,
-    parameter string INIT_FILE = ""
+    parameter int SECTOR_BYTES = 512
 ) (
     input  logic        i_clock,
     input  logic        i_reset,
@@ -82,21 +81,6 @@ module fdc_nec765_sram #(
             idx = 0;
         return RAM_AW'(idx * SECTOR_BYTES);
     endfunction
-
-    integer init_i;
-    initial begin
-        if (INIT_FILE != "") begin
-            $readmemh(INIT_FILE, sram);
-        end else begin
-            for (init_i = 0; init_i < RAM_BYTES; init_i = init_i + 1)
-                sram[init_i] = 8'hE5;
-            if (RAM_BYTES > 2) begin
-                sram[0] = 8'hEB;
-                sram[1] = 8'h3C;
-                sram[2] = 8'h90;
-            end
-        end
-    end
 
     function automatic void decode_cmd_len(input logic [7:0] b, output logic [3:0] n);
         case (b)

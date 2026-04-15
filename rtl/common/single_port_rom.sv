@@ -3,45 +3,27 @@
 // ----------------------------------------------------------------------------
 // 单端口 ROM（同步读），用于仿真/综合中的 ROM 建模。
 //
-// - **初始化**：通过 `INIT_FILE` 用 `$readmemh` 装载；否则清零。
+// - **内容初始化**：不在本模块内装载；仿真时由 testbench 通过层次化引用
+//   写入内部阵列，或使用厂商 ROM IP / 工程脚本做上板初始化。
 // - **读时序**：posedge clock 更新 `rdata`（同步读）。
 // - **复位**：将 `rdata` 清零（ROM 内容不变）。
-//
-// 综合提示：`$readmemh` 的综合支持与 init 流程受器件/工具链限制；
-// 上板建议使用 Quartus ROM/RAM IP 或工程级 memory init。
 // ============================================================================
 
 module single_port_rom #(
     parameter int DATA_WIDTH = 8,    // 数据位宽
     parameter int ADDR_WIDTH = 10,   // 地址位宽（深度 = 2^ADDR_WIDTH）
-    parameter int DEPTH      = 1 << ADDR_WIDTH,  // 显式深度参数（可选）
-    parameter string INIT_FILE = ""  // 初始化文件路径（可选，支持 $readmemh/$readmemb）
+    parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读端口
     input  logic [ADDR_WIDTH-1:0]   addr,            // 地址
     output logic [DATA_WIDTH-1:0]   rdata,           // 读数据
-    
+
     input  logic                    clock,
     input  logic                    reset
 );
 
-    // 存储器数组
     logic [DATA_WIDTH-1:0] rom [0:DEPTH-1];
 
-    // ROM 初始化
-    initial begin
-        // 如果指定了初始化文件，则从文件加载
-        if (INIT_FILE != "") begin
-            $readmemh(INIT_FILE, rom);
-        end else begin
-            // 否则初始化为 0
-            for (int i = 0; i < DEPTH; i++) begin
-                rom[i] = '0;
-            end
-        end
-    end
-
-    // 读操作（同步读，在时钟上升沿后输出）
     always_ff @(posedge clock) begin
         if (reset) begin
             rdata <= '0;

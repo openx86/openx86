@@ -9,16 +9,14 @@ module at24lc32_tb;
     // I2C lines (pull-up modeled by driving '1' when released)
     logic scl_drv;
     logic sda_drv;
+    logic dut_sda_oe;
     wire  scl = scl_drv;
     wire  sda = sda_drv & (dut_sda_oe ? 1'b0 : 1'b1); // open-drain: slave only pulls low
-
-    logic dut_sda_oe;
 
     localparam logic [6:0] DEV_ADDR = 7'b1010_000; // A_PINS=000
 
     at24lc32 #(
-        .A_PINS          ( 3'b000 ),
-        .ENABLE_PLUSARGS ( 1'b1 )
+        .A_PINS ( 3'b000 )
     ) dut (
         .i_clock ( clk ),
         .i_reset ( rst ),
@@ -26,6 +24,31 @@ module at24lc32_tb;
         .i_sda   ( sda ),
         .o_sda_oe( dut_sda_oe )
     );
+
+    task automatic tb_load_eeprom_bin(input string path);
+        integer fh;
+        integer n;
+        fh = $fopen(path, "rb");
+        if (fh == 0) begin
+            $display("at24lc32_tb: cannot open bin %s", path);
+            return;
+        end
+        n = $fread(dut.mem, fh);
+        $fclose(fh);
+        $display("at24lc32_tb: fread %0d bytes from %s", n, path);
+    endtask
+
+    initial begin
+        for (int i = 0; i < 4096; i++)
+            dut.mem[i] = 8'hFF;
+        begin
+            automatic string p;
+            if ($value$plusargs("AT24_BIN=%s", p))
+                tb_load_eeprom_bin(p);
+            else if ($value$plusargs("AT24_HEX=%s", p))
+                $readmemh(p, dut.mem);
+        end
+    end
 
     initial clk = 1'b0;
     always #1 clk = ~clk;

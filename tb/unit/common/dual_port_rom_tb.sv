@@ -42,8 +42,7 @@ module dual_port_rom_tb;
     dual_port_rom #(
         .DATA_WIDTH ( DATA_WIDTH ),
         .ADDR_WIDTH ( ADDR_WIDTH ),
-        .DEPTH      ( DEPTH      ),
-        .INIT_FILE  ( ""         )  // 可以从文件加载，这里使用默认初始化
+        .DEPTH      ( DEPTH      )
     ) dut (
         .addra  ( addra  ),
         .rdataa ( rdataa ),

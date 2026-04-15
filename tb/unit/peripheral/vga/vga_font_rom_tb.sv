@@ -24,6 +24,7 @@ module vga_font_rom_tb;
     always #19.86 clock = ~clock;
 
     initial begin
+        $readmemh("rtl/periph/vga_font_8x16.hex", dut.font_rom_inst.font_rom_inst.rom);
         clock     = 0;
         reset     = 1;
         char_code = '0;
