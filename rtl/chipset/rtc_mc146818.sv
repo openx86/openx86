@@ -26,13 +26,14 @@ module rtc_mc146818 (
             index_reg <= '0;
             for (int i = 0; i < 128; i++)
                 cmos[i] <= 8'h00;
-            cmos[0] <= 8'h26; // 秒（任意初值）
-            cmos[2] <= 8'h15; // 分
-            cmos[4] <= 8'h10; // 时
-            cmos[6] <= 8'h01; // 星期
-            cmos[7] <= 8'h15; // 日
-            cmos[8] <= 8'h04; // 月
-            cmos[9] <= 8'h26; // 年低
+            // 初值：1997-10-06 00:00:00（二进制寄存器，非 BCD）
+            cmos[0] <= 8'h00; // 秒
+            cmos[2] <= 8'h00; // 分
+            cmos[4] <= 8'h00; // 时
+            cmos[6] <= 8'h02; // 星期（1=日 … 7=六；1997-10-06 为周一）
+            cmos[7] <= 8'h06; // 日
+            cmos[8] <= 8'h0A; // 月
+            cmos[9] <= 8'h61; // 年低（十进制 97 → 1997）
         end else if (i_io_valid && i_io_we && o_io_hit) begin
             if (i_io_addr == 16'h0070)
                 index_reg <= i_io_wdata;

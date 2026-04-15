@@ -41,7 +41,7 @@ module rtc_mc146818_tb;
         io_we    = 0;
         io_addr  = 16'h0071;
         @(posedge clock);
-        if (io_rdata !== 8'h26)
+        if (io_rdata !== 8'h00)
             $display("FAIL rtc sec read got %h", io_rdata);
         else
             $display("PASS rtc cmos[0]");
