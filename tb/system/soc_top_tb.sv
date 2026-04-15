@@ -122,18 +122,6 @@ module soc_top_tb;
                 dut.u_bus.u_bus_controller.u_devices.g_disk_ram.u_disk_image.mem[1] = 8'h5A;
             end
         end
-
-        begin
-            int i;
-            int nb = $size(dut.u_bus.u_bus_controller.u_devices.u_fdc.sram);
-            for (i = 0; i < nb; i++)
-                dut.u_bus.u_bus_controller.u_devices.u_fdc.sram[i] = 8'hE5;
-            if (nb > 2) begin
-                dut.u_bus.u_bus_controller.u_devices.u_fdc.sram[0] = 8'hEB;
-                dut.u_bus.u_bus_controller.u_devices.u_fdc.sram[1] = 8'h3C;
-                dut.u_bus.u_bus_controller.u_devices.u_fdc.sram[2] = 8'h90;
-            end
-        end
     end
 
     initial begin

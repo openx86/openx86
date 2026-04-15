@@ -117,8 +117,6 @@ localparam logic [15:0] IO_BASE_EXTENDED    = 16'h0100;  // 扩展 I/O 起始
 localparam logic [15:0] IO_END_EXTENDED     = 16'h03FF;  // 扩展 I/O 结束
 localparam logic [15:0] IO_BASE_VGA         = 16'h03C0;  // VGA I/O 起始
 localparam logic [15:0] IO_END_VGA          = 16'h03DF;  // VGA I/O 结束
-localparam logic [15:0] IO_BASE_FDC         = 16'h03F0;  // 软盘控制器起始
-localparam logic [15:0] IO_END_FDC          = 16'h03F7;  // 软盘控制器结束
 localparam logic [15:0] IO_BASE_COM1        = 16'h03F8;  // COM1 串口起始
 localparam logic [15:0] IO_END_COM1         = 16'h03FF;  // COM1 串口结束
 
@@ -135,10 +133,6 @@ logic is_other_io_access;
 logic is_chipset_io;
 logic [7:0] chipset_io_rdata;
 logic       chipset_io_hit;
-
-logic       is_fdc_io;
-logic [7:0] fdc_io_rdata;
-logic       fdc_io_hit;
 
 // 数据选择信号
 logic [31:0] vram_data_selected;
@@ -209,23 +203,6 @@ assign is_chipset_io = is_other_io_access && (
     (i_bus_address[15:0] == 16'h03F6) ||
     ((i_bus_address[15:0] >= 16'h0378) && (i_bus_address[15:0] <= 16'h037F)) ||
     ((i_bus_address[15:0] >= 16'h03F8) && (i_bus_address[15:0] <= 16'h03FF))
-);
-
-// 软驱 NEC765：0x3F0–0x3F5、0x3F7（不含 0x3F6，与 IDE 备用口错开）
-assign is_fdc_io = is_other_io_access && (
-    ((i_bus_address[15:0] >= 16'h03F0) && (i_bus_address[15:0] <= 16'h03F5)) ||
-    (i_bus_address[15:0] == 16'h03F7)
-);
-
-fdc_nec765_sram u_fdc (
-    .i_clock    ( i_clock ),
-    .i_reset    ( i_reset ),
-    .i_io_valid ( is_fdc_io && i_bus_valid ),
-    .i_io_we    ( i_bus_write_enable ),
-    .i_io_addr  ( i_bus_address[15:0] ),
-    .i_io_wdata ( i_bus_data_write[7:0] ),
-    .o_io_rdata ( fdc_io_rdata ),
-    .o_io_hit   ( fdc_io_hit )
 );
 
 // -------------------------------------------------------------------------
@@ -601,8 +578,7 @@ assign ext_bios_data_selected = is_ext_bios_access ? i_ext_bios_rdata : 32'h0;
 // I/O 数据（8 位扩展到 32 位）
 logic [7:0] io_byte_data;
 assign io_byte_data = is_vga_io_access ? i_vga_io_data_r :
-                      (fdc_io_hit ? fdc_io_rdata :
-                      (chipset_io_hit ? chipset_io_rdata : 8'hFF));
+                      (chipset_io_hit ? chipset_io_rdata : 8'hFF);
 assign io_data_selected = is_io_access ? {24'h0, io_byte_data} : 32'h0;
 
 // 最终数据输出

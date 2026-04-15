@@ -1279,7 +1279,6 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_test_register
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/w686_core.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/w686_cpu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/memory/sdram_controller.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/fdc_nec765_sram.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/ide_sd_sector_bridge.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/ps2_host_phy.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/sd_4bit_phy.sv

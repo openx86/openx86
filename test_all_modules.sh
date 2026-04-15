@@ -162,7 +162,6 @@ get_dependencies() {
         deps="$deps $RTL_DIR/periph/ide_sd_sector_bridge.sv"
         deps="$deps $RTL_DIR/periph/sd_native_host_4bit.sv"
         deps="$deps $RTL_DIR/periph/sd_4bit_phy.sv"
-        deps="$deps $RTL_DIR/periph/fdc_nec765_sram.sv"
         deps="$deps $RTL_DIR/bus.sv"
     fi
     if grep -q "sdram_controller" "$module_file"; then
