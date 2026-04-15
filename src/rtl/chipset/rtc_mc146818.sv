@@ -34,15 +34,15 @@ module rtc_mc146818 #(
 
     assign o_io_hit = (i_io_addr == PORT_IDX) || (i_io_addr == PORT_DAT);
 
+    logic [7:0] index_reg;
+    logic [7:0] cmos [0:127];
+
     wire dm_bin   = cmos[11][2];
     wire mode_24h = cmos[11][1];
     wire set_stop = cmos[11][7];
     wire pie_en   = cmos[11][6];
     wire aie_en   = cmos[11][5];
     wire uie_en   = cmos[11][4];
-
-    logic [7:0] index_reg;
-    logic [7:0] cmos[128];
 
     logic [5:0] sec_bin, min_bin;
     logic [4:0] hour_bin;
@@ -234,7 +234,7 @@ module rtc_mc146818 #(
             4'd14: pie_reload_q = 24'(CLK_HZ / 4);
             default: pie_reload_q = 24'(CLK_HZ / 2);
         endcase
-    endfunction
+    end
 
     function automatic logic alarm_field_ok(
         input logic [7:0] alarm_byte,
@@ -329,8 +329,16 @@ module rtc_mc146818 #(
                             7'h02: min_bin <= dm_bin ? i_io_wdata[5:0] : bcd_to_u6(i_io_wdata);
                             7'h04: hour_bin <= dec_hour(i_io_wdata, dm_bin, mode_24h);
                             7'h06: dow_bin <= i_io_wdata[2:0];
-                            7'h07: dom_bin <= dm_bin ? i_io_wdata[4:0] : bcd_to_u8(i_io_wdata)[4:0];
-                            7'h08: month_bin <= dm_bin ? i_io_wdata[3:0] : bcd_to_u8(i_io_wdata)[3:0];
+                            7'h07: begin
+                                logic [7:0] dom_u8;
+                                dom_u8 = bcd_to_u8(i_io_wdata);
+                                dom_bin <= dm_bin ? i_io_wdata[4:0] : dom_u8[4:0];
+                            end
+                            7'h08: begin
+                                logic [7:0] mon_u8;
+                                mon_u8 = bcd_to_u8(i_io_wdata);
+                                month_bin <= dm_bin ? i_io_wdata[3:0] : mon_u8[3:0];
+                            end
                             7'h09: year_bin <= dm_bin ? (i_io_wdata > 8'd99 ? 8'd99 : i_io_wdata)
                                 : bcd_to_u8(i_io_wdata);
                             7'h01, 7'h03, 7'h05: cmos[index_reg[6:0]] <= i_io_wdata;

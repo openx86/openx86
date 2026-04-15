@@ -105,7 +105,8 @@ module pc_bios_24lc32 #(
 
     // Wrap into EEPROM_BYTES (assumed power-of-two in default 4096)
     wire [AW-1:0] ext_addr = ext_dw_byte_full[AW-1:0];
-    wire [AW-1:0] sys_addr = (sys_dw_byte_full + OFF_SYS_BASE_BYTES)[AW-1:0];
+    wire [31:0]   sys_dw_plus_base = (sys_dw_byte_full + OFF_SYS_BASE_BYTES);
+    wire [AW-1:0] sys_addr = sys_dw_plus_base[AW-1:0];
 
     always_ff @(posedge clock) begin
         if (reset) begin

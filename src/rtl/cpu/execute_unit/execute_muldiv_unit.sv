@@ -20,6 +20,8 @@ module execute_muldiv_unit (
     logic [63:0] divisor_u;
     logic signed [63:0] sdividend;
     logic signed [31:0] sdivisor;
+    logic [63:0] uquot, urem;
+    logic signed [63:0] squot, srem;
 
     always_comb begin
         umul = 64'(i_lo) * 64'(i_src);
@@ -28,6 +30,10 @@ module execute_muldiv_unit (
         divisor_u = {32'h0, i_src};
         sdividend = $signed({i_hi, i_lo});
         sdivisor  = $signed(i_src);
+        uquot = '0;
+        urem  = '0;
+        squot = '0;
+        srem  = '0;
 
         o_div0 = 1'b0;
         o_lo   = 32'h0;
@@ -46,16 +52,20 @@ module execute_muldiv_unit (
                 if (i_src == 32'h0) begin
                     o_div0 = 1'b1;
                 end else begin
-                    o_lo = (dividend / divisor_u)[31:0];
-                    o_hi = (dividend % divisor_u)[31:0];
+                    uquot = (dividend / divisor_u);
+                    urem  = (dividend % divisor_u);
+                    o_lo  = uquot[31:0];
+                    o_hi  = urem[31:0];
                 end
             end
             MD_IDIV32: begin
                 if (i_src == 32'h0) begin
                     o_div0 = 1'b1;
                 end else begin
-                    o_lo = (sdividend / sdivisor)[31:0];
-                    o_hi = (sdividend % sdivisor)[31:0];
+                    squot = (sdividend / sdivisor);
+                    srem  = (sdividend % sdivisor);
+                    o_lo  = squot[31:0];
+                    o_hi  = srem[31:0];
                 end
             end
             default: ;
