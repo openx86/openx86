@@ -97,6 +97,19 @@ module bus_tb;
         .i_sdram_rdata      (i_sdram_rdata),
         .i_sdram_ready      (i_sdram_ready),
         .i_sdram_busy       (i_sdram_busy),
+
+        .o_ps2_kbd_clk_out ( ),
+        .o_ps2_kbd_clk_oe  ( ),
+        .i_ps2_kbd_clk_in  ( 1'b1 ),
+        .o_ps2_kbd_dat_out ( ),
+        .o_ps2_kbd_dat_oe  ( ),
+        .i_ps2_kbd_dat_in  ( 1'b1 ),
+        .o_ps2_aux_clk_out ( ),
+        .o_ps2_aux_clk_oe  ( ),
+        .i_ps2_aux_clk_in  ( 1'b1 ),
+        .o_ps2_aux_dat_out ( ),
+        .o_ps2_aux_dat_oe  ( ),
+        .i_ps2_aux_dat_in  ( 1'b1 ),
         
         .i_clock            (clock),
         .i_reset            (reset)

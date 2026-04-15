@@ -80,6 +80,25 @@ get_dependencies() {
     if grep -q "pc_bios_eeprom" "$module_file"; then
         deps="$deps $RTL_DIR/peripheral/eeprom/eeprom_controller.sv"
     fi
+    if grep -q "ps2_i8042" "$module_file"; then
+        deps="$deps $RTL_DIR/peripheral/ps2/ps2_host_phy.sv"
+    fi
+    if grep -q "bus u_" "$module_file"; then
+        deps="$deps $RTL_DIR/chipset/openx86_chipset_pkg.sv"
+        deps="$deps $RTL_DIR/chipset/i8254_pit.sv"
+        deps="$deps $RTL_DIR/chipset/i8259_pic.sv"
+        deps="$deps $RTL_DIR/chipset/i8237_dma.sv"
+        deps="$deps $RTL_DIR/chipset/rtc_mc146818.sv"
+        deps="$deps $RTL_DIR/peripheral/ps2/ps2_host_phy.sv"
+        deps="$deps $RTL_DIR/chipset/ps2_i8042.sv"
+        deps="$deps $RTL_DIR/chipset/com_ns16550.sv"
+        deps="$deps $RTL_DIR/chipset/lpt_centronics.sv"
+        deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard/disk_ram_8.sv"
+        deps="$deps $RTL_DIR/chipset/pc_chipset_io.sv"
+        deps="$deps $RTL_DIR/peripheral/fdc/fdc_nec765_sram.sv"
+        deps="$deps $RTL_DIR/bus.sv"
+    fi
     if grep -q "sdram_controller" "$module_file"; then
         deps="$deps $RTL_DIR/memory/sdram_controller.sv"
     fi

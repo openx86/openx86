@@ -19,6 +19,7 @@ $core = @(
     "rtl/chipset/i8259_pic.sv",
     "rtl/chipset/i8237_dma.sv",
     "rtl/chipset/rtc_mc146818.sv",
+    "rtl/peripheral/ps2/ps2_host_phy.sv",
     "rtl/chipset/ps2_i8042.sv",
     "rtl/chipset/com_ns16550.sv",
     "rtl/chipset/lpt_centronics.sv",

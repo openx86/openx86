@@ -10,6 +10,7 @@ $common = @(
     "rtl/chipset/i8259_pic.sv",
     "rtl/chipset/i8237_dma.sv",
     "rtl/chipset/rtc_mc146818.sv",
+    "rtl/peripheral/ps2/ps2_host_phy.sv",
     "rtl/chipset/ps2_i8042.sv",
     "rtl/chipset/ide_ata_pio.sv",
     "rtl/peripheral/sdcard/disk_ram_8.sv",
@@ -31,6 +32,7 @@ Run-Tb "i8259_pic_tb" ($common + "rtl/chipset/i8259_pic_tb.sv")
 Run-Tb "i8237_dma_tb" ($common + "rtl/chipset/i8237_dma_tb.sv")
 Run-Tb "rtc_mc146818_tb" ($common + "rtl/chipset/rtc_mc146818_tb.sv")
 Run-Tb "ps2_i8042_tb" ($common + "rtl/chipset/ps2_i8042_tb.sv")
+Run-Tb "ps2_host_phy_tb" @("rtl/peripheral/ps2/ps2_host_phy.sv", "rtl/peripheral/ps2/ps2_host_phy_tb.sv")
 Run-Tb "ide_ata_pio_tb" ($common + "rtl/chipset/ide_ata_pio_tb.sv")
 Run-Tb "com_ns16550_tb" ($common + "rtl/chipset/com_ns16550_tb.sv")
 Run-Tb "lpt_centronics_tb" ($common + "rtl/chipset/lpt_centronics_tb.sv")

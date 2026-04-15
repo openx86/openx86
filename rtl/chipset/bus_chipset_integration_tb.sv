@@ -59,6 +59,18 @@ module bus_chipset_integration_tb;
         .i_bios_rdata       ( bios_rdata ),
         .o_ext_bios_addr    ( ext_bios_addr ),
         .i_ext_bios_rdata   ( ext_bios_rdata ),
+        .o_ps2_kbd_clk_out ( ),
+        .o_ps2_kbd_clk_oe  ( ),
+        .i_ps2_kbd_clk_in  ( 1'b1 ),
+        .o_ps2_kbd_dat_out ( ),
+        .o_ps2_kbd_dat_oe  ( ),
+        .i_ps2_kbd_dat_in  ( 1'b1 ),
+        .o_ps2_aux_clk_out ( ),
+        .o_ps2_aux_clk_oe  ( ),
+        .i_ps2_aux_clk_in  ( 1'b1 ),
+        .o_ps2_aux_dat_out ( ),
+        .o_ps2_aux_dat_oe  ( ),
+        .i_ps2_aux_dat_in  ( 1'b1 ),
         .i_clock            ( clock ),
         .i_reset            ( reset )
     );

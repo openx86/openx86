@@ -74,6 +74,12 @@ module soc_top (
         .i_reset            ( reset )
     );
 
+    // PS/2 回读：仿真无外部设备时置 1（上拉空闲）
+    wire ps2_kbd_clk_in = 1'b1;
+    wire ps2_kbd_dat_in = 1'b1;
+    wire ps2_aux_clk_in = 1'b1;
+    wire ps2_aux_dat_in = 1'b1;
+
     bus u_bus (
         .i_bus_valid        ( bus_valid ),
         .o_bus_ready        ( bus_ready ),
@@ -106,6 +112,18 @@ module soc_top (
         .i_sdram_rdata      ( i_sdram_rdata ),
         .i_sdram_ready      ( i_sdram_ready ),
         .i_sdram_busy       ( i_sdram_busy ),
+        .o_ps2_kbd_clk_out ( ),
+        .o_ps2_kbd_clk_oe  ( ),
+        .i_ps2_kbd_clk_in  ( ps2_kbd_clk_in ),
+        .o_ps2_kbd_dat_out ( ),
+        .o_ps2_kbd_dat_oe  ( ),
+        .i_ps2_kbd_dat_in  ( ps2_kbd_dat_in ),
+        .o_ps2_aux_clk_out ( ),
+        .o_ps2_aux_clk_oe  ( ),
+        .i_ps2_aux_clk_in  ( ps2_aux_clk_in ),
+        .o_ps2_aux_dat_out ( ),
+        .o_ps2_aux_dat_oe  ( ),
+        .i_ps2_aux_dat_in  ( ps2_aux_dat_in ),
         .i_clock            ( clock ),
         .i_reset            ( reset )
     );

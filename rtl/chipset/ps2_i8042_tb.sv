@@ -11,7 +11,9 @@ module ps2_i8042_tb;
     logic        kbd_push;
     logic [7:0]  kbd_data;
 
-    ps2_i8042 dut (
+    ps2_i8042 #(
+        .USE_REAL_PS2 ( 1'b0 )
+    ) dut (
         .i_clock     ( clock ),
         .i_reset     ( reset ),
         .i_io_valid  ( io_valid ),
@@ -23,7 +25,21 @@ module ps2_i8042_tb;
         .i_kbd_push  ( kbd_push ),
         .i_kbd_data  ( kbd_data ),
         .i_aux_push  ( 1'b0 ),
-        .i_aux_data  ( 8'h0 )
+        .i_aux_data  ( 8'h0 ),
+        .o_kbd_irq   ( ),
+        .o_aux_irq   ( ),
+        .o_ps2_kbd_clk_out ( ),
+        .o_ps2_kbd_clk_oe  ( ),
+        .i_ps2_kbd_clk_in  ( 1'b1 ),
+        .o_ps2_kbd_dat_out ( ),
+        .o_ps2_kbd_dat_oe  ( ),
+        .i_ps2_kbd_dat_in  ( 1'b1 ),
+        .o_ps2_aux_clk_out ( ),
+        .o_ps2_aux_clk_oe  ( ),
+        .i_ps2_aux_clk_in  ( 1'b1 ),
+        .o_ps2_aux_dat_out ( ),
+        .o_ps2_aux_dat_oe  ( ),
+        .i_ps2_aux_dat_in  ( 1'b1 )
     );
 
     always #5 clock = ~clock;

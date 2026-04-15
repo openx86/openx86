@@ -8,7 +8,10 @@
 // 优先级：… > RTC > COM > LPT > IDE
 // ============================================================================
 
-module pc_chipset_io (
+module pc_chipset_io #(
+    parameter bit  USE_REAL_PS2 = 1'b0,
+    parameter int PS2_CLK_HZ   = 50_000_000
+) (
     input  logic        i_clock,
     input  logic        i_reset,
     input  logic        i_io_valid,
@@ -25,7 +28,19 @@ module pc_chipset_io (
     input  logic [7:0]  i_pic_slave_ir,
     output logic        o_pic_master_intr,
     output logic        o_pic_slave_intr,
-    output logic        o_pit_out0
+    output logic        o_pit_out0,
+    output logic        o_ps2_kbd_clk_out,
+    output logic        o_ps2_kbd_clk_oe,
+    input  logic        i_ps2_kbd_clk_in,
+    output logic        o_ps2_kbd_dat_out,
+    output logic        o_ps2_kbd_dat_oe,
+    input  logic        i_ps2_kbd_dat_in,
+    output logic        o_ps2_aux_clk_out,
+    output logic        o_ps2_aux_clk_oe,
+    input  logic        i_ps2_aux_clk_in,
+    output logic        o_ps2_aux_dat_out,
+    output logic        o_ps2_aux_dat_oe,
+    input  logic        i_ps2_aux_dat_in
 );
 
     localparam int DISK_IMAGE_BYTES = 512 * 2048;
@@ -59,10 +74,17 @@ module pc_chipset_io (
 
     logic [7:0] ir_m;
     logic       rtc_irq;
-    wire [7:0]  pic_slave_ir_merged = { i_pic_slave_ir[7:1], i_pic_slave_ir[0] | rtc_irq };
+    logic       ps2_kbd_irq;
+    logic       ps2_aux_irq;
+    wire [7:0] pic_slave_ir_merged = {
+        i_pic_slave_ir[7:5],
+        i_pic_slave_ir[4] | ps2_aux_irq,
+        i_pic_slave_ir[3:1],
+        i_pic_slave_ir[0] | rtc_irq
+    };
 
     assign ir_m[0]    = pit_out0;
-    assign ir_m[1]    = 1'b0;
+    assign ir_m[1]    = ps2_kbd_irq;
     assign ir_m[2]    = intr_s;
     assign ir_m[7:3]  = 5'b0;
 
@@ -126,19 +148,36 @@ module pc_chipset_io (
         .o_out2     ( pit_out2 )
     );
 
-    ps2_i8042 u_ps2 (
-        .i_clock     ( i_clock ),
-        .i_reset     ( i_reset ),
-        .i_io_valid  ( i_io_valid ),
-        .i_io_we     ( i_io_we ),
-        .i_io_addr   ( i_io_addr ),
-        .i_io_wdata  ( i_io_wdata ),
-        .o_io_rdata  ( r_ps2 ),
-        .o_io_hit    ( h_ps2 ),
-        .i_kbd_push  ( i_ps2_kbd_push ),
-        .i_kbd_data  ( i_ps2_kbd_data ),
-        .i_aux_push  ( i_ps2_aux_push ),
-        .i_aux_data  ( i_ps2_aux_data )
+    ps2_i8042 #(
+        .USE_REAL_PS2 ( USE_REAL_PS2 ),
+        .CLK_HZ       ( PS2_CLK_HZ )
+    ) u_ps2 (
+        .i_clock           ( i_clock ),
+        .i_reset           ( i_reset ),
+        .i_io_valid        ( i_io_valid ),
+        .i_io_we           ( i_io_we ),
+        .i_io_addr         ( i_io_addr ),
+        .i_io_wdata        ( i_io_wdata ),
+        .o_io_rdata        ( r_ps2 ),
+        .o_io_hit          ( h_ps2 ),
+        .i_kbd_push        ( i_ps2_kbd_push ),
+        .i_kbd_data        ( i_ps2_kbd_data ),
+        .i_aux_push        ( i_ps2_aux_push ),
+        .i_aux_data        ( i_ps2_aux_data ),
+        .o_kbd_irq         ( ps2_kbd_irq ),
+        .o_aux_irq         ( ps2_aux_irq ),
+        .o_ps2_kbd_clk_out ( o_ps2_kbd_clk_out ),
+        .o_ps2_kbd_clk_oe  ( o_ps2_kbd_clk_oe ),
+        .i_ps2_kbd_clk_in  ( i_ps2_kbd_clk_in ),
+        .o_ps2_kbd_dat_out ( o_ps2_kbd_dat_out ),
+        .o_ps2_kbd_dat_oe  ( o_ps2_kbd_dat_oe ),
+        .i_ps2_kbd_dat_in  ( i_ps2_kbd_dat_in ),
+        .o_ps2_aux_clk_out ( o_ps2_aux_clk_out ),
+        .o_ps2_aux_clk_oe  ( o_ps2_aux_clk_oe ),
+        .i_ps2_aux_clk_in  ( i_ps2_aux_clk_in ),
+        .o_ps2_aux_dat_out ( o_ps2_aux_dat_out ),
+        .o_ps2_aux_dat_oe  ( o_ps2_aux_dat_oe ),
+        .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in )
     );
 
     rtc_mc146818 u_rtc (

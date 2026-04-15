@@ -30,7 +30,19 @@ module pc_chipset_io_tb;
         .i_pic_slave_ir    ( 8'h0 ),
         .o_pic_master_intr ( ),
         .o_pic_slave_intr  ( ),
-        .o_pit_out0        ( )
+        .o_pit_out0        ( ),
+        .o_ps2_kbd_clk_out ( ),
+        .o_ps2_kbd_clk_oe  ( ),
+        .i_ps2_kbd_clk_in  ( 1'b1 ),
+        .o_ps2_kbd_dat_out ( ),
+        .o_ps2_kbd_dat_oe  ( ),
+        .i_ps2_kbd_dat_in  ( 1'b1 ),
+        .o_ps2_aux_clk_out ( ),
+        .o_ps2_aux_clk_oe  ( ),
+        .i_ps2_aux_clk_in  ( 1'b1 ),
+        .o_ps2_aux_dat_out ( ),
+        .o_ps2_aux_dat_oe  ( ),
+        .i_ps2_aux_dat_in  ( 1'b1 )
     );
 
     initial begin
