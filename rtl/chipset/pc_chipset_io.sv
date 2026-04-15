@@ -2,6 +2,7 @@
 // IBM PC/AT 主板 I/O 聚合 — 单入口 valid/ready 字节访问
 // 优先级（同址冲突时，序号小者优先）：DMA > PIC主 > PIC从 > PIT > 8042 > RTC > IDE
 // PIT CH0 out -> PIC 主片 IR0；PIC 从片 o_intr -> PIC 主片 IR2
+// RTC 中断接从片 IR0（与 i_pic_slave_ir[0] 线或）
 // IDE 使用 disk_ram_8 作为盘映像（与 SD 卡模型共享，见 rtl/peripheral/sdcard）
 // COM1（0x3F8–0x3FF）、LPT1（0x378–0x37F）
 // 优先级：… > RTC > COM > LPT > IDE
@@ -57,6 +58,9 @@ module pc_chipset_io (
     logic       intr_m, intr_s;
 
     logic [7:0] ir_m;
+    logic       rtc_irq;
+    wire [7:0]  pic_slave_ir_merged = { i_pic_slave_ir[7:1], i_pic_slave_ir[0] | rtc_irq };
+
     assign ir_m[0]    = pit_out0;
     assign ir_m[1]    = 1'b0;
     assign ir_m[2]    = intr_s;
@@ -103,7 +107,7 @@ module pc_chipset_io (
         .i_io_wdata ( i_io_wdata ),
         .o_io_rdata ( r_pic_s ),
         .o_io_hit   ( h_pic_s ),
-        .i_ir       ( i_pic_slave_ir ),
+        .i_ir       ( pic_slave_ir_merged ),
         .o_intr     ( intr_s )
     );
 
@@ -145,7 +149,8 @@ module pc_chipset_io (
         .i_io_addr  ( i_io_addr ),
         .i_io_wdata ( i_io_wdata ),
         .o_io_rdata ( r_rtc ),
-        .o_io_hit   ( h_rtc )
+        .o_io_hit   ( h_rtc ),
+        .o_rtc_irq  ( rtc_irq )
     );
 
     com_ns16550 u_com1 (
