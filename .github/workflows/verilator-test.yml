@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install verilator
         run: |
@@ -44,7 +44,7 @@ jobs:
 
       - name: Upload test logs (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: verilator-test-logs
           path: |
@@ -54,7 +54,7 @@ jobs:
 
       - name: Upload test logs (on success)
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: verilator-test-logs-success
           path: |
