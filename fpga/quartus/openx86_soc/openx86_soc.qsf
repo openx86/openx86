@@ -1,0 +1,15 @@
+# ============================================================================
+# OpenX86 SoC (soc_top) — Quartus settings stub
+# ============================================================================
+#
+# 说明：
+# - 源文件列表与 include/search_path 由 `create_project.tcl` 从 `sim/filelists/rtl.f`
+#   自动导入，避免在 .qsf 中重复维护 99+ 个文件。
+# - 板卡相关约束（时钟/pin/IO 标准）建议放在 `fpga/boards/<board>/` 下，并由 Tcl 选择。
+#
+
+set_global_assignment -name TOP_LEVEL_ENTITY soc_top
+
+# 统一把输出导向 build/，避免污染源码目录
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "../../../build/quartus/openx86_soc"
+
