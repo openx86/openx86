@@ -53,8 +53,8 @@ jobs:
       - name: Run all testbenches
         continue-on-error: false
         run: |
-          chmod +x test_all_modules.sh
-          ./test_all_modules.sh || {
+          chmod +x scripts/test_all.sh
+          ./scripts/test_all.sh || {
             echo "测试失败！"
             echo "失败的测试日志:"
             ls -la *_compile.log *_run.log 2>/dev/null || true
@@ -81,3 +81,24 @@ jobs:
             *_run.log
           retention-days: 1
           if-no-files-found: ignore
+
+  test-windows:
+    name: Run SystemVerilog Tests (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install iverilog (choco)
+        shell: powershell
+        run: |
+          choco install iverilog --no-progress -y
+          iverilog -V
+          vvp -V
+
+      - name: Run all testbenches (PowerShell)
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/test_all.ps1"

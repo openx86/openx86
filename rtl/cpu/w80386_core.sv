@@ -1,4 +1,4 @@
-module w80386_core (
+module w486_core (
     // bus
     output logic        o_bus_vaild,
     input  logic        i_bus_ready,
@@ -378,4 +378,30 @@ decode core_decode (
 //     .o_error                        ( decode_o_error )
 // );
 
+endmodule
+
+// Backward-compatible alias (temporary).
+// Remove after all instantiations are migrated to w486_core.
+module w80386_core (
+    output logic        o_bus_vaild,
+    input  logic        i_bus_ready,
+    input  logic        i_bus_busy,
+    output logic        o_bus_write_enable,
+    output logic [31:0] o_bus_address,
+    input  logic [31:0] i_bus_data_read,
+    output logic [31:0] o_bus_data_write,
+    input  logic        clock,
+    input  logic        reset
+);
+    w486_core u (
+        .o_bus_vaild        ( o_bus_vaild ),
+        .i_bus_ready        ( i_bus_ready ),
+        .i_bus_busy         ( i_bus_busy ),
+        .o_bus_write_enable ( o_bus_write_enable ),
+        .o_bus_address      ( o_bus_address ),
+        .i_bus_data_read    ( i_bus_data_read ),
+        .o_bus_data_write   ( o_bus_data_write ),
+        .clock              ( clock ),
+        .reset              ( reset )
+    );
 endmodule

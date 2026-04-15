@@ -35,48 +35,23 @@ but is not used for effective address calculation.
 
 module general_propose_register (
     input  logic        write_enable,
-    input  logic [ 2:0] write_index,
+    input  logic [2:0]  write_index,
     input  logic [31:0] write_data,
-    output logic [ 7:0]  AL,
-    output logic [ 7:0]  BL,
-    output logic [ 7:0]  CL,
-    output logic [ 7:0]  DL,
-    output logic [ 7:0]  AH,
-    output logic [ 7:0]  BH,
-    output logic [ 7:0]  CH,
-    output logic [ 7:0]  DH,
-    output logic [31:0]  AX,
-    output logic [31:0]  CX,
-    output logic [31:0]  DX,
-    output logic [31:0]  BX,
-    output logic [31:0]  SP,
-    output logic [15:0]  BP,
-    output logic [15:0]  SI,
-    output logic [15:0]  DI,
-    output logic [31:0] EAX,
-    output logic [31:0] ECX,
-    output logic [31:0] EDX,
-    output logic [31:0] EBX,
-    output logic [31:0] ESP,
-    output logic [31:0] EBP,
-    output logic [31:0] ESI,
-    output logic [31:0] EDI,
-    input  logic        clock, reset
+    output logic [31:0] read__8 [0:7],
+    output logic [31:0] read_16 [0:7],
+    output logic [31:0] read_32 [0:7],
+    input  logic        clock,
+    input  logic        reset
 );
 
 // GENERAL DATA AND ADDRESS REGISTERS
-reg   [31:0] general_register [8];
+logic [31:0] general_register [0:7];
 
 always_ff @( posedge clock or posedge reset ) begin : ff_basic_register
     if (reset) begin
-        general_register[0] <= 32'b0;
-        general_register[1] <= 32'b0;
-        general_register[2] <= 32'b0;
-        general_register[3] <= 32'b0;
-        general_register[4] <= 32'b0;
-        general_register[5] <= 32'b0;
-        general_register[6] <= 32'b0;
-        general_register[7] <= 32'b0;
+        for (int i = 0; i < 8; i++) begin
+            general_register[i] <= 32'h0;
+        end
     end else begin
         if (write_enable) begin
             general_register[write_index] <= write_data;
@@ -86,30 +61,12 @@ always_ff @( posedge clock or posedge reset ) begin : ff_basic_register
     end
 end
 
-// below signal is generated for debug
-assign  AL  = general_register[0][ 7:0];
-assign  BL  = general_register[1][ 7:0];
-assign  CL  = general_register[2][ 7:0];
-assign  DL  = general_register[3][ 7:0];
-assign  AH  = general_register[0][15:8];
-assign  BH  = general_register[1][15:8];
-assign  CH  = general_register[2][15:8];
-assign  DH  = general_register[3][15:8];
-assign  AX  = general_register[0][31:0];
-assign  CX  = general_register[1][31:0];
-assign  DX  = general_register[2][31:0];
-assign  BX  = general_register[3][31:0];
-assign  SP  = general_register[4][15:0];
-assign  BP  = general_register[5][15:0];
-assign  SI  = general_register[6][15:0];
-assign  DI  = general_register[7][15:0];
-assign EAX  = general_register[0][31:0];
-assign ECX  = general_register[1][31:0];
-assign EDX  = general_register[2][31:0];
-assign EBX  = general_register[3][31:0];
-assign ESP  = general_register[4][31:0];
-assign EBP  = general_register[5][31:0];
-assign ESI  = general_register[6][31:0];
-assign EDI  = general_register[7][31:0];
+always_comb begin
+    for (int i = 0; i < 8; i++) begin
+        read_32[i] = general_register[i];
+        read_16[i] = {16'h0, general_register[i][15:0]};
+        read__8[i] = {24'h0, general_register[i][7:0]};
+    end
+end
 
 endmodule

@@ -57,6 +57,7 @@ module soc_top (
     logic        sdr_phy_clk, sdr_phy_cke;
 
     logic        o_halted;
+    logic        pic_intr;
 
     x86_core_top u_cpu (
         .o_bus_valid        ( bus_valid ),
@@ -67,6 +68,7 @@ module soc_top (
         .o_bus_address      ( bus_addr ),
         .i_bus_data_read    ( bus_rdata ),
         .o_bus_data_write   ( bus_wdata ),
+        .i_intr             ( pic_intr ),
         .i_cr0_we           ( 1'b0 ),
         .i_cr0_wdata        ( 32'h0 ),
         .o_halted           ( o_halted ),
@@ -124,6 +126,7 @@ module soc_top (
         .o_ps2_aux_dat_out ( ),
         .o_ps2_aux_dat_oe  ( ),
         .i_ps2_aux_dat_in  ( ps2_aux_dat_in ),
+        .o_pic_intr         ( pic_intr ),
         .i_clock            ( clock ),
         .i_reset            ( reset )
     );
@@ -186,7 +189,7 @@ module soc_top (
     // 使用 24LC32（4KiB）做后端：地址在 192KiB 线性镜像上取模映射到 4KiB
     pc_bios_24lc32 #(
         .INSTALL_DEFAULT_BOOTSTUB ( 1'b1 ),
-        .ENABLE_PLUSARGS          ( 1'b0 ),
+        .ENABLE_PLUSARGS          ( 1'b1 ),
         .INIT_FILE                ( "" )
     ) u_bios_24lc32 (
         .clock               ( clock ),

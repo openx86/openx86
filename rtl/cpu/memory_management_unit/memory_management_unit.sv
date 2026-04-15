@@ -8,7 +8,7 @@ description: memory_management_unit
 */
 
 module memory_management_unit #(
-    read_from_fetch = 0
+    parameter bit read_from_fetch = 1'b0
 ) (
     // handshake
     input  logic         i_vaild,
@@ -23,6 +23,13 @@ module memory_management_unit #(
     input  logic         i_paging_enable, // from CR register
     input  logic [31: 0] i_page_directory_base, // from CR[3]
     output logic [31: 0] o_physical_address,
+    // bus for paging walks (used only when paging enabled)
+    output logic        o_bus_vaild,
+    input  logic        i_bus_ready,
+    output logic        o_bus_write_enable,
+    output logic [31:0] o_bus_address,
+    input  logic [31:0] i_bus_data_read,
+    output logic [31:0] o_bus_data_write,
     // common
     input  logic         clock, reset
 );
@@ -52,6 +59,12 @@ paging_unit mmu_paging_unit (
     .i_linear_address ( linear_address ),
     .i_page_directory_base ( i_page_directory_base ),
     .o_physical_address ( physical_address ),
+    .o_bus_vaild ( o_bus_vaild ),
+    .i_bus_ready ( i_bus_ready ),
+    .o_bus_write_enable ( o_bus_write_enable ),
+    .o_bus_address ( o_bus_address ),
+    .i_bus_data_read ( i_bus_data_read ),
+    .o_bus_data_write ( o_bus_data_write ),
     .clock ( clock ),
     .reset ( reset )
 );

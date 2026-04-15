@@ -10,7 +10,10 @@
 
 module pc_chipset_io #(
     parameter bit  USE_REAL_PS2 = 1'b0,
-    parameter int PS2_CLK_HZ   = 50_000_000
+    parameter int PS2_CLK_HZ   = 50_000_000,
+    parameter bit  DISK_ENABLE_PLUSARGS = 1'b0,
+    parameter bit  DISK_INIT_IS_BINARY  = 1'b1,
+    parameter string DISK_INIT_FILE     = ""
 ) (
     input  logic        i_clock,
     input  logic        i_reset,
@@ -52,8 +55,19 @@ module pc_chipset_io #(
     logic [7:0]  ide_disk_rdata;
     logic [7:0]  disk_rdata_b_unused;
 
+    string disk_init_file_eff;
+    initial begin
+        disk_init_file_eff = DISK_INIT_FILE;
+        if (DISK_ENABLE_PLUSARGS) begin
+            void'($value$plusargs("DISK_BIN=%s", disk_init_file_eff));
+            void'($value$plusargs("DISK_HEX=%s", disk_init_file_eff));
+        end
+    end
+
     disk_ram_8 #(
-        .BYTE_DEPTH ( DISK_IMAGE_BYTES )
+        .BYTE_DEPTH     ( DISK_IMAGE_BYTES ),
+        .INIT_IS_BINARY ( DISK_INIT_IS_BINARY ),
+        .INIT_FILE      ( disk_init_file_eff )
     ) u_disk_image (
         .i_clock   ( i_clock ),
         .i_reset   ( i_reset ),

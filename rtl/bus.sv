@@ -69,6 +69,9 @@ module bus #(
     output logic        o_ps2_aux_dat_out,
     output logic        o_ps2_aux_dat_oe,
     input  logic        i_ps2_aux_dat_in,
+
+    // PIC 主片中断输出（接 CPU INTR）
+    output logic        o_pic_intr,
     
     // Chipset（IBM PC/AT I/O：PIC/PIT/DMA/RTC/8042/IDE 等）
     // 由 rtl/chipset/pc_chipset_io.sv 聚合；未命中时读回 0xFF
@@ -217,9 +220,12 @@ fdc_nec765_sram u_fdc (
     .o_io_hit   ( fdc_io_hit )
 );
 
+logic pic_intr_w;
+
 pc_chipset_io #(
     .USE_REAL_PS2 ( USE_REAL_PS2 ),
-    .PS2_CLK_HZ   ( PS2_CLK_HZ )
+    .PS2_CLK_HZ   ( PS2_CLK_HZ ),
+    .DISK_ENABLE_PLUSARGS ( 1'b1 )
 ) u_chipset (
     .i_clock           ( i_clock ),
     .i_reset           ( i_reset ),
@@ -235,7 +241,7 @@ pc_chipset_io #(
     .i_ps2_aux_push    ( 1'b0 ),
     .i_ps2_aux_data    ( 8'h0 ),
     .i_pic_slave_ir    ( 8'h0 ),
-    .o_pic_master_intr ( ),
+    .o_pic_master_intr ( pic_intr_w ),
     .o_pic_slave_intr  ( ),
     .o_pit_out0        ( ),
     .o_ps2_kbd_clk_out ( o_ps2_kbd_clk_out ),
@@ -251,6 +257,8 @@ pc_chipset_io #(
     .o_ps2_aux_dat_oe  ( o_ps2_aux_dat_oe ),
     .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in )
 );
+
+assign o_pic_intr = pic_intr_w;
 
 // 注意：VGA VRAM 是只写的（从CPU角度），不支持读操作
 // 如果需要读VRAM，需要从VGA模块内部读取，这里暂时不支持

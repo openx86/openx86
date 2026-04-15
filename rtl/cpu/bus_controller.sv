@@ -11,11 +11,12 @@ module bus_controller (
     input  logic        i_clock, i_reset
 );
 
-// TODO: use BIOS ROM data
-assign o_bus_ready = 1;
-assign o_bus_data_read = 32'hABCD_EF01;
-assign o_bus_busy = 0;
-assign o_bus_ready = i_bus_vaild;
+// Bring-up placeholder bus controller.
+// This module is currently not used by soc_top (which connects x86_core_top
+// directly to rtl/bus.sv), but it must compile as part of the RTL set.
+assign o_bus_ready     = i_bus_vaild;
+assign o_bus_data_read = 32'hFFFF_FFFF;
+assign o_bus_busy      = 1'b0;
 // rom u_rom (
 //     // .data    (_connected_to_data_),    //   input,  width = 32,    data.datain
 //     .q       (bus_read_data),       //  input,  width = 32,       q.dataout

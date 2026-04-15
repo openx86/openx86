@@ -3,7 +3,9 @@
 // ============================================================================
 
 module disk_ram_8 #(
-    parameter int BYTE_DEPTH = 524288
+    parameter int    BYTE_DEPTH      = 524288,
+    parameter bit    INIT_IS_BINARY  = 1'b0,
+    parameter string INIT_FILE       = ""
 ) (
     input  logic        i_clock,
     input  logic        i_reset,
@@ -19,9 +21,28 @@ module disk_ram_8 #(
     logic [7:0] mem [0:BYTE_DEPTH-1];
 
     initial begin
-        if (BYTE_DEPTH > 1) begin
-            mem[0] = 8'hA5;
-            mem[1] = 8'h5A;
+        if (INIT_FILE != "") begin
+            if (!INIT_IS_BINARY) begin
+                $display("disk_ram_8: init hex file '%0s'", INIT_FILE);
+                $readmemh(INIT_FILE, mem);
+            end else begin
+                integer fd;
+                integer n;
+                $display("disk_ram_8: init bin file '%0s'", INIT_FILE);
+                fd = $fopen(INIT_FILE, "rb");
+                if (fd == 0) begin
+                    $display("disk_ram_8: ERROR cannot open '%0s'", INIT_FILE);
+                end else begin
+                    n = $fread(mem, fd);
+                    $display("disk_ram_8: loaded %0d bytes", n);
+                    $fclose(fd);
+                end
+            end
+        end else begin
+            if (BYTE_DEPTH > 1) begin
+                mem[0] = 8'hA5;
+                mem[1] = 8'h5A;
+            end
         end
     end
 
