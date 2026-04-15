@@ -14,6 +14,7 @@ set_global_assignment -name TOP_LEVEL_ENTITY openx86_soc_top
 # 统一把输出导向 build/，避免污染源码目录
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY "../../../build/quartus/openx86_soc"
 
+set_global_assignment -name VERILOG_MACRO "SYNTHESIS=1"
 
 set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Standard Edition"
 set_global_assignment -name FAMILY "Cyclone IV E"
