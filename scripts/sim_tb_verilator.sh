@@ -8,7 +8,8 @@ Usage:
 
 Notes:
   - Requires: verilator (and a C++ toolchain available via verilator --binary)
-  - RTL sources come from sim/filelists/rtl.f when present (fallback: scan rtl/).
+  - RTL sources come from sim/filelists/*.f when present (fallback: scan rtl/).
+  - Default filelist is auto-selected by TB path (cpu/core unit tests use rtl_fullcore.f).
   - Extra arguments after '--' are forwarded to the produced binary, e.g. +SEABIOS_BIN=...
 EOF
 }
@@ -61,7 +62,19 @@ obj_dir="$build_root/obj_dir_${tb_name}"
 bin="$build_root/${tb_name}.bin"
 mkdir -p "$build_root"
 
-rtl_filelist="sim/filelists/rtl.f"
+select_default_filelist() {
+  local tb_path="$1"
+  if [[ "$tb_path" == *"/tb/unit/cpu/"* || "$tb_path" == *"/tb/unit/core/"* ]]; then
+    echo "sim/filelists/rtl_fullcore.f"
+    return
+  fi
+  echo "sim/filelists/rtl.f"
+}
+
+rtl_filelist="${RTL_FILELIST:-}"
+if [[ -z "$rtl_filelist" ]]; then
+  rtl_filelist="$(select_default_filelist "$tb_full")"
+fi
 rtl_sources=()
 incdirs=()
 if [[ -f "$rtl_filelist" ]]; then
@@ -90,6 +103,7 @@ compile_log="${tb_name}_compile.log"
 run_log="${tb_name}_run.log"
 
 echo "== Verilator compile: $tb_full =="
+echo "== RTL filelist: $rtl_filelist =="
 set +e
 verilator \
   --binary \

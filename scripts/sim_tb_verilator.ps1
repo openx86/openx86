@@ -4,6 +4,9 @@ param(
 
     [string] $OutDir = "build",
 
+    # RTL filelist path (defaults to an auto-selected filelist).
+    [string] $Filelist,
+
     # Plusargs forwarded to verilator binary, e.g. +SEABIOS_BIN=... +DISK_BIN=...
     [string[]] $PlusArgs = @()
 )
@@ -58,7 +61,24 @@ function Get-RtlSourcesFromFilelist {
     }
 }
 
-$rtlList = Get-RtlSourcesFromFilelist -FilelistPath "sim/filelists/rtl.f"
+function Select-DefaultFilelist {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $TbPath
+    )
+
+    if ($TbPath -match '[\\/]+tb[\\/]+unit[\\/]+(cpu|core)[\\/]+') {
+        return "sim/filelists/rtl_fullcore.f"
+    }
+    return "sim/filelists/rtl.f"
+}
+
+$filelistPath = $Filelist
+if ([string]::IsNullOrWhiteSpace($filelistPath)) {
+    $filelistPath = Select-DefaultFilelist -TbPath $Tb
+}
+
+$rtlList = Get-RtlSourcesFromFilelist -FilelistPath $filelistPath
 $rtlSources = @($rtlList.Sources | ForEach-Object { (Resolve-Path $_).Path })
 $incArgs = @($rtlList.IncDirs | ForEach-Object { @("-I", $_) })
 
@@ -72,6 +92,7 @@ $bin = Join-Path $buildRoot ($tbName + ".exe")
 New-Item -ItemType Directory -Force -Path $buildRoot | Out-Null
 
 Write-Host "== Verilator compile: $Tb =="
+Write-Host "== RTL filelist: $filelistPath =="
 & verilator `
     --binary `
     -sv `

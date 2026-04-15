@@ -6,6 +6,9 @@ param(
 
     [string[]] $ExtraSources = @(),
 
+    # RTL filelist path (defaults to an auto-selected filelist).
+    [string] $Filelist,
+
     # Plusargs forwarded to vvp, e.g. +SEABIOS_BIN=... +DISK_BIN=...
     [string[]] $PlusArgs = @()
 )
@@ -63,7 +66,25 @@ function Get-RtlSourcesFromFilelist {
     }
 }
 
-$rtlList = Get-RtlSourcesFromFilelist -FilelistPath "sim/filelists/rtl.f"
+function Select-DefaultFilelist {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $TbPath
+    )
+
+    # CPU/core unit tests typically need the broader RTL set.
+    if ($TbPath -match '[\\/]+tb[\\/]+unit[\\/]+(cpu|core)[\\/]+') {
+        return "sim/filelists/rtl_fullcore.f"
+    }
+    return "sim/filelists/rtl.f"
+}
+
+$filelistPath = $Filelist
+if ([string]::IsNullOrWhiteSpace($filelistPath)) {
+    $filelistPath = Select-DefaultFilelist -TbPath $Tb
+}
+
+$rtlList = Get-RtlSourcesFromFilelist -FilelistPath $filelistPath
 $rtlSources = @($rtlList.Sources | ForEach-Object { (Resolve-Path $_).Path })
 $incArgs = @($rtlList.IncDirs | ForEach-Object { @("-I", $_) })
 
@@ -77,6 +98,7 @@ $sources += $ExtraSources | Where-Object { $_ -and (Test-Path $_) }
 $sources += $tbFull
 
 Write-Host "== Compile: $Tb =="
+Write-Host "== RTL filelist: $filelistPath =="
 & iverilog -g2012 -Wall -o $exe @incArgs $sources
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

@@ -11,7 +11,7 @@ NC='\033[0m' # No Color
 
 # 项目根目录
 PROJECT_ROOT=$(pwd)
-RTL_DIR="$PROJECT_ROOT/rtl"
+RTL_DIR="$PROJECT_ROOT/src/rtl"
 
 # 检查结果统计
 ERROR_COUNT=0

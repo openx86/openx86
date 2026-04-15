@@ -45,15 +45,29 @@ find_testbenches() {
 }
 
 # 从 sim/filelists/rtl.f 加载 RTL 源文件与 include 目录（优先于启发式依赖推断）
-RTL_FILELIST="$PROJECT_ROOT/sim/filelists/rtl.f"
+RTL_FILELIST_DEFAULT="$PROJECT_ROOT/sim/filelists/rtl.f"
+RTL_FILELIST_FULLCORE="$PROJECT_ROOT/sim/filelists/rtl_fullcore.f"
 RTL_SOURCES=()
 RTL_INCDIRS=()
 
+select_rtl_filelist_for_tb() {
+    local tb_path="$1"
+    # CPU/core unit tests need the broader set.
+    if [[ "$tb_path" == *"/tb/unit/cpu/"* || "$tb_path" == *"/tb/unit/core/"* ]]; then
+        if [[ -f "$RTL_FILELIST_FULLCORE" ]]; then
+            echo "$RTL_FILELIST_FULLCORE"
+            return
+        fi
+    fi
+    echo "$RTL_FILELIST_DEFAULT"
+}
+
 load_rtl_sources() {
+    local filelist_path="$1"
     RTL_SOURCES=()
     RTL_INCDIRS=()
 
-    if [[ -f "$RTL_FILELIST" ]]; then
+    if [[ -n "$filelist_path" && -f "$filelist_path" ]]; then
         while IFS= read -r line; do
             line="${line#"${line%%[![:space:]]*}"}"
             line="${line%"${line##*[![:space:]]}"}"
@@ -64,7 +78,7 @@ load_rtl_sources() {
                 continue
             fi
             RTL_SOURCES+=("$PROJECT_ROOT/$line")
-        done < "$RTL_FILELIST"
+        done < "$filelist_path"
     else
         # 兼容旧结构：扫描 rtl/（排除 *_tb.sv）
         while IFS= read -r f; do
@@ -74,7 +88,7 @@ load_rtl_sources() {
     fi
 }
 
-load_rtl_sources
+load_rtl_sources "$RTL_FILELIST_DEFAULT"
 
 # 获取模块的依赖文件
 get_dependencies() {
@@ -206,11 +220,17 @@ get_dependencies() {
 run_test() {
     local testbench=$1
     local module_name=$(basename "$testbench" _tb.sv)
+
+    # Pick filelist per TB (so CPU/core tests can use rtl_fullcore.f).
+    local filelist_path
+    filelist_path="$(select_rtl_filelist_for_tb "$testbench")"
+    load_rtl_sources "$filelist_path"
     
     echo ""
     echo -e "${YELLOW}========================================${NC}"
     echo -e "${YELLOW}测试模块: $module_name${NC}"
     echo -e "${YELLOW}文件: $testbench${NC}"
+    echo -e "${YELLOW}RTL filelist: ${filelist_path#$PROJECT_ROOT/}${NC}"
     echo -e "${YELLOW}========================================${NC}"
     
     TOTAL=$((TOTAL + 1))
