@@ -8,12 +8,12 @@
 # - 引脚绑定（放在 .qsf 中）
 # - I/O 标准、驱动强度、slew rate 等
 #
-# 约定：顶层端口名为 `clock` / `reset`（见 src/rtl/soc_top.sv）
+# 约定：顶层端口名为 `i_clk_50m` / `i_reset_n`（见 src/rtl/soc_top.sv）
 #
 
 # 例：50MHz 主时钟（按需修改）
-create_clock -name clk -period 20.000 [get_ports {clock}]
+create_clock -name clk -period 20.000 [get_ports {i_clk_50m}]
 
 # 例：异步复位（按需修改；若为同步复位可删除）
-set_false_path -from [get_ports {reset}]
+set_false_path -from [get_ports {i_reset_n}]
 

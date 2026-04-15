@@ -9,8 +9,7 @@
 // 4KiB EEPROM image. This is sufficient for the reset vector bootstub and small
 // experiments; a full PC BIOS image will not fit.
 //
-// Data packing matches `eeprom_controller` / `rom.sv`:
-// {b0,b1,b2,b3} -> 32'h{b0,b1,b2,b3}
+// Data packing（32-bit 字）：低地址字节在 MSB — {b0,b1,b2,b3} -> 32'h{b0,b1,b2,b3}
 // ============================================================================
 
 module pc_bios_24lc32 #(

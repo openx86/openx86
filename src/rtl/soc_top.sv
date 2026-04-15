@@ -1,16 +1,70 @@
 // ============================================================================
-// Minimal SoC: x86_core_top + bus + sys_ram + BIOS ROMs + VGA Graphics Adapter
+// Minimal SoC: w686_cpu + bus + SDRAM 主存 + pc_bios_24lc32 + VGA
 // ============================================================================
 
 module soc_top (
-    input  logic        clock,
-    input  logic        reset,
+    // ------------------------------------------------------------------------
+    // Board-level clock / reset
+    // ------------------------------------------------------------------------
+    // i_clk_50m: external 50MHz oscillator
+    // i_reset_n: active-low reset input (board push-button / POR)
+    input  logic        i_clk_50m,
+    input  logic        i_reset_n,
+
+    // ------------------------------------------------------------------------
+    // VGA (RGB444 + sync)
+    // ------------------------------------------------------------------------
     output logic        o_vga_hsync,
     output logic        o_vga_vsync,
     output logic [3:0]  o_vga_r,
     output logic [3:0]  o_vga_g,
-    output logic [3:0]  o_vga_b
+    output logic [3:0]  o_vga_b,
+
+    // ------------------------------------------------------------------------
+    // PS/2 ports (open-drain). Each line is (out, oe, in).
+    // oe=1 and out=0 means drive-low; oe=0 means Hi-Z (pulled-up externally).
+    // ------------------------------------------------------------------------
+    output logic        o_ps2_kbd_clk_out,
+    output logic        o_ps2_kbd_clk_oe,
+    input  logic        i_ps2_kbd_clk_in,
+    output logic        o_ps2_kbd_dat_out,
+    output logic        o_ps2_kbd_dat_oe,
+    input  logic        i_ps2_kbd_dat_in,
+    output logic        o_ps2_aux_clk_out,
+    output logic        o_ps2_aux_clk_oe,
+    input  logic        i_ps2_aux_clk_in,
+    output logic        o_ps2_aux_dat_out,
+    output logic        o_ps2_aux_dat_oe,
+    input  logic        i_ps2_aux_dat_in,
+
+    // ------------------------------------------------------------------------
+    // SD Card (SPI mode)
+    // ------------------------------------------------------------------------
+    output logic        o_sd_spi_sck,
+    output logic        o_sd_spi_mosi,
+    input  logic        i_sd_spi_miso,
+    output logic        o_sd_spi_cs_n,
+
+    // ------------------------------------------------------------------------
+    // SDRAM physical interface (16-bit device)
+    // ------------------------------------------------------------------------
+    output logic        o_sdram_clk,
+    output logic        o_sdram_cke,
+    output logic        o_sdram_cs_n,
+    output logic        o_sdram_ras_n,
+    output logic        o_sdram_cas_n,
+    output logic        o_sdram_we_n,
+    output logic [1:0]  o_sdram_ba,
+    output logic [12:0] o_sdram_a,
+    output logic [1:0]  o_sdram_dqm,
+    inout  wire [15:0]  io_sdram_dq
 );
+
+    // Internal clock/reset (keep existing naming for now)
+    logic clock;
+    logic reset;
+    assign clock = i_clk_50m;
+    assign reset = ~i_reset_n;
 
     logic        bus_valid;
     logic        bus_ready;
@@ -29,11 +83,6 @@ module soc_top (
     logic [15:0] vga_io_addr;
     logic [7:0]  vga_io_data_w;
     logic [7:0]  vga_io_data_r;
-
-    logic        ram_we;
-    logic [19:0] ram_addr;
-    logic [31:0] ram_wdata;
-    logic [31:0] ram_rdata;
 
     logic [15:0] bios_addr;
     logic [31:0] bios_rdata;
@@ -55,32 +104,39 @@ module soc_top (
     logic [15:0] sdr_phy_dq_out;
     logic        sdr_phy_dq_oe;
     logic        sdr_phy_clk, sdr_phy_cke;
+    logic [15:0] sdr_phy_dq_in;
 
-    logic        o_halted;
     logic        pic_intr;
 
-    x86_core_top u_cpu (
-        .o_bus_valid        ( bus_valid ),
-        .i_bus_ready        ( bus_ready ),
-        .i_bus_busy         ( bus_busy ),
-        .o_bus_write_enable ( bus_we ),
-        .o_bus_io_access    ( bus_io ),
-        .o_bus_address      ( bus_addr ),
-        .i_bus_data_read    ( bus_rdata ),
-        .o_bus_data_write   ( bus_wdata ),
-        .i_intr             ( pic_intr ),
-        .i_cr0_we           ( 1'b0 ),
-        .i_cr0_wdata        ( 32'h0 ),
-        .o_halted           ( o_halted ),
-        .i_clock            ( clock ),
-        .i_reset            ( reset )
+    // w686_cpu 尚未驱动 I/O 访问区分线：SoC 总线按内存事务解码
+    assign bus_io = 1'b0;
+
+    w686_cpu u_cpu (
+        .bus_vaild        ( bus_valid ),
+        .bus_ready        ( bus_ready ),
+        .bus_busy         ( bus_busy ),
+        .bus_write_enable ( bus_we ),
+        .bus_address      ( bus_addr ),
+        .bus_read_data    ( bus_rdata ),
+        .bus_write_data   ( bus_wdata ),
+        .clock            ( clock ),
+        .reset            ( reset )
     );
 
-    // PS/2 回读：仿真无外部设备时置 1（上拉空闲）
-    wire ps2_kbd_clk_in = 1'b1;
-    wire ps2_kbd_dat_in = 1'b1;
-    wire ps2_aux_clk_in = 1'b1;
-    wire ps2_aux_dat_in = 1'b1;
+    // SDRAM DQ bus (temporary: only driven by controller when sdr_phy_dq_oe=1)
+    assign io_sdram_dq = sdr_phy_dq_oe ? sdr_phy_dq_out : 16'hZZZZ;
+    assign sdr_phy_dq_in = io_sdram_dq;
+
+    // Export SDRAM command/address pins to board
+    assign o_sdram_clk   = sdr_phy_clk;
+    assign o_sdram_cke   = sdr_phy_cke;
+    assign o_sdram_cs_n  = sdr_phy_cs_n;
+    assign o_sdram_ras_n = sdr_phy_ras_n;
+    assign o_sdram_cas_n = sdr_phy_cas_n;
+    assign o_sdram_we_n  = sdr_phy_we_n;
+    assign o_sdram_ba    = sdr_phy_ba;
+    assign o_sdram_a     = sdr_phy_a;
+    assign o_sdram_dqm   = sdr_phy_dqm;
 
     bus u_bus (
         .i_bus_valid        ( bus_valid ),
@@ -99,10 +155,6 @@ module soc_top (
         .o_vga_io_addr      ( vga_io_addr ),
         .o_vga_io_data_w    ( vga_io_data_w ),
         .i_vga_io_data_r    ( vga_io_data_r ),
-        .o_ram_we           ( ram_we ),
-        .o_ram_addr         ( ram_addr ),
-        .o_ram_wdata        ( ram_wdata ),
-        .i_ram_rdata        ( ram_rdata ),
         .o_bios_addr        ( bios_addr ),
         .i_bios_rdata       ( bios_rdata ),
         .o_ext_bios_addr    ( ext_bios_addr ),
@@ -114,26 +166,36 @@ module soc_top (
         .i_sdram_rdata      ( i_sdram_rdata ),
         .i_sdram_ready      ( i_sdram_ready ),
         .i_sdram_busy       ( i_sdram_busy ),
-        .o_ps2_kbd_clk_out ( ),
-        .o_ps2_kbd_clk_oe  ( ),
-        .i_ps2_kbd_clk_in  ( ps2_kbd_clk_in ),
-        .o_ps2_kbd_dat_out ( ),
-        .o_ps2_kbd_dat_oe  ( ),
-        .i_ps2_kbd_dat_in  ( ps2_kbd_dat_in ),
-        .o_ps2_aux_clk_out ( ),
-        .o_ps2_aux_clk_oe  ( ),
-        .i_ps2_aux_clk_in  ( ps2_aux_clk_in ),
-        .o_ps2_aux_dat_out ( ),
-        .o_ps2_aux_dat_oe  ( ),
-        .i_ps2_aux_dat_in  ( ps2_aux_dat_in ),
+        .o_ps2_kbd_clk_out ( o_ps2_kbd_clk_out ),
+        .o_ps2_kbd_clk_oe  ( o_ps2_kbd_clk_oe ),
+        .i_ps2_kbd_clk_in  ( i_ps2_kbd_clk_in ),
+        .o_ps2_kbd_dat_out ( o_ps2_kbd_dat_out ),
+        .o_ps2_kbd_dat_oe  ( o_ps2_kbd_dat_oe ),
+        .i_ps2_kbd_dat_in  ( i_ps2_kbd_dat_in ),
+        .o_ps2_aux_clk_out ( o_ps2_aux_clk_out ),
+        .o_ps2_aux_clk_oe  ( o_ps2_aux_clk_oe ),
+        .i_ps2_aux_clk_in  ( i_ps2_aux_clk_in ),
+        .o_ps2_aux_dat_out ( o_ps2_aux_dat_out ),
+        .o_ps2_aux_dat_oe  ( o_ps2_aux_dat_oe ),
+        .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in ),
+        .o_sd_spi_sck       ( o_sd_spi_sck ),
+        .o_sd_spi_mosi      ( o_sd_spi_mosi ),
+        .i_sd_spi_miso      ( i_sd_spi_miso ),
+        .o_sd_spi_cs_n      ( o_sd_spi_cs_n ),
         .o_pic_intr         ( pic_intr ),
         .i_clock            ( clock ),
         .i_reset            ( reset )
     );
 
     sdram_controller #(
-        .MEM_WORDS_LG2 ( 18 ),
-        .LATENCY       ( 5 )
+        .CLK_HZ          ( 50_000_000 ),
+        .T_RP            ( 2 ),
+        .T_RCD           ( 2 ),
+        .T_RFC           ( 7 ),
+        .T_MRD           ( 2 ),
+        .T_WR            ( 2 ),
+        .CAS             ( 2 ),
+        .REFRESH_CYCLES  ( 390 )
     ) u_sdram (
         .clk            ( clock ),
         .rst            ( reset ),
@@ -154,7 +216,8 @@ module soc_top (
         .o_sdram_a      ( sdr_phy_a ),
         .o_sdram_dqm    ( sdr_phy_dqm ),
         .o_sdram_dq_out ( sdr_phy_dq_out ),
-        .o_sdram_dq_oe  ( sdr_phy_dq_oe )
+        .o_sdram_dq_oe  ( sdr_phy_dq_oe ),
+        .i_sdram_dq_in  ( sdr_phy_dq_in )
     );
 
     // VGA Graphics Adapter: bus VRAM writes + VGA I/O decode (see rtl/bus.sv)
@@ -174,15 +237,6 @@ module soc_top (
         .vga_b        ( o_vga_b          ),
         .clock        ( clock            ),
         .reset        ( reset            )
-    );
-
-    sys_ram u_main_ram (
-        .clock     ( clock ),
-        .reset     ( reset ),
-        .we        ( ram_we ),
-        .byte_addr ( ram_addr ),
-        .wdata     ( ram_wdata ),
-        .rdata     ( ram_rdata )
     );
 
     // 系统 BIOS 0xF0000–0xFFFFF + 扩展 ROM 0xC0000–0xDFFFF → 后端 EEPROM（镜像：128KB 扩展 + 64KB 系统）

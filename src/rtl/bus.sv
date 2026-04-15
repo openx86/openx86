@@ -4,7 +4,16 @@
 // 负责地址解码和外设路由
 // ============================================================================
 
-module bus #(
+// ----------------------------------------------------------------------------
+// bus_devices
+// ----------------------------------------------------------------------------
+// Pure address decode + device integration. This module contains no CPU-side
+// sequencing beyond combinational ready/data selection.
+//
+// It is wrapped by `bus_controller` (and legacy alias `bus`) to keep a stable
+// top-level bus port interface while allowing the device-side to evolve.
+// ----------------------------------------------------------------------------
+module bus_devices #(
     parameter bit  USE_REAL_PS2 = 1'b0,
     parameter int PS2_CLK_HZ   = 50_000_000
 ) (
@@ -31,13 +40,6 @@ module bus #(
     output logic [7:0]  o_vga_io_data_w,
     input  logic [7:0]  i_vga_io_data_r,
     
-    // 系统 RAM 接口（640KB 常规内存）
-    // 使用简单的RAM接口：we, addr, wdata, rdata
-    output logic        o_ram_we,
-    output logic [19:0] o_ram_addr,
-    output logic [31:0] o_ram_wdata,
-    input  logic [31:0] i_ram_rdata,
-    
     // BIOS ROM 接口（系统 BIOS 64KB）
     // 使用简单的ROM接口：addr, rdata
     output logic [15:0] o_bios_addr,
@@ -47,7 +49,7 @@ module bus #(
     output logic [16:0] o_ext_bios_addr,
     input  logic [31:0] i_ext_bios_rdata,
 
-    // SDRAM 高层窗口（16MB @ 0x0100_0000，经 sdram_controller 多周期完成）
+    // SDRAM：640KB 常规内存 + 16MB 窗口（0x0100_0000）共用 sdram_controller
     output logic        o_sdram_en,
     output logic        o_sdram_we,
     output logic [23:0] o_sdram_addr_off,
@@ -69,6 +71,12 @@ module bus #(
     output logic        o_ps2_aux_dat_out,
     output logic        o_ps2_aux_dat_oe,
     input  logic        i_ps2_aux_dat_in,
+
+    // SD Card SPI (SPI mode)
+    output logic        o_sd_spi_sck,
+    output logic        o_sd_spi_mosi,
+    input  logic        i_sd_spi_miso,
+    output logic        o_sd_spi_cs_n,
 
     // PIC 主片中断输出（接 CPU INTR）
     output logic        o_pic_intr,
@@ -130,15 +138,18 @@ logic       is_fdc_io;
 logic [7:0] fdc_io_rdata;
 logic       fdc_io_hit;
 
+// SDCard SPI I/O window: 0x0200-0x0207 (byte registers)
+logic       is_sd_io;
+logic [7:0] sd_io_rdata;
+logic       sd_io_hit;
+
 // 数据选择信号
-logic [31:0] ram_data_selected;
 logic [31:0] vram_data_selected;
 logic [31:0] bios_data_selected;
 logic [31:0] ext_bios_data_selected;
 logic [31:0] io_data_selected;
 
 // 就绪信号
-logic ram_ready_internal;
 logic vram_ready_internal;
 logic bios_ready_internal;
 logic ext_bios_ready_internal;
@@ -186,6 +197,11 @@ assign is_vga_io_access   = is_io_access &&
                              
 assign is_other_io_access = is_io_access && !is_vga_io_access;
 
+// SD card I/O decode (keep out of legacy PC chipset ranges)
+assign is_sd_io = is_other_io_access &&
+                  (i_bus_address[15:0] >= 16'h0200) &&
+                  (i_bus_address[15:0] <= 16'h0207);
+
 // Chipset 端口并集（与 rtl/chipset/pc_chipset_io.sv 内各 IP 一致）
 assign is_chipset_io = is_other_io_access && (
     ((i_bus_address[15:0] >= 16'h0000) && (i_bus_address[15:0] <= 16'h000F)) ||
@@ -208,6 +224,83 @@ assign is_fdc_io = is_other_io_access && (
     ((i_bus_address[15:0] >= 16'h03F0) && (i_bus_address[15:0] <= 16'h03F5)) ||
     (i_bus_address[15:0] == 16'h03F7)
 );
+
+// ---------------------------------------------------------------------------
+// SD Card SPI host + simple register file (byte-wide I/O)
+// 0x0200 CMD/STATUS  [bit0]=read, [bit1]=write (write 1 to trigger)
+// 0x0201..0x0204 LBA [31:0] little-endian bytes
+// 0x0205 STATUS      [bit0]=done_latched, [bit1]=busy
+// ---------------------------------------------------------------------------
+logic [31:0] sd_lba;
+logic        sd_cmd_read_pulse, sd_cmd_write_pulse;
+logic        sd_busy, sd_done;
+logic        sd_done_latched;
+
+always_ff @(posedge i_clock or posedge i_reset) begin
+    if (i_reset) begin
+        sd_lba          <= 32'h0;
+        sd_done_latched <= 1'b0;
+    end else begin
+        if (sd_done)
+            sd_done_latched <= 1'b1;
+
+        // Clear done on command trigger or explicit status read
+        if (is_sd_io && i_bus_valid && (i_bus_address[15:0] == 16'h0200) && i_bus_write_enable)
+            sd_done_latched <= 1'b0;
+        if (is_sd_io && i_bus_valid && (i_bus_address[15:0] == 16'h0205) && !i_bus_write_enable)
+            sd_done_latched <= 1'b0;
+
+        // LBA byte writes
+        if (is_sd_io && i_bus_valid && i_bus_write_enable) begin
+            unique case (i_bus_address[15:0])
+                16'h0201: sd_lba[7:0]   <= i_bus_data_write[7:0];
+                16'h0202: sd_lba[15:8]  <= i_bus_data_write[7:0];
+                16'h0203: sd_lba[23:16] <= i_bus_data_write[7:0];
+                16'h0204: sd_lba[31:24] <= i_bus_data_write[7:0];
+                default: ;
+            endcase
+        end
+    end
+end
+
+always_comb begin
+    sd_cmd_read_pulse  = 1'b0;
+    sd_cmd_write_pulse = 1'b0;
+    if (is_sd_io && i_bus_valid && i_bus_write_enable && (i_bus_address[15:0] == 16'h0200)) begin
+        sd_cmd_read_pulse  = i_bus_data_write[0];
+        sd_cmd_write_pulse = i_bus_data_write[1];
+    end
+end
+
+sdcard_spi_host u_sdcard_spi_host (
+    .i_clock     ( i_clock ),
+    .i_reset     ( i_reset ),
+    .o_spi_sck   ( o_sd_spi_sck ),
+    .o_spi_mosi  ( o_sd_spi_mosi ),
+    .i_spi_miso  ( i_sd_spi_miso ),
+    .o_spi_cs_n  ( o_sd_spi_cs_n ),
+    .o_busy      ( sd_busy ),
+    .i_cmd_read  ( sd_cmd_read_pulse ),
+    .i_cmd_write ( sd_cmd_write_pulse ),
+    .i_lba       ( sd_lba ),
+    .o_done      ( sd_done )
+);
+
+always_comb begin
+    sd_io_hit   = is_sd_io;
+    sd_io_rdata = 8'h00;
+    if (is_sd_io) begin
+        unique case (i_bus_address[15:0])
+            16'h0200: sd_io_rdata = {6'b0, sd_busy, sd_done_latched};
+            16'h0201: sd_io_rdata = sd_lba[7:0];
+            16'h0202: sd_io_rdata = sd_lba[15:8];
+            16'h0203: sd_io_rdata = sd_lba[23:16];
+            16'h0204: sd_io_rdata = sd_lba[31:24];
+            16'h0205: sd_io_rdata = {6'b0, sd_busy, sd_done_latched};
+            default:  sd_io_rdata = 8'h00;
+        endcase
+    end
+end
 
 fdc_nec765_sram u_fdc (
     .i_clock    ( i_clock ),
@@ -274,11 +367,6 @@ assign o_vga_mem_addr = i_bus_address[19:0] - MEM_BASE_VRAM[19:0];
 // 外设使能信号生成
 // ============================================================================
 
-// RAM 访问控制
-assign o_ram_we = is_ram_access && i_bus_valid && i_bus_write_enable;
-assign o_ram_addr = i_bus_address[19:0];
-assign o_ram_wdata = i_bus_data_write;
-
 // VRAM 访问控制（VGA 只支持字节写）
 assign o_vga_mem_en_w = is_vram_access && i_bus_valid && i_bus_write_enable;
 assign o_vga_mem_data_w = i_bus_data_write[7:0];  // 只使用低 8 位
@@ -287,11 +375,12 @@ assign o_vga_mem_data_w = i_bus_data_write[7:0];  // 只使用低 8 位
 assign o_bios_addr = i_bus_address[15:0] - MEM_BASE_SYS_BIOS[15:0];
 assign o_ext_bios_addr = i_bus_address[16:0] - MEM_BASE_EXT_BIOS[16:0];
 
-// SDRAM（32 位对齐字访问）
-assign o_sdram_en      = is_sdram_access && i_bus_valid;
-assign o_sdram_we      = i_bus_write_enable;
-assign o_sdram_addr_off= i_bus_address[23:0] - MEM_BASE_SDRAM[23:0];
-assign o_sdram_wdata   = i_bus_data_write;
+// SDRAM（32 位字访问；常规 RAM 与高位窗口映射到同一物理地址空间，见 soc_top）
+assign o_sdram_en       = (is_ram_access || is_sdram_access) && i_bus_valid;
+assign o_sdram_we       = i_bus_write_enable;
+assign o_sdram_addr_off = is_ram_access ? i_bus_address[23:0]
+                                        : (i_bus_address[23:0] - MEM_BASE_SDRAM[23:0]);
+assign o_sdram_wdata    = i_bus_data_write;
 
 // VGA I/O 端口访问控制
 assign o_vga_io_en_w = is_vga_io_access && i_bus_valid && i_bus_write_enable;
@@ -302,9 +391,6 @@ assign o_vga_io_data_w = i_bus_data_write[7:0];  // I/O 端口通常是 8 位或
 // ============================================================================
 // 数据读取路径选择
 // ============================================================================
-
-// RAM 数据（32 位）
-assign ram_data_selected = is_ram_access ? i_ram_rdata : 32'h0;
 
 // VRAM 数据（8 位扩展到 32 位）
 // 注意：VGA VRAM 是只写的，不支持CPU读操作
@@ -318,21 +404,20 @@ assign ext_bios_data_selected = is_ext_bios_access ? i_ext_bios_rdata : 32'h0;
 // I/O 数据（8 位扩展到 32 位）
 logic [7:0] io_byte_data;
 assign io_byte_data = is_vga_io_access ? i_vga_io_data_r :
+                      (sd_io_hit ? sd_io_rdata :
                       (fdc_io_hit ? fdc_io_rdata :
-                      (chipset_io_hit ? chipset_io_rdata : 8'hFF));
+                      (chipset_io_hit ? chipset_io_rdata : 8'hFF)));
 assign io_data_selected = is_io_access ? {24'h0, io_byte_data} : 32'h0;
 
 // 最终数据输出
 always_comb begin
-    if (is_ram_access) begin
-        o_bus_data_read = ram_data_selected;
+    if (is_ram_access || is_sdram_access) begin
+        o_bus_data_read = i_sdram_ready ? i_sdram_rdata : 32'h0;
     end else if (is_vram_access) begin
         // VRAM不支持读操作，返回0
         o_bus_data_read = 32'h0;
     end else if (is_ext_bios_access) begin
         o_bus_data_read = ext_bios_data_selected;
-    end else if (is_sdram_access) begin
-        o_bus_data_read = i_sdram_ready ? i_sdram_rdata : 32'h0;
     end else if (is_sys_bios_access) begin
         o_bus_data_read = bios_data_selected;
     end else if (is_io_access) begin
@@ -348,29 +433,24 @@ end
 // ============================================================================
 
 // 各外设的就绪信号
-// RAM和ROM是同步的，假设立即完成（实际可能需要1个时钟周期）
-assign ram_ready_internal = is_ram_access ? 1'b1 : 1'b0;
-
 assign vram_ready_internal = o_vga_mem_en_w ? 1'b1 : 1'b0;  // VGA 写操作假设立即完成
 
 // BIOS ROM是同步的，假设立即完成
 assign bios_ready_internal = is_sys_bios_access ? 1'b1 : 1'b0;
 assign ext_bios_ready_internal = is_ext_bios_access ? 1'b1 : 1'b0;
 
-assign sdram_ready_internal = is_sdram_access ? i_sdram_ready : 1'b0;
+assign sdram_ready_internal = (is_ram_access || is_sdram_access) ? i_sdram_ready : 1'b0;
 
 assign io_ready_internal = (o_vga_io_en_w || o_vga_io_en_r || is_other_io_access) ? 1'b1 : 1'b0;  // I/O 操作假设立即完成
 
 // 总线就绪信号
 always_comb begin
-    if (is_ram_access) begin
-        o_bus_ready = ram_ready_internal;
+    if (is_ram_access || is_sdram_access) begin
+        o_bus_ready = sdram_ready_internal;
     end else if (is_vram_access) begin
         o_bus_ready = vram_ready_internal;
     end else if (is_ext_bios_access) begin
         o_bus_ready = ext_bios_ready_internal;
-    end else if (is_sdram_access) begin
-        o_bus_ready = sdram_ready_internal;
     end else if (is_sys_bios_access) begin
         o_bus_ready = bios_ready_internal;
     end else if (is_io_access) begin
@@ -382,6 +462,236 @@ always_comb begin
 end
 
 // SDRAM 忙：多周期事务期间由控制器拉高
-assign o_bus_busy = is_sdram_access && i_sdram_busy;
+assign o_bus_busy = (is_ram_access || is_sdram_access) && i_sdram_busy;
 
+endmodule
+
+// ----------------------------------------------------------------------------
+// bus_controller
+// ----------------------------------------------------------------------------
+// Stable CPU-facing bus wrapper. Right now it is a thin wrapper around
+// bus_devices, but it is intentionally separated so that future work (e.g.
+// registered responses, wait-state insertion, arbitration) does not bloat the
+// decode/device file.
+// ----------------------------------------------------------------------------
+module bus_controller #(
+    parameter bit  USE_REAL_PS2 = 1'b0,
+    parameter int PS2_CLK_HZ   = 50_000_000
+) (
+    input  logic        i_bus_valid,
+    output logic        o_bus_ready,
+    output logic        o_bus_busy,
+    input  logic        i_bus_write_enable,
+    input  logic        i_bus_io_access,
+    input  logic [31:0] i_bus_address,
+    output logic [31:0] o_bus_data_read,
+    input  logic [31:0] i_bus_data_write,
+
+    output logic        o_vga_mem_en_w,
+    output logic [19:0] o_vga_mem_addr,
+    output logic [7:0]  o_vga_mem_data_w,
+
+    output logic        o_vga_io_en_w,
+    output logic        o_vga_io_en_r,
+    output logic [15:0] o_vga_io_addr,
+    output logic [7:0]  o_vga_io_data_w,
+    input  logic [7:0]  i_vga_io_data_r,
+
+    output logic [15:0] o_bios_addr,
+    input  logic [31:0] i_bios_rdata,
+
+    output logic [16:0] o_ext_bios_addr,
+    input  logic [31:0] i_ext_bios_rdata,
+
+    output logic        o_sdram_en,
+    output logic        o_sdram_we,
+    output logic [23:0] o_sdram_addr_off,
+    output logic [31:0] o_sdram_wdata,
+    input  logic [31:0] i_sdram_rdata,
+    input  logic        i_sdram_ready,
+    input  logic        i_sdram_busy,
+
+    output logic        o_ps2_kbd_clk_out,
+    output logic        o_ps2_kbd_clk_oe,
+    input  logic        i_ps2_kbd_clk_in,
+    output logic        o_ps2_kbd_dat_out,
+    output logic        o_ps2_kbd_dat_oe,
+    input  logic        i_ps2_kbd_dat_in,
+    output logic        o_ps2_aux_clk_out,
+    output logic        o_ps2_aux_clk_oe,
+    input  logic        i_ps2_aux_clk_in,
+    output logic        o_ps2_aux_dat_out,
+    output logic        o_ps2_aux_dat_oe,
+    input  logic        i_ps2_aux_dat_in,
+
+    output logic        o_sd_spi_sck,
+    output logic        o_sd_spi_mosi,
+    input  logic        i_sd_spi_miso,
+    output logic        o_sd_spi_cs_n,
+
+    output logic        o_pic_intr,
+
+    input  logic        i_clock,
+    input  logic        i_reset
+);
+    bus_devices #(
+        .USE_REAL_PS2 ( USE_REAL_PS2 ),
+        .PS2_CLK_HZ   ( PS2_CLK_HZ )
+    ) u_devices (
+        .i_bus_valid        ( i_bus_valid ),
+        .o_bus_ready        ( o_bus_ready ),
+        .o_bus_busy         ( o_bus_busy ),
+        .i_bus_write_enable ( i_bus_write_enable ),
+        .i_bus_io_access    ( i_bus_io_access ),
+        .i_bus_address      ( i_bus_address ),
+        .o_bus_data_read    ( o_bus_data_read ),
+        .i_bus_data_write   ( i_bus_data_write ),
+        .o_vga_mem_en_w     ( o_vga_mem_en_w ),
+        .o_vga_mem_addr     ( o_vga_mem_addr ),
+        .o_vga_mem_data_w   ( o_vga_mem_data_w ),
+        .o_vga_io_en_w      ( o_vga_io_en_w ),
+        .o_vga_io_en_r      ( o_vga_io_en_r ),
+        .o_vga_io_addr      ( o_vga_io_addr ),
+        .o_vga_io_data_w    ( o_vga_io_data_w ),
+        .i_vga_io_data_r    ( i_vga_io_data_r ),
+        .o_bios_addr        ( o_bios_addr ),
+        .i_bios_rdata       ( i_bios_rdata ),
+        .o_ext_bios_addr    ( o_ext_bios_addr ),
+        .i_ext_bios_rdata   ( i_ext_bios_rdata ),
+        .o_sdram_en         ( o_sdram_en ),
+        .o_sdram_we         ( o_sdram_we ),
+        .o_sdram_addr_off   ( o_sdram_addr_off ),
+        .o_sdram_wdata      ( o_sdram_wdata ),
+        .i_sdram_rdata      ( i_sdram_rdata ),
+        .i_sdram_ready      ( i_sdram_ready ),
+        .i_sdram_busy       ( i_sdram_busy ),
+        .o_ps2_kbd_clk_out  ( o_ps2_kbd_clk_out ),
+        .o_ps2_kbd_clk_oe   ( o_ps2_kbd_clk_oe ),
+        .i_ps2_kbd_clk_in   ( i_ps2_kbd_clk_in ),
+        .o_ps2_kbd_dat_out  ( o_ps2_kbd_dat_out ),
+        .o_ps2_kbd_dat_oe   ( o_ps2_kbd_dat_oe ),
+        .i_ps2_kbd_dat_in   ( i_ps2_kbd_dat_in ),
+        .o_ps2_aux_clk_out  ( o_ps2_aux_clk_out ),
+        .o_ps2_aux_clk_oe   ( o_ps2_aux_clk_oe ),
+        .i_ps2_aux_clk_in   ( i_ps2_aux_clk_in ),
+        .o_ps2_aux_dat_out  ( o_ps2_aux_dat_out ),
+        .o_ps2_aux_dat_oe   ( o_ps2_aux_dat_oe ),
+        .i_ps2_aux_dat_in   ( i_ps2_aux_dat_in ),
+        .o_sd_spi_sck       ( o_sd_spi_sck ),
+        .o_sd_spi_mosi      ( o_sd_spi_mosi ),
+        .i_sd_spi_miso      ( i_sd_spi_miso ),
+        .o_sd_spi_cs_n      ( o_sd_spi_cs_n ),
+        .o_pic_intr         ( o_pic_intr ),
+        .i_clock            ( i_clock ),
+        .i_reset            ( i_reset )
+    );
+endmodule
+
+// ----------------------------------------------------------------------------
+// Legacy alias: keep `bus` module name stable for existing code.
+// ----------------------------------------------------------------------------
+module bus #(
+    parameter bit  USE_REAL_PS2 = 1'b0,
+    parameter int PS2_CLK_HZ   = 50_000_000
+) (
+    input  logic        i_bus_valid,
+    output logic        o_bus_ready,
+    output logic        o_bus_busy,
+    input  logic        i_bus_write_enable,
+    input  logic        i_bus_io_access,
+    input  logic [31:0] i_bus_address,
+    output logic [31:0] o_bus_data_read,
+    input  logic [31:0] i_bus_data_write,
+    output logic        o_vga_mem_en_w,
+    output logic [19:0] o_vga_mem_addr,
+    output logic [7:0]  o_vga_mem_data_w,
+    output logic        o_vga_io_en_w,
+    output logic        o_vga_io_en_r,
+    output logic [15:0] o_vga_io_addr,
+    output logic [7:0]  o_vga_io_data_w,
+    input  logic [7:0]  i_vga_io_data_r,
+    output logic [15:0] o_bios_addr,
+    input  logic [31:0] i_bios_rdata,
+    output logic [16:0] o_ext_bios_addr,
+    input  logic [31:0] i_ext_bios_rdata,
+    output logic        o_sdram_en,
+    output logic        o_sdram_we,
+    output logic [23:0] o_sdram_addr_off,
+    output logic [31:0] o_sdram_wdata,
+    input  logic [31:0] i_sdram_rdata,
+    input  logic        i_sdram_ready,
+    input  logic        i_sdram_busy,
+    output logic        o_ps2_kbd_clk_out,
+    output logic        o_ps2_kbd_clk_oe,
+    input  logic        i_ps2_kbd_clk_in,
+    output logic        o_ps2_kbd_dat_out,
+    output logic        o_ps2_kbd_dat_oe,
+    input  logic        i_ps2_kbd_dat_in,
+    output logic        o_ps2_aux_clk_out,
+    output logic        o_ps2_aux_clk_oe,
+    input  logic        i_ps2_aux_clk_in,
+    output logic        o_ps2_aux_dat_out,
+    output logic        o_ps2_aux_dat_oe,
+    input  logic        i_ps2_aux_dat_in,
+
+    output logic        o_sd_spi_sck,
+    output logic        o_sd_spi_mosi,
+    input  logic        i_sd_spi_miso,
+    output logic        o_sd_spi_cs_n,
+
+    output logic        o_pic_intr,
+    input  logic        i_clock,
+    input  logic        i_reset
+);
+    bus_controller #(
+        .USE_REAL_PS2 ( USE_REAL_PS2 ),
+        .PS2_CLK_HZ   ( PS2_CLK_HZ )
+    ) u_bus_controller (
+        .i_bus_valid        ( i_bus_valid ),
+        .o_bus_ready        ( o_bus_ready ),
+        .o_bus_busy         ( o_bus_busy ),
+        .i_bus_write_enable ( i_bus_write_enable ),
+        .i_bus_io_access    ( i_bus_io_access ),
+        .i_bus_address      ( i_bus_address ),
+        .o_bus_data_read    ( o_bus_data_read ),
+        .i_bus_data_write   ( i_bus_data_write ),
+        .o_vga_mem_en_w     ( o_vga_mem_en_w ),
+        .o_vga_mem_addr     ( o_vga_mem_addr ),
+        .o_vga_mem_data_w   ( o_vga_mem_data_w ),
+        .o_vga_io_en_w      ( o_vga_io_en_w ),
+        .o_vga_io_en_r      ( o_vga_io_en_r ),
+        .o_vga_io_addr      ( o_vga_io_addr ),
+        .o_vga_io_data_w    ( o_vga_io_data_w ),
+        .i_vga_io_data_r    ( i_vga_io_data_r ),
+        .o_bios_addr        ( o_bios_addr ),
+        .i_bios_rdata       ( i_bios_rdata ),
+        .o_ext_bios_addr    ( o_ext_bios_addr ),
+        .i_ext_bios_rdata   ( i_ext_bios_rdata ),
+        .o_sdram_en         ( o_sdram_en ),
+        .o_sdram_we         ( o_sdram_we ),
+        .o_sdram_addr_off   ( o_sdram_addr_off ),
+        .o_sdram_wdata      ( o_sdram_wdata ),
+        .i_sdram_rdata      ( i_sdram_rdata ),
+        .i_sdram_ready      ( i_sdram_ready ),
+        .i_sdram_busy       ( i_sdram_busy ),
+        .o_ps2_kbd_clk_out  ( o_ps2_kbd_clk_out ),
+        .o_ps2_kbd_clk_oe   ( o_ps2_kbd_clk_oe ),
+        .i_ps2_kbd_clk_in   ( i_ps2_kbd_clk_in ),
+        .o_ps2_kbd_dat_out  ( o_ps2_kbd_dat_out ),
+        .o_ps2_kbd_dat_oe   ( o_ps2_kbd_dat_oe ),
+        .i_ps2_kbd_dat_in   ( i_ps2_kbd_dat_in ),
+        .o_ps2_aux_clk_out  ( o_ps2_aux_clk_out ),
+        .o_ps2_aux_clk_oe   ( o_ps2_aux_clk_oe ),
+        .i_ps2_aux_clk_in   ( i_ps2_aux_clk_in ),
+        .o_ps2_aux_dat_out  ( o_ps2_aux_dat_out ),
+        .o_ps2_aux_dat_oe   ( o_ps2_aux_dat_oe ),
+        .i_ps2_aux_dat_in   ( i_ps2_aux_dat_in ),
+        .o_sd_spi_sck       ( o_sd_spi_sck ),
+        .o_sd_spi_mosi      ( o_sd_spi_mosi ),
+        .i_sd_spi_miso      ( i_sd_spi_miso ),
+        .o_sd_spi_cs_n      ( o_sd_spi_cs_n ),
+        .o_pic_intr         ( o_pic_intr ),
+        .i_clock            ( i_clock ),
+        .i_reset            ( i_reset )
+    );
 endmodule

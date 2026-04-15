@@ -1,5 +1,6 @@
 // ============================================================================
-// sdram_controller 基本读写与握手
+// sdram_controller：初始化后 32-bit 写读（带 16-bit PHY 存根）
+// 编译：iverilog -g2012 -I src/rtl tb/common/sdram_x16_stub.sv tb/unit/memory/sdram_controller_tb.sv src/rtl/memory/sdram_controller.sv
 // ============================================================================
 
 `timescale 1ns/1ns
@@ -27,11 +28,14 @@ module sdram_controller_tb;
     logic [1:0]  o_sdram_dqm;
     logic [15:0] o_sdram_dq_out;
     logic        o_sdram_dq_oe;
+    logic [15:0] i_sdram_dq_in;
 
-    sdram_controller #(
-        .MEM_WORDS_LG2 ( 10 ),
-        .LATENCY       ( 3 )
-    ) dut (
+    logic [15:0] stub_dq;
+    logic        stub_oe;
+
+    assign i_sdram_dq_in = o_sdram_dq_oe ? o_sdram_dq_out : (stub_oe ? stub_dq : 16'hZZZZ);
+
+    sdram_controller dut (
         .clk            ( clk ),
         .rst            ( rst ),
         .i_en           ( i_en ),
@@ -51,44 +55,76 @@ module sdram_controller_tb;
         .o_sdram_a      ( o_sdram_a ),
         .o_sdram_dqm    ( o_sdram_dqm ),
         .o_sdram_dq_out ( o_sdram_dq_out ),
-        .o_sdram_dq_oe  ( o_sdram_dq_oe )
+        .o_sdram_dq_oe  ( o_sdram_dq_oe ),
+        .i_sdram_dq_in  ( i_sdram_dq_in )
+    );
+
+    sdram_x16_stub #(
+        .CAS_LATENCY       ( 2 ),
+        .MEM_HALFWORDS_LG2 ( 21 )
+    ) u_stub (
+        .clk          ( clk ),
+        .cs_n         ( o_sdram_cs_n ),
+        .ras_n        ( o_sdram_ras_n ),
+        .cas_n        ( o_sdram_cas_n ),
+        .we_n         ( o_sdram_we_n ),
+        .ba           ( o_sdram_ba ),
+        .a            ( o_sdram_a ),
+        .host_dq_out  ( o_sdram_dq_out ),
+        .host_dq_oe   ( o_sdram_dq_oe ),
+        .model_dq     ( stub_dq ),
+        .model_dq_oe  ( stub_oe )
     );
 
     always #5 clk = ~clk;
 
-    initial begin
-        clk    = 1'b0;
-        rst    = 1'b1;
-        i_en   = 1'b0;
-        i_we   = 1'b0;
-        i_addr_off = '0;
-        i_wdata    = '0;
-        #40 rst = 1'b0;
+    task automatic wait_init();
+        int unsigned c;
+        c = 0;
+        while (o_busy && c < 50000) begin
+            @(posedge clk);
+            c++;
+        end
+        if (c >= 50000) begin
+            $display("FAIL sdram_controller_tb init timeout");
+            $finish(1);
+        end
+    endtask
 
-        // 写
+    initial begin
+        clk         = 1'b0;
+        rst         = 1'b1;
+        i_en        = 1'b0;
+        i_we        = 1'b0;
+        i_addr_off  = '0;
+        i_wdata     = '0;
+        repeat (8) @(posedge clk);
+        rst = 1'b0;
+        wait_init();
+
         @(posedge clk);
-        i_en = 1'b1;
-        i_we = 1'b1;
-        i_addr_off = 24'h10;
+        i_en       = 1'b1;
+        i_we       = 1'b1;
+        i_addr_off = 24'h40;
         i_wdata    = 32'hDEAD_BEEF;
         @(posedge clk);
         i_en = 1'b0;
 
-        while (!o_ready) @(posedge clk);
+        do @(posedge clk); while (!o_ready);
         @(posedge clk);
 
-        // 读
         @(posedge clk);
-        i_en = 1'b1;
-        i_we = 1'b0;
-        i_addr_off = 24'h10;
+        i_en       = 1'b1;
+        i_we       = 1'b0;
+        i_addr_off = 24'h40;
         @(posedge clk);
         i_en = 1'b0;
 
-        while (!o_ready) @(posedge clk);
+        do @(posedge clk); while (!o_ready);
         @(posedge clk);
+
         if (o_rdata !== 32'hDEAD_BEEF) begin
-            $display("FAIL read 0x%08h", o_rdata);
+            $display("FAIL read got %h", o_rdata);
             $finish(1);
         end
 

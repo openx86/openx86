@@ -14,8 +14,10 @@ module instruction_fetch (
     input  logic [31:0] i_code_data_read,
     // signal from outside
     input  logic        i_protected_mode,
-    input  logic        i_segment_selector [6],
-    input  logic        i_current_privilege_level,
+    input  logic [15:0] i_segment_selector [0:6],
+    input  logic [ 1:0] i_current_privilege_level,
+    input  logic        i_paging_enable,
+    input  logic [31:0] i_page_directory_base,
     // signal from execute unit
     input  logic        i_IP_vaild,
     // instruction fetch
@@ -30,6 +32,16 @@ module instruction_fetch (
 logic i_vaild;
 logic o_ready;
 
+// 分页遍历时需系统总线；当前 SoC 未把 MMU 总线复接到 CPU 口，bring-up 下保持默认
+logic        if_mmu_bus_vaild;
+logic        if_mmu_bus_ready;
+logic        if_mmu_bus_we;
+logic [31:0] if_mmu_bus_addr;
+logic [31:0] if_mmu_bus_rdata;
+logic [31:0] if_mmu_bus_wdata;
+assign if_mmu_bus_ready  = 1'b0;
+assign if_mmu_bus_rdata   = 32'h0;
+
 memory_management_unit #(
     .read_from_fetch ( 1 )
 ) instruction_fetch_memory_management_unit (
@@ -40,10 +52,16 @@ memory_management_unit #(
     .i_current_privilege_level ( i_current_privilege_level ),
     .i_segment_index ( `sreg_index_CS ),
     .i_effective_address ( EIP ),
-    .i_write_enable ( 0 ),
+    .i_write_enable ( 1'b0 ),
     .i_paging_enable ( i_paging_enable ),
     .i_page_directory_base ( i_page_directory_base ),
     .o_physical_address ( o_code_address ),
+    .o_bus_vaild ( if_mmu_bus_vaild ),
+    .i_bus_ready ( if_mmu_bus_ready ),
+    .o_bus_write_enable ( if_mmu_bus_we ),
+    .o_bus_address ( if_mmu_bus_addr ),
+    .i_bus_data_read ( if_mmu_bus_rdata ),
+    .o_bus_data_write ( if_mmu_bus_wdata ),
     .clock ( clock ),
     .reset ( reset )
 );

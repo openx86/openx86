@@ -34,3 +34,33 @@
 sim
 
 .idea
+
+# Build outputs
+build/
+
+# Quartus / FPGA generated files (keep project sources like .qsf/.qpf/.tcl tracked)
+fpga/**/*.rpt
+fpga/**/*.summary
+fpga/**/*.smsg
+fpga/**/*.qws
+fpga/**/*.jdi
+fpga/**/*.jditmp
+fpga/**/*.pin
+fpga/**/*.sof
+fpga/**/*.pof
+fpga/**/*.sld
+fpga/**/*.qdf
+fpga/**/*.qmsg
+fpga/**/*.rdb
+fpga/**/*.cdb
+fpga/**/*.hdb
+fpga/**/*.idb
+fpga/**/*.ddb
+fpga/**/*.ammdb
+fpga/**/*.logdb
+fpga/**/*.tdb
+fpga/**/db/
+fpga/**/incremental_db/
+fpga/**/simulation/
+fpga/**/output_files/
+fpga/**/.flock

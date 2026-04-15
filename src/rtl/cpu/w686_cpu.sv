@@ -28,6 +28,7 @@ module w686_cpu (
     // output logic        address_status_n,
     output logic        bus_vaild,
     input  logic        bus_ready,
+    input  logic        bus_busy,
     output logic        bus_write_enable,
     output logic [31:0] bus_address,
     input  logic [31:0] bus_read_data,
@@ -37,14 +38,15 @@ module w686_cpu (
 );
 
 w686_core core_0 (
-    .bus_vaild ( bus_vaild ),
-    .bus_ready ( bus_ready ),
-    .bus_write_enable ( bus_write_enable ),
-    .bus_address ( bus_address ),
-    .bus_read_data ( bus_read_data ),
-    .bus_write_data ( bus_write_data ),
-    .clock ( clock ),
-    .reset ( reset )
+    .o_bus_vaild        ( bus_vaild ),
+    .i_bus_ready        ( bus_ready ),
+    .i_bus_busy         ( bus_busy ),
+    .o_bus_write_enable ( bus_write_enable ),
+    .o_bus_address      ( bus_address ),
+    .i_bus_data_read    ( bus_read_data ),
+    .o_bus_data_write   ( bus_write_data ),
+    .clock              ( clock ),
+    .reset              ( reset )
 );
 
 // TODO: shared cache

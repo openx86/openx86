@@ -40,17 +40,27 @@ logic [31: 0] physical_address;
 logic         paging_vaild;
 logic         paging_ready;
 
+// Bring-up：描述符缓存尚未接到 MMU 时，用全 0 占位（实模式/未保护路径）
+logic [63:0] segment_descriptor_stub [0:6];
+always_comb begin
+    for (int i = 0; i < 7; i++) begin
+        segment_descriptor_stub[i] = 64'h0;
+    end
+end
+
 segmentation_unit #(
     .read_from_fetch ( read_from_fetch )
 ) mmu_segmentation_unit (
     .i_protected_mode ( i_protected_mode ),
     .i_segment_selector ( i_segment_selector ),
+    .o_segment_descriptor ( segment_descriptor_stub ),
     .i_current_privilege_level ( i_current_privilege_level ),
     .i_segment_index ( i_segment_index ),
     .i_effective_address ( i_effective_address ),
     .i_write_enable ( i_write_enable ),
-    // .o_segment_descriptor ( o_segment_descriptor ),
-    .o_linear_address ( linear_address )
+    .o_linear_address ( linear_address ),
+    .clock ( clock ),
+    .reset ( reset )
 );
 
 paging_unit mmu_paging_unit (

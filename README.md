@@ -4,9 +4,8 @@
 
 ## 目录结构（高层）
 - **`src/rtl/`**：主要 RTL 实现
-  - `src/rtl/soc_top.sv`：当前 SoC 主线顶层（默认综合/默认系统仿真）
-  - `src/rtl/x86_core_top.sv`：bring-up 级 CPU wrapper（最小指令集用于 smoke test）
-  - `src/rtl/cpu/`：`w686_*` CPU 与相关单元（可选，主要供 CPU 单测）
+  - `src/rtl/soc_top.sv`：当前 SoC 主线顶层（默认综合/默认系统仿真），CPU 侧例化 `w686_cpu`
+  - `src/rtl/cpu/`：`w686_*` CPU 与相关单元（`soc_top` 与 CPU 单测共用）
   - `src/rtl/experimental/`：草稿/实验性 RTL（默认不进入 CI）
 - **`tb/`**：testbenches
 - **`scripts/`**：仿真/测试脚本

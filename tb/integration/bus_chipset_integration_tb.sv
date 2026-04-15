@@ -24,10 +24,13 @@ module bus_chipset_integration_tb;
     logic [7:0]  vga_io_data_w;
     logic [7:0]  vga_io_data_r;
 
-    logic        ram_we;
-    logic [19:0] ram_addr;
-    logic [31:0] ram_wdata;
-    logic [31:0] ram_rdata;
+    logic        o_sdram_en;
+    logic        o_sdram_we;
+    logic [23:0] o_sdram_addr_off;
+    logic [31:0] o_sdram_wdata;
+    logic [31:0] i_sdram_rdata;
+    logic        i_sdram_ready;
+    logic        i_sdram_busy;
 
     logic [15:0] bios_addr;
     logic [31:0] bios_rdata;
@@ -51,14 +54,17 @@ module bus_chipset_integration_tb;
         .o_vga_io_addr      ( vga_io_addr ),
         .o_vga_io_data_w    ( vga_io_data_w ),
         .i_vga_io_data_r    ( vga_io_data_r ),
-        .o_ram_we           ( ram_we ),
-        .o_ram_addr         ( ram_addr ),
-        .o_ram_wdata        ( ram_wdata ),
-        .i_ram_rdata        ( ram_rdata ),
         .o_bios_addr        ( bios_addr ),
         .i_bios_rdata       ( bios_rdata ),
         .o_ext_bios_addr    ( ext_bios_addr ),
         .i_ext_bios_rdata   ( ext_bios_rdata ),
+        .o_sdram_en         ( o_sdram_en ),
+        .o_sdram_we         ( o_sdram_we ),
+        .o_sdram_addr_off   ( o_sdram_addr_off ),
+        .o_sdram_wdata      ( o_sdram_wdata ),
+        .i_sdram_rdata      ( i_sdram_rdata ),
+        .i_sdram_ready      ( i_sdram_ready ),
+        .i_sdram_busy       ( i_sdram_busy ),
         .o_ps2_kbd_clk_out ( ),
         .o_ps2_kbd_clk_oe  ( ),
         .i_ps2_kbd_clk_in  ( 1'b1 ),
@@ -71,11 +77,18 @@ module bus_chipset_integration_tb;
         .o_ps2_aux_dat_out ( ),
         .o_ps2_aux_dat_oe  ( ),
         .i_ps2_aux_dat_in  ( 1'b1 ),
+        .o_sd_spi_sck  ( ),
+        .o_sd_spi_mosi ( ),
+        .i_sd_spi_miso ( 1'b1 ),
+        .o_sd_spi_cs_n ( ),
+        .o_pic_intr ( ),
         .i_clock            ( clock ),
         .i_reset            ( reset )
     );
 
-    assign ram_rdata = 32'h0;
+    assign i_sdram_rdata = 32'h0;
+    assign i_sdram_ready = 1'b0;
+    assign i_sdram_busy  = 1'b0;
     assign bios_rdata = 32'h0;
     assign ext_bios_rdata = 32'h0;
     assign vga_io_data_r = 8'hFF;

@@ -130,9 +130,6 @@ get_dependencies() {
     if grep -q "ide_ata_pio" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
     fi
-    if grep -q "pc_bios_eeprom" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/eeprom/eeprom_controller.sv"
-    fi
     if grep -q "pc_bios_24lc32" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/pc_bios_24lc32.sv"
     fi
@@ -239,8 +236,14 @@ run_test() {
         # 使用iverilog编译和运行
         local compile_cmd="iverilog -g2012 -o ${module_name}_sim"
         
+        # PHY 存根（部分 SDRAM 相关 TB 需先于 testbench 编译）
+        local stub_preload=""
+        if [[ "$testbench" == *"sdram_controller_tb.sv" || "$testbench" == *"bus_tb.sv" ]]; then
+            stub_preload="$PROJECT_ROOT/tb/common/sdram_x16_stub.sv"
+        fi
+
         # 添加testbench
-        compile_cmd="$compile_cmd $testbench"
+        compile_cmd="$compile_cmd $stub_preload $testbench"
 
         # 添加 RTL 全量源（由 filelist 定义，避免 tb 移动后依赖推断失效）
         compile_cmd="$compile_cmd ${RTL_SOURCES[*]}"

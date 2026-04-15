@@ -240,6 +240,15 @@ logic [31:0] data_address;
 logic [31:0] data_data_read;
 logic [31:0] data_data_write;
 
+// instruction_fetch 期望 7 个选择子槽位；段寄存器文件目前提供 CS–GS（6 个）
+logic [15:0] fetch_segment_selector_ext [0:6];
+always_comb begin
+    for (int i = 0; i < 6; i++) begin
+        fetch_segment_selector_ext[i] = segment_selector[i];
+    end
+    fetch_segment_selector_ext[6] = 16'h0;
+end
+
 bus_interface_unit core_bus_interface_unit (
     .i_code_vaild ( code_vaild ),
     .o_code_ready ( code_ready ),
@@ -262,7 +271,6 @@ bus_interface_unit core_bus_interface_unit (
     .i_reset ( reset )
 );
 
-logic         IP_vaild;
 logic [ 7: 0] instruction [0:15];
 logic         instruction_ready;
 instruction_fetch core_instruction_fetch (
@@ -270,7 +278,12 @@ instruction_fetch core_instruction_fetch (
     .i_code_ready ( code_ready ),
     .o_code_address ( code_address ),
     .i_code_data_read ( code_data_read ),
-    .i_IP_vaild ( IP_vaild ),
+    .i_protected_mode ( PE ),
+    .i_segment_selector ( fetch_segment_selector_ext ),
+    .i_current_privilege_level ( 2'b0 ),
+    .i_paging_enable ( PG ),
+    .i_page_directory_base ( page_directory_base ),
+    .i_IP_vaild ( 1'b1 ),
     .o_instruction ( instruction[0:15] ),
     .o_instruction_ready ( instruction_ready ),
     .EIP ( EIP ),
@@ -279,7 +292,8 @@ instruction_fetch core_instruction_fetch (
 );
 
 decode core_decode (
-    .i_instruction ( instruction[0:15] )
+    .i_instruction ( instruction[0:15] ),
+    .i_default_operand_size ( 1'b1 )
 );
 
 // logic [31:0] code_base;

@@ -29,12 +29,6 @@ module bus_tb;
     logic [7:0]  vga_io_data_w;
     logic [7:0]  vga_io_data_r;
 
-    // RAM 接口
-    logic        ram_we;
-    logic [19:0] ram_addr;
-    logic [31:0] ram_wdata;
-    logic [31:0] ram_rdata;
-
     // BIOS ROM 接口
     logic [15:0] bios_addr;
     logic [31:0] bios_rdata;
@@ -49,6 +43,12 @@ module bus_tb;
     logic [31:0] i_sdram_rdata;
     logic        i_sdram_ready;
     logic        i_sdram_busy;
+
+    logic [15:0] sdr_dq_in;
+    logic [15:0] stub_dq;
+    logic        stub_oe;
+
+    assign sdr_dq_in = sdr_dq_oe ? sdr_dq_out : (stub_oe ? stub_dq : 16'hZZZZ);
 
     logic        sdr_cs_n, sdr_ras_n, sdr_cas_n, sdr_we_n;
     logic [1:0]  sdr_ba;
@@ -78,12 +78,7 @@ module bus_tb;
         .o_vga_io_addr      (vga_io_addr),
         .o_vga_io_data_w    (vga_io_data_w),
         .i_vga_io_data_r    (vga_io_data_r),
-        
-        .o_ram_we           (ram_we),
-        .o_ram_addr         (ram_addr),
-        .o_ram_wdata        (ram_wdata),
-        .i_ram_rdata        (ram_rdata),
-        
+
         .o_bios_addr        (bios_addr),
         .i_bios_rdata       (bios_rdata),
         
@@ -110,15 +105,19 @@ module bus_tb;
         .o_ps2_aux_dat_out ( ),
         .o_ps2_aux_dat_oe  ( ),
         .i_ps2_aux_dat_in  ( 1'b1 ),
-        
+
+        .o_sd_spi_sck  ( ),
+        .o_sd_spi_mosi ( ),
+        .i_sd_spi_miso ( 1'b1 ),
+        .o_sd_spi_cs_n ( ),
+
+        .o_pic_intr ( ),
+
         .i_clock            (clock),
         .i_reset            (reset)
     );
 
-    sdram_controller #(
-        .MEM_WORDS_LG2 ( 12 ),
-        .LATENCY       ( 3 )
-    ) u_sdram (
+    sdram_controller u_sdram (
         .clk            ( clock ),
         .rst            ( reset ),
         .i_en           ( o_sdram_en ),
@@ -138,31 +137,26 @@ module bus_tb;
         .o_sdram_a      ( sdr_a ),
         .o_sdram_dqm    ( sdr_dqm ),
         .o_sdram_dq_out ( sdr_dq_out ),
-        .o_sdram_dq_oe  ( sdr_dq_oe )
+        .o_sdram_dq_oe  ( sdr_dq_oe ),
+        .i_sdram_dq_in  ( sdr_dq_in )
     );
 
-    // 简单的RAM模型（用于测试）
-    logic [31:0] ram_mem [0:1023];  // 1KB RAM用于测试
-    
-    always_ff @(posedge clock) begin
-        if (reset) begin
-            for (int i = 0; i < 1024; i++) begin
-                ram_mem[i] <= 32'h0;
-            end
-        end else begin
-            if (ram_we) begin
-                ram_mem[ram_addr[9:0]] <= ram_wdata;
-            end
-        end
-    end
-    
-    always_ff @(posedge clock) begin
-        if (reset) begin
-            ram_rdata <= 32'h0;
-        end else begin
-            ram_rdata <= ram_mem[ram_addr[9:0]];
-        end
-    end
+    sdram_x16_stub #(
+        .CAS_LATENCY       ( 2 ),
+        .MEM_HALFWORDS_LG2 ( 21 )
+    ) u_sdram_stub (
+        .clk          ( clock ),
+        .cs_n         ( sdr_cs_n ),
+        .ras_n        ( sdr_ras_n ),
+        .cas_n        ( sdr_cas_n ),
+        .we_n         ( sdr_we_n ),
+        .ba           ( sdr_ba ),
+        .a            ( sdr_a ),
+        .host_dq_out  ( sdr_dq_out ),
+        .host_dq_oe   ( sdr_dq_oe ),
+        .model_dq     ( stub_dq ),
+        .model_dq_oe  ( stub_oe )
+    );
 
     // 简单的BIOS ROM模型
     logic [31:0] bios_mem [0:16383];  // 64KB BIOS
@@ -256,9 +250,10 @@ module bus_tb;
         
         #20;
         reset = 0;
-        #10;
+        // SDRAM 上电初始化（200us + 命令序列）
+        repeat (20000) @(posedge clock);
 
-        // 测试1: 写入RAM (地址 0x00000000)
+        // 测试1: 写入常规内存 (地址 0x00000000，经 SDRAM)
         $display("\n[测试1] 写入RAM地址 0x00000000");
         bus_valid = 1;
         bus_write_enable = 1;
