@@ -42,7 +42,14 @@ module pc_chipset_io_tb;
         .i_ps2_aux_clk_in  ( 1'b1 ),
         .o_ps2_aux_dat_out ( ),
         .o_ps2_aux_dat_oe  ( ),
-        .i_ps2_aux_dat_in  ( 1'b1 )
+        .i_ps2_aux_dat_in  ( 1'b1 ),
+        .o_sdio_clk    ( ),
+        .o_sdio_cmd_o  ( ),
+        .o_sdio_cmd_oe ( ),
+        .i_sdio_cmd_i  ( 1'b1 ),
+        .o_sdio_dat_o  ( ),
+        .o_sdio_dat_oe ( ),
+        .i_sdio_dat_i  ( 4'hF )
     );
 
     initial begin

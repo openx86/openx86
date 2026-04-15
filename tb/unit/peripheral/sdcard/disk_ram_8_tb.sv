@@ -30,21 +30,25 @@ module disk_ram_8_tb;
         .o_rdata_b ( disk_b )
     );
 
+    wire ide_sector_req;
     ide_ata_pio #(
         .SECTOR_BYTES(512),
         .SECTOR_COUNT(16),
-        .USE_INTERNAL_DISK_MEM(1'b0)
+        .USE_INTERNAL_DISK_MEM(1'b0),
+        .USE_ASYNC_DISK(1'b0)
     ) u_ide (
-        .i_clock       ( clock ),
-        .i_reset       ( reset ),
-        .i_io_valid    ( io_valid ),
-        .i_io_we       ( io_we ),
-        .i_io_addr     ( io_addr ),
-        .i_io_wdata    ( io_wdata ),
-        .o_io_rdata    ( io_rdata ),
-        .o_io_hit      ( io_hit ),
-        .o_disk_raddr  ( ide_raddr ),
-        .i_disk_rdata  ( disk_a )
+        .i_clock             ( clock ),
+        .i_reset             ( reset ),
+        .i_io_valid          ( io_valid ),
+        .i_io_we             ( io_we ),
+        .i_io_addr           ( io_addr ),
+        .i_io_wdata          ( io_wdata ),
+        .o_io_rdata          ( io_rdata ),
+        .o_io_hit            ( io_hit ),
+        .o_disk_raddr        ( ide_raddr ),
+        .i_disk_rdata        ( disk_a ),
+        .i_disk_sector_ready ( 1'b0 ),
+        .o_disk_sector_req   ( ide_sector_req )
     );
 
     task automatic wr(input logic [15:0] a, input logic [7:0] d);

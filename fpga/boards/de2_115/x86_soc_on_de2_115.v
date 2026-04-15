@@ -210,15 +210,15 @@ wire        ps2_kbd_dat_out, ps2_kbd_dat_oe;
 wire        ps2_aux_clk_out, ps2_aux_clk_oe;
 wire        ps2_aux_dat_out, ps2_aux_dat_oe;
 
-wire        sd_spi_mosi_w;
-wire        sd_spi_cs_n_w;
-
 // Approx. 25MHz pixel clock for VGA DAC (640x480 class timing uses ~25MHz)
 reg vga_pix_clk_div;
 always @(posedge CLOCK_50)
     vga_pix_clk_div <= ~vga_pix_clk_div;
 
-openx86_soc_top u_openx86_soc (
+// DE2-115 SD 插座：SDIO CLK/CMD/DAT0..3（IDE 盘体走 SD 时使用 USE_SDIO_DISK）
+openx86_soc_top #(
+    .USE_SDIO_DISK ( 1'b1 )
+) u_openx86_soc (
     .i_clk_50m          ( CLOCK_50 ),
     .i_reset_n          ( KEY[0] ),
 
@@ -241,10 +241,9 @@ openx86_soc_top u_openx86_soc (
     .o_ps2_aux_dat_oe   ( ps2_aux_dat_oe ),
     .i_ps2_aux_dat_in   ( PS2_DAT2 ),
 
-    .o_sd_spi_sck       ( SD_CLK ),
-    .o_sd_spi_mosi      ( sd_spi_mosi_w ),
-    .i_sd_spi_miso      ( SD_DAT[0] ),
-    .o_sd_spi_cs_n      ( sd_spi_cs_n_w ),
+    .o_sdio_clk    ( SD_CLK ),
+    .io_sdio_cmd   ( SD_CMD ),
+    .io_sdio_dat   ( SD_DAT ),
 
     .o_sdram_clk        ( DRAM_CLK ),
     .o_sdram_cke        ( DRAM_CKE ),
@@ -264,12 +263,7 @@ assign PS2_DAT  = (ps2_kbd_dat_oe && !ps2_kbd_dat_out) ? 1'b0 : 1'bz;
 assign PS2_CLK2 = (ps2_aux_clk_oe && !ps2_aux_clk_out) ? 1'b0 : 1'bz;
 assign PS2_DAT2 = (ps2_aux_dat_oe && !ps2_aux_dat_out) ? 1'b0 : 1'bz;
 
-// SD SPI: CMD = MOSI; DAT0 = MISO; DAT3 = CS# (active low)
-assign SD_CMD    = sd_spi_mosi_w;
-assign SD_DAT[0] = 1'bz;
-assign SD_DAT[1] = 1'bz;
-assign SD_DAT[2] = 1'bz;
-assign SD_DAT[3] = sd_spi_cs_n_w ? 1'bz : 1'b0;
+// SD_CLK / SD_CMD / SD_DAT 已由 u_openx86_soc 原生 PHY 驱动（勿再 assign）
 
 // 32-bit SDRAM: use lower 16 data bits; mask upper 16-bit lane
 assign DRAM_DQM[3:2]  = 2'b11;

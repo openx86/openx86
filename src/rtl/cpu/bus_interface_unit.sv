@@ -24,6 +24,7 @@ module bus_interface_unit (
     input  logic        i_data_vaild,
     output logic        o_data_ready,
     input  logic        i_data_write_enable,
+    input  logic        i_data_io_access,
     input  logic [31:0] i_data_address,
     output logic [31:0] o_data_data_read,
     input  logic [31:0] i_data_data_write,
@@ -32,6 +33,7 @@ module bus_interface_unit (
     input  logic        i_bus_ready,
     input  logic        i_bus_busy,
     output logic        o_bus_write_enable,
+    output logic        o_bus_io_access,
     output logic [31:0] o_bus_address,
     input  logic [31:0] i_bus_data_read,
     output logic [31:0] o_bus_data_write,
@@ -89,6 +91,7 @@ always_ff @(posedge i_clock or posedge i_reset) begin
     if (i_reset) begin
         o_bus_vaild <= 0;
         o_bus_write_enable <= 0;
+        o_bus_io_access <= 0;
         o_bus_address <= 0;
         o_code_ready <= 0;
         o_data_ready <= 0;
@@ -102,9 +105,11 @@ always_ff @(posedge i_clock or posedge i_reset) begin
                 end
                 if (i_code_vaild) begin
                     o_bus_write_enable <= 0;
+                    o_bus_io_access <= 0;
                     o_bus_address <= i_code_address;
                 end else if (i_data_vaild) begin
                     o_bus_write_enable <= i_data_write_enable;
+                    o_bus_io_access <= i_data_io_access;
                     o_bus_address <= i_data_address;
                 end else begin
                     o_bus_write_enable <= 0;

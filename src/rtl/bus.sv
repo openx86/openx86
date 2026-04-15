@@ -15,7 +15,8 @@
 // ----------------------------------------------------------------------------
 module bus_devices #(
     parameter bit  USE_REAL_PS2 = 1'b0,
-    parameter int PS2_CLK_HZ   = 50_000_000
+    parameter int PS2_CLK_HZ   = 50_000_000,
+    parameter bit  USE_SDIO_DISK = 1'b0
 ) (
     // CPU 总线接口
     input  logic        i_bus_valid,
@@ -72,11 +73,14 @@ module bus_devices #(
     output logic        o_ps2_aux_dat_oe,
     input  logic        i_ps2_aux_dat_in,
 
-    // SD Card SPI (SPI mode)
-    output logic        o_sd_spi_sck,
-    output logic        o_sd_spi_mosi,
-    input  logic        i_sd_spi_miso,
-    output logic        o_sd_spi_cs_n,
+    // SDIO / SD 4-bit（IDE 盘体由 pc_chipset_io 内主机驱动；USE_SDIO_DISK=0 时引脚空闲）
+    output logic        o_sdio_clk,
+    output logic        o_sdio_cmd_o,
+    output logic        o_sdio_cmd_oe,
+    input  logic        i_sdio_cmd_i,
+    output logic [3:0]  o_sdio_dat_o,
+    output logic        o_sdio_dat_oe,
+    input  logic [3:0]  i_sdio_dat_i,
 
     // PIC 主片中断输出（接 CPU INTR）
     output logic        o_pic_intr,
@@ -138,11 +142,6 @@ logic       is_fdc_io;
 logic [7:0] fdc_io_rdata;
 logic       fdc_io_hit;
 
-// SDCard SPI I/O window: 0x0200-0x0207 (byte registers)
-logic       is_sd_io;
-logic [7:0] sd_io_rdata;
-logic       sd_io_hit;
-
 // 数据选择信号
 logic [31:0] vram_data_selected;
 logic [31:0] bios_data_selected;
@@ -197,11 +196,6 @@ assign is_vga_io_access   = is_io_access &&
                              
 assign is_other_io_access = is_io_access && !is_vga_io_access;
 
-// SD card I/O decode (keep out of legacy PC chipset ranges)
-assign is_sd_io = is_other_io_access &&
-                  (i_bus_address[15:0] >= 16'h0200) &&
-                  (i_bus_address[15:0] <= 16'h0207);
-
 // Chipset 端口并集（与 rtl/chipset/pc_chipset_io.sv 内各 IP 一致）
 assign is_chipset_io = is_other_io_access && (
     ((i_bus_address[15:0] >= 16'h0000) && (i_bus_address[15:0] <= 16'h000F)) ||
@@ -225,83 +219,6 @@ assign is_fdc_io = is_other_io_access && (
     (i_bus_address[15:0] == 16'h03F7)
 );
 
-// ---------------------------------------------------------------------------
-// SD Card SPI host + simple register file (byte-wide I/O)
-// 0x0200 CMD/STATUS  [bit0]=read, [bit1]=write (write 1 to trigger)
-// 0x0201..0x0204 LBA [31:0] little-endian bytes
-// 0x0205 STATUS      [bit0]=done_latched, [bit1]=busy
-// ---------------------------------------------------------------------------
-logic [31:0] sd_lba;
-logic        sd_cmd_read_pulse, sd_cmd_write_pulse;
-logic        sd_busy, sd_done;
-logic        sd_done_latched;
-
-always_ff @(posedge i_clock or posedge i_reset) begin
-    if (i_reset) begin
-        sd_lba          <= 32'h0;
-        sd_done_latched <= 1'b0;
-    end else begin
-        if (sd_done)
-            sd_done_latched <= 1'b1;
-
-        // Clear done on command trigger or explicit status read
-        if (is_sd_io && i_bus_valid && (i_bus_address[15:0] == 16'h0200) && i_bus_write_enable)
-            sd_done_latched <= 1'b0;
-        if (is_sd_io && i_bus_valid && (i_bus_address[15:0] == 16'h0205) && !i_bus_write_enable)
-            sd_done_latched <= 1'b0;
-
-        // LBA byte writes
-        if (is_sd_io && i_bus_valid && i_bus_write_enable) begin
-            unique case (i_bus_address[15:0])
-                16'h0201: sd_lba[7:0]   <= i_bus_data_write[7:0];
-                16'h0202: sd_lba[15:8]  <= i_bus_data_write[7:0];
-                16'h0203: sd_lba[23:16] <= i_bus_data_write[7:0];
-                16'h0204: sd_lba[31:24] <= i_bus_data_write[7:0];
-                default: ;
-            endcase
-        end
-    end
-end
-
-always_comb begin
-    sd_cmd_read_pulse  = 1'b0;
-    sd_cmd_write_pulse = 1'b0;
-    if (is_sd_io && i_bus_valid && i_bus_write_enable && (i_bus_address[15:0] == 16'h0200)) begin
-        sd_cmd_read_pulse  = i_bus_data_write[0];
-        sd_cmd_write_pulse = i_bus_data_write[1];
-    end
-end
-
-sdcard_spi_host u_sdcard_spi_host (
-    .i_clock     ( i_clock ),
-    .i_reset     ( i_reset ),
-    .o_spi_sck   ( o_sd_spi_sck ),
-    .o_spi_mosi  ( o_sd_spi_mosi ),
-    .i_spi_miso  ( i_sd_spi_miso ),
-    .o_spi_cs_n  ( o_sd_spi_cs_n ),
-    .o_busy      ( sd_busy ),
-    .i_cmd_read  ( sd_cmd_read_pulse ),
-    .i_cmd_write ( sd_cmd_write_pulse ),
-    .i_lba       ( sd_lba ),
-    .o_done      ( sd_done )
-);
-
-always_comb begin
-    sd_io_hit   = is_sd_io;
-    sd_io_rdata = 8'h00;
-    if (is_sd_io) begin
-        unique case (i_bus_address[15:0])
-            16'h0200: sd_io_rdata = {6'b0, sd_busy, sd_done_latched};
-            16'h0201: sd_io_rdata = sd_lba[7:0];
-            16'h0202: sd_io_rdata = sd_lba[15:8];
-            16'h0203: sd_io_rdata = sd_lba[23:16];
-            16'h0204: sd_io_rdata = sd_lba[31:24];
-            16'h0205: sd_io_rdata = {6'b0, sd_busy, sd_done_latched};
-            default:  sd_io_rdata = 8'h00;
-        endcase
-    end
-end
-
 fdc_nec765_sram u_fdc (
     .i_clock    ( i_clock ),
     .i_reset    ( i_reset ),
@@ -318,7 +235,8 @@ logic pic_intr_w;
 pc_chipset_io #(
     .USE_REAL_PS2 ( USE_REAL_PS2 ),
     .PS2_CLK_HZ   ( PS2_CLK_HZ ),
-    .DISK_ENABLE_PLUSARGS ( 1'b1 )
+    .DISK_ENABLE_PLUSARGS ( 1'b1 ),
+    .USE_SDIO_DISK        ( USE_SDIO_DISK )
 ) u_chipset (
     .i_clock           ( i_clock ),
     .i_reset           ( i_reset ),
@@ -348,7 +266,14 @@ pc_chipset_io #(
     .i_ps2_aux_clk_in  ( i_ps2_aux_clk_in ),
     .o_ps2_aux_dat_out ( o_ps2_aux_dat_out ),
     .o_ps2_aux_dat_oe  ( o_ps2_aux_dat_oe ),
-    .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in )
+    .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in ),
+    .o_sdio_clk    ( o_sdio_clk ),
+    .o_sdio_cmd_o  ( o_sdio_cmd_o ),
+    .o_sdio_cmd_oe ( o_sdio_cmd_oe ),
+    .i_sdio_cmd_i  ( i_sdio_cmd_i ),
+    .o_sdio_dat_o  ( o_sdio_dat_o ),
+    .o_sdio_dat_oe ( o_sdio_dat_oe ),
+    .i_sdio_dat_i  ( i_sdio_dat_i )
 );
 
 assign o_pic_intr = pic_intr_w;
@@ -404,9 +329,8 @@ assign ext_bios_data_selected = is_ext_bios_access ? i_ext_bios_rdata : 32'h0;
 // I/O 数据（8 位扩展到 32 位）
 logic [7:0] io_byte_data;
 assign io_byte_data = is_vga_io_access ? i_vga_io_data_r :
-                      (sd_io_hit ? sd_io_rdata :
                       (fdc_io_hit ? fdc_io_rdata :
-                      (chipset_io_hit ? chipset_io_rdata : 8'hFF)));
+                      (chipset_io_hit ? chipset_io_rdata : 8'hFF));
 assign io_data_selected = is_io_access ? {24'h0, io_byte_data} : 32'h0;
 
 // 最终数据输出
@@ -476,7 +400,8 @@ endmodule
 // ----------------------------------------------------------------------------
 module bus_controller #(
     parameter bit  USE_REAL_PS2 = 1'b0,
-    parameter int PS2_CLK_HZ   = 50_000_000
+    parameter int PS2_CLK_HZ   = 50_000_000,
+    parameter bit  USE_SDIO_DISK = 1'b0
 ) (
     input  logic        i_bus_valid,
     output logic        o_bus_ready,
@@ -524,10 +449,13 @@ module bus_controller #(
     output logic        o_ps2_aux_dat_oe,
     input  logic        i_ps2_aux_dat_in,
 
-    output logic        o_sd_spi_sck,
-    output logic        o_sd_spi_mosi,
-    input  logic        i_sd_spi_miso,
-    output logic        o_sd_spi_cs_n,
+    output logic        o_sdio_clk,
+    output logic        o_sdio_cmd_o,
+    output logic        o_sdio_cmd_oe,
+    input  logic        i_sdio_cmd_i,
+    output logic [3:0]  o_sdio_dat_o,
+    output logic        o_sdio_dat_oe,
+    input  logic [3:0]  i_sdio_dat_i,
 
     output logic        o_pic_intr,
 
@@ -536,7 +464,8 @@ module bus_controller #(
 );
     bus_devices #(
         .USE_REAL_PS2 ( USE_REAL_PS2 ),
-        .PS2_CLK_HZ   ( PS2_CLK_HZ )
+        .PS2_CLK_HZ   ( PS2_CLK_HZ ),
+        .USE_SDIO_DISK ( USE_SDIO_DISK )
     ) u_devices (
         .i_bus_valid        ( i_bus_valid ),
         .o_bus_ready        ( o_bus_ready ),
@@ -577,10 +506,13 @@ module bus_controller #(
         .o_ps2_aux_dat_out  ( o_ps2_aux_dat_out ),
         .o_ps2_aux_dat_oe   ( o_ps2_aux_dat_oe ),
         .i_ps2_aux_dat_in   ( i_ps2_aux_dat_in ),
-        .o_sd_spi_sck       ( o_sd_spi_sck ),
-        .o_sd_spi_mosi      ( o_sd_spi_mosi ),
-        .i_sd_spi_miso      ( i_sd_spi_miso ),
-        .o_sd_spi_cs_n      ( o_sd_spi_cs_n ),
+        .o_sdio_clk    ( o_sdio_clk ),
+        .o_sdio_cmd_o  ( o_sdio_cmd_o ),
+        .o_sdio_cmd_oe ( o_sdio_cmd_oe ),
+        .i_sdio_cmd_i  ( i_sdio_cmd_i ),
+        .o_sdio_dat_o  ( o_sdio_dat_o ),
+        .o_sdio_dat_oe ( o_sdio_dat_oe ),
+        .i_sdio_dat_i  ( i_sdio_dat_i ),
         .o_pic_intr         ( o_pic_intr ),
         .i_clock            ( i_clock ),
         .i_reset            ( i_reset )
@@ -592,7 +524,8 @@ endmodule
 // ----------------------------------------------------------------------------
 module bus #(
     parameter bit  USE_REAL_PS2 = 1'b0,
-    parameter int PS2_CLK_HZ   = 50_000_000
+    parameter int PS2_CLK_HZ   = 50_000_000,
+    parameter bit  USE_SDIO_DISK = 1'b0
 ) (
     input  logic        i_bus_valid,
     output logic        o_bus_ready,
@@ -634,10 +567,13 @@ module bus #(
     output logic        o_ps2_aux_dat_oe,
     input  logic        i_ps2_aux_dat_in,
 
-    output logic        o_sd_spi_sck,
-    output logic        o_sd_spi_mosi,
-    input  logic        i_sd_spi_miso,
-    output logic        o_sd_spi_cs_n,
+    output logic        o_sdio_clk,
+    output logic        o_sdio_cmd_o,
+    output logic        o_sdio_cmd_oe,
+    input  logic        i_sdio_cmd_i,
+    output logic [3:0]  o_sdio_dat_o,
+    output logic        o_sdio_dat_oe,
+    input  logic [3:0]  i_sdio_dat_i,
 
     output logic        o_pic_intr,
     input  logic        i_clock,
@@ -645,7 +581,8 @@ module bus #(
 );
     bus_controller #(
         .USE_REAL_PS2 ( USE_REAL_PS2 ),
-        .PS2_CLK_HZ   ( PS2_CLK_HZ )
+        .PS2_CLK_HZ   ( PS2_CLK_HZ ),
+        .USE_SDIO_DISK ( USE_SDIO_DISK )
     ) u_bus_controller (
         .i_bus_valid        ( i_bus_valid ),
         .o_bus_ready        ( o_bus_ready ),
@@ -686,10 +623,13 @@ module bus #(
         .o_ps2_aux_dat_out  ( o_ps2_aux_dat_out ),
         .o_ps2_aux_dat_oe   ( o_ps2_aux_dat_oe ),
         .i_ps2_aux_dat_in   ( i_ps2_aux_dat_in ),
-        .o_sd_spi_sck       ( o_sd_spi_sck ),
-        .o_sd_spi_mosi      ( o_sd_spi_mosi ),
-        .i_sd_spi_miso      ( i_sd_spi_miso ),
-        .o_sd_spi_cs_n      ( o_sd_spi_cs_n ),
+        .o_sdio_clk    ( o_sdio_clk ),
+        .o_sdio_cmd_o  ( o_sdio_cmd_o ),
+        .o_sdio_cmd_oe ( o_sdio_cmd_oe ),
+        .i_sdio_cmd_i  ( i_sdio_cmd_i ),
+        .o_sdio_dat_o  ( o_sdio_dat_o ),
+        .o_sdio_dat_oe ( o_sdio_dat_oe ),
+        .i_sdio_dat_i  ( i_sdio_dat_i ),
         .o_pic_intr         ( o_pic_intr ),
         .i_clock            ( i_clock ),
         .i_reset            ( i_reset )

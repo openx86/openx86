@@ -1,6 +1,5 @@
 // ============================================================================
-// soc_top smoke test — 复位后运行固定周期（w686_cpu 集成路径）
-// Integrates vga peripheral (VGA bus VRAM + I/O) and sdram_controller (0x0100_0000 window).
+// openx86_soc_top smoke test — 复位后运行固定周期（w686_cpu + bus + SDRAM 窗口）
 // ============================================================================
 
 module soc_top_tb;
@@ -13,8 +12,12 @@ module soc_top_tb;
     logic [3:0]  o_vga_g;
     logic [3:0]  o_vga_b;
     wire  [15:0] sdram_dq;
+    wire         io_sdio_cmd;
+    wire  [3:0]  io_sdio_dat;
 
-    soc_top dut (
+    openx86_soc_top #(
+        .USE_SDIO_DISK ( 1'b0 )
+    ) dut (
         .i_clk_50m   ( clock ),
         .i_reset_n   ( reset_n ),
         .o_vga_hsync ( o_vga_hsync ),
@@ -34,10 +37,9 @@ module soc_top_tb;
         .o_ps2_aux_dat_out ( ),
         .o_ps2_aux_dat_oe  ( ),
         .i_ps2_aux_dat_in  ( 1'b1 ),
-        .o_sd_spi_sck  ( ),
-        .o_sd_spi_mosi ( ),
-        .i_sd_spi_miso ( 1'b1 ),
-        .o_sd_spi_cs_n ( ),
+        .o_sdio_clk  ( ),
+        .io_sdio_cmd ( io_sdio_cmd ),
+        .io_sdio_dat ( io_sdio_dat ),
         .o_sdram_clk   ( ),
         .o_sdram_cke   ( ),
         .o_sdram_cs_n  ( ),

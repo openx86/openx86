@@ -16,6 +16,7 @@ module w686_core (
     input  logic        i_bus_ready,
     input  logic        i_bus_busy,
     output logic        o_bus_write_enable,
+    output logic        o_bus_io_access,
     output logic [31:0] o_bus_address,
     input  logic [31:0] i_bus_data_read,
     output logic [31:0] o_bus_data_write,
@@ -239,6 +240,7 @@ logic        data_write_enable;
 logic [31:0] data_address;
 logic [31:0] data_data_read;
 logic [31:0] data_data_write;
+wire         data_io_access = 1'b0;
 
 // instruction_fetch 期望 7 个选择子槽位；段寄存器文件目前提供 CS–GS（6 个）
 logic [15:0] fetch_segment_selector_ext [0:6];
@@ -257,6 +259,7 @@ bus_interface_unit core_bus_interface_unit (
     .i_data_vaild ( data_vaild ),
     .o_data_ready ( data_ready ),
     .i_data_write_enable ( data_write_enable ),
+    .i_data_io_access ( data_io_access ),
     .i_data_address ( data_address ),
     .o_data_data_read ( data_data_read ),
     .i_data_data_write ( data_data_write ),
@@ -264,6 +267,7 @@ bus_interface_unit core_bus_interface_unit (
     .i_bus_ready ( i_bus_ready ),
     .i_bus_busy ( i_bus_busy ),
     .o_bus_write_enable ( o_bus_write_enable ),
+    .o_bus_io_access ( o_bus_io_access ),
     .o_bus_address ( o_bus_address ),
     .i_bus_data_read ( i_bus_data_read ),
     .o_bus_data_write ( o_bus_data_write ),

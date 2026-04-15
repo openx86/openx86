@@ -2,7 +2,9 @@
 // Minimal SoC: w686_cpu + bus + SDRAM 主存 + pc_bios_24lc32 + VGA
 // ============================================================================
 
-module openx86_soc_top (
+module openx86_soc_top #(
+    parameter bit USE_SDIO_DISK = 1'b0
+) (
     // ------------------------------------------------------------------------
     // Board-level clock / reset
     // ------------------------------------------------------------------------
@@ -38,12 +40,11 @@ module openx86_soc_top (
     input  logic        i_ps2_aux_dat_in,
 
     // ------------------------------------------------------------------------
-    // SD Card (SPI mode)
+    // SDIO / SD 4-bit（IDE 盘体经片内主机；PHY 在片内）
     // ------------------------------------------------------------------------
-    output logic        o_sd_spi_sck,
-    output logic        o_sd_spi_mosi,
-    input  logic        i_sd_spi_miso,
-    output logic        o_sd_spi_cs_n,
+    output logic        o_sdio_clk,
+    inout  wire         io_sdio_cmd,
+    inout  wire [3:0]   io_sdio_dat,
 
     // ------------------------------------------------------------------------
     // SDRAM physical interface (16-bit device)
@@ -108,14 +109,20 @@ module openx86_soc_top (
 
     logic        pic_intr;
 
-    // w686_cpu 尚未驱动 I/O 访问区分线：SoC 总线按内存事务解码
-    assign bus_io = 1'b0;
+    logic        b_sd_nat_clk;
+    logic        b_sd_cmd_o;
+    logic        b_sd_cmd_oe;
+    logic        b_nat_cmd_i;
+    logic [3:0]  b_sd_dat_o;
+    logic        b_sd_dat_oe;
+    logic [3:0]  b_nat_dat_i;
 
     w686_cpu u_cpu (
         .bus_vaild        ( bus_valid ),
         .bus_ready        ( bus_ready ),
         .bus_busy         ( bus_busy ),
         .bus_write_enable ( bus_we ),
+        .bus_io_access    ( bus_io ),
         .bus_address      ( bus_addr ),
         .bus_read_data    ( bus_rdata ),
         .bus_write_data   ( bus_wdata ),
@@ -138,7 +145,9 @@ module openx86_soc_top (
     assign o_sdram_a     = sdr_phy_a;
     assign o_sdram_dqm   = sdr_phy_dqm;
 
-    bus u_bus (
+    bus #(
+        .USE_SDIO_DISK ( USE_SDIO_DISK )
+    ) u_bus (
         .i_bus_valid        ( bus_valid ),
         .o_bus_ready        ( bus_ready ),
         .o_bus_busy         ( bus_busy ),
@@ -178,13 +187,29 @@ module openx86_soc_top (
         .o_ps2_aux_dat_out ( o_ps2_aux_dat_out ),
         .o_ps2_aux_dat_oe  ( o_ps2_aux_dat_oe ),
         .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in ),
-        .o_sd_spi_sck       ( o_sd_spi_sck ),
-        .o_sd_spi_mosi      ( o_sd_spi_mosi ),
-        .i_sd_spi_miso      ( i_sd_spi_miso ),
-        .o_sd_spi_cs_n      ( o_sd_spi_cs_n ),
+        .o_sdio_clk    ( b_sd_nat_clk ),
+        .o_sdio_cmd_o  ( b_sd_cmd_o ),
+        .o_sdio_cmd_oe ( b_sd_cmd_oe ),
+        .i_sdio_cmd_i  ( b_nat_cmd_i ),
+        .o_sdio_dat_o  ( b_sd_dat_o ),
+        .o_sdio_dat_oe ( b_sd_dat_oe ),
+        .i_sdio_dat_i  ( b_nat_dat_i ),
         .o_pic_intr         ( pic_intr ),
         .i_clock            ( clock ),
         .i_reset            ( reset )
+    );
+
+    sd_4bit_phy u_sdio_phy (
+        .i_sd_clk       ( b_sd_nat_clk ),
+        .i_host_cmd_out ( b_sd_cmd_o ),
+        .i_host_cmd_oe  ( b_sd_cmd_oe ),
+        .o_host_cmd_in  ( b_nat_cmd_i ),
+        .i_host_dat_out ( b_sd_dat_o ),
+        .i_host_dat_oe  ( b_sd_dat_oe ),
+        .o_host_dat_in  ( b_nat_dat_i ),
+        .o_sd_clk_pin   ( o_sdio_clk ),
+        .io_sd_cmd      ( io_sdio_cmd ),
+        .io_sd_dat      ( io_sdio_dat )
     );
 
     sdram_controller #(

@@ -13,7 +13,8 @@ module pc_chipset_io #(
     parameter int PS2_CLK_HZ   = 50_000_000,
     parameter bit  DISK_ENABLE_PLUSARGS = 1'b0,
     parameter bit  DISK_INIT_IS_BINARY  = 1'b1,
-    parameter string DISK_INIT_FILE     = ""
+    parameter string DISK_INIT_FILE     = "",
+    parameter bit  USE_SDIO_DISK   = 1'b0
 ) (
     input  logic        i_clock,
     input  logic        i_reset,
@@ -43,7 +44,14 @@ module pc_chipset_io #(
     input  logic        i_ps2_aux_clk_in,
     output logic        o_ps2_aux_dat_out,
     output logic        o_ps2_aux_dat_oe,
-    input  logic        i_ps2_aux_dat_in
+    input  logic        i_ps2_aux_dat_in,
+    output logic        o_sdio_clk,
+    output logic        o_sdio_cmd_o,
+    output logic        o_sdio_cmd_oe,
+    input  logic        i_sdio_cmd_i,
+    output logic [3:0]  o_sdio_dat_o,
+    output logic        o_sdio_dat_oe,
+    input  logic [3:0]  i_sdio_dat_i
 );
 
     localparam int DISK_IMAGE_BYTES = 512 * 2048;
@@ -52,8 +60,11 @@ module pc_chipset_io #(
     assign o_io_ready = 1'b1;
 
     logic [31:0] ide_disk_raddr;
-    logic [7:0]  ide_disk_rdata;
+    logic [7:0]  ide_disk_rdata_ram;
     logic [7:0]  disk_rdata_b_unused;
+    logic [7:0]  ide_disk_rdata_eff;
+    logic        ide_sector_ready_eff;
+    logic        ide_sector_req_w;
 
     string disk_init_file_eff;
     initial begin
@@ -64,21 +75,78 @@ module pc_chipset_io #(
         end
     end
 
-    disk_ram_8 #(
-        .BYTE_DEPTH     ( DISK_IMAGE_BYTES ),
-        .INIT_IS_BINARY ( DISK_INIT_IS_BINARY ),
-        .INIT_FILE      ( disk_init_file_eff )
-    ) u_disk_image (
-        .i_clock   ( i_clock ),
-        .i_reset   ( i_reset ),
-        .i_we      ( 1'b0 ),
-        .i_waddr   ( 32'h0 ),
-        .i_wdata   ( 8'h0 ),
-        .i_raddr_a ( ide_disk_raddr ),
-        .i_raddr_b ( 32'h0 ),
-        .o_rdata_a ( ide_disk_rdata ),
-        .o_rdata_b ( disk_rdata_b_unused )
-    );
+    generate
+        if (!USE_SDIO_DISK) begin : g_disk_ram
+            disk_ram_8 #(
+                .BYTE_DEPTH     ( DISK_IMAGE_BYTES ),
+                .INIT_IS_BINARY ( DISK_INIT_IS_BINARY ),
+                .INIT_FILE      ( disk_init_file_eff )
+            ) u_disk_image (
+                .i_clock   ( i_clock ),
+                .i_reset   ( i_reset ),
+                .i_we      ( 1'b0 ),
+                .i_waddr   ( 32'h0 ),
+                .i_wdata   ( 8'h0 ),
+                .i_raddr_a ( ide_disk_raddr ),
+                .i_raddr_b ( 32'h0 ),
+                .o_rdata_a ( ide_disk_rdata_ram ),
+                .o_rdata_b ( disk_rdata_b_unused )
+            );
+            assign ide_disk_rdata_eff   = ide_disk_rdata_ram;
+            assign ide_sector_ready_eff = 1'b0;
+            assign o_sdio_clk      = 1'b0;
+            assign o_sdio_cmd_o    = 1'b1;
+            assign o_sdio_cmd_oe   = 1'b0;
+            assign o_sdio_dat_o    = 4'hF;
+            assign o_sdio_dat_oe   = 1'b0;
+        end else begin : g_sdio_host
+            logic        sd_start;
+            logic [31:0] sd_lba;
+            logic        sd_busy;
+            logic        sd_done;
+            logic        sd_err;
+            logic        sd_payload_we;
+            logic [8:0]  sd_payload_addr;
+            logic [7:0]  sd_payload_data;
+
+            ide_sd_sector_bridge u_ide_sd_br (
+                .i_clock             ( i_clock ),
+                .i_reset             ( i_reset ),
+                .i_ide_disk_raddr    ( ide_disk_raddr ),
+                .o_ide_disk_rdata    ( ide_disk_rdata_eff ),
+                .i_ide_sector_req    ( ide_sector_req_w ),
+                .o_ide_sector_ready  ( ide_sector_ready_eff ),
+                .o_sd_start          ( sd_start ),
+                .o_sd_lba            ( sd_lba ),
+                .i_sd_busy           ( sd_busy ),
+                .i_sd_done           ( sd_done ),
+                .i_sd_err            ( sd_err ),
+                .i_sd_payload_we     ( sd_payload_we ),
+                .i_sd_payload_addr   ( sd_payload_addr ),
+                .i_sd_payload_data   ( sd_payload_data )
+            );
+
+            sd_native_host_4bit u_sdio_host (
+                .i_clock        ( i_clock ),
+                .i_reset        ( i_reset ),
+                .o_sd_clk       ( o_sdio_clk ),
+                .o_phy_cmd_out  ( o_sdio_cmd_o ),
+                .o_phy_cmd_oe   ( o_sdio_cmd_oe ),
+                .i_phy_cmd_in   ( i_sdio_cmd_i ),
+                .o_phy_dat_out  ( o_sdio_dat_o ),
+                .o_phy_dat_oe   ( o_sdio_dat_oe ),
+                .i_phy_dat_in   ( i_sdio_dat_i ),
+                .i_start        ( sd_start ),
+                .i_lba          ( sd_lba ),
+                .o_busy         ( sd_busy ),
+                .o_done         ( sd_done ),
+                .o_err          ( sd_err ),
+                .o_payload_we   ( sd_payload_we ),
+                .o_payload_addr ( sd_payload_addr ),
+                .o_payload_data ( sd_payload_data )
+            );
+        end
+    endgenerate
 
     logic [7:0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
     logic       h_dma, h_pic_m, h_pic_s, h_pit, h_ps2, h_rtc, h_com, h_lpt, h_ide;
@@ -231,20 +299,23 @@ module pc_chipset_io #(
     );
 
     ide_ata_pio #(
-        .SECTOR_BYTES        ( 512 ),
-        .SECTOR_COUNT        ( DISK_SECTOR_CNT ),
-        .USE_INTERNAL_DISK_MEM ( 1'b0 )
+        .SECTOR_BYTES          ( 512 ),
+        .SECTOR_COUNT          ( DISK_SECTOR_CNT ),
+        .USE_INTERNAL_DISK_MEM ( 1'b0 ),
+        .USE_ASYNC_DISK        ( USE_SDIO_DISK )
     ) u_ide (
-        .i_clock       ( i_clock ),
-        .i_reset       ( i_reset ),
-        .i_io_valid    ( i_io_valid ),
-        .i_io_we       ( i_io_we ),
-        .i_io_addr     ( i_io_addr ),
-        .i_io_wdata    ( i_io_wdata ),
-        .o_io_rdata    ( r_ide ),
-        .o_io_hit      ( h_ide ),
-        .o_disk_raddr  ( ide_disk_raddr ),
-        .i_disk_rdata  ( ide_disk_rdata )
+        .i_clock             ( i_clock ),
+        .i_reset             ( i_reset ),
+        .i_io_valid          ( i_io_valid ),
+        .i_io_we             ( i_io_we ),
+        .i_io_addr           ( i_io_addr ),
+        .i_io_wdata          ( i_io_wdata ),
+        .o_io_rdata          ( r_ide ),
+        .o_io_hit            ( h_ide ),
+        .o_disk_raddr        ( ide_disk_raddr ),
+        .i_disk_rdata        ( ide_disk_rdata_eff ),
+        .i_disk_sector_ready ( ide_sector_ready_eff ),
+        .o_disk_sector_req   ( ide_sector_req_w )
     );
 
     always_comb begin

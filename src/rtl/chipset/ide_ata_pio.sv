@@ -7,7 +7,8 @@
 module ide_ata_pio #(
     parameter int SECTOR_BYTES = 512,
     parameter int SECTOR_COUNT = 4,
-    parameter bit USE_INTERNAL_DISK_MEM = 1
+    parameter bit USE_INTERNAL_DISK_MEM = 1,
+    parameter bit USE_ASYNC_DISK = 1'b0
 ) (
     input  logic        i_clock,
     input  logic        i_reset,
@@ -18,7 +19,9 @@ module ide_ata_pio #(
     output logic [7:0]  o_io_rdata,
     output logic        o_io_hit,
     output logic [31:0] o_disk_raddr,
-    input  logic [7:0]  i_disk_rdata
+    input  logic [7:0]  i_disk_rdata,
+    input  logic        i_disk_sector_ready,
+    output logic        o_disk_sector_req
 );
 
     localparam logic [15:0] BASE_LO = 16'h01F0;
@@ -27,8 +30,9 @@ module ide_ata_pio #(
 
     assign o_io_hit = ((i_io_addr >= BASE_LO) && (i_io_addr <= BASE_HI)) || (i_io_addr == ALT);
 
-    typedef enum logic [1:0] {
+    typedef enum logic [2:0] {
         ST_IDLE,
+        ST_WAIT_SECTOR,
         ST_DRQ
     } ide_state_e;
 
@@ -44,6 +48,9 @@ module ide_ata_pio #(
 
     localparam logic [7:0] ST_RDY = 8'h40;
     localparam logic [7:0] ST_DRQ_F = 8'h08;
+    localparam logic [7:0] ST_BSY = 8'h80;
+
+    wire async_on = USE_ASYNC_DISK && !USE_INTERNAL_DISK_MEM;
 
     wire [31:0] mem_bytes = SECTOR_BYTES * SECTOR_COUNT;
     wire [31:0] byte_addr  = mem_off * 32'(SECTOR_BYTES) + { 23'h0, buf_ptr };
@@ -88,6 +95,10 @@ module ide_ata_pio #(
             error_r    <= '0;
             buf_ptr    <= '0;
             mem_off    <= '0;
+        end else if (async_on && state == ST_WAIT_SECTOR && i_disk_sector_ready) begin
+            state   <= ST_DRQ;
+            buf_ptr <= '0;
+            status  <= ST_DRQ_F | ST_RDY;
         end else if (i_io_valid && i_io_we && o_io_hit) begin
             unique case (i_io_addr)
                 16'h01F2: sector_cnt <= i_io_wdata;
@@ -99,8 +110,13 @@ module ide_ata_pio #(
                     if (i_io_wdata == 8'h20) begin
                         mem_off <= { lba_hi, lba_mid, lba_lo };
                         buf_ptr <= '0;
-                        state   <= ST_DRQ;
-                        status  <= ST_DRQ_F | ST_RDY;
+                        if (async_on) begin
+                            state  <= ST_WAIT_SECTOR;
+                            status <= ST_BSY;
+                        end else begin
+                            state  <= ST_DRQ;
+                            status <= ST_DRQ_F | ST_RDY;
+                        end
                     end
                 end
                 16'h03F6: ;
@@ -115,6 +131,8 @@ module ide_ata_pio #(
                 buf_ptr <= buf_ptr + 9'h1;
         end
     end
+
+    assign o_disk_sector_req = async_on && (state == ST_WAIT_SECTOR);
 
     always_comb begin
         o_io_rdata = 8'hFF;

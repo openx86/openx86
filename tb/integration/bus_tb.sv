@@ -106,10 +106,13 @@ module bus_tb;
         .o_ps2_aux_dat_oe  ( ),
         .i_ps2_aux_dat_in  ( 1'b1 ),
 
-        .o_sd_spi_sck  ( ),
-        .o_sd_spi_mosi ( ),
-        .i_sd_spi_miso ( 1'b1 ),
-        .o_sd_spi_cs_n ( ),
+        .o_sdio_clk    ( ),
+        .o_sdio_cmd_o  ( ),
+        .o_sdio_cmd_oe ( ),
+        .i_sdio_cmd_i  ( 1'b1 ),
+        .o_sdio_dat_o  ( ),
+        .o_sdio_dat_oe ( ),
+        .i_sdio_dat_i  ( 4'hF ),
 
         .o_pic_intr ( ),
 

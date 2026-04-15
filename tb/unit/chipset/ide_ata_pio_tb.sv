@@ -19,17 +19,20 @@ module ide_ata_pio_tb;
     logic        io_hit;
 
     wire [31:0] disk_ra;
+    wire disk_sector_req;
     ide_ata_pio dut (
-        .i_clock       ( clock ),
-        .i_reset       ( reset ),
-        .i_io_valid    ( io_valid ),
-        .i_io_we       ( io_we ),
-        .i_io_addr     ( io_addr ),
-        .i_io_wdata    ( io_wdata ),
-        .o_io_rdata    ( io_rdata ),
-        .o_io_hit      ( io_hit ),
-        .o_disk_raddr  ( disk_ra ),
-        .i_disk_rdata  ( 8'h0 )
+        .i_clock             ( clock ),
+        .i_reset             ( reset ),
+        .i_io_valid          ( io_valid ),
+        .i_io_we             ( io_we ),
+        .i_io_addr           ( io_addr ),
+        .i_io_wdata          ( io_wdata ),
+        .o_io_rdata          ( io_rdata ),
+        .o_io_hit            ( io_hit ),
+        .o_disk_raddr        ( disk_ra ),
+        .i_disk_rdata        ( 8'h0 ),
+        .i_disk_sector_ready ( 1'b0 ),
+        .o_disk_sector_req   ( disk_sector_req )
     );
 
     always #5 clock = ~clock;

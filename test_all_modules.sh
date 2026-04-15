@@ -130,6 +130,15 @@ get_dependencies() {
     if grep -q "ide_ata_pio" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
     fi
+    if grep -q "sd_mmc_card_model_native" "$module_file"; then
+        deps="$deps $TB_DIR/unit/peripheral/sdcard/sd_mmc_card_model_native.sv"
+    fi
+    if grep -q "ide_sd_sector_bridge" "$module_file"; then
+        deps="$deps $RTL_DIR/periph/ide_sd_sector_bridge.sv"
+    fi
+    if grep -q "sd_native_host_4bit" "$module_file"; then
+        deps="$deps $RTL_DIR/periph/sd_native_host_4bit.sv"
+    fi
     if grep -q "pc_bios_24lc32" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/pc_bios_24lc32.sv"
     fi
@@ -149,6 +158,9 @@ get_dependencies() {
         deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
         deps="$deps $RTL_DIR/periph/sd_disk_ram_8.sv"
         deps="$deps $RTL_DIR/chipset/pc_chipset_io.sv"
+        deps="$deps $RTL_DIR/periph/ide_sd_sector_bridge.sv"
+        deps="$deps $RTL_DIR/periph/sd_native_host_4bit.sv"
+        deps="$deps $RTL_DIR/periph/sd_4bit_phy.sv"
         deps="$deps $RTL_DIR/periph/fdc_nec765_sram.sv"
         deps="$deps $RTL_DIR/bus.sv"
     fi
@@ -242,8 +254,13 @@ run_test() {
             stub_preload="$PROJECT_ROOT/tb/common/sdram_x16_stub.sv"
         fi
 
+        local extra_tb_sv=""
+        if [[ "$testbench" == *"ide_sd_native_disk_tb.sv" ]]; then
+            extra_tb_sv="$PROJECT_ROOT/tb/unit/peripheral/sdcard/sd_mmc_card_model_native.sv"
+        fi
+
         # 添加testbench
-        compile_cmd="$compile_cmd $stub_preload $testbench"
+        compile_cmd="$compile_cmd $stub_preload $extra_tb_sv $testbench"
 
         # 添加 RTL 全量源（由 filelist 定义，避免 tb 移动后依赖推断失效）
         compile_cmd="$compile_cmd ${RTL_SOURCES[*]}"
