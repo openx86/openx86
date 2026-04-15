@@ -1,4 +1,4 @@
-name: SystemVerilog Tests
+name: SystemVerilog Tests (iverilog)
 
 on:
   push:
@@ -11,71 +11,58 @@ on:
       - develop
       - main
       - master
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 jobs:
-  test:
-    name: Run SystemVerilog Tests
+  test-ubuntu:
+    name: iverilog (Ubuntu)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Install iverilog
         run: |
           sudo apt-get update
           sudo apt-get install -y iverilog
-          
+
       - name: Verify iverilog installation
         run: |
           which iverilog
           which vvp
           iverilog -V
           vvp -V
-          
-      - name: List all testbenches
+
+      - name: Check syntax + run all testbenches (iverilog)
         run: |
-          echo "查找所有testbench文件:"
-          find rtl -name "*_tb.sv" -type f | sort
-          echo ""
-          echo "testbench总数: $(find rtl -name "*_tb.sv" -type f | wc -l)"
-          
-      - name: Check syntax (all SystemVerilog and Verilog files)
-        continue-on-error: false
-        run: |
-          chmod +x check_syntax.sh
-          ./check_syntax.sh || {
-            echo "语法检查失败！"
-            exit 1
-          }
-          
-      - name: Run all testbenches
-        continue-on-error: false
-        run: |
-          chmod +x scripts/test_all.sh
+          chmod +x scripts/test_all.sh check_syntax.sh test_all_modules.sh
           ./scripts/test_all.sh || {
             echo "测试失败！"
             echo "失败的测试日志:"
             ls -la *_compile.log *_run.log 2>/dev/null || true
             exit 1
           }
-          
+
       - name: Upload test logs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-logs
+          name: iverilog-test-logs
           path: |
             *_compile.log
             *_run.log
           retention-days: 7
-          
+
       - name: Upload test logs (on success)
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: test-logs-success
+          name: iverilog-test-logs-success
           path: |
             *_compile.log
             *_run.log
@@ -83,7 +70,7 @@ jobs:
           if-no-files-found: ignore
 
   test-windows:
-    name: Run SystemVerilog Tests (Windows)
+    name: iverilog (Windows)
     runs-on: windows-latest
     timeout-minutes: 30
 
@@ -98,7 +85,8 @@ jobs:
           iverilog -V
           vvp -V
 
-      - name: Run all testbenches (PowerShell)
+      - name: Run all testbenches (PowerShell, iverilog)
         shell: powershell
         run: |
           powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/test_all.ps1"
+

@@ -1,0 +1,65 @@
+name: SystemVerilog Tests (verilator)
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - master
+  pull_request:
+    branches:
+      - develop
+      - main
+      - master
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test-ubuntu:
+    name: verilator (Ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator
+          verilator --version
+
+      - name: Run all testbenches (verilator)
+        run: |
+          chmod +x scripts/test_all_verilator.sh scripts/sim_tb_verilator.sh
+          ./scripts/test_all_verilator.sh build || {
+            echo "测试失败！"
+            echo "失败的测试日志:"
+            ls -la *_compile.log *_run.log 2>/dev/null || true
+            exit 1
+          }
+
+      - name: Upload test logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verilator-test-logs
+          path: |
+            *_compile.log
+            *_run.log
+          retention-days: 7
+
+      - name: Upload test logs (on success)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verilator-test-logs-success
+          path: |
+            *_compile.log
+            *_run.log
+          retention-days: 1
+          if-no-files-found: ignore
+
