@@ -1,6 +1,6 @@
 // ============================================================================
 // soc_top smoke test — same BIOS bring-up as x86_core_top_tb
-// Integrates vga_graphics_adapter (VGA bus VRAM + I/O) and sdram_controller (0x0100_0000 window).
+// Integrates vga peripheral (VGA bus VRAM + I/O) and sdram_controller (0x0100_0000 window).
 // ============================================================================
 
 module soc_top_tb;

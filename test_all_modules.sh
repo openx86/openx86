@@ -62,17 +62,17 @@ get_dependencies() {
         deps="$deps $RTL_DIR/common/edge_detect.sv"
     fi
     if grep -q "vga_port" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_port.sv"
+        deps="$deps $RTL_DIR/peripheral/vga/vga_port.sv"
     fi
     if grep -q "vga_font_rom" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/peripheral/vga/vga_font_rom.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
     fi
     if grep -q "vga_text_color" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_text_color.sv"
+        deps="$deps $RTL_DIR/peripheral/vga/vga_text_color.sv"
     fi
     if grep -q "vga_text_intense" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_text_intense.sv"
+        deps="$deps $RTL_DIR/peripheral/vga/vga_text_intense.sv"
     fi
     if grep -q "ide_ata_pio" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
@@ -84,11 +84,11 @@ get_dependencies() {
         deps="$deps $RTL_DIR/memory/sdram_controller.sv"
     fi
     if grep -q "vga_graphics_adapter" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_graphics_adapter.sv"
-        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_port.sv"
-        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_font_rom.sv"
-        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_text_color.sv"
-        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_text_intense.sv"
+        deps="$deps $RTL_DIR/peripheral/vga/vga_graphics_adapter.sv"
+        deps="$deps $RTL_DIR/peripheral/vga/vga_port.sv"
+        deps="$deps $RTL_DIR/peripheral/vga/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/peripheral/vga/vga_text_color.sv"
+        deps="$deps $RTL_DIR/peripheral/vga/vga_text_intense.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
         deps="$deps $RTL_DIR/common/simple_dual_port_ram.sv"
     fi

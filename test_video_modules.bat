@@ -1,12 +1,12 @@
 @echo off
-REM Windows批处理脚本：运行 VGA Graphics Adapter (peripheral\vga_graphics_adapter) 下各模块 testbench
+REM Windows批处理脚本：运行 VGA (peripheral\vga) 下各模块 testbench
 REM 支持iverilog
 
 setlocal enabledelayedexpansion
 
 set PROJECT_ROOT=%~dp0
 set RTL_DIR=%PROJECT_ROOT%rtl
-set VIDEO_DIR=%RTL_DIR%\peripheral\vga_graphics_adapter
+set VIDEO_DIR=%RTL_DIR%\peripheral\vga
 set COMMON_DIR=%RTL_DIR%\common
 
 REM 检测iverilog

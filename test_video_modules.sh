@@ -1,5 +1,5 @@
 #!/bin/bash
-# 测试脚本：运行 VGA Graphics Adapter (rtl/peripheral/vga_graphics_adapter) 下各模块 testbench
+# 测试脚本：运行 VGA (rtl/peripheral/vga) 下各模块 testbench
 # 支持iverilog和ModelSim/QuestaSim
 
 set -e  # 遇到错误立即退出
@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 # 项目根目录
 PROJECT_ROOT=$(pwd)
 RTL_DIR="$PROJECT_ROOT/rtl"
-VIDEO_DIR="$RTL_DIR/peripheral/vga_graphics_adapter"
+VIDEO_DIR="$RTL_DIR/peripheral/vga"
 COMMON_DIR="$RTL_DIR/common"
 
 # 检测可用的仿真器

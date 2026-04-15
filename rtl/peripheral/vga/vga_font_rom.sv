@@ -22,7 +22,7 @@ module vga_font_rom (
         .DATA_WIDTH ( 8      ),
         .ADDR_WIDTH ( 12     ),
         .DEPTH      ( 4096   ),
-        .INIT_FILE  ( "rtl/peripheral/vga_graphics_adapter/vga_font_8x16.hex" )  // 字体数据文件
+        .INIT_FILE  ( "rtl/peripheral/vga/vga_font_8x16.hex" )  // 字体数据文件
     ) font_rom_inst (
         .addr   ( font_addr  ),
         .rdata  ( font_data  ),
