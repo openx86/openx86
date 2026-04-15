@@ -27,4 +27,4 @@ DATE = "09:10:21  March 29, 2010"
 
 # Revisions
 
-PROJECT_REVISION = "DE2_115_Default"
+PROJECT_REVISION = "x86_soc_on_de2_115"
