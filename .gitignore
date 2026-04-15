@@ -33,6 +33,8 @@
 
 sim
 
+*.bak
+
 .idea
 
 # Build outputs
@@ -64,3 +66,4 @@ fpga/**/incremental_db/
 fpga/**/simulation/
 fpga/**/output_files/
 fpga/**/.flock
+fpga/**/*.done
