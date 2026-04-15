@@ -1,4 +1,16 @@
-module w486_core (
+// ============================================================================
+// w686_core
+// ----------------------------------------------------------------------------
+// CPU 核心实现（进行中）：包含寄存器组、取指、译码，以及总线接口单元等子模块。
+//
+// 总线接口约定（简化版）：
+// - `o_bus_vaild` 拉高表示发起一次总线访问；地址/方向等在 valid 期间保持稳定。
+// - 目标侧在 `i_bus_ready=1` 且 `i_bus_busy=0` 时完成一次握手；读数据通过 `i_bus_data_read` 返回。
+// - `i_bus_busy` 表示外部忙（例如 SDRAM 控制器），核心需要等待其解除后再认为完成。
+//
+// 历史命名 `w80386_*`/`w486_*` 已统一更名为 `w686_*`。
+// ============================================================================
+module w686_core (
     // bus
     output logic        o_bus_vaild,
     input  logic        i_bus_ready,
@@ -378,30 +390,4 @@ decode core_decode (
 //     .o_error                        ( decode_o_error )
 // );
 
-endmodule
-
-// Backward-compatible alias (temporary).
-// Remove after all instantiations are migrated to w486_core.
-module w80386_core (
-    output logic        o_bus_vaild,
-    input  logic        i_bus_ready,
-    input  logic        i_bus_busy,
-    output logic        o_bus_write_enable,
-    output logic [31:0] o_bus_address,
-    input  logic [31:0] i_bus_data_read,
-    output logic [31:0] o_bus_data_write,
-    input  logic        clock,
-    input  logic        reset
-);
-    w486_core u (
-        .o_bus_vaild        ( o_bus_vaild ),
-        .i_bus_ready        ( i_bus_ready ),
-        .i_bus_busy         ( i_bus_busy ),
-        .o_bus_write_enable ( o_bus_write_enable ),
-        .o_bus_address      ( o_bus_address ),
-        .i_bus_data_read    ( i_bus_data_read ),
-        .o_bus_data_write   ( o_bus_data_write ),
-        .clock              ( clock ),
-        .reset              ( reset )
-    );
 endmodule

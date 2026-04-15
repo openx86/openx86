@@ -1,4 +1,13 @@
-module w486_cpu (
+// ============================================================================
+// w686_cpu
+// ----------------------------------------------------------------------------
+// CPU 顶层封装：对外提供统一的简化 SoC bus 接口（valid/ready）。
+//
+// 说明：
+// - 该模块目前实例化 `w686_core` 作为具体实现。
+// - 历史命名 `w80386_*`/`w486_*` 已统一更名为 `w686_*`。
+// ============================================================================
+module w686_cpu (
     // input  logic        next_address_n,
     // input  logic        bus_ready_n,
     // input  logic        bus_size_16_n,
@@ -27,7 +36,7 @@ module w486_cpu (
     input  logic        reset
 );
 
-w486_core core_0 (
+w686_core core_0 (
     .bus_vaild ( bus_vaild ),
     .bus_ready ( bus_ready ),
     .bus_write_enable ( bus_write_enable ),
@@ -42,28 +51,4 @@ w486_core core_0 (
 // TODO: system agent
 // TODO: SDRAM controller
 
-endmodule
-
-// Backward-compatible alias (temporary).
-// Remove after all instantiations are migrated to w486_cpu.
-module w80386_cpu (
-    output logic        bus_vaild,
-    input  logic        bus_ready,
-    output logic        bus_write_enable,
-    output logic [31:0] bus_address,
-    input  logic [31:0] bus_read_data,
-    output logic [31:0] bus_write_data,
-    input  logic        clock,
-    input  logic        reset
-);
-    w486_cpu u (
-        .bus_vaild        ( bus_vaild ),
-        .bus_ready        ( bus_ready ),
-        .bus_write_enable ( bus_write_enable ),
-        .bus_address      ( bus_address ),
-        .bus_read_data    ( bus_read_data ),
-        .bus_write_data   ( bus_write_data ),
-        .clock            ( clock ),
-        .reset            ( reset )
-    );
 endmodule
