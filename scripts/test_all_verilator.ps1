@@ -13,12 +13,23 @@ if (!(Test-Path $runner)) {
     throw "Missing runner: $runner"
 }
 
-$tbs =
-    Get-ChildItem -Path "rtl" -Recurse -File -Include "*_tb.sv" |
-    Sort-Object FullName
+function Get-Testbenches {
+    $roots = @()
+    if (Test-Path "tb") { $roots += "tb" }
+    if (Test-Path "rtl") { $roots += "rtl" }
+    if ($roots.Count -eq 0) { return @() }
+
+    $tbs = @()
+    foreach ($r in $roots) {
+        $tbs += Get-ChildItem -Path $r -Recurse -File -Include "*_tb.sv"
+    }
+    return $tbs | Sort-Object FullName -Unique
+}
+
+$tbs = Get-Testbenches
 
 if ($tbs.Count -eq 0) {
-    throw "No testbenches found under rtl/"
+    throw "No testbenches found under tb/ or rtl/"
 }
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null

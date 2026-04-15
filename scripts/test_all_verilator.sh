@@ -15,9 +15,17 @@ fi
 runner="scripts/sim_tb_verilator.sh"
 chmod +x "$runner"
 
-mapfile -t tbs < <(find rtl -name "*_tb.sv" -type f | sort)
+tb_roots=()
+[[ -d "tb" ]] && tb_roots+=("tb")
+[[ -d "rtl" ]] && tb_roots+=("rtl")
+if [[ ${#tb_roots[@]} -eq 0 ]]; then
+  echo "ERROR: no tb/ or rtl/ directory found" >&2
+  exit 1
+fi
+
+mapfile -t tbs < <(find "${tb_roots[@]}" -name "*_tb.sv" -type f | sort)
 if [[ ${#tbs[@]} -eq 0 ]]; then
-  echo "ERROR: no testbenches found under rtl/" >&2
+  echo "ERROR: no testbenches found under tb/ or rtl/" >&2
   exit 1
 fi
 

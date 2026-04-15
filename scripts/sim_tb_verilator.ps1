@@ -23,12 +23,44 @@ if (!(Get-Command verilator -ErrorAction SilentlyContinue)) {
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
-# Collect all RTL sources (exclude testbenches).
-$rtlSources =
-    Get-ChildItem -Path "rtl" -Recurse -File -Include "*.sv" |
-    Where-Object { $_.FullName -notmatch "_tb\.sv$" } |
-    Sort-Object FullName |
-    ForEach-Object { $_.FullName }
+function Get-RtlSourcesFromFilelist {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $FilelistPath
+    )
+
+    if (!(Test-Path $FilelistPath)) {
+        throw "Missing RTL filelist: $FilelistPath"
+    }
+
+    $incDirs = @()
+    $sources = @()
+
+    foreach ($line in Get-Content -Path $FilelistPath) {
+        $l = $line.Trim()
+        if ($l.Length -eq 0) { continue }
+        if ($l.StartsWith("#")) { continue }
+
+        if ($l.StartsWith("+incdir+")) {
+            $dir = $l.Substring("+incdir+".Length).Trim()
+            if ($dir.Length -ne 0) {
+                $incDirs += $dir
+            }
+            continue
+        }
+
+        $sources += $l
+    }
+
+    return [PSCustomObject]@{
+        IncDirs = $incDirs
+        Sources = $sources
+    }
+}
+
+$rtlList = Get-RtlSourcesFromFilelist -FilelistPath "sim/filelists/rtl.f"
+$rtlSources = @($rtlList.Sources | ForEach-Object { (Resolve-Path $_).Path })
+$incArgs = @($rtlList.IncDirs | ForEach-Object { @("-I", $_) })
 
 $tbFull = (Resolve-Path $Tb).Path
 $tbName = [IO.Path]::GetFileNameWithoutExtension($tbFull)
@@ -45,7 +77,7 @@ Write-Host "== Verilator compile: $Tb =="
     -sv `
     --timing `
     -Wall `
-    -Irtl `
+    $incArgs `
     --top-module $tbName `
     --Mdir $objDir `
     -o $bin `

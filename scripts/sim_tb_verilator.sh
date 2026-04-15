@@ -8,7 +8,7 @@ Usage:
 
 Notes:
   - Requires: verilator (and a C++ toolchain available via verilator --binary)
-  - All RTL sources under rtl/ are included (excluding *_tb.sv), plus the testbench itself.
+  - RTL sources come from sim/filelists/rtl.f when present (fallback: scan rtl/).
   - Extra arguments after '--' are forwarded to the produced binary, e.g. +SEABIOS_BIN=...
 EOF
 }
@@ -61,7 +61,30 @@ obj_dir="$build_root/obj_dir_${tb_name}"
 bin="$build_root/${tb_name}.bin"
 mkdir -p "$build_root"
 
-mapfile -t rtl_sources < <(find rtl -type f -name "*.sv" ! -name "*_tb.sv" | sort)
+rtl_filelist="sim/filelists/rtl.f"
+rtl_sources=()
+incdirs=()
+if [[ -f "$rtl_filelist" ]]; then
+  while IFS= read -r line; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -z "$line" ]] && continue
+    [[ "$line" == \#* ]] && continue
+    if [[ "$line" == +incdir+* ]]; then
+      incdirs+=("${line#'+incdir+'}")
+      continue
+    fi
+    rtl_sources+=("$line")
+  done < "$rtl_filelist"
+else
+  mapfile -t rtl_sources < <(find src/rtl -type f -name "*.sv" ! -name "*_tb.sv" | sort)
+  incdirs+=("src/rtl")
+fi
+
+inc_args=()
+for d in "${incdirs[@]}"; do
+  inc_args+=("-I$d")
+done
 
 compile_log="${tb_name}_compile.log"
 run_log="${tb_name}_run.log"
@@ -73,7 +96,7 @@ verilator \
   -sv \
   --timing \
   -Wall \
-  -Irtl \
+  "${inc_args[@]}" \
   --top-module "$tb_name" \
   --Mdir "$obj_dir" \
   -o "$bin" \

@@ -15,5 +15,5 @@ if ($env:SEABIOS_HEX) { $plus += "+SEABIOS_HEX=$($env:SEABIOS_HEX)" }
 if ($env:DISK_BIN) { $plus += "+DISK_BIN=$($env:DISK_BIN)" }
 if ($env:DISK_HEX) { $plus += "+DISK_HEX=$($env:DISK_HEX)" }
 
-& powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/sim_tb.ps1" -Tb "rtl/soc_top_tb.sv" -OutDir "build" -PlusArgs $plus
+& powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/sim_tb.ps1" -Tb "tb/system/soc_top_tb.sv" -OutDir "build" -PlusArgs $plus
 exit $LASTEXITCODE
