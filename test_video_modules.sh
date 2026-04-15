@@ -1,5 +1,5 @@
 #!/bin/bash
-# 测试脚本：运行video文件夹下所有模块的testbench
+# 测试脚本：运行 VGA Graphics Adapter (rtl/peripheral/vga_graphics_adapter) 下各模块 testbench
 # 支持iverilog和ModelSim/QuestaSim
 
 set -e  # 遇到错误立即退出
@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 # 项目根目录
 PROJECT_ROOT=$(pwd)
 RTL_DIR="$PROJECT_ROOT/rtl"
-VIDEO_DIR="$RTL_DIR/peripheral/video"
+VIDEO_DIR="$RTL_DIR/peripheral/vga_graphics_adapter"
 COMMON_DIR="$RTL_DIR/common"
 
 # 检测可用的仿真器
@@ -65,7 +65,7 @@ run_test() {
         elif [ "$module_name" = "vga_text_color" ] || [ "$module_name" = "vga_text_intense" ]; then
             # 这些模块依赖vga_font_rom，但testbench中已经模拟了
             :
-        elif [ "$module_name" = "vga_top" ]; then
+        elif [ "$module_name" = "vga_graphics_adapter" ]; then
             compile_cmd="$compile_cmd $VIDEO_DIR/vga_port.sv"
             compile_cmd="$compile_cmd $VIDEO_DIR/vga_font_rom.sv"
             compile_cmd="$compile_cmd $VIDEO_DIR/vga_text_color.sv"
@@ -137,7 +137,7 @@ run_test() {
 
 # 主测试流程
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}开始测试 Video 模块${NC}"
+echo -e "${GREEN}开始测试 VGA Graphics Adapter 模块${NC}"
 echo -e "${GREEN}========================================${NC}"
 
 # 测试所有testbench
@@ -146,7 +146,7 @@ testbenches=(
     "$VIDEO_DIR/vga_port_tb.sv"
     "$VIDEO_DIR/vga_text_color_tb.sv"
     "$VIDEO_DIR/vga_text_intense_tb.sv"
-    "$VIDEO_DIR/vga_top_tb.sv"
+    "$VIDEO_DIR/vga_graphics_adapter_tb.sv"
 )
 
 for tb in "${testbenches[@]}"; do

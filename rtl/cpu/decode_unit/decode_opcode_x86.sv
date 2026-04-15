@@ -562,7 +562,12 @@ assign o_opcode_x86_XOR_imm_to_reg_mem                                          
 assign o_opcode_x86_XOR_imm_to_acc                                              = (i_instruction[0][7:1] == 7'b0011_010 );
 
 
-// assign o_opcode_x86_processor_extension_escape          = (i_instruction[0][7:3] == 5'b1101_1   );
-// ESC instruction is used for co-processor like X87 FPU, but now we dont need it. (actually I cant find this instruction opcode from the latest Intel SDM)
+// ----------------------------------------------------------------------------
+// 80486 级指令：下列已在上方 one-hot 中译码（节选）
+//   CPUID(0F A2)、CMPXCHG(0F B0/B1)、XADD(0F C0/C1)、BSWAP(0F C8+rd)、
+//   INVD(0F 08)、WBINVD(0F 09)、INVLPG(0F 01 /7)、BSF/BSR、双精度 SHLD/SHRD、
+//   SETcc、CMPXCHG8B(486 后 Pentium 亦可在此扩展) 等。
+//   协处理器 / X87：首字节 D8–DF 为 ESC，第二字节为 ModR/M；见 decode_x87_esc.sv
+// ----------------------------------------------------------------------------
 
 endmodule

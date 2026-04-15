@@ -62,26 +62,57 @@ get_dependencies() {
         deps="$deps $RTL_DIR/common/edge_detect.sv"
     fi
     if grep -q "vga_port" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/video/vga_port.sv"
+        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_port.sv"
     fi
     if grep -q "vga_font_rom" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/video/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_font_rom.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
     fi
     if grep -q "vga_text_color" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/video/vga_text_color.sv"
+        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_text_color.sv"
     fi
     if grep -q "vga_text_intense" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/video/vga_text_intense.sv"
+        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_text_intense.sv"
     fi
-    if grep -q "vga_top" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/video/vga_top.sv"
-        deps="$deps $RTL_DIR/peripheral/video/vga_port.sv"
-        deps="$deps $RTL_DIR/peripheral/video/vga_font_rom.sv"
-        deps="$deps $RTL_DIR/peripheral/video/vga_text_color.sv"
-        deps="$deps $RTL_DIR/peripheral/video/vga_text_intense.sv"
+    if grep -q "ide_ata_pio" "$module_file"; then
+        deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
+    fi
+    if grep -q "pc_bios_eeprom" "$module_file"; then
+        deps="$deps $RTL_DIR/peripheral/eeprom/eeprom_controller.sv"
+    fi
+    if grep -q "sdram_controller" "$module_file"; then
+        deps="$deps $RTL_DIR/memory/sdram_controller.sv"
+    fi
+    if grep -q "vga_graphics_adapter" "$module_file"; then
+        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_graphics_adapter.sv"
+        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_port.sv"
+        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_text_color.sv"
+        deps="$deps $RTL_DIR/peripheral/vga_graphics_adapter/vga_text_intense.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
         deps="$deps $RTL_DIR/common/simple_dual_port_ram.sv"
+    fi
+    if grep -q "execute_unit_tb" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/execute_unit/execute_unit_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/execute_unit/address_generation_unit.sv"
+        deps="$deps $RTL_DIR/cpu/execute_unit/execute_branch_unit.sv"
+        deps="$deps $RTL_DIR/cpu/execute_unit/execute_muldiv_unit.sv"
+    fi
+    if grep -q "decode_x87_esc" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/decode_unit/decode_x87_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/decode_unit/decode_x87_esc.sv"
+    fi
+    if [ "$(basename "$module_file")" = "decode_tb.sv" ]; then
+        deps="$deps $RTL_DIR/cpu/decode_unit/decode_x87_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/decode_unit/decode_x87_esc.sv"
+    fi
+    if grep -q "execute_unit_top" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/execute_unit/execute_unit_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/execute_unit/address_generation_unit.sv"
+        deps="$deps $RTL_DIR/cpu/execute_unit/load_store_unit.sv"
+        deps="$deps $RTL_DIR/cpu/execute_unit/execute_branch_unit.sv"
+        deps="$deps $RTL_DIR/cpu/execute_unit/execute_muldiv_unit.sv"
+        deps="$deps $RTL_DIR/cpu/execute_unit/execute_x87_fpu.sv"
     fi
     
     # 添加decode相关模块的依赖

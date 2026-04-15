@@ -1,12 +1,12 @@
 @echo off
-REM Windows批处理脚本：运行video文件夹下所有模块的testbench
+REM Windows批处理脚本：运行 VGA Graphics Adapter (peripheral\vga_graphics_adapter) 下各模块 testbench
 REM 支持iverilog
 
 setlocal enabledelayedexpansion
 
 set PROJECT_ROOT=%~dp0
 set RTL_DIR=%PROJECT_ROOT%rtl
-set VIDEO_DIR=%RTL_DIR%\peripheral\video
+set VIDEO_DIR=%RTL_DIR%\peripheral\vga_graphics_adapter
 set COMMON_DIR=%RTL_DIR%\common
 
 REM 检测iverilog
@@ -49,7 +49,7 @@ set compile_cmd=!compile_cmd! "%VIDEO_DIR%\!module_name!.sv"
 REM 添加依赖的common模块
 if "!module_name!"=="vga_font_rom" (
     set compile_cmd=!compile_cmd! "%COMMON_DIR%\single_port_rom.sv"
-) else if "!module_name!"=="vga_top" (
+) else if "!module_name!"=="vga_graphics_adapter" (
     set compile_cmd=!compile_cmd! "%VIDEO_DIR%\vga_port.sv"
     set compile_cmd=!compile_cmd! "%VIDEO_DIR%\vga_font_rom.sv"
     set compile_cmd=!compile_cmd! "%VIDEO_DIR%\vga_text_color.sv"
@@ -94,14 +94,14 @@ goto :eof
 
 REM 主测试流程
 echo ========================================
-echo 开始测试 Video 模块
+echo 开始测试 VGA Graphics Adapter 模块
 echo ========================================
 
 call :run_test "%VIDEO_DIR%\vga_font_rom_tb.sv"
 call :run_test "%VIDEO_DIR%\vga_port_tb.sv"
 call :run_test "%VIDEO_DIR%\vga_text_color_tb.sv"
 call :run_test "%VIDEO_DIR%\vga_text_intense_tb.sv"
-call :run_test "%VIDEO_DIR%\vga_top_tb.sv"
+call :run_test "%VIDEO_DIR%\vga_graphics_adapter_tb.sv"
 
 REM 输出测试结果
 echo.

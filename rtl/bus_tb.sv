@@ -41,6 +41,23 @@ module bus_tb;
     logic [16:0] ext_bios_addr;
     logic [31:0] ext_bios_rdata;
 
+    // SDRAM（与 soc_top 一致：接 sdram_controller）
+    logic        o_sdram_en;
+    logic        o_sdram_we;
+    logic [23:0] o_sdram_addr_off;
+    logic [31:0] o_sdram_wdata;
+    logic [31:0] i_sdram_rdata;
+    logic        i_sdram_ready;
+    logic        i_sdram_busy;
+
+    logic        sdr_cs_n, sdr_ras_n, sdr_cas_n, sdr_we_n;
+    logic [1:0]  sdr_ba;
+    logic [12:0] sdr_a;
+    logic [1:0]  sdr_dqm;
+    logic [15:0] sdr_dq_out;
+    logic        sdr_dq_oe;
+    logic        sdr_clk, sdr_cke;
+
     // 实例化总线控制器
     bus u_bus (
         .i_bus_valid        (bus_valid),
@@ -72,9 +89,43 @@ module bus_tb;
         
         .o_ext_bios_addr    (ext_bios_addr),
         .i_ext_bios_rdata   (ext_bios_rdata),
+
+        .o_sdram_en         (o_sdram_en),
+        .o_sdram_we         (o_sdram_we),
+        .o_sdram_addr_off   (o_sdram_addr_off),
+        .o_sdram_wdata      (o_sdram_wdata),
+        .i_sdram_rdata      (i_sdram_rdata),
+        .i_sdram_ready      (i_sdram_ready),
+        .i_sdram_busy       (i_sdram_busy),
         
         .i_clock            (clock),
         .i_reset            (reset)
+    );
+
+    sdram_controller #(
+        .MEM_WORDS_LG2 ( 12 ),
+        .LATENCY       ( 3 )
+    ) u_sdram (
+        .clk            ( clock ),
+        .rst            ( reset ),
+        .i_en           ( o_sdram_en ),
+        .i_we           ( o_sdram_we ),
+        .i_addr_off     ( o_sdram_addr_off ),
+        .i_wdata        ( o_sdram_wdata ),
+        .o_rdata        ( i_sdram_rdata ),
+        .o_ready        ( i_sdram_ready ),
+        .o_busy         ( i_sdram_busy ),
+        .o_sdram_clk    ( sdr_clk ),
+        .o_sdram_cke    ( sdr_cke ),
+        .o_sdram_cs_n   ( sdr_cs_n ),
+        .o_sdram_ras_n  ( sdr_ras_n ),
+        .o_sdram_cas_n  ( sdr_cas_n ),
+        .o_sdram_we_n   ( sdr_we_n ),
+        .o_sdram_ba     ( sdr_ba ),
+        .o_sdram_a      ( sdr_a ),
+        .o_sdram_dqm    ( sdr_dqm ),
+        .o_sdram_dq_out ( sdr_dq_out ),
+        .o_sdram_dq_oe  ( sdr_dq_oe )
     );
 
     // 简单的RAM模型（用于测试）
@@ -277,7 +328,7 @@ module bus_tb;
         bus_valid = 0;
         #20;
 
-        // 测试7: 访问未映射的地址
+        // 测试7: 访问未映射的地址（非 SDRAM 窗口）
         $display("\n[测试7] 访问未映射的地址 0x00100000");
         bus_valid = 1;
         bus_write_enable = 0;
@@ -286,6 +337,42 @@ module bus_tb;
         #10;
         wait(bus_ready);
         $display("  读取数据: 0x%08h (期望: 0xFFFFFFFF)", bus_data_read);
+        #10;
+        bus_valid = 0;
+        #20;
+
+        // 测试7b: SDRAM 窗口 0x0100_0000 写后读
+        $display("\n[测试7b] SDRAM 写/读 0x0100_0000");
+        bus_valid = 1;
+        bus_write_enable = 1;
+        bus_io_access = 0;
+        bus_address = 32'h0100_0000;
+        bus_data_write = 32'hCAFE_0001;
+        #10;
+        wait(bus_ready);
+        #10;
+        bus_valid = 0;
+        #20;
+        bus_valid = 1;
+        bus_write_enable = 0;
+        bus_io_access = 0;
+        bus_address = 32'h0100_0000;
+        #10;
+        wait(bus_ready);
+        $display("  SDRAM 读回: 0x%08h (期望 0xCAFE0001)", bus_data_read);
+        #10;
+        bus_valid = 0;
+        #20;
+
+        // 测试8: Chipset DMA 页寄存器 I/O 0x0080（读 0）
+        $display("\n[测试8] 读取 Chipset DMA 页寄存器 0x0080");
+        bus_valid = 1;
+        bus_write_enable = 0;
+        bus_io_access = 1;
+        bus_address = 32'h0000_0080;
+        #10;
+        wait(bus_ready);
+        $display("  读取数据低 8 位: 0x%02h (期望 0x00)", bus_data_read[7:0]);
         #10;
         bus_valid = 0;
         #20;

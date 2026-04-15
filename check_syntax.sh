@@ -28,8 +28,9 @@ if ! command -v iverilog &> /dev/null; then
     exit 1
 fi
 
-# 查找所有SystemVerilog文件（排除testbench）
-echo -e "${YELLOW}检查 SystemVerilog 文件 (.sv)${NC}"
+# 查找所有 SystemVerilog 文件（排除 *_tb.sv：单文件编译会因缺少例化模块而误报）
+echo -e "${YELLOW}检查 SystemVerilog 文件 (.sv，不含 testbench)${NC}"
+echo -e "${YELLOW}完整集成验证请运行: ./test_all_modules.sh 或 scripts/sim_soc.ps1 所列文件列表${NC}"
 sv_files=$(find "$RTL_DIR" -name "*.sv" -type f ! -name "*_tb.sv" | sort)
 
 for file in $sv_files; do

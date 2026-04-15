@@ -244,7 +244,15 @@ module decode (
     output logic [31:0] o_displacement,
     output logic [31:0] o_immediate,
     output logic [ 3:0] o_consume_bytes,
-    output logic        o_error
+    output logic        o_error,
+    output logic        o_x87_is_esc,
+    output logic [ 2:0] o_x87_esc_group,
+    output logic [31:0] o_x87_opmask,
+    output logic        o_x87_memory_operand,
+    output logic        o_x87_modrm_required,
+    output logic [ 1:0] o_x87_mod,
+    output logic [ 2:0] o_x87_reg,
+    output logic [ 2:0] o_x87_rm
 );
 
 logic [ 7:0] prefix_instruction [0:3];
@@ -311,6 +319,29 @@ always_comb begin
         default                        : opcode_instruction <= i_instruction[0:0+3];
     endcase
 end
+
+logic        x87_esc_int;
+logic [31:0] x87_opmask_int;
+logic [ 2:0] x87_grp_int;
+logic        x87_mem_int;
+logic        x87_modrm_req_int;
+logic [ 1:0] x87_mod_int;
+logic [ 2:0] x87_reg_int;
+logic [ 2:0] x87_rm_int;
+
+decode_x87_esc u_decode_x87_esc (
+    .i_b0               ( opcode_instruction[0] ),
+    .i_b1               ( opcode_instruction[1] ),
+    .o_is_esc           ( x87_esc_int ),
+    .o_mod              ( x87_mod_int ),
+    .o_reg              ( x87_reg_int ),
+    .o_rm               ( x87_rm_int ),
+    .o_esc_group        ( x87_grp_int ),
+    .o_opmask           ( x87_opmask_int ),
+    .o_modrm_required   ( x87_modrm_req_int ),
+    .o_memory_operand   ( x87_mem_int )
+);
+
 decode_opcode_x86 deocde_decode_opcode_x86 (
     .o_opcode_x86_AAA_ASCII_adjust_after_add ( o_opcode_x86_AAA_ASCII_adjust_after_add ),
     .o_opcode_x86_AAD_ASCII_AX_before_div ( o_opcode_x86_AAD_ASCII_AX_before_div ),
@@ -974,5 +1005,14 @@ assign o_gen_reg_bit_width_from_mod_rm = mod_rm_o_gen_reg_bit_width;
 assign o_displacement = disp_imm_o_displacement;
 assign o_immediate = disp_imm_o_immediate;
 assign o_consume_bytes = offset_disp_imm + disp_imm_o_consume_bytes;
+
+assign o_x87_is_esc         = x87_esc_int;
+assign o_x87_esc_group      = x87_grp_int;
+assign o_x87_opmask         = x87_opmask_int;
+assign o_x87_memory_operand = x87_mem_int;
+assign o_x87_modrm_required = x87_modrm_req_int;
+assign o_x87_mod            = x87_mod_int;
+assign o_x87_reg            = x87_reg_int;
+assign o_x87_rm             = x87_rm_int;
 
 endmodule

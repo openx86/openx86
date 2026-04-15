@@ -1,0 +1,1 @@
+iverilog -o test test.v
