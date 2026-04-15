@@ -165,26 +165,26 @@ get_dependencies() {
         deps="$deps $RTL_DIR/common/simple_dual_port_ram.sv"
     fi
     if grep -q "execute_unit_tb" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/execute_unit/execute_unit_pkg.sv"
-        deps="$deps $RTL_DIR/cpu/execute_unit/address_generation_unit.sv"
-        deps="$deps $RTL_DIR/cpu/execute_unit/execute_branch_unit.sv"
-        deps="$deps $RTL_DIR/cpu/execute_unit/execute_muldiv_unit.sv"
+        deps="$deps $RTL_DIR/cpu/eu_execute_unit_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/eu_address_generation_unit.sv"
+        deps="$deps $RTL_DIR/cpu/eu_execute_branch_unit.sv"
+        deps="$deps $RTL_DIR/cpu/eu_execute_muldiv_unit.sv"
     fi
     if grep -q "decode_x87_esc" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/decode_unit/decode_x87_pkg.sv"
-        deps="$deps $RTL_DIR/cpu/decode_unit/decode_x87_esc.sv"
+        deps="$deps $RTL_DIR/cpu/du_decode_x87_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/du_decode_x87_esc.sv"
     fi
     if [ "$(basename "$module_file")" = "decode_tb.sv" ]; then
-        deps="$deps $RTL_DIR/cpu/decode_unit/decode_x87_pkg.sv"
-        deps="$deps $RTL_DIR/cpu/decode_unit/decode_x87_esc.sv"
+        deps="$deps $RTL_DIR/cpu/du_decode_x87_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/du_decode_x87_esc.sv"
     fi
     if grep -q "execute_unit_top" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/execute_unit/execute_unit_pkg.sv"
-        deps="$deps $RTL_DIR/cpu/execute_unit/address_generation_unit.sv"
-        deps="$deps $RTL_DIR/cpu/execute_unit/load_store_unit.sv"
-        deps="$deps $RTL_DIR/cpu/execute_unit/execute_branch_unit.sv"
-        deps="$deps $RTL_DIR/cpu/execute_unit/execute_muldiv_unit.sv"
-        deps="$deps $RTL_DIR/cpu/execute_unit/execute_x87_fpu.sv"
+        deps="$deps $RTL_DIR/cpu/eu_execute_unit_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/eu_address_generation_unit.sv"
+        deps="$deps $RTL_DIR/cpu/eu_load_store_unit.sv"
+        deps="$deps $RTL_DIR/cpu/eu_execute_branch_unit.sv"
+        deps="$deps $RTL_DIR/cpu/eu_execute_muldiv_unit.sv"
+        deps="$deps $RTL_DIR/cpu/eu_execute_x87_fpu.sv"
     fi
     
     # 添加decode相关模块的依赖
