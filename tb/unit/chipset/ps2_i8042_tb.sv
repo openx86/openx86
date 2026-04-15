@@ -1,12 +1,5 @@
 // ============================================================================
-// TB: ps2_i8042
-// ----------------------------------------------------------------------------
-// 目标：对 8042（键盘控制器/PS2 控制器）的 I/O 端口行为做基本回归。
-//
-// - 通过 I/O 端口写命令/数据，检查状态寄存器与读回路径
-// - 通过 `kbd_push/kbd_data` 注入来自键盘侧的字节，观察 IRQ/输出
-//
-// 注：该 TB 以最小序列覆盖 bring-up 行为，不等同于完整 PS/2 设备协议验证。
+// TB: chip_i8042_ps2（ISA 并行口）
 // ============================================================================
 
 module ps2_i8042_tb;
@@ -18,21 +11,25 @@ module ps2_i8042_tb;
     logic [15:0] io_addr;
     logic [7:0]  io_wdata;
     logic [7:0]  io_rdata;
-    logic        io_hit;
     logic        kbd_push;
     logic [7:0]  kbd_data;
 
-    ps2_i8042 #(
+    wire ps2_hit = (io_addr == 16'h0060) | (io_addr == 16'h0064);
+    wire cs_n    = !(io_valid && ps2_hit);
+    wire wr_n    = !(io_valid && io_we && ps2_hit);
+    wire rd_n    = !(io_valid && !io_we && ps2_hit);
+
+    chip_i8042_ps2 #(
         .USE_REAL_PS2 ( 1'b0 )
     ) dut (
         .i_clock     ( clock ),
         .i_reset     ( reset ),
-        .i_io_valid  ( io_valid ),
-        .i_io_we     ( io_we ),
-        .i_io_addr   ( io_addr ),
-        .i_io_wdata  ( io_wdata ),
-        .o_io_rdata  ( io_rdata ),
-        .o_io_hit    ( io_hit ),
+        .i_cs_n      ( cs_n ),
+        .i_rd_n      ( rd_n ),
+        .i_wr_n      ( wr_n ),
+        .i_a0        ( io_addr[2] ),
+        .i_d         ( io_wdata ),
+        .o_d         ( io_rdata ),
         .i_kbd_push  ( kbd_push ),
         .i_kbd_data  ( kbd_data ),
         .i_aux_push  ( 1'b0 ),

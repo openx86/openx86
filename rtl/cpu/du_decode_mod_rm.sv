@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_stage_mod_rm
+module: du_decode_mod_rm
 create at: 2021-10-23 15:54:39
 description: decode mod and r/m field in instruction
 */
@@ -57,7 +57,7 @@ addressing modes.
 
 `include "openx86_defs.h.sv"
 
-module decode_mod_rm (
+module du_decode_mod_rm (
     // ports
     input  logic [ 1:0] i_mod,
     input  logic [ 2:0] i_rm,

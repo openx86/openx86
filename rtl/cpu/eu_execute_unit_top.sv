@@ -1,9 +1,9 @@
 // ============================================================================
-// execute_unit 聚合顶层 — 将 AGU / LSU / Branch / MulDiv / X87 子模块引出
+// eu_execute_unit_top — AGU / LSU / Branch / MulDiv / X87 子模块聚合顶层
 // 译码/微码侧通过选择信号驱动各簇；此处为直连端口便于 SoC 集成
 // ============================================================================
 
-module execute_unit_top (
+module eu_execute_unit_top (
     input logic clk,
     input logic rst,
 
@@ -65,7 +65,7 @@ module execute_unit_top (
     output logic        o_x87_cf
 );
 
-    address_generation_unit u_agu (
+    eu_address_generation_unit u_agu (
         .i_base              ( i_agu_base ),
         .i_index             ( i_agu_index ),
         .i_scale             ( i_agu_scale ),
@@ -73,7 +73,7 @@ module execute_unit_top (
         .o_effective_address ( o_agu_effective_addr )
     );
 
-    load_store_unit u_lsu (
+    eu_load_store_unit u_lsu (
         .clk          ( clk ),
         .rst          ( rst ),
         .i_start      ( i_lsu_start ),
@@ -91,7 +91,7 @@ module execute_unit_top (
         .i_mem_ready  ( i_lsu_mem_ready )
     );
 
-    execute_branch_unit u_br (
+    eu_execute_branch_unit u_br (
         .i_is_jcc      ( i_br_is_jcc ),
         .i_jcc_nibble  ( i_br_jcc_nibble ),
         .i_CF          ( i_br_CF ),
@@ -107,7 +107,7 @@ module execute_unit_top (
         .o_target_eip  ( o_br_target_eip )
     );
 
-    execute_muldiv_unit u_md (
+    eu_execute_muldiv_unit u_md (
         .i_op   ( i_md_op ),
         .i_lo   ( i_md_lo ),
         .i_hi   ( i_md_hi ),
@@ -117,7 +117,7 @@ module execute_unit_top (
         .o_div0 ( o_md_div0 )
     );
 
-    execute_x87_fpu u_x87 (
+    eu_execute_x87_fpu u_x87 (
         .clk         ( clk ),
         .rst         ( rst ),
         .i_valid     ( i_x87_valid ),

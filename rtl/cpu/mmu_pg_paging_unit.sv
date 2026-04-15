@@ -2,9 +2,9 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: paging_unit
+module: mmu_pg_paging_unit
 create at: 2022-01-31 02:35:30
-description: paging_unit
+description: mmu_pg_paging_unit (分页部件)
 
 4.5.2 Paging Organization
 4.5.2.1 PAGE MECHANISM
@@ -35,7 +35,7 @@ changes the value of CR0. (See 4.5.4 Translation
 Lookaside Buffer).
 */
 
-module paging_unit (
+module mmu_pg_paging_unit (
     // handshake
     input  logic         i_vaild,
     output logic         o_ready,

@@ -14,22 +14,26 @@ module rtc_mc146818_tb;
     logic [15:0] io_addr;
     logic [7:0]  io_wdata;
     logic [7:0]  io_rdata;
-    logic        io_hit;
     logic        rtc_irq;
+
+    wire rtc_hit = (io_addr == 16'h0070) | (io_addr == 16'h0071);
+    wire cs_n    = !(io_valid && rtc_hit);
+    wire wr_n    = !(io_valid && io_we && rtc_hit);
+    wire rd_n    = !(io_valid && !io_we && rtc_hit);
 
     always #1 clock = ~clock;
 
-    rtc_mc146818 #(
+    chip_mc146818_rtc #(
         .CLK_HZ ( RTC_HZ )
     ) dut (
         .i_clock    ( clock ),
         .i_reset    ( reset ),
-        .i_io_valid ( io_valid ),
-        .i_io_we    ( io_we ),
-        .i_io_addr  ( io_addr ),
-        .i_io_wdata ( io_wdata ),
-        .o_io_rdata ( io_rdata ),
-        .o_io_hit   ( io_hit ),
+        .i_cs_n     ( cs_n ),
+        .i_rd_n     ( rd_n ),
+        .i_wr_n     ( wr_n ),
+        .i_a0       ( io_addr[0] ),
+        .i_d        ( io_wdata ),
+        .o_d        ( io_rdata ),
         .o_rtc_irq  ( rtc_irq )
     );
 

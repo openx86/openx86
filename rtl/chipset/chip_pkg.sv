@@ -1,8 +1,15 @@
 // ============================================================================
 // IBM PC/AT 典型 I/O 端口常量（与 rtl/bus.sv 译码一致）
 // 首版为寄存器级模型，非全部硬件周期精确。
+//
+// 并行外设主机侧约定（rtl/chipset 内 Intel 类 IC，除 I2C 的 at24lc32）：
+//   i_cs_n   低有效片选（仅当地址命中该片且总线事务有效时由 bus_devices 拉低）
+//   i_rd_n   低有效读选通（与 i_wr_n 互斥；未选中时保持高）
+//   i_wr_n   低有效写选通
+//   i_d[7:0] 写数据；o_d[7:0] 读数据（父级按优先级 mux）
+//   i_a*     寄存器/地址线，语义见各模块端口注释
 // ============================================================================
-package openx86_chipset_pkg;
+package chip_pkg;
 
     // DMA 8237 主片
     localparam logic [15:0] IO_DMA_BASE     = 16'h0000;
@@ -46,4 +53,4 @@ package openx86_chipset_pkg;
     localparam logic [15:0] IO_COM1_LO      = 16'h03F8;
     localparam logic [15:0] IO_COM1_HI      = 16'h03FF;
 
-endpackage
+endpackage : chip_pkg

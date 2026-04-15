@@ -18,7 +18,7 @@ logic  [7:0] instruction [0:15];
 
 wire default_operand_size = `default_operation_size_32;
 
-decode decode_instance_in_testbench (
+du_decode decode_instance_in_testbench (
     .i_default_operand_size ( default_operand_size ),
     .i_instruction ( instruction )
 );

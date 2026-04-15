@@ -1,58 +1,63 @@
 // ============================================================================
-// TB: i8237_dma
+// TB: i8237_dma（ISA 并行口）
 // ----------------------------------------------------------------------------
-// 目标：对 8237 DMA 控制器的 I/O 寄存器访问路径做基本回归。
-// - 通过 `io_valid/io_we/io_addr/io_wdata` 驱动 DUT
-// - 观察 `io_hit/io_rdata` 是否符合期望（本 TB 以简单序列为主）
-//
-// 说明：这是 unit TB，不依赖完整 SoC 集成；由脚本统一注入 RTL filelist。
+// 对 8237 DMA 控制器的 I/O 寄存器访问路径做基本回归。
 // ============================================================================
 
 module i8237_dma_tb;
 
     logic        clock = 0;
     logic        reset;
-    logic        io_valid;
-    logic        io_we;
-    logic [15:0] io_addr;
-    logic [7:0]  io_wdata;
-    logic [7:0]  io_rdata;
-    logic        io_hit;
+    logic        valid;
+    logic        we;
+    logic [15:0] addr;
+    logic [7:0]  wdata;
+    logic [7:0]  rdata;
 
-    i8237_dma dut (
+    wire hit_lo   = (addr <= 16'h000F);
+    wire hit_page = (addr >= 16'h0080) && (addr <= 16'h008F);
+    wire hit_hi   = (addr >= 16'h00C0) && (addr <= 16'h00DF);
+    wire hit      = hit_lo | hit_page | hit_hi;
+    wire cs_n     = !(valid && hit);
+    wire wr_n     = !(valid && we && hit);
+    wire rd_n     = !(valid && !we && hit);
+
+    chip_8237_dma dut (
         .i_clock    ( clock ),
         .i_reset    ( reset ),
-        .i_io_valid ( io_valid ),
-        .i_io_we    ( io_we ),
-        .i_io_addr  ( io_addr ),
-        .i_io_wdata ( io_wdata ),
-        .o_io_rdata ( io_rdata ),
-        .o_io_hit   ( io_hit )
+        .i_cs_n     ( cs_n ),
+        .i_rd_n     ( rd_n ),
+        .i_wr_n     ( wr_n ),
+        .i_addr     ( addr ),
+        .i_d        ( wdata ),
+        .o_d        ( rdata )
     );
 
     always #5 clock = ~clock;
 
     initial begin
-        reset    = 1;
-        io_valid = 0;
-        io_we    = 0;
+        reset = 1;
+        valid = 0;
+        we    = 0;
+        addr  = 16'h0005;
+        wdata = '0;
         repeat (3) @(posedge clock);
         reset = 0;
         @(posedge clock);
 
-        io_valid = 1;
-        io_we    = 1;
-        io_addr  = 16'h0005;
-        io_wdata = 8'hAB;
+        valid = 1;
+        we    = 1;
+        addr  = 16'h0005;
+        wdata = 8'hAB;
         @(posedge clock);
-        io_valid = 0;
+        valid = 0;
         @(posedge clock);
 
-        io_valid = 1;
-        io_we    = 0;
-        io_addr  = 16'h0005;
+        valid = 1;
+        we    = 0;
+        addr  = 16'h0005;
         @(posedge clock);
-        if (io_rdata !== 8'hAB)
+        if (rdata !== 8'hAB)
             $display("FAIL dma read");
         else
             $display("PASS dma read");

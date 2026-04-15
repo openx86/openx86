@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: register_general_propose
+module: rf_general_propose_register
 create at: 2021-10-22 23:09:45
 description: define the general propose register
 */
@@ -33,7 +33,7 @@ offers additional flexibility for data operations,
 but is not used for effective address calculation.
 */
 
-module general_propose_register (
+module rf_general_propose_register (
     input  logic        write_enable,
     input  logic [2:0]  write_index,
     input  logic [31:0] write_data,

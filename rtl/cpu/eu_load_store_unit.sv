@@ -3,7 +3,7 @@
 // 将执行侧访存请求转换为对总线/存储器端口的握手（valid/ready）
 // ============================================================================
 
-module load_store_unit (
+module eu_load_store_unit (
     input  logic        clk,
     input  logic        rst,
 

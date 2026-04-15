@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: segment_descriptor_decode
+module: mmu_seg_segment_descriptor_decode
 create at: 2021-10-23 13:43:22
 description: decode the segment register
 */
@@ -28,7 +28,7 @@ specifies the protection level 0–3 associated with a
 segment
 */
 
-module segment_descriptor_decode (
+module mmu_seg_segment_descriptor_decode (
     // ports
     output logic [31:0] o_base,
     output logic [19:0] o_limit,

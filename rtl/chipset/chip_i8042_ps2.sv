@@ -7,18 +7,19 @@
 // USE_REAL_PS2=0：保留 i_*_push 仿真注入，引脚输出为空闲高阻模型
 // ============================================================================
 
-module ps2_i8042 #(
+module chip_i8042_ps2 #(
     parameter bit  USE_REAL_PS2 = 1'b0,
     parameter int CLK_HZ       = 50_000_000
 ) (
     input  logic        i_clock,
     input  logic        i_reset,
-    input  logic        i_io_valid,
-    input  logic        i_io_we,
-    input  logic [15:0] i_io_addr,
-    input  logic [7:0]  i_io_wdata,
-    output logic [7:0]  o_io_rdata,
-    output logic        o_io_hit,
+    input  logic        i_cs_n,
+    input  logic        i_rd_n,
+    input  logic        i_wr_n,
+    // 0 = 数据口 0x60，1 = 状态/命令 0x64
+    input  logic        i_a0,
+    input  logic [7:0]  i_d,
+    output logic [7:0]  o_d,
     input  logic        i_kbd_push,
     input  logic [7:0]  i_kbd_data,
     input  logic        i_aux_push,
@@ -39,7 +40,8 @@ module ps2_i8042 #(
     input  logic        i_ps2_aux_dat_in
 );
 
-    assign o_io_hit = (i_io_addr == 16'h0060) || (i_io_addr == 16'h0064);
+    wire wr = !i_cs_n && !i_wr_n;
+    wire rd = !i_cs_n && !i_rd_n;
 
     localparam int KBD_D = 16;
     localparam int AUX_D = 16;
@@ -225,8 +227,8 @@ module ps2_i8042 #(
                 aux_count          <= aux_count + 4'h1;
             end
 
-            if (i_io_valid && i_io_we && o_io_hit && i_io_addr == 16'h0064) begin
-                unique case (i_io_wdata)
+            if (wr && i_a0) begin
+                unique case (i_d)
                     8'hD4: next_wr_to_aux <= 1'b1;
                     8'hD3, 8'hD2: next_wr_to_aux <= 1'b0;
                     8'hAE: kbd_if_en <= 1'b1;
@@ -235,25 +237,29 @@ module ps2_i8042 #(
                     8'hA8: aux_if_en <= 1'b0;
                     default: ;
                 endcase
+                if (i_d == 8'hD4)
+                    use_aux_out <= 1'b1;
+                else if (i_d == 8'hD3 || i_d == 8'hD2)
+                    use_aux_out <= 1'b0;
             end
 
-            if (i_io_valid && i_io_we && o_io_hit && i_io_addr == 16'h0060) begin
+            if (wr && !i_a0) begin
                 if (USE_REAL_PS2) begin
                     if (next_wr_to_aux && aux_if_en) begin
                         if (!aux_tx_busy && !aux_tx_pending) begin
                             aux_tx_req  <= 1'b1;
-                            aux_tx_byte <= i_io_wdata;
+                            aux_tx_byte <= i_d;
                         end else if (!aux_tx_pending) begin
                             aux_tx_pending <= 1'b1;
-                            aux_tx_hold    <= i_io_wdata;
+                            aux_tx_hold    <= i_d;
                         end
                     end else if (kbd_if_en) begin
                         if (!kbd_tx_busy && !kbd_tx_pending) begin
                             kbd_tx_req  <= 1'b1;
-                            kbd_tx_byte <= i_io_wdata;
+                            kbd_tx_byte <= i_d;
                         end else if (!kbd_tx_pending) begin
                             kbd_tx_pending <= 1'b1;
-                            kbd_tx_hold    <= i_io_wdata;
+                            kbd_tx_hold    <= i_d;
                         end
                     end
                 end
@@ -276,7 +282,7 @@ module ps2_i8042 #(
             if (USE_REAL_PS2 && aux_tx_err)
                 aux_tx_pending <= 1'b0;
 
-            if (i_io_valid && !i_io_we && o_io_hit && i_io_addr == 16'h0060) begin
+            if (rd && !i_a0) begin
                 if (use_aux_out && aux_obf) begin
                     aux_rptr  <= aux_rptr + 4'h1;
                     aux_count <= aux_count - 4'h1;
@@ -286,27 +292,21 @@ module ps2_i8042 #(
                 end
             end
 
-            if (i_io_valid && i_io_we && o_io_hit && i_io_addr == 16'h0064) begin
-                if (i_io_wdata == 8'hD4)
-                    use_aux_out <= 1'b1;
-                else if (i_io_wdata == 8'hD3 || i_io_wdata == 8'hD2)
-                    use_aux_out <= 1'b0;
-            end
         end
     end
 
     always_comb begin
-        o_io_rdata = 8'hFF;
-        if (i_io_valid && !i_io_we && o_io_hit) begin
-            if (i_io_addr == 16'h0060) begin
+        o_d = 8'hFF;
+        if (rd) begin
+            if (!i_a0) begin
                 if (use_aux_out && aux_obf)
-                    o_io_rdata = aux_head;
+                    o_d = aux_head;
                 else if (kbd_obf)
-                    o_io_rdata = kbd_head;
+                    o_d = kbd_head;
                 else
-                    o_io_rdata = 8'h00;
+                    o_d = 8'h00;
             end else
-                o_io_rdata = status_rd;
+                o_d = status_rd;
         end
     end
 

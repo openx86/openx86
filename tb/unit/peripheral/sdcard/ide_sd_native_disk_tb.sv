@@ -1,5 +1,5 @@
 // ============================================================================
-// ide_ata_pio（异步）+ ide_sd_sector_bridge + sd_native_host_4bit + card 模型
+// chip_ata_ide（异步）+ ide_sd_sector_bridge + sd_native_host_4bit + card 模型
 // ============================================================================
 `timescale 1ns/1ps
 
@@ -10,7 +10,11 @@ module ide_sd_native_disk_tb;
     logic        io_valid, io_we;
     logic [15:0] io_addr;
     logic [7:0]  io_wdata, io_rdata;
-    logic        io_hit;
+
+    wire ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
+    wire ide_cs_n = !(io_valid && ide_hit);
+    wire ide_wr_n = !(io_valid && io_we && ide_hit);
+    wire ide_rd_n = !(io_valid && !io_we && ide_hit);
 
     logic [31:0] ide_raddr;
     logic        ide_sector_req;
@@ -94,7 +98,7 @@ module ide_sd_native_disk_tb;
         .i_sd_payload_data   ( sd_payload_data )
     );
 
-    ide_ata_pio #(
+    chip_ata_ide #(
         .SECTOR_BYTES(512),
         .SECTOR_COUNT(16),
         .USE_INTERNAL_DISK_MEM(1'b0),
@@ -102,12 +106,12 @@ module ide_sd_native_disk_tb;
     ) u_ide (
         .i_clock             ( clock ),
         .i_reset             ( reset ),
-        .i_io_valid          ( io_valid ),
-        .i_io_we             ( io_we ),
-        .i_io_addr           ( io_addr ),
-        .i_io_wdata          ( io_wdata ),
-        .o_io_rdata          ( io_rdata ),
-        .o_io_hit            ( io_hit ),
+        .i_cs_n              ( ide_cs_n ),
+        .i_rd_n              ( ide_rd_n ),
+        .i_wr_n              ( ide_wr_n ),
+        .i_addr              ( io_addr ),
+        .i_d                 ( io_wdata ),
+        .o_d                 ( io_rdata ),
         .o_disk_raddr        ( ide_raddr ),
         .i_disk_rdata        ( disk_rdata_mux ),
         .i_disk_sector_ready( ide_sector_ready ),

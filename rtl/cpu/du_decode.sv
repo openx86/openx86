@@ -2,14 +2,14 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode unit
+module: du_decode
 create at: 2022-01-04 03:27:51
-description: decode unit module
+description: decode unit (模块名与文件名 du_decode 一致)
 */
 
 `include "openx86_defs.h.sv"
 
-module decode (
+module du_decode (
     input  logic [ 7:0] i_instruction [0:15],
     input  logic        i_default_operand_size,
     output logic        o_opcode_x86_AAA_ASCII_adjust_after_add,
@@ -276,7 +276,7 @@ logic        prefix_o_consume_bytes_prefix_3;
 logic        prefix_o_consume_bytes_prefix_4;
 logic        prefix_o_error;
 assign prefix_instruction = i_instruction[0:3];
-decode_prefix_all deocde_decode_prefix_all (
+du_decode_prefix_all deocde_decode_prefix_all (
     .i_instruction ( prefix_instruction ),
     .o_group_1_lock_bus ( prefix_o_group_1_lock_bus ),
     .o_group_1_repeat_not_equal ( prefix_o_group_1_repeat_not_equal ),
@@ -329,7 +329,7 @@ logic [ 1:0] x87_mod_int;
 logic [ 2:0] x87_reg_int;
 logic [ 2:0] x87_rm_int;
 
-decode_x87_esc u_decode_x87_esc (
+du_decode_x87_esc u_decode_x87_esc (
     .i_b0               ( opcode_instruction[0] ),
     .i_b1               ( opcode_instruction[1] ),
     .o_is_esc           ( x87_esc_int ),
@@ -342,7 +342,7 @@ decode_x87_esc u_decode_x87_esc (
     .o_memory_operand   ( x87_mem_int )
 );
 
-decode_opcode_x86 deocde_decode_opcode_x86 (
+du_decode_opcode_x86 deocde_decode_opcode_x86 (
     .o_opcode_x86_AAA_ASCII_adjust_after_add ( o_opcode_x86_AAA_ASCII_adjust_after_add ),
     .o_opcode_x86_AAD_ASCII_AX_before_div ( o_opcode_x86_AAD_ASCII_AX_before_div ),
     .o_opcode_x86_AAM_ASCII_AX_after_mul ( o_opcode_x86_AAM_ASCII_AX_after_mul ),
@@ -587,7 +587,7 @@ logic        field_o_primary_opcode_byte_2;
 logic        field_o_primary_opcode_byte_3;
 logic        field_o_error;
 assign field_instruction = opcode_instruction;
-decode_field deocde_decode_field (
+du_decode_field deocde_decode_field (
     .i_instruction ( field_instruction ),
     .i_opcode_x86_AAA_ASCII_adjust_after_add ( o_opcode_x86_AAA_ASCII_adjust_after_add ),
     .i_opcode_x86_AAD_ASCII_AX_before_div ( o_opcode_x86_AAD_ASCII_AX_before_div ),
@@ -862,7 +862,7 @@ assign mod_rm_i_rm = field_o_rm;
 assign mod_rm_i_w_is_present = field_o_w_is_present;
 assign mod_rm_i_w = field_o_w;
 assign mod_rm_i_default_operand_size = i_default_operand_size;
-decode_mod_rm deocde_decode_mod_rm (
+du_decode_mod_rm deocde_decode_mod_rm (
     .i_mod ( mod_rm_i_mod ),
     .i_rm ( mod_rm_i_rm ),
     .i_w_is_present ( mod_rm_i_w_is_present ),
@@ -912,7 +912,7 @@ assign sib_i_mod = mod_rm_i_mod;
 //         default: sib_i_sib <= 8'bzzzz_zzzz;
 //     endcase
 // end
-decode_sib deocde_decode_sib (
+du_decode_sib deocde_decode_sib (
     .i_sib ( sib_i_sib ),
     .i_mod ( sib_i_mod ),
     .o_scale_factor ( sib_o_scale_factor ),
@@ -969,7 +969,7 @@ assign disp_imm_i_immediate_size_1 = field_o_immediate_size_8;
 assign disp_imm_i_immediate_size_2 = field_o_immediate_size_16;
 assign disp_imm_i_immediate_size_4 = field_o_immediate_size_full;
 assign disp_imm_i_immediate_size_f = field_o_immediate_size_full;
-decode_disp_imm deocde_decode_disp_imm (
+du_decode_disp_imm deocde_decode_disp_imm (
     .i_instruction ( disp_imm_i_instruction ),
     .i_displacement_size_1 ( disp_imm_i_displacement_size_1 ),
     .i_displacement_size_2 ( disp_imm_i_displacement_size_2 ),

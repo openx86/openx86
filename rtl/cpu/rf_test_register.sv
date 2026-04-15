@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: test_register
+module: rf_test_register
 create at: 2022-01-31 01:07:15
 description: define the test register
 */
@@ -11,7 +11,7 @@ description: define the test register
 Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMORY MANAGEMENT
 */
 
-module test_register (
+module rf_test_register (
     // ports
     input  logic         write_enable,
     input  logic [ 2: 0] write_index,

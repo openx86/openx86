@@ -2,14 +2,14 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: segment_descriptor_cache
+module: mmu_seg_segment_descriptor_cache
 create at: 2022-01-27 12:56:29
 description: segment_descriptor_cache
 */
 
 `include "openx86_defs.h.sv"
 
-module segment_descriptor_cache (
+module mmu_seg_segment_descriptor_cache (
     input  logic         protect_enable,
     input  logic [15:0]  segment_selector,
     input  logic [63:0]  segment_descriptor,
@@ -46,7 +46,7 @@ logic        dec_code_conforming;
 logic        dec_code_readable;
 logic        dec_accessed;
 
-segment_descriptor_decode u_segment_descriptor_decode (
+mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .o_base                                     ( dec_base ),
     .o_limit                                    ( dec_limit ),
     .o_date_or_code_present                     ( dec_present ),

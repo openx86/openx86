@@ -4,7 +4,7 @@
 // 执行单元逻辑子模块：NOT（按位取反）。
 // ============================================================================
 
-module execute_logic_not #(
+module eu_log_execute_logic_not #(
     // parameter
     BIT_WIDTH = 32
 ) (

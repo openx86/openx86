@@ -15,7 +15,7 @@ module at24lc32_tb;
 
     localparam logic [6:0] DEV_ADDR = 7'b1010_000; // A_PINS=000
 
-    at24lc32 #(
+    chip_at24lc32_eeprom #(
         .A_PINS ( 3'b000 )
     ) dut (
         .i_clock ( clk ),

@@ -8,7 +8,7 @@
 // - 本文件仅输出加法结果；标志位更新通常由上层统一实现。
 // ============================================================================
 
-module execute_arithmetic_add #(
+module eu_ari_execute_arithmetic_add #(
     // parameter
     BIT_WIDTH = 32
 ) (

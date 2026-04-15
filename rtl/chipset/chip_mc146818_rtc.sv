@@ -10,29 +10,28 @@
 // UIP/PIE 周期与实芯片分频器可能略有偏差。
 // ============================================================================
 
-module rtc_mc146818 #(
+module chip_mc146818_rtc #(
     parameter int CLK_HZ = 8_000
 ) (
     input  logic        i_clock,
     input  logic        i_reset,
-    input  logic        i_io_valid,
-    input  logic        i_io_we,
-    input  logic [15:0] i_io_addr,
-    input  logic [7:0]  i_io_wdata,
-    output logic [7:0]  o_io_rdata,
-    output logic        o_io_hit,
+    input  logic        i_cs_n,
+    input  logic        i_rd_n,
+    input  logic        i_wr_n,
+    // 0 = 索引口 0x70，1 = 数据口 0x71
+    input  logic        i_a0,
+    input  logic [7:0]  i_d,
+    output logic [7:0]  o_d,
     output logic        o_rtc_irq
 );
-
-    localparam logic [15:0] PORT_IDX = 16'h0070;
-    localparam logic [15:0] PORT_DAT = 16'h0071;
 
     localparam int UIP_CYC = ((CLK_HZ * 244) / 1_000_000) > 0 ? ((CLK_HZ * 244) / 1_000_000) : 1;
     localparam int CW      = $clog2(CLK_HZ + 1);
     localparam logic [CW-1:0] SUB_LAST = CW'(CLK_HZ - 1);
     localparam logic [CW-1:0] UIP_START = (CLK_HZ > UIP_CYC) ? CW'(CLK_HZ - UIP_CYC) : CW'(0);
 
-    assign o_io_hit = (i_io_addr == PORT_IDX) || (i_io_addr == PORT_DAT);
+    wire wr = !i_cs_n && !i_wr_n;
+    wire rd = !i_cs_n && !i_rd_n;
 
     logic [7:0] index_reg;
     logic [7:0] cmos_ram [0:127];
@@ -60,8 +59,7 @@ module rtc_mc146818 #(
     logic [23:0] pie_reload_q;
     logic        alarm_match_d;
 
-    wire read_c_pulse = i_io_valid && !i_io_we && o_io_hit && (i_io_addr == PORT_DAT)
-        && (index_reg[6:0] == 7'h0C);
+    wire read_c_pulse = rd && i_a0 && (index_reg[6:0] == 7'h0C);
     logic read_c_d1;
 
     function automatic logic [7:0] u8_to_bcd(input logic [7:0] v);
@@ -257,28 +255,28 @@ module rtc_mc146818 #(
 
     logic [6:0] rd_idx;
     always_comb begin
-        o_io_rdata = 8'hFF;
+        o_d = 8'hFF;
         rd_idx = index_reg[6:0];
-        if (i_io_valid && !i_io_we && o_io_hit) begin
-            if (i_io_addr == PORT_IDX)
-                o_io_rdata = index_reg;
+        if (rd) begin
+            if (!i_a0)
+                o_d = index_reg;
             else begin
                 unique case (rd_idx)
-                    7'h00: o_io_rdata = enc_sec;
-                    7'h01: o_io_rdata = cmos_ram[1];
-                    7'h02: o_io_rdata = enc_min;
-                    7'h03: o_io_rdata = cmos_ram[3];
-                    7'h04: o_io_rdata = enc_hourv;
-                    7'h05: o_io_rdata = cmos_ram[5];
-                    7'h06: o_io_rdata = enc_dow;
-                    7'h07: o_io_rdata = enc_dom;
-                    7'h08: o_io_rdata = enc_mon;
-                    7'h09: o_io_rdata = enc_year;
-                    7'h0A: o_io_rdata = {uip_phase, cmos_ram[10][6:0]};
-                    7'h0B: o_io_rdata = cmos_ram[11];
-                    7'h0C: o_io_rdata = {reg_c_irqf, reg_c_pf, reg_c_af, reg_c_uf, 4'b0};
-                    7'h0D: o_io_rdata = 8'h80;
-                    default: o_io_rdata = cmos_ram[rd_idx];
+                    7'h00: o_d = enc_sec;
+                    7'h01: o_d = cmos_ram[1];
+                    7'h02: o_d = enc_min;
+                    7'h03: o_d = cmos_ram[3];
+                    7'h04: o_d = enc_hourv;
+                    7'h05: o_d = cmos_ram[5];
+                    7'h06: o_d = enc_dow;
+                    7'h07: o_d = enc_dom;
+                    7'h08: o_d = enc_mon;
+                    7'h09: o_d = enc_year;
+                    7'h0A: o_d = {uip_phase, cmos_ram[10][6:0]};
+                    7'h0B: o_d = cmos_ram[11];
+                    7'h0C: o_d = {reg_c_irqf, reg_c_pf, reg_c_af, reg_c_uf, 4'b0};
+                    7'h0D: o_d = 8'h80;
+                    default: o_d = cmos_ram[rd_idx];
                 endcase
             end
         end
@@ -320,33 +318,33 @@ module rtc_mc146818 #(
                 reg_c_irqf <= 1'b0;
             end else begin
 
-            if (i_io_valid && i_io_we && o_io_hit) begin
-                    if (i_io_addr == PORT_IDX)
-                        index_reg <= i_io_wdata;
+            if (wr) begin
+                    if (!i_a0)
+                        index_reg <= i_d;
                     else begin
                         unique case (index_reg[6:0])
-                            7'h00: sec_bin <= dm_bin ? i_io_wdata[5:0] : bcd_to_u6(i_io_wdata);
-                            7'h02: min_bin <= dm_bin ? i_io_wdata[5:0] : bcd_to_u6(i_io_wdata);
-                            7'h04: hour_bin <= dec_hour(i_io_wdata, dm_bin, mode_24h);
-                            7'h06: dow_bin <= i_io_wdata[2:0];
+                            7'h00: sec_bin <= dm_bin ? i_d[5:0] : bcd_to_u6(i_d);
+                            7'h02: min_bin <= dm_bin ? i_d[5:0] : bcd_to_u6(i_d);
+                            7'h04: hour_bin <= dec_hour(i_d, dm_bin, mode_24h);
+                            7'h06: dow_bin <= i_d[2:0];
                             7'h07: begin
                                 logic [7:0] dom_u8;
-                                dom_u8 = bcd_to_u8(i_io_wdata);
-                                dom_bin <= dm_bin ? i_io_wdata[4:0] : dom_u8[4:0];
+                                dom_u8 = bcd_to_u8(i_d);
+                                dom_bin <= dm_bin ? i_d[4:0] : dom_u8[4:0];
                             end
                             7'h08: begin
                                 logic [7:0] mon_u8;
-                                mon_u8 = bcd_to_u8(i_io_wdata);
-                                month_bin <= dm_bin ? i_io_wdata[3:0] : mon_u8[3:0];
+                                mon_u8 = bcd_to_u8(i_d);
+                                month_bin <= dm_bin ? i_d[3:0] : mon_u8[3:0];
                             end
-                            7'h09: year_bin <= dm_bin ? (i_io_wdata > 8'd99 ? 8'd99 : i_io_wdata)
-                                : bcd_to_u8(i_io_wdata);
-                            7'h01, 7'h03, 7'h05: cmos_ram[index_reg[6:0]] <= i_io_wdata;
-                            7'h0A: cmos_ram[10] <= i_io_wdata & 8'h7F;
-                            7'h0B: cmos_ram[11] <= i_io_wdata;
-                            7'h32: cmos_ram[50] <= i_io_wdata;
+                            7'h09: year_bin <= dm_bin ? (i_d > 8'd99 ? 8'd99 : i_d)
+                                : bcd_to_u8(i_d);
+                            7'h01, 7'h03, 7'h05: cmos_ram[index_reg[6:0]] <= i_d;
+                            7'h0A: cmos_ram[10] <= i_d & 8'h7F;
+                            7'h0B: cmos_ram[11] <= i_d;
+                            7'h32: cmos_ram[50] <= i_d;
                             7'h0C, 7'h0D: ;
-                            default: cmos_ram[index_reg[6:0]] <= i_io_wdata;
+                            default: cmos_ram[index_reg[6:0]] <= i_d;
                         endcase
                     end
                 end

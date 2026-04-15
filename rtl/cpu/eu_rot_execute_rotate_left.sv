@@ -7,7 +7,7 @@
 // - `result = (operand << count) | (operand >> (BIT_WIDTH - count))`
 // ============================================================================
 
-module execute_rotate_left #(
+module eu_rot_execute_rotate_left #(
     // parameter
     BIT_WIDTH = 32
 ) (

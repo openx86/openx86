@@ -1,5 +1,5 @@
 // ============================================================================
-// disk_ram_8 + ide_ata_pio（外部盘）读 LBA0
+// disk_ram_8 + chip_ata_ide（外部盘）读 LBA0
 // 文件名匹配 test_all_modules.sh 自动加入 disk_ram_8.sv
 // ============================================================================
 `timescale 1ns/1ps
@@ -11,7 +11,11 @@ module disk_ram_8_tb;
     logic        io_valid, io_we;
     logic [15:0] io_addr;
     logic [7:0]  io_wdata, io_rdata;
-    logic        io_hit;
+
+    wire ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
+    wire ide_cs_n = !(io_valid && ide_hit);
+    wire ide_wr_n = !(io_valid && io_we && ide_hit);
+    wire ide_rd_n = !(io_valid && !io_we && ide_hit);
 
     logic [31:0] ide_raddr;
     logic [7:0]  disk_a, disk_b;
@@ -36,7 +40,7 @@ module disk_ram_8_tb;
     end
 
     wire ide_sector_req;
-    ide_ata_pio #(
+    chip_ata_ide #(
         .SECTOR_BYTES(512),
         .SECTOR_COUNT(16),
         .USE_INTERNAL_DISK_MEM(1'b0),
@@ -44,12 +48,12 @@ module disk_ram_8_tb;
     ) u_ide (
         .i_clock             ( clock ),
         .i_reset             ( reset ),
-        .i_io_valid          ( io_valid ),
-        .i_io_we             ( io_we ),
-        .i_io_addr           ( io_addr ),
-        .i_io_wdata          ( io_wdata ),
-        .o_io_rdata          ( io_rdata ),
-        .o_io_hit            ( io_hit ),
+        .i_cs_n              ( ide_cs_n ),
+        .i_rd_n              ( ide_rd_n ),
+        .i_wr_n              ( ide_wr_n ),
+        .i_addr              ( io_addr ),
+        .i_d                 ( io_wdata ),
+        .o_d                 ( io_rdata ),
         .o_disk_raddr        ( ide_raddr ),
         .i_disk_rdata        ( disk_a ),
         .i_disk_sector_ready ( 1'b0 ),

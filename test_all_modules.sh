@@ -12,7 +12,9 @@ NC='\033[0m' # No Color
 
 # 项目根目录
 PROJECT_ROOT=$(pwd)
-RTL_DIR="$PROJECT_ROOT/src/rtl"
+# RTL 根目录：优先本仓库的 rtl/，兼容旧布局 src/rtl
+RTL_DIR="$PROJECT_ROOT/rtl"
+[[ -d "$RTL_DIR" ]] || RTL_DIR="$PROJECT_ROOT/src/rtl"
 TB_DIR="$PROJECT_ROOT/tb"
 
 # 检测可用的仿真器
@@ -127,8 +129,8 @@ get_dependencies() {
     if grep -q "vga_text_intense" "$module_file"; then
         deps="$deps $RTL_DIR/periph/vga_text_intense.sv"
     fi
-    if grep -q "ide_ata_pio" "$module_file"; then
-        deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
+    if grep -q "chip_ata_ide" "$module_file"; then
+        deps="$deps $RTL_DIR/chipset/chip_ata_ide.sv"
     fi
     if grep -q "sd_mmc_card_model_native" "$module_file"; then
         deps="$deps $TB_DIR/unit/peripheral/sdcard/sd_mmc_card_model_native.sv"
@@ -139,25 +141,24 @@ get_dependencies() {
     if grep -q "sd_native_host_4bit" "$module_file"; then
         deps="$deps $RTL_DIR/periph/sd_native_host_4bit.sv"
     fi
-    if grep -q "pc_bios_24lc32" "$module_file"; then
-        deps="$deps $RTL_DIR/chipset/pc_bios_24lc32.sv"
+    if grep -q "chip_pc_bios_eeprom" "$module_file"; then
+        deps="$deps $RTL_DIR/chipset/chip_pc_bios_eeprom.sv"
     fi
-    if grep -q "ps2_i8042" "$module_file"; then
+    if grep -q "chip_i8042_ps2" "$module_file"; then
         deps="$deps $RTL_DIR/periph/ps2_host_phy.sv"
     fi
     if grep -q "bus u_" "$module_file"; then
-        deps="$deps $RTL_DIR/chipset/openx86_chipset_pkg.sv"
-        deps="$deps $RTL_DIR/chipset/i8254_pit.sv"
-        deps="$deps $RTL_DIR/chipset/i8259_pic.sv"
-        deps="$deps $RTL_DIR/chipset/i8237_dma.sv"
-        deps="$deps $RTL_DIR/chipset/rtc_mc146818.sv"
+        deps="$deps $RTL_DIR/chipset/chip_pkg.sv"
+        deps="$deps $RTL_DIR/chipset/chip_8254_pit.sv"
+        deps="$deps $RTL_DIR/chipset/chip_8259_pic.sv"
+        deps="$deps $RTL_DIR/chipset/chip_8237_dma.sv"
+        deps="$deps $RTL_DIR/chipset/chip_mc146818_rtc.sv"
         deps="$deps $RTL_DIR/periph/ps2_host_phy.sv"
-        deps="$deps $RTL_DIR/chipset/ps2_i8042.sv"
-        deps="$deps $RTL_DIR/chipset/com_ns16550.sv"
-        deps="$deps $RTL_DIR/chipset/lpt_centronics.sv"
-        deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
+        deps="$deps $RTL_DIR/chipset/chip_i8042_ps2.sv"
+        deps="$deps $RTL_DIR/chipset/chip_ns16550_com.sv"
+        deps="$deps $RTL_DIR/chipset/chip_centronics_lpt.sv"
+        deps="$deps $RTL_DIR/chipset/chip_ata_ide.sv"
         deps="$deps $RTL_DIR/periph/sd_disk_ram_8.sv"
-        deps="$deps $RTL_DIR/chipset/pc_chipset_io.sv"
         deps="$deps $RTL_DIR/periph/ide_sd_sector_bridge.sv"
         deps="$deps $RTL_DIR/periph/sd_native_host_4bit.sv"
         deps="$deps $RTL_DIR/periph/sd_4bit_phy.sv"
@@ -182,7 +183,7 @@ get_dependencies() {
         deps="$deps $RTL_DIR/cpu/eu_execute_branch_unit.sv"
         deps="$deps $RTL_DIR/cpu/eu_execute_muldiv_unit.sv"
     fi
-    if grep -q "decode_x87_esc" "$module_file"; then
+    if grep -q "du_decode_x87_esc" "$module_file"; then
         deps="$deps $RTL_DIR/cpu/du_decode_x87_pkg.sv"
         deps="$deps $RTL_DIR/cpu/du_decode_x87_esc.sv"
     fi
@@ -190,7 +191,7 @@ get_dependencies() {
         deps="$deps $RTL_DIR/cpu/du_decode_x87_pkg.sv"
         deps="$deps $RTL_DIR/cpu/du_decode_x87_esc.sv"
     fi
-    if grep -q "execute_unit_top" "$module_file"; then
+    if grep -q "eu_execute_unit_top" "$module_file"; then
         deps="$deps $RTL_DIR/cpu/eu_execute_unit_pkg.sv"
         deps="$deps $RTL_DIR/cpu/eu_address_generation_unit.sv"
         deps="$deps $RTL_DIR/cpu/eu_load_store_unit.sv"
@@ -199,27 +200,31 @@ get_dependencies() {
         deps="$deps $RTL_DIR/cpu/eu_execute_x87_fpu.sv"
     fi
     
-    # 添加decode相关模块的依赖
-    if grep -q "decode_opcode_x86" "$module_file"; then
-        deps="$deps $RTL_DIR/core/decode/decode_opcode_x86.sv"
+    # 添加 decode 相关模块的依赖（rtl/cpu，模块名与文件名一致）
+    if grep -q "du_decode_opcode_x86" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/du_decode_opcode_x86.sv"
     fi
-    if grep -q "decode_mod_rm" "$module_file"; then
-        deps="$deps $RTL_DIR/core/decode/decode_mod_rm.sv"
+    if grep -q "du_decode_mod_rm" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/du_decode_mod_rm.sv"
     fi
-    if grep -q "decode_sib" "$module_file"; then
-        deps="$deps $RTL_DIR/core/decode/decode_sib.sv"
+    if grep -q "du_decode_sib" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/du_decode_sib.sv"
     fi
-    if grep -q "decode_disp_imm" "$module_file"; then
-        deps="$deps $RTL_DIR/core/decode/decode_disp_imm.sv"
+    if grep -q "du_decode_disp_imm" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/du_decode_disp_imm.sv"
     fi
-    if grep -q "decode_prefix" "$module_file"; then
-        deps="$deps $RTL_DIR/core/decode/decode_prefix.sv"
+    if grep -q "du_decode_prefix" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/du_decode_prefix.sv"
     fi
-    if grep -q "decode_prefix_all" "$module_file"; then
-        deps="$deps $RTL_DIR/core/decode/decode_prefix_all.sv"
+    if grep -q "du_decode_prefix_all" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/du_decode_prefix_all.sv"
     fi
-    if grep -q "decode_field" "$module_file"; then
-        deps="$deps $RTL_DIR/core/decode/decode_field.sv"
+    if grep -q "du_decode_field" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/du_decode_field.sv"
+    fi
+    # 译码顶层实例化：`du_decode <instance_name> (`（避免与 du_decode_* 子模块名混淆）
+    if grep -qE '^[[:space:]]*du_decode[[:space:]]' "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/du_decode.sv"
     fi
     
     echo "$deps"

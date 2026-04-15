@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: flags_register
+module: rf_flags_register
 create at: 2021-10-22 22:23:28
 description: define the flags register
 */
@@ -18,7 +18,7 @@ lower 16 bits (bit 0-15) of EFLAGS contain the
 useful when executing 8086 and 80286 code.
 */
 
-module flags_register (
+module rf_flags_register (
     // ports
     input  logic        write_enable,
     input  logic [31:0] write_data,

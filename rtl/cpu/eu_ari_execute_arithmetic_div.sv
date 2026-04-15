@@ -8,7 +8,7 @@
 // - 综合时除法器资源开销大；真实实现通常使用多周期除法或共享乘除单元。
 // ============================================================================
 
-module execute_arithmetic_div #(
+module eu_ari_execute_arithmetic_div #(
     // parameter
     BIT_WIDTH = 32
 ) (

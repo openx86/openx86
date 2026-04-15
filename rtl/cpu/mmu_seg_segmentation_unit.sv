@@ -2,12 +2,12 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: segmentation_unit
+module: mmu_seg_segmentation_unit
 create at: 2022-01-31 01:31:23
-description: segmentation_unit
+description: mmu_seg_segmentation_unit
 */
 
-module segmentation_unit #(
+module mmu_seg_segmentation_unit #(
     read_from_fetch = 0
 ) (
     input  logic        i_protected_mode, // from CR0.PE (CR[0][0])
@@ -39,7 +39,7 @@ logic        code_conforming;
 logic        code_readable;
 logic        date_or_code_accessed;
 
-segment_descriptor_decode u_segment_descriptor_decode (
+mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .o_base                                ( base ),
     .o_limit                               ( limit ),
     .o_date_or_code_present                ( date_or_code_present ),

@@ -1,27 +1,24 @@
 // ============================================================================
-// NS16550 兼容 UART — COM1 端口 0x3F8–0x3FF（8 寄存器，DLAB 切换波特率锁存）
+// NS16550 兼容 UART — COM1
+// 主机接口：nCS/nRD/nWR + A[2:0]（相对基址 0x3F8 的寄存器偏移）
 // 简化：无 FIFO 深度、无 divisor 时序；THR 写、RBR 读；MCR.4 为内部回环时 THR→RBR
 // 可选 i_rx_push / i_rx_data 用于仿真注入接收字节
 // ============================================================================
 
-module com_ns16550 #(
-    parameter logic [15:0] PORT_BASE = 16'h03F8
-) (
+module chip_ns16550_com (
     input  logic        i_clock,
     input  logic        i_reset,
-    input  logic        i_io_valid,
-    input  logic        i_io_we,
-    input  logic [15:0] i_io_addr,
-    input  logic [7:0]  i_io_wdata,
-    output logic [7:0]  o_io_rdata,
-    output logic        o_io_hit,
+    input  logic        i_cs_n,
+    input  logic        i_rd_n,
+    input  logic        i_wr_n,
+    input  logic [2:0]  i_a,
+    input  logic [7:0]  i_d,
+    output logic [7:0]  o_d,
     input  logic        i_rx_push,
     input  logic [7:0]  i_rx_data
 );
 
-    assign o_io_hit = (i_io_addr >= PORT_BASE) && (i_io_addr <= PORT_BASE + 16'h7);
-
-    wire [2:0] off = i_io_addr[2:0];
+    wire [2:0] off = i_a;
 
     logic [7:0] rbr;
     logic       rbr_valid;
@@ -33,6 +30,9 @@ module com_ns16550 #(
     logic [7:0] dll, dlm;
 
     wire dlab = lcr[7];
+
+    wire wr = !i_cs_n && !i_wr_n;
+    wire rd = !i_cs_n && !i_rd_n;
 
     always_ff @(posedge i_clock or posedge i_reset) begin
         if (i_reset) begin
@@ -50,32 +50,32 @@ module com_ns16550 #(
                 rbr       <= i_rx_data;
                 rbr_valid <= 1'b1;
             end
-            if (i_io_valid && i_io_we && o_io_hit) begin
+            if (wr) begin
                 unique case (off)
                     3'd0: begin
                         if (dlab)
-                            dll <= i_io_wdata;
+                            dll <= i_d;
                         else begin
                             if (mcr[4]) begin
-                                rbr       <= i_io_wdata;
+                                rbr       <= i_d;
                                 rbr_valid <= 1'b1;
                             end
                         end
                     end
                     3'd1: begin
                         if (dlab)
-                            dlm <= i_io_wdata;
+                            dlm <= i_d;
                         else
-                            ier <= i_io_wdata;
+                            ier <= i_d;
                     end
-                    3'd2: fcr <= i_io_wdata;
-                    3'd3: lcr <= i_io_wdata;
-                    3'd4: mcr <= i_io_wdata;
+                    3'd2: fcr <= i_d;
+                    3'd3: lcr <= i_d;
+                    3'd4: mcr <= i_d;
                     3'd5: ; // LSR read-only
                     3'd6: ; // MSR
-                    3'd7: scr <= i_io_wdata;
+                    3'd7: scr <= i_d;
                 endcase
-            end else if (i_io_valid && !i_io_we && o_io_hit && off == 3'd0 && !dlab && rbr_valid) begin
+            end else if (rd && off == 3'd0 && !dlab && rbr_valid) begin
                 rbr_valid <= 1'b0;
             end
         end
@@ -84,17 +84,17 @@ module com_ns16550 #(
     wire [7:0] lsr = { 1'b0, 1'b0, 1'b1, 1'b1, 4'b0000, rbr_valid };
 
     always_comb begin
-        o_io_rdata = 8'hFF;
-        if (i_io_valid && !i_io_we && o_io_hit) begin
+        o_d = 8'hFF;
+        if (rd) begin
             unique case (off)
-                3'd0: o_io_rdata = dlab ? dll : rbr;
-                3'd1: o_io_rdata = dlab ? dlm : ier;
-                3'd2: o_io_rdata = 8'hC1;
-                3'd3: o_io_rdata = lcr;
-                3'd4: o_io_rdata = mcr;
-                3'd5: o_io_rdata = lsr;
-                3'd6: o_io_rdata = 8'hB0;
-                3'd7: o_io_rdata = scr;
+                3'd0: o_d = dlab ? dll : rbr;
+                3'd1: o_d = dlab ? dlm : ier;
+                3'd2: o_d = 8'hC1;
+                3'd3: o_d = lcr;
+                3'd4: o_d = mcr;
+                3'd5: o_d = lsr;
+                3'd6: o_d = 8'hB0;
+                3'd7: o_d = scr;
             endcase
         end
     end

@@ -73,7 +73,7 @@ module bus_devices #(
     output logic        o_ps2_aux_dat_oe,
     input  logic        i_ps2_aux_dat_in,
 
-    // SDIO / SD 4-bit（IDE 盘体由 pc_chipset_io 内主机驱动；USE_SDIO_DISK=0 时引脚空闲）
+    // SDIO / SD 4-bit（IDE 盘体由 bus_devices 内 SD 主机驱动；USE_SDIO_DISK=0 时引脚空闲）
     output logic        o_sdio_clk,
     output logic        o_sdio_cmd_o,
     output logic        o_sdio_cmd_oe,
@@ -85,8 +85,7 @@ module bus_devices #(
     // PIC 主片中断输出（接 CPU INTR）
     output logic        o_pic_intr,
     
-    // Chipset（IBM PC/AT I/O：PIC/PIT/DMA/RTC/8042/IDE 等）
-    // 由 rtl/chipset/pc_chipset_io.sv 聚合；未命中时读回 0xFF
+    // Chipset（IBM PC/AT I/O：各 chip_* 模块由 bus_devices 直连例化；未命中时读回 0xFF）
 
     // 公共信号
     input  logic        i_clock,
@@ -136,7 +135,6 @@ logic is_other_io_access;
 logic is_chipset_io;
 logic [7:0] chipset_io_rdata;
 logic       chipset_io_hit;
-logic       chipset_io_ready_unused;
 
 logic       is_fdc_io;
 logic [7:0] fdc_io_rdata;
@@ -196,7 +194,7 @@ assign is_vga_io_access   = is_io_access &&
                              
 assign is_other_io_access = is_io_access && !is_vga_io_access;
 
-// Chipset 端口并集（与 rtl/chipset/pc_chipset_io.sv 内各 IP 一致）
+// Chipset 端口并集（与各 chip_* 模块地址一致）
 assign is_chipset_io = is_other_io_access && (
     ((i_bus_address[15:0] >= 16'h0000) && (i_bus_address[15:0] <= 16'h000F)) ||
     ((i_bus_address[15:0] >= 16'h0080) && (i_bus_address[15:0] <= 16'h008F)) ||
@@ -230,30 +228,232 @@ fdc_nec765_sram u_fdc (
     .o_io_hit   ( fdc_io_hit )
 );
 
-logic pic_intr_w;
+// -------------------------------------------------------------------------
+// IBM PC/AT：各 chip_* 在 bus_devices 内直连例化
+// -------------------------------------------------------------------------
+localparam int CHIP_DISK_IMAGE_BYTES = 512 * 2048;
+localparam int CHIP_DISK_SECTOR_CNT  = CHIP_DISK_IMAGE_BYTES / 512;
 
-pc_chipset_io #(
+wire [15:0] chip_io_addr = i_bus_address[15:0];
+wire        chip_io_vld  = is_chipset_io && i_bus_valid;
+wire        chip_io_we   = i_bus_write_enable;
+
+logic [31:0] chip_ide_disk_raddr;
+logic [7:0]  chip_ide_disk_rdata_ram;
+logic [7:0]  chip_disk_rdata_b_unused;
+logic [7:0]  chip_ide_disk_rdata_eff;
+logic        chip_ide_sector_ready_eff;
+logic        chip_ide_sector_req_w;
+
+generate
+    if (!USE_SDIO_DISK) begin : g_disk_ram
+        disk_ram_8 #(
+            .BYTE_DEPTH ( CHIP_DISK_IMAGE_BYTES )
+        ) u_disk_image (
+            .i_clock   ( i_clock ),
+            .i_reset   ( i_reset ),
+            .i_we      ( 1'b0 ),
+            .i_waddr   ( 32'h0 ),
+            .i_wdata   ( 8'h0 ),
+            .i_raddr_a ( chip_ide_disk_raddr ),
+            .i_raddr_b ( 32'h0 ),
+            .o_rdata_a ( chip_ide_disk_rdata_ram ),
+            .o_rdata_b ( chip_disk_rdata_b_unused )
+        );
+        assign chip_ide_disk_rdata_eff   = chip_ide_disk_rdata_ram;
+        assign chip_ide_sector_ready_eff = 1'b0;
+        assign o_sdio_clk      = 1'b0;
+        assign o_sdio_cmd_o    = 1'b1;
+        assign o_sdio_cmd_oe   = 1'b0;
+        assign o_sdio_dat_o    = 4'hF;
+        assign o_sdio_dat_oe   = 1'b0;
+    end else begin : g_sdio_host
+        logic        sd_start;
+        logic [31:0] sd_lba;
+        logic        sd_busy;
+        logic        sd_done;
+        logic        sd_err;
+        logic        sd_payload_we;
+        logic [8:0]  sd_payload_addr;
+        logic [7:0]  sd_payload_data;
+
+        ide_sd_sector_bridge u_ide_sd_br (
+            .i_clock             ( i_clock ),
+            .i_reset             ( i_reset ),
+            .i_ide_disk_raddr    ( chip_ide_disk_raddr ),
+            .o_ide_disk_rdata    ( chip_ide_disk_rdata_eff ),
+            .i_ide_sector_req    ( chip_ide_sector_req_w ),
+            .o_ide_sector_ready  ( chip_ide_sector_ready_eff ),
+            .o_sd_start          ( sd_start ),
+            .o_sd_lba            ( sd_lba ),
+            .i_sd_busy           ( sd_busy ),
+            .i_sd_done           ( sd_done ),
+            .i_sd_err            ( sd_err ),
+            .i_sd_payload_we     ( sd_payload_we ),
+            .i_sd_payload_addr   ( sd_payload_addr ),
+            .i_sd_payload_data   ( sd_payload_data )
+        );
+
+        sd_native_host_4bit u_sdio_host (
+            .i_clock        ( i_clock ),
+            .i_reset        ( i_reset ),
+            .o_sd_clk       ( o_sdio_clk ),
+            .o_phy_cmd_out  ( o_sdio_cmd_o ),
+            .o_phy_cmd_oe   ( o_sdio_cmd_oe ),
+            .i_phy_cmd_in   ( i_sdio_cmd_i ),
+            .o_phy_dat_out  ( o_sdio_dat_o ),
+            .o_phy_dat_oe   ( o_sdio_dat_oe ),
+            .i_phy_dat_in   ( i_sdio_dat_i ),
+            .i_start        ( sd_start ),
+            .i_lba          ( sd_lba ),
+            .o_busy         ( sd_busy ),
+            .o_done         ( sd_done ),
+            .o_err          ( sd_err ),
+            .o_payload_we   ( sd_payload_we ),
+            .o_payload_addr ( sd_payload_addr ),
+            .o_payload_data ( sd_payload_data )
+        );
+    end
+endgenerate
+
+logic [7:0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
+
+wire hit_dma   = (chip_io_addr <= 16'h000F)
+               | ((chip_io_addr >= 16'h0080) & (chip_io_addr <= 16'h008F))
+               | ((chip_io_addr >= 16'h00C0) & (chip_io_addr <= 16'h00DF));
+wire hit_pic_m = (chip_io_addr >= 16'h0020) & (chip_io_addr <= 16'h0021);
+wire hit_pic_s = (chip_io_addr >= 16'h00A0) & (chip_io_addr <= 16'h00A1);
+wire hit_pit   = (chip_io_addr >= 16'h0040) & (chip_io_addr <= 16'h0043);
+wire hit_ps2   = (chip_io_addr == 16'h0060) | (chip_io_addr == 16'h0064);
+wire hit_rtc   = (chip_io_addr == 16'h0070) | (chip_io_addr == 16'h0071);
+wire hit_com   = (chip_io_addr >= 16'h03F8) & (chip_io_addr <= 16'h03FF);
+wire hit_lpt   = (chip_io_addr >= 16'h0378) & (chip_io_addr <= 16'h037F);
+wire hit_ide   = ((chip_io_addr >= 16'h01F0) & (chip_io_addr <= 16'h01F7)) | (chip_io_addr == 16'h03F6);
+
+wire vld = chip_io_vld;
+
+wire cs_dma_n   = !(vld & hit_dma);
+wire rd_dma_n   = !(vld & !chip_io_we & hit_dma);
+wire wr_dma_n   = !(vld &  chip_io_we & hit_dma);
+
+wire cs_pic_m_n = !(vld & hit_pic_m);
+wire rd_pic_m_n = !(vld & !chip_io_we & hit_pic_m);
+wire wr_pic_m_n = !(vld &  chip_io_we & hit_pic_m);
+
+wire cs_pic_s_n = !(vld & hit_pic_s);
+wire rd_pic_s_n = !(vld & !chip_io_we & hit_pic_s);
+wire wr_pic_s_n = !(vld &  chip_io_we & hit_pic_s);
+
+wire cs_pit_n   = !(vld & hit_pit);
+wire rd_pit_n   = !(vld & !chip_io_we & hit_pit);
+wire wr_pit_n   = !(vld &  chip_io_we & hit_pit);
+
+wire cs_ps2_n   = !(vld & hit_ps2);
+wire rd_ps2_n   = !(vld & !chip_io_we & hit_ps2);
+wire wr_ps2_n   = !(vld &  chip_io_we & hit_ps2);
+
+wire cs_rtc_n   = !(vld & hit_rtc);
+wire rd_rtc_n   = !(vld & !chip_io_we & hit_rtc);
+wire wr_rtc_n   = !(vld &  chip_io_we & hit_rtc);
+
+wire cs_com_n   = !(vld & hit_com);
+wire rd_com_n   = !(vld & !chip_io_we & hit_com);
+wire wr_com_n   = !(vld &  chip_io_we & hit_com);
+
+wire cs_lpt_n   = !(vld & hit_lpt);
+wire rd_lpt_n   = !(vld & !chip_io_we & hit_lpt);
+wire wr_lpt_n   = !(vld &  chip_io_we & hit_lpt);
+
+wire cs_ide_n   = !(vld & hit_ide);
+wire rd_ide_n   = !(vld & !chip_io_we & hit_ide);
+wire wr_ide_n   = !(vld &  chip_io_we & hit_ide);
+
+logic       pit_out0;
+logic       intr_m, intr_s;
+
+logic [7:0] ir_m;
+logic       rtc_irq;
+logic       ps2_kbd_irq;
+logic       ps2_aux_irq;
+wire [7:0] pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
+
+assign ir_m[0]    = pit_out0;
+assign ir_m[1]    = ps2_kbd_irq;
+assign ir_m[2]    = intr_s;
+assign ir_m[7:3]  = 5'b0;
+
+assign chipset_io_hit = chip_io_vld & (hit_dma | hit_pic_m | hit_pic_s | hit_pit | hit_ps2 | hit_rtc | hit_com | hit_lpt | hit_ide);
+
+chip_8237_dma u_chip_dma (
+    .i_clock    ( i_clock ),
+    .i_reset    ( i_reset ),
+    .i_cs_n     ( cs_dma_n ),
+    .i_rd_n     ( rd_dma_n ),
+    .i_wr_n     ( wr_dma_n ),
+    .i_addr     ( chip_io_addr ),
+    .i_d        ( i_bus_data_write[7:0] ),
+    .o_d        ( r_dma )
+);
+
+chip_8259_pic u_chip_pic_m (
+    .i_clock    ( i_clock ),
+    .i_reset    ( i_reset ),
+    .i_cs_n     ( cs_pic_m_n ),
+    .i_rd_n     ( rd_pic_m_n ),
+    .i_wr_n     ( wr_pic_m_n ),
+    .i_a0       ( chip_io_addr[0] ),
+    .i_d        ( i_bus_data_write[7:0] ),
+    .o_d        ( r_pic_m ),
+    .i_ir       ( ir_m ),
+    .o_intr     ( intr_m )
+);
+
+chip_8259_pic u_chip_pic_s (
+    .i_clock    ( i_clock ),
+    .i_reset    ( i_reset ),
+    .i_cs_n     ( cs_pic_s_n ),
+    .i_rd_n     ( rd_pic_s_n ),
+    .i_wr_n     ( wr_pic_s_n ),
+    .i_a0       ( chip_io_addr[0] ),
+    .i_d        ( i_bus_data_write[7:0] ),
+    .o_d        ( r_pic_s ),
+    .i_ir       ( pic_slave_ir_merged ),
+    .o_intr     ( intr_s )
+);
+
+logic pit_out1_unused, pit_out2_unused;
+chip_8254_pit u_chip_pit (
+    .i_clock    ( i_clock ),
+    .i_reset    ( i_reset ),
+    .i_cs_n     ( cs_pit_n ),
+    .i_rd_n     ( rd_pit_n ),
+    .i_wr_n     ( wr_pit_n ),
+    .i_a        ( chip_io_addr[1:0] ),
+    .i_d        ( i_bus_data_write[7:0] ),
+    .o_d        ( r_pit ),
+    .o_out0     ( pit_out0 ),
+    .o_out1     ( pit_out1_unused ),
+    .o_out2     ( pit_out2_unused )
+);
+
+chip_i8042_ps2 #(
     .USE_REAL_PS2 ( USE_REAL_PS2 ),
-    .PS2_CLK_HZ   ( PS2_CLK_HZ ),
-    .USE_SDIO_DISK        ( USE_SDIO_DISK )
-) u_chipset (
+    .CLK_HZ       ( PS2_CLK_HZ )
+) u_chip_ps2 (
     .i_clock           ( i_clock ),
     .i_reset           ( i_reset ),
-    .i_io_valid        ( is_chipset_io && i_bus_valid ),
-    .i_io_we           ( i_bus_write_enable ),
-    .i_io_addr         ( i_bus_address[15:0] ),
-    .i_io_wdata        ( i_bus_data_write[7:0] ),
-    .o_io_rdata        ( chipset_io_rdata ),
-    .o_io_hit          ( chipset_io_hit ),
-    .o_io_ready        ( chipset_io_ready_unused ),
-    .i_ps2_kbd_push    ( 1'b0 ),
-    .i_ps2_kbd_data    ( 8'h0 ),
-    .i_ps2_aux_push    ( 1'b0 ),
-    .i_ps2_aux_data    ( 8'h0 ),
-    .i_pic_slave_ir    ( 8'h0 ),
-    .o_pic_master_intr ( pic_intr_w ),
-    .o_pic_slave_intr  ( ),
-    .o_pit_out0        ( ),
+    .i_cs_n            ( cs_ps2_n ),
+    .i_rd_n            ( rd_ps2_n ),
+    .i_wr_n            ( wr_ps2_n ),
+    .i_a0              ( chip_io_addr[2] ),
+    .i_d               ( i_bus_data_write[7:0] ),
+    .o_d               ( r_ps2 ),
+    .i_kbd_push        ( 1'b0 ),
+    .i_kbd_data        ( 8'h0 ),
+    .i_aux_push        ( 1'b0 ),
+    .i_aux_data        ( 8'h0 ),
+    .o_kbd_irq         ( ps2_kbd_irq ),
+    .o_aux_irq         ( ps2_aux_irq ),
     .o_ps2_kbd_clk_out ( o_ps2_kbd_clk_out ),
     .o_ps2_kbd_clk_oe  ( o_ps2_kbd_clk_oe ),
     .i_ps2_kbd_clk_in  ( i_ps2_kbd_clk_in ),
@@ -265,17 +465,90 @@ pc_chipset_io #(
     .i_ps2_aux_clk_in  ( i_ps2_aux_clk_in ),
     .o_ps2_aux_dat_out ( o_ps2_aux_dat_out ),
     .o_ps2_aux_dat_oe  ( o_ps2_aux_dat_oe ),
-    .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in ),
-    .o_sdio_clk    ( o_sdio_clk ),
-    .o_sdio_cmd_o  ( o_sdio_cmd_o ),
-    .o_sdio_cmd_oe ( o_sdio_cmd_oe ),
-    .i_sdio_cmd_i  ( i_sdio_cmd_i ),
-    .o_sdio_dat_o  ( o_sdio_dat_o ),
-    .o_sdio_dat_oe ( o_sdio_dat_oe ),
-    .i_sdio_dat_i  ( i_sdio_dat_i )
+    .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in )
 );
 
-assign o_pic_intr = pic_intr_w;
+chip_mc146818_rtc u_chip_rtc (
+    .i_clock    ( i_clock ),
+    .i_reset    ( i_reset ),
+    .i_cs_n     ( cs_rtc_n ),
+    .i_rd_n     ( rd_rtc_n ),
+    .i_wr_n     ( wr_rtc_n ),
+    .i_a0       ( chip_io_addr[0] ),
+    .i_d        ( i_bus_data_write[7:0] ),
+    .o_d        ( r_rtc ),
+    .o_rtc_irq  ( rtc_irq )
+);
+
+chip_ns16550_com u_chip_com1 (
+    .i_clock    ( i_clock ),
+    .i_reset    ( i_reset ),
+    .i_cs_n     ( cs_com_n ),
+    .i_rd_n     ( rd_com_n ),
+    .i_wr_n     ( wr_com_n ),
+    .i_a        ( chip_io_addr[2:0] ),
+    .i_d        ( i_bus_data_write[7:0] ),
+    .o_d        ( r_com ),
+    .i_rx_push  ( 1'b0 ),
+    .i_rx_data  ( 8'h0 )
+);
+
+chip_centronics_lpt u_chip_lpt1 (
+    .i_clock    ( i_clock ),
+    .i_reset    ( i_reset ),
+    .i_cs_n     ( cs_lpt_n ),
+    .i_rd_n     ( rd_lpt_n ),
+    .i_wr_n     ( wr_lpt_n ),
+    .i_a        ( chip_io_addr[2:0] ),
+    .i_d        ( i_bus_data_write[7:0] ),
+    .o_d        ( r_lpt )
+);
+
+chip_ata_ide #(
+    .SECTOR_BYTES          ( 512 ),
+    .SECTOR_COUNT          ( CHIP_DISK_SECTOR_CNT ),
+    .USE_INTERNAL_DISK_MEM ( 1'b0 ),
+    .USE_ASYNC_DISK        ( USE_SDIO_DISK )
+) u_chip_ide (
+    .i_clock             ( i_clock ),
+    .i_reset             ( i_reset ),
+    .i_cs_n              ( cs_ide_n ),
+    .i_rd_n              ( rd_ide_n ),
+    .i_wr_n              ( wr_ide_n ),
+    .i_addr              ( chip_io_addr ),
+    .i_d                 ( i_bus_data_write[7:0] ),
+    .o_d                 ( r_ide ),
+    .o_disk_raddr        ( chip_ide_disk_raddr ),
+    .i_disk_rdata        ( chip_ide_disk_rdata_eff ),
+    .i_disk_sector_ready ( chip_ide_sector_ready_eff ),
+    .o_disk_sector_req   ( chip_ide_sector_req_w )
+);
+
+always_comb begin
+    chipset_io_rdata = 8'hFF;
+    if (chip_io_vld) begin
+        if (hit_dma)
+            chipset_io_rdata = r_dma;
+        else if (hit_pic_m)
+            chipset_io_rdata = r_pic_m;
+        else if (hit_pic_s)
+            chipset_io_rdata = r_pic_s;
+        else if (hit_pit)
+            chipset_io_rdata = r_pit;
+        else if (hit_ps2)
+            chipset_io_rdata = r_ps2;
+        else if (hit_rtc)
+            chipset_io_rdata = r_rtc;
+        else if (hit_com)
+            chipset_io_rdata = r_com;
+        else if (hit_lpt)
+            chipset_io_rdata = r_lpt;
+        else if (hit_ide)
+            chipset_io_rdata = r_ide;
+    end
+end
+
+assign o_pic_intr = intr_m;
 
 // 注意：VGA VRAM 是只写的（从CPU角度），不支持读操作
 // 如果需要读VRAM，需要从VGA模块内部读取，这里暂时不支持

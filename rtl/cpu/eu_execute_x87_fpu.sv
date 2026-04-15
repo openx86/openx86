@@ -3,7 +3,7 @@
 // 数值为 64 位有符号整数路径（可综合）；后续可替换为 IEEE754 软浮点
 // ============================================================================
 
-module execute_x87_fpu (
+module eu_execute_x87_fpu (
     input  logic        clk,
     input  logic        rst,
     input  logic        i_valid,

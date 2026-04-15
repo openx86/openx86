@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: segment_descriptor_encode
+module: mmu_seg_segment_descriptor_encode
 create at: 2022-01-27 13:23:55
 description: encode the segment information to segment descriptor
 */
@@ -28,7 +28,7 @@ specifies the protection level 0–3 associated with a
 segment
 */
 
-module segment_descriptor_encode (
+module mmu_seg_segment_descriptor_encode (
     // ports
     input  logic [31:0] base,
     input  logic [19:0] limit,

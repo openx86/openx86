@@ -1,8 +1,8 @@
 // ============================================================================
 // execute — 历史占位模块（原草稿已移除）
-// 执行通路请使用 execute_unit_top 及 execute_unit_pkg
+// 执行通路请使用 eu_execute_unit_top 及 execute_unit_pkg
 // ============================================================================
 
-module execute;
+module eu_execute;
 
 endmodule

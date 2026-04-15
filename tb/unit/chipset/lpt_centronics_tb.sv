@@ -1,5 +1,5 @@
 // ============================================================================
-// lpt_centronics testbench — 写数据口、读状态/控制
+// lpt_centronics testbench — 写数据口、读状态/控制（ISA 并行口）
 // ============================================================================
 `timescale 1ns/1ps
 
@@ -10,17 +10,21 @@ module lpt_centronics_tb;
     logic        io_valid, io_we;
     logic [15:0] io_addr;
     logic [7:0]  io_wdata, io_rdata;
-    logic        io_hit;
 
-    lpt_centronics dut (
+    wire lpt_hit = (io_addr >= 16'h0378) && (io_addr <= 16'h037F);
+    wire cs_n    = !(io_valid && lpt_hit);
+    wire wr_n    = !(io_valid && io_we && lpt_hit);
+    wire rd_n    = !(io_valid && !io_we && lpt_hit);
+
+    chip_centronics_lpt dut (
         .i_clock    ( clock ),
         .i_reset    ( reset ),
-        .i_io_valid ( io_valid ),
-        .i_io_we    ( io_we ),
-        .i_io_addr  ( io_addr ),
-        .i_io_wdata ( io_wdata ),
-        .o_io_rdata ( io_rdata ),
-        .o_io_hit   ( io_hit )
+        .i_cs_n     ( cs_n ),
+        .i_rd_n     ( rd_n ),
+        .i_wr_n     ( wr_n ),
+        .i_a        ( io_addr[2:0] ),
+        .i_d        ( io_wdata ),
+        .o_d        ( io_rdata )
     );
 
     always #5 clock = ~clock;

@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_disp_imm
+module: du_decode_disp_imm
 create at: 2022-02-25 04:29:04
 description: decode the s-i-b means scale-index-base
 */
@@ -14,7 +14,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 `include "openx86_defs.h.sv"
 
-module decode_disp_imm (
+module du_decode_disp_imm (
     input  logic [ 7:0] i_instruction [0:7],
     input  logic        i_displacement_size_1,
     input  logic        i_displacement_size_2,

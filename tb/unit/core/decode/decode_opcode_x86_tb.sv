@@ -224,7 +224,7 @@ module decode_opcode_x86_tb;
     logic o_opcode_x86_XOR_imm_to_acc;
 
     // 实例化被测试模块
-    decode_opcode_x86 dut (
+    du_decode_opcode_x86 dut (
         .i_instruction(i_instruction),
         .o_opcode_x86_AAA_ASCII_adjust_after_add(o_opcode_x86_AAA_ASCII_adjust_after_add),
         .o_opcode_x86_AAD_ASCII_AX_before_div(o_opcode_x86_AAD_ASCII_AX_before_div),

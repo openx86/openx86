@@ -2,7 +2,7 @@
 // Branch Unit — 近分支相对位移与 Jcc 条件判定（386 子集）
 // ============================================================================
 
-module execute_branch_unit (
+module eu_execute_branch_unit (
     input  logic        i_is_jcc,
     input  logic [ 3:0] i_jcc_nibble,
     input  logic        i_CF,

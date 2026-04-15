@@ -8,7 +8,7 @@
 // - 标志位更新（例如 ZF/SF/PF，CF/OF 清零等）通常由上层统一实现。
 // ============================================================================
 
-module execute_logic_and #(
+module eu_log_execute_logic_and #(
     // parameter
     BIT_WIDTH = 32
 ) (

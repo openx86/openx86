@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_sib
+module: du_decode_sib
 create at: 2022-02-25 04:26:25
 description: decode the s-i-b means scale-index-base
 */
@@ -14,7 +14,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 `include "openx86_defs.h.sv"
 
-module decode_sib (
+module du_decode_sib (
     input  logic [ 7:0] i_sib,
     input  logic [ 1:0] i_mod,
     output logic [ 1:0] o_scale_factor,

@@ -10,9 +10,9 @@
 | `sd_4bit_phy.sv` | SDIO 物理层：CMD/DAT 开漏与 CLK 输出，供片内主机驱动板级 SD 插座。 |
 | `sd_native_host_4bit.sv` | SDIO 4-bit 主机（CMD + 数据阶段 FSM），由 `ide_sd_sector_bridge` 触发块读。 |
 | `ide_sd_sector_bridge.sv` | IDE 扇区请求与 SD 主机之间的握手与缓冲。 |
-| `disk_ram_8_tb.sv` | `disk_ram_8` + `ide_ata_pio`（`USE_INTERNAL_DISK_MEM=0`）集成测试。 |
+| `disk_ram_8_tb.sv` | `disk_ram_8` + `chip_ata_ide`（`USE_INTERNAL_DISK_MEM=0`）集成测试。 |
 
-CPU 侧 **仅通过 IDE**（`0x1F0–0x1F7` / `0x3F6`）访问硬盘：`rtl/chipset/pc_chipset_io.sv` 内例化 `disk_ram_8`，`ide_ata_pio` 使用 **外部盘** 读口 A。SD 主机与卡模型可在 SoC 顶层或仿真里再接到 **同一 `disk_ram_8` 的写口与读口 B**（例如块编程、脱机灌盘）。
+CPU 侧 **仅通过 IDE**（`0x1F0–0x1F7` / `0x3F6`）访问硬盘：`rtl/bus.sv` 的 `bus_devices` 内例化 `disk_ram_8`，`chip_ata_ide` 使用 **外部盘** 读口 A。SD 主机与卡模型可在 SoC 顶层或仿真里再接到 **同一 `disk_ram_8` 的写口与读口 B**（例如块编程、脱机灌盘）。
 
 ## 与旧版区别
 
@@ -21,5 +21,5 @@ CPU 侧 **仅通过 IDE**（`0x1F0–0x1F7` / `0x3F6`）访问硬盘：`rtl/chip
 
 ## 仿真
 
-- `disk_ram_8_tb.sv`：根目录 `./test_all_modules.sh` 会自动编译 `sd_disk_ram_8.sv` + `ide_ata_pio.sv`。
+- `disk_ram_8_tb.sv`：根目录 `./test_all_modules.sh` 会自动编译 `sd_disk_ram_8.sv` + `chip_ata_ide.sv`。
 - `ide_sd_native_disk_tb.sv`：IDE + SDIO 主机 + 原生卡模型读扇区路径。

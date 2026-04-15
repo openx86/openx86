@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: instruction_point_register
+module: rf_instruction_point_register
 create at: 2022-01-31 01:19:14
 description: define the instruction point register
 */
@@ -19,7 +19,7 @@ pointer named IP, which is used by 16-bit
 addressing.
 */
 
-module instruction_point_register (
+module rf_instruction_point_register (
     // ports
     input  logic        write_enable,
     input  logic [31:0] write_data,

@@ -20,7 +20,7 @@ module execute_unit_tb;
         forever #5 clk = ~clk;
     end
 
-    address_generation_unit u_agu (
+    eu_address_generation_unit u_agu (
         .i_base              ( 32'h1000 ),
         .i_index             ( 32'h2 ),
         .i_scale             ( 2'd2 ),
@@ -28,7 +28,7 @@ module execute_unit_tb;
         .o_effective_address ( eff )
     );
 
-    execute_branch_unit u_br (
+    eu_execute_branch_unit u_br (
         .i_is_jcc     ( 1'b1 ),
         .i_jcc_nibble ( 4'h4 ),
         .i_CF         ( 1'b0 ),
@@ -44,7 +44,7 @@ module execute_unit_tb;
         .o_target_eip ( br_tgt )
     );
 
-    execute_muldiv_unit u_md (
+    eu_execute_muldiv_unit u_md (
         .i_op   ( 3'd1 ),
         .i_lo   ( 32'd1000 ),
         .i_hi   ( 32'h0 ),

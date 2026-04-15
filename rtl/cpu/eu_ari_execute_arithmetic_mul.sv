@@ -9,7 +9,7 @@
 //   具体截断/高低位选择由上层或其他单元决定。
 // ============================================================================
 
-module execute_arithmetic_mul #(
+module eu_ari_execute_arithmetic_mul #(
     // parameter
     BIT_WIDTH = 32
 ) (

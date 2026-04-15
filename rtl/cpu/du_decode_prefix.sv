@@ -2,13 +2,13 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_prefix
+module: du_decode_prefix
 create at: 2022-02-20 09:24:27
 description: decode prefix from instruction
 */
 
 `include "openx86_defs.h.sv"
-module decode_prefix (
+module du_decode_prefix (
     input  logic [ 7:0] i_instruction,
     output logic        o_group_1_lock_bus,
     output logic        o_group_1_repeat_not_equal,

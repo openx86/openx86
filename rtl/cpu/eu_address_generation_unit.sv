@@ -4,7 +4,7 @@
 // 用于 ModR/M、SIB 寻址；段基址/分页在 MMU 侧叠加
 // ============================================================================
 
-module address_generation_unit (
+module eu_address_generation_unit (
     input  logic [31:0] i_base,
     input  logic [31:0] i_index,
     input  logic [ 1:0] i_scale,

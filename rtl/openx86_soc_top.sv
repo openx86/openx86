@@ -1,5 +1,5 @@
 // ============================================================================
-// Minimal SoC: w686_cpu + bus + SDRAM 主存 + pc_bios_24lc32 + VGA
+// Minimal SoC: w686_cpu 仅接 bus；SDRAM/ROM/VGA/chipset 均由 bus 译码后驱动
 // ============================================================================
 
 module openx86_soc_top #(
@@ -266,7 +266,7 @@ module openx86_soc_top #(
 
     // 系统 BIOS 0xF0000–0xFFFFF + 扩展 ROM 0xC0000–0xDFFFF → 后端 EEPROM（镜像：128KB 扩展 + 64KB 系统）
     // 使用 24LC32（4KiB）做后端：地址在 192KiB 线性镜像上取模映射到 4KiB
-    pc_bios_24lc32 u_bios_24lc32 (
+    chip_pc_bios_eeprom u_bios_24lc32 (
         .clock               ( clock ),
         .reset               ( reset ),
         .i_sys_bios_byte_off ( bios_addr ),

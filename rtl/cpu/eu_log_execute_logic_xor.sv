@@ -4,7 +4,7 @@
 // 执行单元逻辑子模块：XOR（按位异或）。
 // ============================================================================
 
-module execute_logic_xor #(
+module eu_log_execute_logic_xor #(
     // parameter
     BIT_WIDTH = 32
 ) (

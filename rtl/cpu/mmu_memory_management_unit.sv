@@ -2,12 +2,12 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: memory_management_unit
+module: mmu_memory_management_unit
 create at: 2022-02-04 23:34:40
-description: memory_management_unit
+description: mmu_memory_management_unit
 */
 
-module memory_management_unit #(
+module mmu_memory_management_unit #(
     parameter bit read_from_fetch = 1'b0
 ) (
     // handshake
@@ -48,7 +48,7 @@ always_comb begin
     end
 end
 
-segmentation_unit #(
+mmu_seg_segmentation_unit #(
     .read_from_fetch ( read_from_fetch )
 ) mmu_segmentation_unit (
     .i_protected_mode ( i_protected_mode ),
@@ -63,7 +63,7 @@ segmentation_unit #(
     .reset ( reset )
 );
 
-paging_unit mmu_paging_unit (
+mmu_pg_paging_unit mmu_paging_unit (
     .i_vaild ( paging_vaild ),
     .o_ready ( paging_ready ),
     .i_linear_address ( linear_address ),

@@ -1,10 +1,11 @@
 // ============================================================================
 // IDE ATA 主通道 PIO — 简化寄存器 + 扇区读
-// USE_INTERNAL_DISK_MEM=1：内部 RAM（默认，兼容 ide_ata_pio_tb）
+// 主机接口：nCS/nRD/nWR + i_addr[15:0]（0x1F0–0x1F7、0x3F6；译码由上层完成）
+// USE_INTERNAL_DISK_MEM=1：内部 RAM（默认，兼容 chip_ata_ide_tb）
 // USE_INTERNAL_DISK_MEM=0：外部盘映像 o_disk_raddr / i_disk_rdata（与 SD 共享）
 // ============================================================================
 
-module ide_ata_pio #(
+module chip_ata_ide #(
     parameter int SECTOR_BYTES = 512,
     parameter int SECTOR_COUNT = 4,
     parameter bit USE_INTERNAL_DISK_MEM = 1,
@@ -12,23 +13,17 @@ module ide_ata_pio #(
 ) (
     input  logic        i_clock,
     input  logic        i_reset,
-    input  logic        i_io_valid,
-    input  logic        i_io_we,
-    input  logic [15:0] i_io_addr,
-    input  logic [7:0]  i_io_wdata,
-    output logic [7:0]  o_io_rdata,
-    output logic        o_io_hit,
+    input  logic        i_cs_n,
+    input  logic        i_rd_n,
+    input  logic        i_wr_n,
+    input  logic [15:0] i_addr,
+    input  logic [7:0]  i_d,
+    output logic [7:0]  o_d,
     output logic [31:0] o_disk_raddr,
     input  logic [7:0]  i_disk_rdata,
     input  logic        i_disk_sector_ready,
     output logic        o_disk_sector_req
 );
-
-    localparam logic [15:0] BASE_LO = 16'h01F0;
-    localparam logic [15:0] BASE_HI = 16'h01F7;
-    localparam logic [15:0] ALT     = 16'h03F6;
-
-    assign o_io_hit = ((i_io_addr >= BASE_LO) && (i_io_addr <= BASE_HI)) || (i_io_addr == ALT);
 
     typedef enum logic [2:0] {
         ST_IDLE,
@@ -60,6 +55,9 @@ module ide_ata_pio #(
     localparam int DM_DEPTH = USE_INTERNAL_DISK_MEM ? 4096 : 1;
     logic [7:0] disk_mem [0:DM_DEPTH-1];
     logic [7:0] disk_rdata_mux;
+
+    wire wr = !i_cs_n && !i_wr_n;
+    wire rd = !i_cs_n && !i_rd_n;
 
     always_comb begin
         if (USE_INTERNAL_DISK_MEM) begin
@@ -99,15 +97,15 @@ module ide_ata_pio #(
             state   <= ST_DRQ;
             buf_ptr <= '0;
             status  <= ST_DRQ_F | ST_RDY;
-        end else if (i_io_valid && i_io_we && o_io_hit) begin
-            unique case (i_io_addr)
-                16'h01F2: sector_cnt <= i_io_wdata;
-                16'h01F3: lba_lo  <= i_io_wdata;
-                16'h01F4: lba_mid <= i_io_wdata;
-                16'h01F5: lba_hi  <= i_io_wdata;
-                16'h01F6: drv_head <= i_io_wdata;
+        end else if (wr) begin
+            unique case (i_addr)
+                16'h01F2: sector_cnt <= i_d;
+                16'h01F3: lba_lo  <= i_d;
+                16'h01F4: lba_mid <= i_d;
+                16'h01F5: lba_hi  <= i_d;
+                16'h01F6: drv_head <= i_d;
                 16'h01F7: begin
-                    if (i_io_wdata == 8'h20) begin
+                    if (i_d == 8'h20) begin
                         mem_off <= { lba_hi, lba_mid, lba_lo };
                         buf_ptr <= '0;
                         if (async_on) begin
@@ -122,7 +120,7 @@ module ide_ata_pio #(
                 16'h03F6: ;
                 default: ;
             endcase
-        end else if (i_io_valid && !i_io_we && o_io_hit && i_io_addr == 16'h01F0 && state == ST_DRQ) begin
+        end else if (rd && i_addr == 16'h01F0 && state == ST_DRQ) begin
             if (buf_ptr == (9'(SECTOR_BYTES) - 9'd1)) begin
                 state   <= ST_IDLE;
                 status  <= ST_RDY;
@@ -135,24 +133,24 @@ module ide_ata_pio #(
     assign o_disk_sector_req = async_on && (state == ST_WAIT_SECTOR);
 
     always_comb begin
-        o_io_rdata = 8'hFF;
-        if (i_io_valid && !i_io_we && o_io_hit) begin
-            unique case (i_io_addr)
+        o_d = 8'hFF;
+        if (rd) begin
+            unique case (i_addr)
                 16'h01F0: begin
                     if (state == ST_DRQ && byte_addr < mem_bytes)
-                        o_io_rdata = disk_rdata_mux;
+                        o_d = disk_rdata_mux;
                     else
-                        o_io_rdata = 8'h00;
+                        o_d = 8'h00;
                 end
-                16'h01F1: o_io_rdata = error_r;
-                16'h01F2: o_io_rdata = sector_cnt;
-                16'h01F3: o_io_rdata = lba_lo;
-                16'h01F4: o_io_rdata = lba_mid;
-                16'h01F5: o_io_rdata = lba_hi;
-                16'h01F6: o_io_rdata = drv_head;
-                16'h01F7: o_io_rdata = status;
-                16'h03F6: o_io_rdata = status;
-                default: o_io_rdata = 8'hFF;
+                16'h01F1: o_d = error_r;
+                16'h01F2: o_d = sector_cnt;
+                16'h01F3: o_d = lba_lo;
+                16'h01F4: o_d = lba_mid;
+                16'h01F5: o_d = lba_hi;
+                16'h01F6: o_d = drv_head;
+                16'h01F7: o_d = status;
+                16'h03F6: o_d = status;
+                default: o_d = 8'hFF;
             endcase
         end
     end

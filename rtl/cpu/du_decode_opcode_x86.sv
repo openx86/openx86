@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_opcode_x86
+module: du_decode_opcode_x86
 create at: 2022-03-02 00:41:18
 description: decode x86(IA-32) opcode selection signal from instruction bytes
 some tricks:
@@ -11,7 +11,7 @@ instruction[2][7:6] is not used
 we could decode it as a mod/rm field, allowing the control/debug register to transfer data to memory
 */
 
-module decode_opcode_x86 (
+module du_decode_opcode_x86 (
     output logic        o_opcode_x86_AAA_ASCII_adjust_after_add,
     output logic        o_opcode_x86_AAD_ASCII_AX_before_div,
     output logic        o_opcode_x86_AAM_ASCII_AX_after_mul,

@@ -2,14 +2,14 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_field
+module: du_decode_field
 create at: 2022-02-25 02:54:27
 description: decode fileds include w, s, reg, mod_r/m, imm, disp
 */
 
 `include "openx86_defs.h.sv"
 
-module decode_field (
+module du_decode_field (
     input  logic [ 7:0] i_instruction [0:3],
     input  logic        i_opcode_x86_AAA_ASCII_adjust_after_add,
     input  logic        i_opcode_x86_AAD_ASCII_AX_before_div,

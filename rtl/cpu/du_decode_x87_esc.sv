@@ -2,7 +2,7 @@
 // X87 FPU — ESC D8h–DFh 译码（第二字节通常为 ModR/M）
 // ============================================================================
 
-module decode_x87_esc (
+module du_decode_x87_esc (
     input  logic [ 7:0] i_b0,
     input  logic [ 7:0] i_b1,
     output logic        o_is_esc,

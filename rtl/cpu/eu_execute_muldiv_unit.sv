@@ -2,7 +2,7 @@
 // Multiply / Divide Unit — MUL/IMUL 32×32→64，DIV/IDIV 64÷32
 // ============================================================================
 
-module execute_muldiv_unit (
+module eu_execute_muldiv_unit (
     input  logic [2:0]  i_op,
     input  logic [31:0] i_lo,
     input  logic [31:0] i_hi,

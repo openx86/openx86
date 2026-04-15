@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: global_descriptor_table_register
+module: rf_sar_global_descriptor_table_register
 create at: 2022-01-30 23:07:44
 description: define global_descriptor_table_register
 */
@@ -37,7 +37,7 @@ bit is 1 then the segment is either a code or data
 segment, if it is 0 then the segment is a system segment.
 */
 
-module global_descriptor_table_register (
+module rf_sar_global_descriptor_table_register (
     input  logic        GDTR_write_enable,
     input  logic [15:0] GDTR_write_data_limit,
     input  logic [31:0] GDTR_write_data_base,

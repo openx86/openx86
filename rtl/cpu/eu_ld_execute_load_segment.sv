@@ -13,7 +13,7 @@
 // 可能只覆盖最小可运行路径，未实现全部异常语义。
 // ============================================================================
 
-module execute_load_segment (
+module eu_ld_execute_load_segment (
     input  logic        protected_mode_enable,
     input  logic [15:0] index_segment_register,
     input  logic [15:0] index_general_register,
@@ -60,7 +60,7 @@ wire        decode_code_conforming;
 wire        decode_code_readable;
 wire        decode_date_or_code_accessed;
 
-segment_descriptor_encode u_segment_descriptor_encode (
+mmu_seg_segment_descriptor_encode u_segment_descriptor_encode (
     .base                                     ( encode_base ),
     .limit                                    ( encode_limit ),
     .present                                  ( encode_present ),
@@ -76,7 +76,7 @@ segment_descriptor_encode u_segment_descriptor_encode (
     .descriptor                               ( encode_descriptor )
 );
 
-segment_descriptor_decode u_segment_descriptor_decode (
+mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .o_base                                     ( decode_base ),
     .o_limit                                    ( decode_limit ),
     .o_date_or_code_present                     ( decode_present ),

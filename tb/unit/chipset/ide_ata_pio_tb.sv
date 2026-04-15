@@ -1,10 +1,5 @@
 // ============================================================================
-// TB: ide_ata_pio
-// ----------------------------------------------------------------------------
-// 目标：验证 IDE ATA PIO 控制器的寄存器访问与数据通路的基础行为。
-//
-// 该 DUT 通常会通过 `o_disk_raddr/i_disk_rdata` 与磁盘映像 RAM 交互；
-// 系统级仿真中磁盘映像在 testbench 里对 `disk_ram_8.mem` 做装载（如 soc_top_tb 的 +DISK_BIN/+DISK_HEX）。
+// TB: chip_ata_ide（ISA 并行口）
 // ============================================================================
 
 module ide_ata_pio_tb;
@@ -16,19 +11,23 @@ module ide_ata_pio_tb;
     logic [15:0] io_addr;
     logic [7:0]  io_wdata;
     logic [7:0]  io_rdata;
-    logic        io_hit;
+
+    wire ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
+    wire cs_n    = !(io_valid && ide_hit);
+    wire wr_n    = !(io_valid && io_we && ide_hit);
+    wire rd_n    = !(io_valid && !io_we && ide_hit);
 
     wire [31:0] disk_ra;
     wire disk_sector_req;
-    ide_ata_pio dut (
+    chip_ata_ide dut (
         .i_clock             ( clock ),
         .i_reset             ( reset ),
-        .i_io_valid          ( io_valid ),
-        .i_io_we             ( io_we ),
-        .i_io_addr           ( io_addr ),
-        .i_io_wdata          ( io_wdata ),
-        .o_io_rdata          ( io_rdata ),
-        .o_io_hit            ( io_hit ),
+        .i_cs_n              ( cs_n ),
+        .i_rd_n              ( rd_n ),
+        .i_wr_n              ( wr_n ),
+        .i_addr              ( io_addr ),
+        .i_d                 ( io_wdata ),
+        .o_d                 ( io_rdata ),
         .o_disk_raddr        ( disk_ra ),
         .i_disk_rdata        ( 8'h0 ),
         .i_disk_sector_ready ( 1'b0 ),

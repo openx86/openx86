@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: control_register
+module: rf_control_register
 create at: 2021-10-23 14:12:03
 description: define the control register
 */
@@ -42,7 +42,7 @@ does not change during the task switch, the cached
 page table entries are not flushed.
 */
 
-module control_register (
+module rf_control_register (
     // ports
     input  logic         write_enable,
     input  logic [ 2: 0] write_index,

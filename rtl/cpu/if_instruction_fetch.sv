@@ -6,7 +6,7 @@
 // description: instruction fetch module
 
 `include "openx86_defs.h.sv"
-module instruction_fetch (
+module if_instruction_fetch (
     // signal from bus_interface_unit
     output logic        o_code_vaild,
     input  logic        i_code_ready,
@@ -42,7 +42,7 @@ logic [31:0] if_mmu_bus_wdata;
 assign if_mmu_bus_ready  = 1'b0;
 assign if_mmu_bus_rdata   = 32'h0;
 
-memory_management_unit #(
+mmu_memory_management_unit #(
     .read_from_fetch ( 1 )
 ) instruction_fetch_memory_management_unit (
     .i_vaild ( i_vaild ),

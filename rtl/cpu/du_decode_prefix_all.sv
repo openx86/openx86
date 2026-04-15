@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: decode_prefix
+module: du_decode_prefix_all
 create at: 2021-12-28 16:56:15
 description: decode prefix from instruction
 
@@ -49,7 +49,7 @@ Kevin McGrath and Dave Christie, "The AMD x86-64 Architecture: Extending the x86
 */
 
 `include "openx86_defs.h.sv"
-module decode_prefix_all (
+module du_decode_prefix_all (
     input  logic [ 7:0] i_instruction [0:3],
     output logic        o_group_1_lock_bus,
     output logic        o_group_1_repeat_not_equal,
@@ -212,7 +212,7 @@ always_comb begin
     endcase
 end
 
-decode_prefix decode_prefix_in_stage_0_from_instruction_0 (
+du_decode_prefix decode_prefix_in_stage_0_from_instruction_0 (
     .i_instruction                   ( i_instruction                [0] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [0] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [0] ),
@@ -231,7 +231,7 @@ decode_prefix decode_prefix_in_stage_0_from_instruction_0 (
     .o_segment_override_index        ( segment_override_index       [0] )
 );
 
-decode_prefix decode_prefix_in_stage_0_from_instruction_1 (
+du_decode_prefix decode_prefix_in_stage_0_from_instruction_1 (
     .i_instruction                   ( i_instruction                [1] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [1] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [1] ),
@@ -250,7 +250,7 @@ decode_prefix decode_prefix_in_stage_0_from_instruction_1 (
     .o_segment_override_index        ( segment_override_index       [1] )
 );
 
-decode_prefix decode_prefix_in_stage_0_from_instruction_2 (
+du_decode_prefix decode_prefix_in_stage_0_from_instruction_2 (
     .i_instruction                   ( i_instruction                [2] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [2] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [2] ),
@@ -269,7 +269,7 @@ decode_prefix decode_prefix_in_stage_0_from_instruction_2 (
     .o_segment_override_index        ( segment_override_index       [2] )
 );
 
-decode_prefix decode_prefix_in_stage_0_from_instruction_3 (
+du_decode_prefix decode_prefix_in_stage_0_from_instruction_3 (
     .i_instruction                   ( i_instruction                [3] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [3] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [3] ),

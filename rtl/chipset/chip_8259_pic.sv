@@ -1,27 +1,24 @@
 // ============================================================================
 // Intel 8259 PIC — 单片简化模型（可级联）
-// PORT_BASE: 主片 0x0020（端口 0x20/0x21），从片 0x00A0
+// 主机接口：ISA 式 nCS/nRD/nWR + A0（0=命令/OCW，1=数据/IMR）
+// 片选与端口译码由 bus_devices / 总线侧完成（主片 0x20/0x21，从片 0xA0/0xA1）
 // 支持 ICW1–ICW4 初始化、OCW1 写 IMR、OCW2 非特殊 EOI(0x20)
-// 读 0x20: IRR（简化，不区分 ISR/IRR 选择）
+// 读命令口: IRR（简化，不区分 ISR/IRR 选择）
 // o_intr = |(i_ir & ~imr)（电平敏感，与边沿触发真片有差异）
 // ============================================================================
 
-module i8259_pic #(
-    parameter logic [15:0] PORT_BASE = 16'h0020
-) (
+module chip_8259_pic (
     input  logic        i_clock,
     input  logic        i_reset,
-    input  logic        i_io_valid,
-    input  logic        i_io_we,
-    input  logic [15:0] i_io_addr,
-    input  logic [7:0]  i_io_wdata,
-    output logic [7:0]  o_io_rdata,
-    output logic        o_io_hit,
+    input  logic        i_cs_n,
+    input  logic        i_rd_n,
+    input  logic        i_wr_n,
+    input  logic        i_a0,
+    input  logic [7:0]  i_d,
+    output logic [7:0]  o_d,
     input  logic [7:0]  i_ir,
     output logic        o_intr
 );
-
-    assign o_io_hit = (i_io_addr == PORT_BASE) || (i_io_addr == PORT_BASE + 16'h1);
 
     typedef enum logic [2:0] {
         ST_RESET,
@@ -42,6 +39,9 @@ module i8259_pic #(
     logic [7:0]           irr;
     logic [7:0]           isr;
 
+    wire wr = !i_cs_n && !i_wr_n;
+    wire rd = !i_cs_n && !i_rd_n;
+
     assign o_intr = (state == ST_READY) && (|(i_ir & ~imr));
 
     always_ff @(posedge i_clock or posedge i_reset) begin
@@ -56,24 +56,23 @@ module i8259_pic #(
             imr       <= 8'hFF;
             irr       <= '0;
             isr       <= '0;
-        end else if (i_io_valid && i_io_we && o_io_hit) begin
-            if (i_io_addr[0] == 1'b0) begin
-                if (i_io_wdata[4]) begin
-                    // ICW1
-                    icw1      <= i_io_wdata;
-                    need_icw3 <= !i_io_wdata[1];
-                    need_icw4 <= i_io_wdata[0];
+        end else if (wr) begin
+            if (i_a0 == 1'b0) begin
+                if (i_d[4]) begin
+                    icw1      <= i_d;
+                    need_icw3 <= !i_d[1];
+                    need_icw4 <= i_d[0];
                     state     <= ST_ICW2;
                 end else if (state == ST_READY) begin
-                    if (i_io_wdata == 8'h20) begin
+                    if (i_d == 8'h20) begin
                         isr <= '0;
                     end
                 end
             end else begin
                 unique case (state)
-                    ST_RESET: ; // 等 ICW1
+                    ST_RESET: ;
                     ST_ICW2: begin
-                        icw2_vec <= i_io_wdata;
+                        icw2_vec <= i_d;
                         if (need_icw3)
                             state <= ST_ICW3;
                         else if (need_icw4)
@@ -82,18 +81,18 @@ module i8259_pic #(
                             state <= ST_READY;
                     end
                     ST_ICW3: begin
-                        icw3 <= i_io_wdata;
+                        icw3 <= i_d;
                         if (need_icw4)
                             state <= ST_ICW4;
                         else
                             state <= ST_READY;
                     end
                     ST_ICW4: begin
-                        icw4  <= i_io_wdata;
+                        icw4  <= i_d;
                         state <= ST_READY;
                     end
                     ST_READY: begin
-                        imr <= i_io_wdata;
+                        imr <= i_d;
                     end
                 endcase
             end
@@ -103,12 +102,12 @@ module i8259_pic #(
     end
 
     always_comb begin
-        o_io_rdata = 8'hFF;
-        if (i_io_valid && !i_io_we && o_io_hit) begin
-            if (i_io_addr[0] == 1'b0)
-                o_io_rdata = irr;
+        o_d = 8'hFF;
+        if (rd) begin
+            if (i_a0 == 1'b0)
+                o_d = irr;
             else
-                o_io_rdata = imr;
+                o_d = imr;
         end
     end
 

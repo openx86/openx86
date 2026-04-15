@@ -17,7 +17,7 @@
 // - mem[] 不在本模块做上电/文件初始化；由 testbench 写入（如擦除态 0xFF）。
 // ============================================================================
 
-module at24lc32 #(
+module chip_at24lc32_eeprom #(
     parameter logic [2:0] A_PINS = 3'b000,
     parameter int         NUM_BYTES = 4096,
     parameter int         PAGE_BYTES = 32

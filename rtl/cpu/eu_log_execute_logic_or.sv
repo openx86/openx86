@@ -4,7 +4,7 @@
 // 执行单元逻辑子模块：OR（按位或）。
 // ============================================================================
 
-module execute_logic_or #(
+module eu_log_execute_logic_or #(
     // parameter
     BIT_WIDTH = 32
 ) (

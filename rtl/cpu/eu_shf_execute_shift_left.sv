@@ -5,7 +5,7 @@
 // - `result = operand << count`
 // ============================================================================
 
-module execute_shift_left #(
+module eu_shf_execute_shift_left #(
     // parameter
     BIT_WIDTH = 32
 ) (

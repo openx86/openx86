@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: segment_register
+module: rf_segment_register
 create at: 2022-01-31 03:54:23
 description: define the segment register
 */
@@ -12,7 +12,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 */
 
-module segment_register (
+module rf_segment_register (
     input  logic        write_enable,
     input  logic [ 2:0] write_index,
     input  logic [15:0] write_selector,

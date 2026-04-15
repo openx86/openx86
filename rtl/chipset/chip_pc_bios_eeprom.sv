@@ -14,7 +14,7 @@
 // mem[] 内容不在本模块初始化；仿真/验证在 testbench 中装载或写入。
 // ============================================================================
 
-module pc_bios_24lc32 #(
+module chip_pc_bios_eeprom #(
     parameter int EEPROM_BYTES = 4096      // 24LC32 = 4096 bytes
 ) (
     input  logic        clock,

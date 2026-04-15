@@ -8,7 +8,7 @@
 // - 该文件当前仅输出加法结果；标志位（CF/OF/...）若需要应由上层统一计算。
 // ============================================================================
 
-module execute_arithmetic_adc #(
+module eu_ari_execute_arithmetic_adc #(
     // parameter
     BIT_WIDTH = 32
 ) (

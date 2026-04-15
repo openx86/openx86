@@ -5,7 +5,7 @@
 // - `is_signed` 用于选择逻辑右移(0)或算术右移(1)的行为（高位填充 0 或符号位）。
 // ============================================================================
 
-module execute_shift_right #(
+module eu_shf_execute_shift_right #(
     // parameter
     BIT_WIDTH = 32
 ) (

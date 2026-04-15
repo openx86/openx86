@@ -71,7 +71,7 @@ module soc_top_tb;
             $display("soc_top_tb: cannot open DISK_BIN %s", path);
             return;
         end
-        n = $fread(dut.u_bus.u_chipset.g_disk_ram.u_disk_image.mem, fh);
+        n = $fread(dut.u_bus.u_bus_controller.u_devices.g_disk_ram.u_disk_image.mem, fh);
         $fclose(fh);
         $display("soc_top_tb: DISK_BIN loaded %0d bytes", n);
     endtask
@@ -116,22 +116,22 @@ module soc_top_tb;
             if ($value$plusargs("DISK_BIN=%s", p))
                 tb_load_bin_to_disk(p);
             else if ($value$plusargs("DISK_HEX=%s", p))
-                $readmemh(p, dut.u_bus.u_chipset.g_disk_ram.u_disk_image.mem);
+                $readmemh(p, dut.u_bus.u_bus_controller.u_devices.g_disk_ram.u_disk_image.mem);
             else begin
-                dut.u_bus.u_chipset.g_disk_ram.u_disk_image.mem[0] = 8'hA5;
-                dut.u_bus.u_chipset.g_disk_ram.u_disk_image.mem[1] = 8'h5A;
+                dut.u_bus.u_bus_controller.u_devices.g_disk_ram.u_disk_image.mem[0] = 8'hA5;
+                dut.u_bus.u_bus_controller.u_devices.g_disk_ram.u_disk_image.mem[1] = 8'h5A;
             end
         end
 
         begin
             int i;
-            int nb = $size(dut.u_bus.u_fdc.sram);
+            int nb = $size(dut.u_bus.u_bus_controller.u_devices.u_fdc.sram);
             for (i = 0; i < nb; i++)
-                dut.u_bus.u_fdc.sram[i] = 8'hE5;
+                dut.u_bus.u_bus_controller.u_devices.u_fdc.sram[i] = 8'hE5;
             if (nb > 2) begin
-                dut.u_bus.u_fdc.sram[0] = 8'hEB;
-                dut.u_bus.u_fdc.sram[1] = 8'h3C;
-                dut.u_bus.u_fdc.sram[2] = 8'h90;
+                dut.u_bus.u_bus_controller.u_devices.u_fdc.sram[0] = 8'hEB;
+                dut.u_bus.u_bus_controller.u_devices.u_fdc.sram[1] = 8'h3C;
+                dut.u_bus.u_bus_controller.u_devices.u_fdc.sram[2] = 8'h90;
             end
         end
     end

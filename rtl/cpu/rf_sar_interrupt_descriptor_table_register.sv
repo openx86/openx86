@@ -2,7 +2,7 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: interrupt_descriptor_table_register
+module: rf_sar_interrupt_descriptor_table_register
 create at: 2022-01-30 23:31:01
 description: define interrupt_descriptor_table_register
 */
@@ -23,7 +23,7 @@ are referenced via INT instructions, external interrupt
 vectors, and exceptions. (See 2.9 Interrupts).
 */
 
-module interrupt_descriptor_table_register (
+module rf_sar_interrupt_descriptor_table_register (
     input  logic        IDTR_write_enable,
     input  logic [15:0] IDTR_write_data_limit,
     input  logic [31:0] IDTR_write_data_base,
