@@ -12,7 +12,8 @@ NC='\033[0m' # No Color
 
 # 项目根目录
 PROJECT_ROOT=$(pwd)
-RTL_DIR="$PROJECT_ROOT/rtl"
+RTL_DIR="$PROJECT_ROOT/src/rtl"
+TB_DIR="$PROJECT_ROOT/tb"
 
 # 检测可用的仿真器
 SIMULATOR=""
@@ -34,8 +35,46 @@ TOTAL=0
 
 # 查找所有testbench文件
 find_testbenches() {
-    find "$RTL_DIR" -name "*_tb.sv" -type f | sort
+    local roots=()
+    [[ -d "$TB_DIR" ]] && roots+=("$TB_DIR")
+    [[ -d "$RTL_DIR" ]] && roots+=("$RTL_DIR")
+    if [[ ${#roots[@]} -eq 0 ]]; then
+        return 0
+    fi
+    find "${roots[@]}" -name "*_tb.sv" -type f | sort
 }
+
+# 从 sim/filelists/rtl.f 加载 RTL 源文件与 include 目录（优先于启发式依赖推断）
+RTL_FILELIST="$PROJECT_ROOT/sim/filelists/rtl.f"
+RTL_SOURCES=()
+RTL_INCDIRS=()
+
+load_rtl_sources() {
+    RTL_SOURCES=()
+    RTL_INCDIRS=()
+
+    if [[ -f "$RTL_FILELIST" ]]; then
+        while IFS= read -r line; do
+            line="${line#"${line%%[![:space:]]*}"}"
+            line="${line%"${line##*[![:space:]]}"}"
+            [[ -z "$line" ]] && continue
+            [[ "$line" == \#* ]] && continue
+            if [[ "$line" == +incdir+* ]]; then
+                RTL_INCDIRS+=("${line#'+incdir+'}")
+                continue
+            fi
+            RTL_SOURCES+=("$PROJECT_ROOT/$line")
+        done < "$RTL_FILELIST"
+    else
+        # 兼容旧结构：扫描 rtl/（排除 *_tb.sv）
+        while IFS= read -r f; do
+            RTL_SOURCES+=("$f")
+        done < <(find "$RTL_DIR" -type f -name "*.sv" ! -name "*_tb.sv" | sort)
+        RTL_INCDIRS+=("$RTL_DIR")
+    fi
+}
+
+load_rtl_sources
 
 # 获取模块的依赖文件
 get_dependencies() {
@@ -62,29 +101,29 @@ get_dependencies() {
         deps="$deps $RTL_DIR/common/edge_detect.sv"
     fi
     if grep -q "vga_port" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga/vga_port.sv"
+        deps="$deps $RTL_DIR/periph/vga/vga_port.sv"
     fi
     if grep -q "vga_font_rom" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/periph/vga/vga_font_rom.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
     fi
     if grep -q "vga_text_color" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga/vga_text_color.sv"
+        deps="$deps $RTL_DIR/periph/vga/vga_text_color.sv"
     fi
     if grep -q "vga_text_intense" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga/vga_text_intense.sv"
+        deps="$deps $RTL_DIR/periph/vga/vga_text_intense.sv"
     fi
     if grep -q "ide_ata_pio" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
     fi
     if grep -q "pc_bios_eeprom" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/eeprom/eeprom_controller.sv"
+        deps="$deps $RTL_DIR/periph/eeprom/eeprom_controller.sv"
     fi
     if grep -q "pc_bios_24lc32" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/pc_bios_24lc32.sv"
     fi
     if grep -q "ps2_i8042" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/ps2/ps2_host_phy.sv"
+        deps="$deps $RTL_DIR/periph/ps2/ps2_host_phy.sv"
     fi
     if grep -q "bus u_" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/openx86_chipset_pkg.sv"
@@ -92,25 +131,25 @@ get_dependencies() {
         deps="$deps $RTL_DIR/chipset/i8259_pic.sv"
         deps="$deps $RTL_DIR/chipset/i8237_dma.sv"
         deps="$deps $RTL_DIR/chipset/rtc_mc146818.sv"
-        deps="$deps $RTL_DIR/peripheral/ps2/ps2_host_phy.sv"
+        deps="$deps $RTL_DIR/periph/ps2/ps2_host_phy.sv"
         deps="$deps $RTL_DIR/chipset/ps2_i8042.sv"
         deps="$deps $RTL_DIR/chipset/com_ns16550.sv"
         deps="$deps $RTL_DIR/chipset/lpt_centronics.sv"
         deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
-        deps="$deps $RTL_DIR/peripheral/sdcard/disk_ram_8.sv"
+        deps="$deps $RTL_DIR/periph/sdcard/disk_ram_8.sv"
         deps="$deps $RTL_DIR/chipset/pc_chipset_io.sv"
-        deps="$deps $RTL_DIR/peripheral/fdc/fdc_nec765_sram.sv"
+        deps="$deps $RTL_DIR/periph/fdc/fdc_nec765_sram.sv"
         deps="$deps $RTL_DIR/bus.sv"
     fi
     if grep -q "sdram_controller" "$module_file"; then
         deps="$deps $RTL_DIR/memory/sdram_controller.sv"
     fi
     if grep -q "vga_graphics_adapter" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/vga/vga_graphics_adapter.sv"
-        deps="$deps $RTL_DIR/peripheral/vga/vga_port.sv"
-        deps="$deps $RTL_DIR/peripheral/vga/vga_font_rom.sv"
-        deps="$deps $RTL_DIR/peripheral/vga/vga_text_color.sv"
-        deps="$deps $RTL_DIR/peripheral/vga/vga_text_intense.sv"
+        deps="$deps $RTL_DIR/periph/vga/vga_graphics_adapter.sv"
+        deps="$deps $RTL_DIR/periph/vga/vga_port.sv"
+        deps="$deps $RTL_DIR/periph/vga/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/periph/vga/vga_text_color.sv"
+        deps="$deps $RTL_DIR/periph/vga/vga_text_intense.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
         deps="$deps $RTL_DIR/common/simple_dual_port_ram.sv"
     fi
@@ -182,21 +221,14 @@ run_test() {
         
         # 添加testbench
         compile_cmd="$compile_cmd $testbench"
-        
-        # 获取并添加依赖
-        local deps=$(get_dependencies "$testbench")
-        if [ -n "$deps" ]; then
-            compile_cmd="$compile_cmd $deps"
-        fi
-        
-        # 自动查找并添加对应的模块文件（如果testbench名称匹配）
-        local module_file=$(echo "$testbench" | sed 's/_tb\.sv$/.sv/')
-        if [ -f "$module_file" ] && [ "$module_file" != "$testbench" ]; then
-            compile_cmd="$compile_cmd $module_file"
-        fi
-        
-        # 添加include路径
-        compile_cmd="$compile_cmd -I$RTL_DIR"
+
+        # 添加 RTL 全量源（由 filelist 定义，避免 tb 移动后依赖推断失效）
+        compile_cmd="$compile_cmd ${RTL_SOURCES[*]}"
+
+        # 添加 include 路径
+        for d in "${RTL_INCDIRS[@]}"; do
+            compile_cmd="$compile_cmd -I$d"
+        done
         
         # 编译
         if eval "$compile_cmd" 2>&1 | tee "${module_name}_compile.log"; then

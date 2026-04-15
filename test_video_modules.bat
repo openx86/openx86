@@ -5,9 +5,10 @@ REM 支持iverilog
 setlocal enabledelayedexpansion
 
 set PROJECT_ROOT=%~dp0
-set RTL_DIR=%PROJECT_ROOT%rtl
-set VIDEO_DIR=%RTL_DIR%\peripheral\vga
+set RTL_DIR=%PROJECT_ROOT%src\rtl
+set VIDEO_DIR=%RTL_DIR%\periph\vga
 set COMMON_DIR=%RTL_DIR%\common
+set VIDEO_TB_DIR=%PROJECT_ROOT%tb\unit\peripheral\vga
 
 REM 检测iverilog
 where iverilog >nul 2>&1
@@ -97,11 +98,11 @@ echo ========================================
 echo 开始测试 VGA Graphics Adapter 模块
 echo ========================================
 
-call :run_test "%VIDEO_DIR%\vga_font_rom_tb.sv"
-call :run_test "%VIDEO_DIR%\vga_port_tb.sv"
-call :run_test "%VIDEO_DIR%\vga_text_color_tb.sv"
-call :run_test "%VIDEO_DIR%\vga_text_intense_tb.sv"
-call :run_test "%VIDEO_DIR%\vga_graphics_adapter_tb.sv"
+call :run_test "%VIDEO_TB_DIR%\vga_font_rom_tb.sv"
+call :run_test "%VIDEO_TB_DIR%\vga_port_tb.sv"
+call :run_test "%VIDEO_TB_DIR%\vga_text_color_tb.sv"
+call :run_test "%VIDEO_TB_DIR%\vga_text_intense_tb.sv"
+call :run_test "%VIDEO_TB_DIR%\vga_graphics_adapter_tb.sv"
 
 REM 输出测试结果
 echo.

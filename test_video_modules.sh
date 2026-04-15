@@ -12,9 +12,10 @@ NC='\033[0m' # No Color
 
 # 项目根目录
 PROJECT_ROOT=$(pwd)
-RTL_DIR="$PROJECT_ROOT/rtl"
-VIDEO_DIR="$RTL_DIR/peripheral/vga"
+RTL_DIR="$PROJECT_ROOT/src/rtl"
+VIDEO_DIR="$RTL_DIR/periph/vga"
 COMMON_DIR="$RTL_DIR/common"
+VIDEO_TB_DIR="$PROJECT_ROOT/tb/unit/peripheral/vga"
 
 # 检测可用的仿真器
 SIMULATOR=""
@@ -142,11 +143,11 @@ echo -e "${GREEN}========================================${NC}"
 
 # 测试所有testbench
 testbenches=(
-    "$VIDEO_DIR/vga_font_rom_tb.sv"
-    "$VIDEO_DIR/vga_port_tb.sv"
-    "$VIDEO_DIR/vga_text_color_tb.sv"
-    "$VIDEO_DIR/vga_text_intense_tb.sv"
-    "$VIDEO_DIR/vga_graphics_adapter_tb.sv"
+    "$VIDEO_TB_DIR/vga_font_rom_tb.sv"
+    "$VIDEO_TB_DIR/vga_port_tb.sv"
+    "$VIDEO_TB_DIR/vga_text_color_tb.sv"
+    "$VIDEO_TB_DIR/vga_text_intense_tb.sv"
+    "$VIDEO_TB_DIR/vga_graphics_adapter_tb.sv"
 )
 
 for tb in "${testbenches[@]}"; do
