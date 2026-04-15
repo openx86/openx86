@@ -6,7 +6,7 @@
 // Reg B(0x0B): SET 冻结日历；DM 选 BCD/二进制；bit1=1 为 24 小时
 // Reg C(0x0C): 只读，读清 PF/AF/UF/IRQF；写忽略
 // Reg D(0x0D): 只读 VRT(7)=1；写忽略
-// 世纪寄存器 0x32 → cmos[50]，按 BCD 解释（与常见 BIOS 一致）
+// 世纪寄存器 0x32 → cmos_ram[50]，按 BCD 解释（与常见 BIOS 一致）
 // UIP/PIE 周期与实芯片分频器可能略有偏差。
 // ============================================================================
 
@@ -35,14 +35,14 @@ module rtc_mc146818 #(
     assign o_io_hit = (i_io_addr == PORT_IDX) || (i_io_addr == PORT_DAT);
 
     logic [7:0] index_reg;
-    logic [7:0] cmos [0:127];
+    logic [7:0] cmos_ram [0:127];
 
-    wire dm_bin   = cmos[11][2];
-    wire mode_24h = cmos[11][1];
-    wire set_stop = cmos[11][7];
-    wire pie_en   = cmos[11][6];
-    wire aie_en   = cmos[11][5];
-    wire uie_en   = cmos[11][4];
+    wire dm_bin   = cmos_ram[11][2];
+    wire mode_24h = cmos_ram[11][1];
+    wire set_stop = cmos_ram[11][7];
+    wire pie_en   = cmos_ram[11][6];
+    wire aie_en   = cmos_ram[11][5];
+    wire uie_en   = cmos_ram[11][4];
 
     logic [5:0] sec_bin, min_bin;
     logic [4:0] hour_bin;
@@ -216,7 +216,7 @@ module rtc_mc146818 #(
     endfunction
 
     always_comb begin
-        unique case (cmos[10][3:0])
+        unique case (cmos_ram[10][3:0])
             4'd0: pie_reload_q = 24'd0;
             4'd1: pie_reload_q = 24'(CLK_HZ / 32768);
             4'd2: pie_reload_q = 24'(CLK_HZ / 16384);
@@ -251,9 +251,9 @@ module rtc_mc146818 #(
     wire [7:0] enc_year = dm_bin ? year_bin : u8_to_bcd(year_bin);
     wire [7:0] enc_dow  = {5'b0, dow_bin};
 
-    wire alarm_now = alarm_field_ok(cmos[1], enc_sec)
-        && alarm_field_ok(cmos[3], enc_min)
-        && alarm_field_ok(cmos[5], enc_hourv);
+    wire alarm_now = alarm_field_ok(cmos_ram[1], enc_sec)
+        && alarm_field_ok(cmos_ram[3], enc_min)
+        && alarm_field_ok(cmos_ram[5], enc_hourv);
 
     logic [6:0] rd_idx;
     always_comb begin
@@ -265,20 +265,20 @@ module rtc_mc146818 #(
             else begin
                 unique case (rd_idx)
                     7'h00: o_io_rdata = enc_sec;
-                    7'h01: o_io_rdata = cmos[1];
+                    7'h01: o_io_rdata = cmos_ram[1];
                     7'h02: o_io_rdata = enc_min;
-                    7'h03: o_io_rdata = cmos[3];
+                    7'h03: o_io_rdata = cmos_ram[3];
                     7'h04: o_io_rdata = enc_hourv;
-                    7'h05: o_io_rdata = cmos[5];
+                    7'h05: o_io_rdata = cmos_ram[5];
                     7'h06: o_io_rdata = enc_dow;
                     7'h07: o_io_rdata = enc_dom;
                     7'h08: o_io_rdata = enc_mon;
                     7'h09: o_io_rdata = enc_year;
-                    7'h0A: o_io_rdata = {uip_phase, cmos[10][6:0]};
-                    7'h0B: o_io_rdata = cmos[11];
+                    7'h0A: o_io_rdata = {uip_phase, cmos_ram[10][6:0]};
+                    7'h0B: o_io_rdata = cmos_ram[11];
                     7'h0C: o_io_rdata = {reg_c_irqf, reg_c_pf, reg_c_af, reg_c_uf, 4'b0};
                     7'h0D: o_io_rdata = 8'h80;
-                    default: o_io_rdata = cmos[rd_idx];
+                    default: o_io_rdata = cmos_ram[rd_idx];
                 endcase
             end
         end
@@ -290,7 +290,7 @@ module rtc_mc146818 #(
         if (i_reset) begin
             index_reg <= '0;
             for (int i = 0; i < 128; i++)
-                cmos[i] <= 8'h00;
+                cmos_ram[i] <= 8'h00;
             sec_bin   <= 6'd0;
             min_bin   <= 6'd0;
             hour_bin  <= 5'd0;
@@ -307,9 +307,9 @@ module rtc_mc146818 #(
             pie_div    <= '0;
             alarm_match_d <= 1'b0;
             read_c_d1  <= 1'b0;
-            cmos[10] <= 8'h26;
-            cmos[11] <= 8'h02;
-            cmos[50] <= 8'h19;
+            cmos_ram[10] <= 8'h26;
+            cmos_ram[11] <= 8'h02;
+            cmos_ram[50] <= 8'h19;
         end else begin
             alarm_match_d <= alarm_now;
 
@@ -341,12 +341,12 @@ module rtc_mc146818 #(
                             end
                             7'h09: year_bin <= dm_bin ? (i_io_wdata > 8'd99 ? 8'd99 : i_io_wdata)
                                 : bcd_to_u8(i_io_wdata);
-                            7'h01, 7'h03, 7'h05: cmos[index_reg[6:0]] <= i_io_wdata;
-                            7'h0A: cmos[10] <= i_io_wdata & 8'h7F;
-                            7'h0B: cmos[11] <= i_io_wdata;
-                            7'h32: cmos[50] <= i_io_wdata;
+                            7'h01, 7'h03, 7'h05: cmos_ram[index_reg[6:0]] <= i_io_wdata;
+                            7'h0A: cmos_ram[10] <= i_io_wdata & 8'h7F;
+                            7'h0B: cmos_ram[11] <= i_io_wdata;
+                            7'h32: cmos_ram[50] <= i_io_wdata;
                             7'h0C, 7'h0D: ;
-                            default: cmos[index_reg[6:0]] <= i_io_wdata;
+                            default: cmos_ram[index_reg[6:0]] <= i_io_wdata;
                         endcase
                     end
                 end
@@ -377,7 +377,7 @@ module rtc_mc146818 #(
                                         dow_bin <= dow_bin + 1'b1;
                                     begin
                                         int fy, dmax;
-                                        fy = full_year(cmos[50], year_bin);
+                                        fy = full_year(cmos_ram[50], year_bin);
                                         dmax = dim(month_bin, fy);
                                         if (dom_bin == dmax) begin
                                             dom_bin <= 5'd1;
@@ -385,7 +385,7 @@ module rtc_mc146818 #(
                                                 month_bin <= 4'd1;
                                                 if (year_bin == 8'd99) begin
                                                     year_bin <= 8'd0;
-                                                    cmos[50] <= century_bcd_inc(cmos[50]);
+                                                    cmos_ram[50] <= century_bcd_inc(cmos_ram[50]);
                                                 end else
                                                     year_bin <= year_bin + 1'b1;
                                             end else

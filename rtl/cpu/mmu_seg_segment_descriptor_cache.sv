@@ -7,9 +7,9 @@ create at: 2022-01-27 12:56:29
 description: segment_descriptor_cache
 */
 
-module segment_descriptor_cache #(
-    // parameters
-) (
+`include "common.h.sv"
+
+module segment_descriptor_cache (
     // ports
     input  logic         protect_enable,
     input  logic [15: 0] write_data,

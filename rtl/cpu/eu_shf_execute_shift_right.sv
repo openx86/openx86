@@ -16,10 +16,11 @@ module execute_shift_right #(
     output logic [BIT_WIDTH-1:0] result
 );
 
-assign result = is_signed ?
-{count'b0, operand[BIT_WIDTH-1:count]}
-:
-{count'{operand[BIT_WIDTH-1]}, operand[BIT_WIDTH-1:count]}
-;
+localparam int SHIFT_W = (BIT_WIDTH <= 1) ? 1 : $clog2(BIT_WIDTH);
+wire [SHIFT_W-1:0] shift_amt = count[SHIFT_W-1:0];
+
+assign result = is_signed[0]
+    ? ($signed(operand) >>> shift_amt)
+    : (operand >> shift_amt);
 
 endmodule

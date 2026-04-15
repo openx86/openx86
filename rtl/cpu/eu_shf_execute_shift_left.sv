@@ -15,6 +15,9 @@ module execute_shift_left #(
     output logic [BIT_WIDTH-1:0] result
 );
 
-assign result = {operand[BIT_WIDTH-count-1:count], count'b0};
+localparam int SHIFT_W = (BIT_WIDTH <= 1) ? 1 : $clog2(BIT_WIDTH);
+wire [SHIFT_W-1:0] shift_amt = count[SHIFT_W-1:0];
+
+assign result = operand << shift_amt;
 
 endmodule

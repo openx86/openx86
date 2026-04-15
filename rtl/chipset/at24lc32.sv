@@ -178,7 +178,8 @@ module at24lc32 #(
                             // full byte captured
                             if (state == ST_RECV_CTRL) begin
                                 addr_match <= is_ctrl_match({shreg[7:1], i_sda});
-                                rw         <= {shreg[0], i_sda}[0]; // ctrl LSB is R/W; last bit sampled now
+                                // R/W is control byte LSB, same as i_sda when finishing this byte (Quartus: no index on concat)
+                                rw         <= i_sda;
                                 state      <= ST_ACK_CTRL;
                             end else if (state == ST_RECV_AH) begin
                                 word_addr[15:8] <= {shreg[7:1], i_sda};

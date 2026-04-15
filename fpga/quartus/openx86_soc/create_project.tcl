@@ -8,7 +8,7 @@
 # What it does:
 # - Creates (or opens) the `openx86_soc` project in this directory
 # - Imports sources and include/search paths from `sim/filelists/rtl.f`
-# - Sets TOP_LEVEL_ENTITY = soc_top
+# - Sets TOP_LEVEL_ENTITY = openx86_soc_top
 # - Applies generic timing constraints from fpga/boards/generic/constraints.sdc
 #
 # Notes:
@@ -39,7 +39,7 @@ if {[project_exists $proj_name]} {
     project_new -revision $proj_name $proj_name
 }
 
-set_global_assignment -name TOP_LEVEL_ENTITY soc_top
+set_global_assignment -name TOP_LEVEL_ENTITY openx86_soc_top
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY [file join $repo_root build quartus $proj_name]
 
 # Parse filelist

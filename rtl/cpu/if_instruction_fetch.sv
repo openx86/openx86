@@ -5,7 +5,7 @@
 // create at: 2021-12-28 15:31:24
 // description: instruction fetch module
 
-`include "openx86_defs.svh"
+`include "openx86_defs.h.sv"
 module instruction_fetch (
     // signal from bus_interface_unit
     output logic        o_code_vaild,

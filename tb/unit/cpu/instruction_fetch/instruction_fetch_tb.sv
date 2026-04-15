@@ -6,9 +6,7 @@
 // description: test fetch module
 
 `timescale 1ns/1ns
-module instruction_fetch_tb #(
-    // parameters
-) (
+module instruction_fetch_tb (
     // ports
 );
 

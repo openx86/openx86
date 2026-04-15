@@ -55,7 +55,7 @@ of all 16-bit addressing modes and 32-bit
 addressing modes.
 */
 
-`include "openx86_defs.svh"
+`include "openx86_defs.h.sv"
 
 module decode_mod_rm (
     // ports

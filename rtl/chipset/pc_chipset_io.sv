@@ -67,11 +67,12 @@ module pc_chipset_io #(
     logic        ide_sector_req_w;
 
     string disk_init_file_eff;
+    int plusarg_match_unused;
     initial begin
         disk_init_file_eff = DISK_INIT_FILE;
         if (DISK_ENABLE_PLUSARGS) begin
-            void'($value$plusargs("DISK_BIN=%s", disk_init_file_eff));
-            void'($value$plusargs("DISK_HEX=%s", disk_init_file_eff));
+            plusarg_match_unused = $value$plusargs("DISK_BIN=%s", disk_init_file_eff);
+            plusarg_match_unused = $value$plusargs("DISK_HEX=%s", disk_init_file_eff);
         end
     end
 

@@ -6,10 +6,8 @@
 // description: test decode module
 
 `timescale 1ns/1ns
-`include "openx86_defs.svh"
-module decode_tb #(
-    // parameters
-) (
+`include "openx86_defs.h.sv"
+module decode_tb (
     // ports
 );
 

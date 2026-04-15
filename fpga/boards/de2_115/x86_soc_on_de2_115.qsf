@@ -16,6 +16,8 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION "9.1 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "09:10:21  MARCH 29, 2010"
 set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
 set_global_assignment -name USE_GENERATED_PHYSICAL_CONSTRAINTS OFF -section_id eda_blast_fpga
+set_global_assignment -name SEARCH_PATH ../../../rtl
+set_global_assignment -name SEARCH_PATH ../../../@include
 
 #============================================================
 # CLOCK
@@ -1191,14 +1193,98 @@ set_global_assignment -name CYCLONEIII_CONFIGURATION_DEVICE EPCS64
 set_global_assignment -name MISC_FILE "E:/SVN/DE2_115/trunk/ref_design/x86_soc_on_de2_115/x86_soc_on_de2_115.dpf"
 
 set_global_assignment -name MISC_FILE "E:/DE2_115_NEW/trunk/ref_design/x86_soc_on_de2_115/x86_soc_on_de2_115.dpf"
-set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
-set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
+set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
+set_global_assignment -name TIMING_ANALYZER_DO_CCPP_REMOVAL ON
 set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
 
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_global_assignment -name SDC_FILE x86_soc_on_de2_115.SDC
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/bus.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_text_intense.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_text_color.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_port.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_graphics_adapter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_font_rom.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/sd_native_host_4bit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/sd_disk_ram_8.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/sd_4bit_phy.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/ps2_host_phy.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/ide_sd_sector_bridge.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/fdc_nec765_sram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/memory/sdram_controller.sv
+set_global_assignment -name SOURCE_FILE ../../../@include/openx86_defs.svh
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/w686_cpu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/w686_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_test_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_segment_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_sar_interrupt_descriptor_table_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_sar_global_descriptor_table_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_instruction_point_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_general_propose_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_flags_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_debug_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/rf_control_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/mmu_seg_system_segment_descriptor_decode.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/mmu_seg_segmentation_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/mmu_seg_segment_descriptor_decode.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/mmu_seg_gate_segment_descriptor_decode.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/mmu_pg_paging_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/mmu_memory_management_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/if_instruction_fetch.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_shf_execute_shift_right.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_shf_execute_shift_left.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_rot_execute_rotate_right.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_rot_execute_rotate_left.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_log_execute_logic_xor.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_log_execute_logic_or.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_log_execute_logic_not.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_log_execute_logic_and.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_load_store_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute_x87_fpu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute_unit_top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute_unit_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute_muldiv_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute_branch_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_arithmetic_sub.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_arithmetic_sbb.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_arithmetic_mul.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_arithmetic_div.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_arithmetic_add.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_arithmetic_adc.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_address_generation_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode_x87_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode_x87_esc.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode_sib.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode_prefix_all.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode_prefix.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode_opcode_x86.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode_mod_rm.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode_field.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode_disp_imm.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/du_decode.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/bus_interface_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/true_dual_port_ram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/single_port_rom.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/single_port_ram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/simple_dual_port_ram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/edge_detect.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/dual_port_rom.sv
+set_global_assignment -name SOURCE_FILE ../../../@include/common.h.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/rtc_mc146818.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/ps2_i8042.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/pc_chipset_io.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/pc_bios_24lc32.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/openx86_chipset_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/lpt_centronics.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/ide_ata_pio.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/i8259_pic.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/i8254_pit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/i8237_dma.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/com_ns16550.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/at24lc32.sv
+set_global_assignment -name SDC_FILE x86_soc_on_de2_115.sdc
 set_global_assignment -name VERILOG_FILE x86_soc_on_de2_115.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

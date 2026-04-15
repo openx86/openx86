@@ -1,3 +1,6 @@
+`ifndef OPENX86_DEFS_SVH
+`define OPENX86_DEFS_SVH
+
 // CPUID
 // TODO: use real cpuid_max_EAX
 `define cpuid_max_EAX (32'hFFFF_FFFF)
@@ -267,3 +270,5 @@
 
 // execute
 // `define OPERAND_BIT_WIDTH 32
+
+`endif
