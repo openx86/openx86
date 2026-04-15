@@ -115,17 +115,17 @@ get_dependencies() {
         deps="$deps $RTL_DIR/common/edge_detect.sv"
     fi
     if grep -q "vga_port" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga/vga_port.sv"
+        deps="$deps $RTL_DIR/periph/vga_port.sv"
     fi
     if grep -q "vga_font_rom" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/periph/vga_font_rom.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
     fi
     if grep -q "vga_text_color" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga/vga_text_color.sv"
+        deps="$deps $RTL_DIR/periph/vga_text_color.sv"
     fi
     if grep -q "vga_text_intense" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga/vga_text_intense.sv"
+        deps="$deps $RTL_DIR/periph/vga_text_intense.sv"
     fi
     if grep -q "ide_ata_pio" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
@@ -134,7 +134,7 @@ get_dependencies() {
         deps="$deps $RTL_DIR/chipset/pc_bios_24lc32.sv"
     fi
     if grep -q "ps2_i8042" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/ps2/ps2_host_phy.sv"
+        deps="$deps $RTL_DIR/periph/ps2_host_phy.sv"
     fi
     if grep -q "bus u_" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/openx86_chipset_pkg.sv"
@@ -142,25 +142,25 @@ get_dependencies() {
         deps="$deps $RTL_DIR/chipset/i8259_pic.sv"
         deps="$deps $RTL_DIR/chipset/i8237_dma.sv"
         deps="$deps $RTL_DIR/chipset/rtc_mc146818.sv"
-        deps="$deps $RTL_DIR/periph/ps2/ps2_host_phy.sv"
+        deps="$deps $RTL_DIR/periph/ps2_host_phy.sv"
         deps="$deps $RTL_DIR/chipset/ps2_i8042.sv"
         deps="$deps $RTL_DIR/chipset/com_ns16550.sv"
         deps="$deps $RTL_DIR/chipset/lpt_centronics.sv"
         deps="$deps $RTL_DIR/chipset/ide_ata_pio.sv"
-        deps="$deps $RTL_DIR/periph/sdcard/disk_ram_8.sv"
+        deps="$deps $RTL_DIR/periph/sd_disk_ram_8.sv"
         deps="$deps $RTL_DIR/chipset/pc_chipset_io.sv"
-        deps="$deps $RTL_DIR/periph/fdc/fdc_nec765_sram.sv"
+        deps="$deps $RTL_DIR/periph/fdc_nec765_sram.sv"
         deps="$deps $RTL_DIR/bus.sv"
     fi
     if grep -q "sdram_controller" "$module_file"; then
         deps="$deps $RTL_DIR/memory/sdram_controller.sv"
     fi
     if grep -q "vga_graphics_adapter" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga/vga_graphics_adapter.sv"
-        deps="$deps $RTL_DIR/periph/vga/vga_port.sv"
-        deps="$deps $RTL_DIR/periph/vga/vga_font_rom.sv"
-        deps="$deps $RTL_DIR/periph/vga/vga_text_color.sv"
-        deps="$deps $RTL_DIR/periph/vga/vga_text_intense.sv"
+        deps="$deps $RTL_DIR/periph/vga_graphics_adapter.sv"
+        deps="$deps $RTL_DIR/periph/vga_port.sv"
+        deps="$deps $RTL_DIR/periph/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/periph/vga_text_color.sv"
+        deps="$deps $RTL_DIR/periph/vga_text_intense.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
         deps="$deps $RTL_DIR/common/simple_dual_port_ram.sv"
     fi
