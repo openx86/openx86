@@ -183,11 +183,12 @@ module soc_top (
     );
 
     // 系统 BIOS 0xF0000–0xFFFFF + 扩展 ROM 0xC0000–0xDFFFF → 后端 EEPROM（镜像：128KB 扩展 + 64KB 系统）
-    pc_bios_eeprom #(
+    // 使用 24LC32（4KiB）做后端：地址在 192KiB 线性镜像上取模映射到 4KiB
+    pc_bios_24lc32 #(
         .INSTALL_DEFAULT_BOOTSTUB ( 1'b1 ),
         .ENABLE_PLUSARGS          ( 1'b0 ),
         .INIT_FILE                ( "" )
-    ) u_bios_eeprom (
+    ) u_bios_24lc32 (
         .clock               ( clock ),
         .reset               ( reset ),
         .i_sys_bios_byte_off ( bios_addr ),

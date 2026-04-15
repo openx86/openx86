@@ -80,6 +80,9 @@ get_dependencies() {
     if grep -q "pc_bios_eeprom" "$module_file"; then
         deps="$deps $RTL_DIR/peripheral/eeprom/eeprom_controller.sv"
     fi
+    if grep -q "pc_bios_24lc32" "$module_file"; then
+        deps="$deps $RTL_DIR/chipset/pc_bios_24lc32.sv"
+    fi
     if grep -q "ps2_i8042" "$module_file"; then
         deps="$deps $RTL_DIR/peripheral/ps2/ps2_host_phy.sv"
     fi
