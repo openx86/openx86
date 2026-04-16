@@ -38,7 +38,26 @@ package execute_unit_pkg;
         X87_FCHS  = 5'd7,
         X87_FABS  = 5'd8,
         X87_FXCH  = 5'd9,
-        X87_FCOMI = 5'd10
+        X87_FCOMI = 5'd10,
+        X87_FLD_STI = 5'd11,
+        X87_FST     = 5'd12,
+        X87_FFREE   = 5'd13,
+        X87_FCOM    = 5'd14,
+        X87_FCOMP   = 5'd15,
+        X87_FTST    = 5'd16,
+        X87_FLD1    = 5'd17,
+        X87_FLDZ    = 5'd18,
+        X87_FNOP    = 5'd19,
+        X87_FADDP   = 5'd20,
+        X87_FMULP   = 5'd21,
+        X87_FSUBP   = 5'd22,
+        X87_FSUBRP  = 5'd23,
+        X87_FDIVP   = 5'd24,
+        X87_FDIVRP  = 5'd25,
+        X87_FCOMIP  = 5'd26,
+        X87_FUCOMIP = 5'd27,
+        X87_FSUBR   = 5'd28,
+        X87_FDIVR   = 5'd29
     } x87_op_e;
 
 endpackage

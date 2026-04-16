@@ -21,6 +21,10 @@ module eu_execute_x87_fpu (
 
     logic [63:0] phys [0:7];
     logic [ 2:0] top;
+    logic        zf_r;
+    logic        pf_r;
+    logic        cf_r;
+    logic [63:0] swap_tmp;
 
     wire [2:0] p0 = top + 3'd0;
     wire [2:0] p1 = top + 3'd1;
@@ -29,6 +33,9 @@ module eu_execute_x87_fpu (
     always_ff @(posedge clk) begin
         if (rst) begin
             top <= 3'd0;
+            zf_r <= 1'b0;
+            pf_r <= 1'b0;
+            cf_r <= 1'b0;
             for (int k = 0; k < 8; k++) phys[k] <= 64'h0;
         end else if (i_valid) begin
             unique case (i_op)
@@ -36,24 +43,69 @@ module eu_execute_x87_fpu (
                     phys[top - 3'd1] <= i_push_data;
                     top <= top - 3'd1;
                 end
+                X87_FLD_STI: begin
+                    phys[top - 3'd1] <= phys[px];
+                    top <= top - 3'd1;
+                end
+                X87_FLD1: begin
+                    phys[top - 3'd1] <= i_push_data;
+                    top <= top - 3'd1;
+                end
+                X87_FLDZ: begin
+                    phys[top - 3'd1] <= i_push_data;
+                    top <= top - 3'd1;
+                end
+                X87_FST: begin
+                    phys[px] <= phys[p0];
+                end
                 X87_FSTP: begin
+                    phys[px] <= phys[p0];
                     top <= top + 3'd1;
                 end
                 X87_FADD: begin
-                    phys[p1] <= phys[p1] + phys[p0];
+                    phys[p0] <= phys[p0] + phys[px];
+                end
+                X87_FADDP: begin
+                    phys[px] <= phys[px] + phys[p0];
                     top <= top + 3'd1;
                 end
                 X87_FSUB: begin
-                    phys[p1] <= phys[p1] - phys[p0];
+                    phys[p0] <= phys[p0] - phys[px];
+                end
+                X87_FSUBR: begin
+                    phys[p0] <= phys[px] - phys[p0];
+                end
+                X87_FSUBP: begin
+                    phys[px] <= phys[px] - phys[p0];
+                    top <= top + 3'd1;
+                end
+                X87_FSUBRP: begin
+                    phys[px] <= phys[p0] - phys[px];
                     top <= top + 3'd1;
                 end
                 X87_FMUL: begin
-                    phys[p1] <= phys[p1] * phys[p0];
+                    phys[p0] <= phys[p0] * phys[px];
+                end
+                X87_FMULP: begin
+                    phys[px] <= phys[px] * phys[p0];
                     top <= top + 3'd1;
                 end
                 X87_FDIV: begin
+                    if (phys[px] != 64'h0)
+                        phys[p0] <= phys[p0] / phys[px];
+                end
+                X87_FDIVR: begin
                     if (phys[p0] != 64'h0)
-                        phys[p1] <= phys[p1] / phys[p0];
+                        phys[p0] <= phys[px] / phys[p0];
+                end
+                X87_FDIVP: begin
+                    if (phys[p0] != 64'h0)
+                        phys[px] <= phys[px] / phys[p0];
+                    top <= top + 3'd1;
+                end
+                X87_FDIVRP: begin
+                    if (phys[px] != 64'h0)
+                        phys[px] <= phys[p0] / phys[px];
                     top <= top + 3'd1;
                 end
                 X87_FCHS: begin
@@ -63,8 +115,43 @@ module eu_execute_x87_fpu (
                     phys[p0] <= ($signed(phys[p0]) < 64'sd0) ? -$signed(phys[p0]) : phys[p0];
                 end
                 X87_FXCH: begin
+                    swap_tmp = phys[p0];
                     phys[p0] <= phys[px];
-                    phys[px] <= phys[p0];
+                    phys[px] <= swap_tmp;
+                end
+                X87_FFREE: begin
+                    phys[px] <= 64'h0;
+                end
+                X87_FCOM: begin
+                    zf_r <= (phys[p0] == phys[px]);
+                    pf_r <= 1'b0;
+                    cf_r <= ($signed(phys[p0]) < $signed(phys[px]));
+                end
+                X87_FCOMP: begin
+                    zf_r <= (phys[p0] == phys[px]);
+                    pf_r <= 1'b0;
+                    cf_r <= ($signed(phys[p0]) < $signed(phys[px]));
+                    top <= top + 3'd1;
+                end
+                X87_FCOMIP,
+                X87_FUCOMIP: begin
+                    zf_r <= (phys[p0] == phys[px]);
+                    pf_r <= 1'b0;
+                    cf_r <= ($signed(phys[p0]) < $signed(phys[px]));
+                    top <= top + 3'd1;
+                end
+                X87_FTST: begin
+                    zf_r <= (phys[p0] == 64'h0);
+                    pf_r <= 1'b0;
+                    cf_r <= ($signed(phys[p0]) < 64'sd0);
+                end
+                X87_FNOP: begin
+                    ;
+                end
+                X87_FCOMI: begin
+                    zf_r <= (phys[p0] == phys[px]);
+                    pf_r <= 1'b0;
+                    cf_r <= ($signed(phys[p0]) < $signed(phys[px]));
                 end
                 default: ;
             endcase
@@ -74,9 +161,9 @@ module eu_execute_x87_fpu (
     always_comb begin
         o_st0 = phys[p0];
         o_st1 = phys[p1];
-        o_zf  = (phys[p0] == phys[p1]);
-        o_pf  = 1'b0;
-        o_cf  = ($signed(phys[p0]) < $signed(phys[p1]));
+        o_zf  = zf_r;
+        o_pf  = pf_r;
+        o_cf  = cf_r;
     end
 
 endmodule
