@@ -2,14 +2,14 @@
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: du_decode
+module: du_decode_unit
 create at: 2022-01-04 03:27:51
-description: decode unit (模块名与文件名 du_decode 一致)
+description: decode unit (模块名与文件名 du_decode_unit 一致)
 */
 
 `include "openx86_defs.h.sv"
 
-module du_decode (
+module du_decode_unit (
     input  logic [ 7:0] i_instruction [0:15],
     input  logic        i_default_operand_size,
     output logic        o_opcode_x86_AAA_ASCII_adjust_after_add,

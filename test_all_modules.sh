@@ -96,7 +96,7 @@ load_rtl_sources "$RTL_FILELIST_DEFAULT"
 get_dependencies() {
     local module_file=$1
     local deps=""
-    
+
     # 检查文件内容，查找依赖的模块
     if grep -q "single_port_rom" "$module_file"; then
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
@@ -190,15 +190,33 @@ get_dependencies() {
         deps="$deps $RTL_DIR/cpu/du_decode_x87_pkg.sv"
         deps="$deps $RTL_DIR/cpu/du_decode_x87_esc.sv"
     fi
-    if grep -q "eu_execute_unit_top" "$module_file"; then
+    if grep -q "eu_execute_unit" "$module_file"; then
         deps="$deps $RTL_DIR/cpu/eu_execute_unit_pkg.sv"
         deps="$deps $RTL_DIR/cpu/eu_address_generation_unit.sv"
         deps="$deps $RTL_DIR/cpu/eu_load_store_unit.sv"
+        deps="$deps $RTL_DIR/cpu/am_access_memory.sv"
         deps="$deps $RTL_DIR/cpu/eu_execute_branch_unit.sv"
         deps="$deps $RTL_DIR/cpu/eu_execute_muldiv_unit.sv"
         deps="$deps $RTL_DIR/cpu/eu_execute_x87_fpu.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_flag_status.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_lahf.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_sahf.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_xchg.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_xadd.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_cmpxchg.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_setcc.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_arpl.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_lar.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_lsl.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_verr.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_stridx_step.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_imul_imm.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_clts.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_lmsw.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_smsw.sv"
+        deps="$deps $RTL_DIR/cpu/eu_misc_loop_ctrl.sv"
     fi
-    
+
     # 添加 decode 相关模块的依赖（rtl/cpu，模块名与文件名一致）
     if grep -q "du_decode_opcode_x86" "$module_file"; then
         deps="$deps $RTL_DIR/cpu/du_decode_opcode_x86.sv"
@@ -221,11 +239,11 @@ get_dependencies() {
     if grep -q "du_decode_field" "$module_file"; then
         deps="$deps $RTL_DIR/cpu/du_decode_field.sv"
     fi
-    # 译码顶层实例化：`du_decode <instance_name> (`（避免与 du_decode_* 子模块名混淆）
-    if grep -qE '^[[:space:]]*du_decode[[:space:]]' "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode.sv"
+    # 译码顶层实例化：du_decode_unit <instance_name> (避免与 du_decode_* 子模块名混淆)
+    if grep -qE '^[[:space:]]*du_decode_unit[[:space:]]' "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/du_decode_unit.sv"
     fi
-    
+
     echo "$deps"
 }
 
@@ -238,20 +256,20 @@ run_test() {
     local filelist_path
     filelist_path="$(select_rtl_filelist_for_tb "$testbench")"
     load_rtl_sources "$filelist_path"
-    
+
     echo ""
     echo -e "${YELLOW}========================================${NC}"
     echo -e "${YELLOW}测试模块: $module_name${NC}"
     echo -e "${YELLOW}文件: $testbench${NC}"
     echo -e "${YELLOW}RTL filelist: ${filelist_path#$PROJECT_ROOT/}${NC}"
     echo -e "${YELLOW}========================================${NC}"
-    
+
     TOTAL=$((TOTAL + 1))
-    
+
     if [ "$SIMULATOR" = "iverilog" ]; then
         # 使用iverilog编译和运行
         local compile_cmd="iverilog -g2012 -o ${module_name}_sim"
-        
+
         # PHY 存根（部分 SDRAM 相关 TB 需先于 testbench 编译）
         local stub_preload=""
         if [[ "$testbench" == *"sdram_controller_tb.sv" || "$testbench" == *"bus_tb.sv" ]]; then
@@ -273,7 +291,7 @@ run_test() {
         for d in "${RTL_INCDIRS[@]}"; do
             compile_cmd="$compile_cmd -I$d"
         done
-        
+
         # 编译
         if eval "$compile_cmd" 2>&1 | tee "${module_name}_compile.log"; then
             # 检查编译日志中是否有错误
@@ -283,7 +301,7 @@ run_test() {
                 FAILED=$((FAILED + 1))
                 return 1
             fi
-            
+
             # 运行仿真
             if vvp "${module_name}_sim" 2>&1 | tee "${module_name}_run.log"; then
                 # 检查是否有错误（包括中文和英文错误信息）
@@ -313,27 +331,27 @@ run_test() {
             FAILED=$((FAILED + 1))
             return 1
         fi
-        
+
     elif [ "$SIMULATOR" = "vsim" ]; then
         # 使用ModelSim/QuestaSim
         local work_dir="work_${module_name}"
         vlib "$work_dir" 2>/dev/null || true
         vmap work "$work_dir"
-        
+
         # 获取依赖
         local deps=$(get_dependencies "$testbench")
-        
+
         # 编译源文件
         local vlog_cmd="vlog -work work -sv $testbench"
         if [ -n "$deps" ]; then
             vlog_cmd="$vlog_cmd $deps"
         fi
         eval "$vlog_cmd" 2>&1 | tee "${module_name}_compile.log"
-        
+
         if [ $? -eq 0 ]; then
             # 运行仿真
             vsim -c -do "run -all; quit" work.${module_name}_tb 2>&1 | tee "${module_name}_run.log"
-            
+
             if [ $? -eq 0 ] && ! grep -qi "错误\|ERROR\|error" "${module_name}_run.log"; then
                 echo -e "${GREEN}测试通过: $module_name${NC}"
                 PASSED=$((PASSED + 1))
