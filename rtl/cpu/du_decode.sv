@@ -252,7 +252,9 @@ module du_decode (
     output logic        o_x87_modrm_required,
     output logic [ 1:0] o_x87_mod,
     output logic [ 2:0] o_x87_reg,
-    output logic [ 2:0] o_x87_rm
+    output logic [ 2:0] o_x87_rm,
+    output logic [ 1:0] o_dbg_modrm_mod,
+    output logic [ 1:0] o_sib_scale_factor
 );
 
 logic [ 7:0] prefix_instruction [0:3];
@@ -925,18 +927,17 @@ du_decode_sib deocde_decode_sib (
     .o_displacement_size_4 ( sib_o_displacement_size_4 ),
     .o_effecitve_address_undefined ( sib_o_effecitve_address_undefined )
 );
-logic [ 3:0] offset_disp_imm, offset_disp_imm_end;
+logic [ 3:0] offset_disp_imm;
 always_comb begin
     if (field_o_mod_rm_is_present) begin
         if (mod_rm_o_sib_is_present) begin
-            offset_disp_imm <= offset_mod_rm + 4'h2;
+            offset_disp_imm = offset_mod_rm + 4'h2;
         end else begin
-            offset_disp_imm <= offset_mod_rm + 4'h1;
+            offset_disp_imm = offset_mod_rm + 4'h1;
         end
     end else begin
-        offset_disp_imm <= offset_mod_rm + 4'h0;
+        offset_disp_imm = offset_mod_rm + 4'h0;
     end
-    offset_disp_imm_end <= offset_disp_imm_end + 4'h8;
 end
 
 logic [ 7:0] disp_imm_i_instruction [0:7];
@@ -1014,5 +1015,11 @@ assign o_x87_modrm_required = x87_modrm_req_int;
 assign o_x87_mod            = x87_mod_int;
 assign o_x87_reg            = x87_reg_int;
 assign o_x87_rm             = x87_rm_int;
+
+assign o_error = prefix_o_error | field_o_error | disp_imm_o_error;
+
+assign o_dbg_modrm_mod = mod_rm_i_mod;
+
+assign o_sib_scale_factor = mod_rm_o_sib_is_present ? sib_o_scale_factor : 2'b00;
 
 endmodule

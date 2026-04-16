@@ -91,12 +91,12 @@ module ide_sd_sector_bridge (
         if (i_reset) begin
             for (bi = 0; bi < 512; bi = bi + 1)
                 sector_ram[bi] <= 8'h00;
-        end else if (i_sd_payload_we && i_sd_payload_addr < 9'd512)
+        end else if (i_sd_payload_we && i_sd_payload_addr <= 9'd511)
             sector_ram[i_sd_payload_addr] <= i_sd_payload_data;
     end
 
     always_comb begin
-        if (i_ide_disk_raddr[8:0] < 9'd512)
+        if (i_ide_disk_raddr[8:0] <= 9'd511)
             o_ide_disk_rdata = sector_ram[i_ide_disk_raddr[8:0]];
         else
             o_ide_disk_rdata = 8'h00;

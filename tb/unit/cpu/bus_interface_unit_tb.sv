@@ -8,6 +8,10 @@ module bus_interface_unit_tb #(
 logic clock, reset;
 always #(clock_period/2) clock = ~clock;
 
+logic        i_mmu_vaild;
+logic        o_mmu_ready;
+logic [31:0] i_mmu_address;
+logic [31:0] o_mmu_data_read;
 logic        i_code_vaild;
 logic        o_code_ready;
 logic [31:0] i_code_address;
@@ -15,6 +19,7 @@ logic [31:0] o_code_data_read;
 logic        i_data_vaild;
 logic        o_data_ready;
 logic        i_data_write_enable;
+logic        i_data_io_access;
 logic [31:0] i_data_address;
 logic [31:0] o_data_data_read;
 logic [31:0] i_data_data_write;
@@ -32,10 +37,13 @@ initial begin
     #(clock_period * 2);
     reset = 0;
 
+    i_mmu_vaild = 0;
+    i_mmu_address = 0;
     i_code_vaild = 0;
     i_code_address = 0;
     i_data_vaild = 0;
     i_data_write_enable = 0;
+    i_data_io_access = 0;
     i_data_address = 0;
     i_data_data_write = 0;
     i_bus_ready = 0;
@@ -124,6 +132,10 @@ initial begin
 end
 
 bus_interface_unit tb_bus_interface_unit (
+    .i_mmu_vaild         ( i_mmu_vaild ),
+    .o_mmu_ready         ( o_mmu_ready ),
+    .i_mmu_address       ( i_mmu_address ),
+    .o_mmu_data_read     ( o_mmu_data_read ),
     .i_code_vaild        ( i_code_vaild ),
     .o_code_ready        ( o_code_ready ),
     .i_code_address      ( i_code_address ),
@@ -131,6 +143,7 @@ bus_interface_unit tb_bus_interface_unit (
     .i_data_vaild        ( i_data_vaild ),
     .o_data_ready        ( o_data_ready ),
     .i_data_write_enable ( i_data_write_enable ),
+    .i_data_io_access    ( i_data_io_access ),
     .i_data_address      ( i_data_address ),
     .o_data_data_read    ( o_data_data_read ),
     .i_data_data_write   ( i_data_data_write ),

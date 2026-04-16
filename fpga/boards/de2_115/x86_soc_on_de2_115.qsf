@@ -1242,7 +1242,6 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_a
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_arithmetic_mul.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_arithmetic_sbb.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_ari_execute_arithmetic_sub.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute_branch_unit.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute_muldiv_unit.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/eu_execute_unit_pkg.sv
@@ -1289,4 +1288,5 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_graphics_
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_port.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_text_color.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_text_intense.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/w686_core_execute_i486.sv
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

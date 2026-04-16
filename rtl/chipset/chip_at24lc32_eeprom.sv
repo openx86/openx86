@@ -33,7 +33,7 @@ module chip_at24lc32_eeprom #(
     localparam int AW = $clog2(NUM_BYTES);
     localparam logic [3:0] DEV_TYPE = 4'b1010; // 24xx EEPROM family
 
-    (* ram_style = "block" *)
+    (* ramstyle = "M9K" *)
     logic [7:0] mem[0:NUM_BYTES-1];
 
     logic scl_q, sda_q;

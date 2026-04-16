@@ -11,8 +11,8 @@ module mmu_seg_segmentation_unit #(
     read_from_fetch = 0
 ) (
     input  logic        i_protected_mode, // from CR0.PE (CR[0][0])
-    input  logic [15:0] i_segment_selector [6], // from segment register file
-    input  logic [63:0] o_segment_descriptor [6], // from segment register file
+    input  logic [15:0] i_segment_selector [0:5], // from segment register file
+    input  logic [63:0] i_segment_descriptor [0:5], // cached descriptors from segment register file
     input  logic [ 2:0] i_segment_index, // from bus_interface_unit module
     input  logic [ 1:0] i_current_privilege_level, // from flags register file
     input  logic [31:0] i_effective_address, // from bus_interface_unit module
@@ -22,7 +22,7 @@ module mmu_seg_segmentation_unit #(
     input  logic        clock, reset
 );
 
-wire  [63:0] segment_descriptor = i_segment_selector[i_segment_index];
+wire  [63:0] segment_descriptor = i_segment_descriptor[i_segment_index];
 
 logic [31:0] base;
 logic [19:0] limit;
@@ -57,7 +57,7 @@ mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .i_descriptor                          ( segment_descriptor )
 );
 
-wire is_index_CS = i_segment_index == 0;
+wire is_index_CS = (i_segment_index == 3'b001); // CS
 
 wire is_code_segment = segment_type & date_or_code_executable;
 wire is_data_segment = segment_type & ~date_or_code_executable;
@@ -86,7 +86,7 @@ exception_read |
 exception_write |
 0;
 
-wire base_address = date_or_code_granularity ? base : base * $clog2(4096);
-assign o_linear_address = base_address + i_effective_address;
+// Linear address = segment base + offset (32-bit flat model)
+assign o_linear_address = base + i_effective_address;
 
 endmodule

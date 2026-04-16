@@ -17,10 +17,12 @@ logic  [7:0] instruction [0:15];
 // interface_opcode opcode_interface_instance ();
 
 wire default_operand_size = `default_operation_size_32;
+wire [1:0] dbg_modrm_mod;
 
 du_decode decode_instance_in_testbench (
     .i_default_operand_size ( default_operand_size ),
-    .i_instruction ( instruction )
+    .i_instruction ( instruction ),
+    .o_dbg_modrm_mod ( dbg_modrm_mod )
 );
 
 // always #1 clock = ~clock;

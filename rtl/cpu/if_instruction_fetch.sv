@@ -12,9 +12,15 @@ module if_instruction_fetch (
     input  logic        i_code_ready,
     output logic [31:0] o_code_address,
     input  logic [31:0] i_code_data_read,
+    // MMU page-table walk (higher BIU priority than code/data)
+    output logic        o_mmu_bus_vaild,
+    input  logic        i_mmu_bus_ready,
+    output logic [31:0] o_mmu_bus_addr,
+    input  logic [31:0] i_mmu_bus_rdata,
     // signal from outside
     input  logic        i_protected_mode,
     input  logic [15:0] i_segment_selector [0:5],
+    input  logic [63:0] i_segment_descriptor [0:5],
     input  logic [ 1:0] i_current_privilege_level,
     input  logic        i_paging_enable,
     input  logic [31:0] i_page_directory_base,
@@ -23,32 +29,30 @@ module if_instruction_fetch (
     // instruction fetch
     output logic [ 7:0] o_instruction [0:15],
     output logic        o_instruction_ready,
+    output logic        o_segment_fault,
     // instruction pointer register file
     input  logic [31:0] EIP,
     // common
     input  logic        clock, reset
 );
 
-logic i_vaild;
-logic o_ready;
-
-// 分页遍历时需系统总线；当前 SoC 未把 MMU 总线复接到 CPU 口，bring-up 下保持默认
-logic        if_mmu_bus_vaild;
-logic        if_mmu_bus_ready;
+logic        i_vaild;
+logic        o_ready;
 logic        if_mmu_bus_we;
-logic [31:0] if_mmu_bus_addr;
-logic [31:0] if_mmu_bus_rdata;
 logic [31:0] if_mmu_bus_wdata;
-assign if_mmu_bus_ready  = 1'b0;
-assign if_mmu_bus_rdata   = 32'h0;
+logic        if_seg_fault;
+
+// 请求段转换：在 IP 有效时根据当前 EIP 计算物理取指地址
+assign i_vaild = i_IP_vaild;
 
 mmu_memory_management_unit #(
-    .read_from_fetch ( 1 )
+    .read_from_fetch ( 1'b1 )
 ) instruction_fetch_memory_management_unit (
     .i_vaild ( i_vaild ),
     .o_ready ( o_ready ),
     .i_protected_mode ( i_protected_mode ),
     .i_segment_selector ( i_segment_selector ),
+    .i_segment_descriptor ( i_segment_descriptor ),
     .i_current_privilege_level ( i_current_privilege_level ),
     .i_segment_index ( `sreg_index_CS ),
     .i_effective_address ( EIP ),
@@ -56,15 +60,18 @@ mmu_memory_management_unit #(
     .i_paging_enable ( i_paging_enable ),
     .i_page_directory_base ( i_page_directory_base ),
     .o_physical_address ( o_code_address ),
-    .o_bus_vaild ( if_mmu_bus_vaild ),
-    .i_bus_ready ( if_mmu_bus_ready ),
+    .o_segment_fault ( if_seg_fault ),
+    .o_bus_vaild ( o_mmu_bus_vaild ),
+    .i_bus_ready ( i_mmu_bus_ready ),
     .o_bus_write_enable ( if_mmu_bus_we ),
-    .o_bus_address ( if_mmu_bus_addr ),
-    .i_bus_data_read ( if_mmu_bus_rdata ),
+    .o_bus_address ( o_mmu_bus_addr ),
+    .i_bus_data_read ( i_mmu_bus_rdata ),
     .o_bus_data_write ( if_mmu_bus_wdata ),
     .clock ( clock ),
     .reset ( reset )
 );
+
+assign o_segment_fault = if_seg_fault;
 
 enum logic {
     STATE_WAIT_FOR_CODE_DATA_READY = 1'h1,

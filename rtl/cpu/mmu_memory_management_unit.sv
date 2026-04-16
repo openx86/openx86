@@ -15,7 +15,8 @@ module mmu_memory_management_unit #(
     output logic         o_ready,
     // signal
     input  logic         i_protected_mode, // from CR0.PE (CR[0][0])
-    input  logic [15: 0] i_segment_selector [6], // from segment register file
+    input  logic [15: 0] i_segment_selector [0:5], // from segment register file
+    input  logic [63: 0] i_segment_descriptor [0:5], // cached segment descriptors
     input  logic [ 1: 0] i_current_privilege_level, // from flags register file
     input  logic [ 2: 0] i_segment_index, // from bus_interface_unit module
     input  logic [31: 0] i_effective_address, // from bus_interface_unit module
@@ -23,6 +24,7 @@ module mmu_memory_management_unit #(
     input  logic         i_paging_enable, // from CR register
     input  logic [31: 0] i_page_directory_base, // from CR[3]
     output logic [31: 0] o_physical_address,
+    output logic         o_segment_fault,
     // bus for paging walks (used only when paging enabled)
     output logic        o_bus_vaild,
     input  logic        i_bus_ready,
@@ -39,29 +41,25 @@ logic [31: 0] physical_address;
 
 logic         paging_vaild;
 logic         paging_ready;
-
-// Bring-up：描述符缓存尚未接到 MMU 时，用全 0 占位（实模式/未保护路径）
-logic [63:0] segment_descriptor_stub [0:5];
-always_comb begin
-    for (int i = 0; i < 6; i++) begin
-        segment_descriptor_stub[i] = 64'h0;
-    end
-end
+logic         seg_priv_err;
 
 mmu_seg_segmentation_unit #(
     .read_from_fetch ( read_from_fetch )
 ) mmu_segmentation_unit (
     .i_protected_mode ( i_protected_mode ),
     .i_segment_selector ( i_segment_selector ),
-    .o_segment_descriptor ( segment_descriptor_stub ),
+    .i_segment_descriptor ( i_segment_descriptor ),
     .i_current_privilege_level ( i_current_privilege_level ),
     .i_segment_index ( i_segment_index ),
     .i_effective_address ( i_effective_address ),
     .i_write_enable ( i_write_enable ),
     .o_linear_address ( linear_address ),
+    .o_segment_privilege_error ( seg_priv_err ),
     .clock ( clock ),
     .reset ( reset )
 );
+
+assign o_segment_fault = seg_priv_err;
 
 mmu_pg_paging_unit mmu_paging_unit (
     .i_vaild ( paging_vaild ),

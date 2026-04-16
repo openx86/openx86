@@ -28,7 +28,7 @@ module chip_pc_bios_eeprom #(
     localparam int OFF_SYS_BASE_BYTES = 128 * 1024;
     localparam int AW = $clog2(EEPROM_BYTES);
 
-    (* ram_style = "block" *)
+    (* ramstyle = "M9K" *)
     logic [7:0] mem[0:EEPROM_BYTES-1];
 
     function automatic logic [31:0] rd32(input logic [AW-1:0] ba);
