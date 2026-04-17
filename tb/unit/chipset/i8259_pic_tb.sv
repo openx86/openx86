@@ -16,7 +16,7 @@ module i8259_pic_tb;
     logic [15: 0] addr;
     logic [ 7: 0]  wdata;
     logic [ 7: 0]  rdata;
-    logic [ 7: 0]  ir;
+    logic [ 7: 0] ir;
     logic        intr;
 
     logic hit   = (addr >= 16'h0020) && (addr <= 16'h0021);
@@ -39,7 +39,7 @@ module i8259_pic_tb;
 
     always #5 clock = ~clock;
 
-    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
+    task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
         @(posedge clock);
         valid = 1;
         we    = 1;

@@ -27,7 +27,12 @@ addressing.
 
 module stage_5_wrb_instruction_point_register (
     // ports
-    input logic          write_enable,    input logic [31: 0]  write_data,    output logic [15: 0] IP,    output logic [31: 0] EIP,    input logic          clock, reset_n);
+    input  logic          write_enable,
+    input  logic [31: 0]  write_data,
+    output logic [15: 0] IP,
+    output logic [31: 0] EIP,
+    input  logic          clock, reset_n
+);
 
 reg   [31: 0] instruction_point;
 

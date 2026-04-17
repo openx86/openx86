@@ -15,8 +15,8 @@ module ide_ata_pio_tb;
     logic        io_valid;
     logic        io_we;
     logic [15: 0] io_addr;
-    logic [ 7: 0]  io_wdata;
-    logic [ 7: 0]  io_rdata;
+    logic [ 7: 0] io_wdata;
+    logic [ 7: 0] io_rdata;
 
     logic ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
     logic cs_n    = !(io_valid && ide_hit);
@@ -42,7 +42,7 @@ module ide_ata_pio_tb;
 
     always #5 clock = ~clock;
 
-    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
+    task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 1;

@@ -5,7 +5,10 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_misc_setcc.
 */
 module stage_3_exe_misc_setcc (
-    input logic [31: 0]  flags,    input logic [ 3:0]   tttn,    output logic [31: 0] y);
+    input  logic [31: 0]  flags,
+    input  logic [ 3: 0]   tttn,
+    output logic [31: 0] y
+);
     logic cond;
 
     logic cf;

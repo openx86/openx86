@@ -65,7 +65,25 @@ addressing modes.
 
 module stage_2_dec_decode_mod_rm (
     // ports
-    input logic [ 1:0]  i_mod,    input logic [ 2:0]  i_rm,    input logic         i_w_is_present,    input logic         i_w,    input logic         i_default_operand_size,    output logic [ 2:0] o_segment_reg_index,    output logic        o_base_reg_is_present,    output logic [ 2:0] o_base_reg_index,    output logic        o_index_reg_is_present,    output logic [ 2:0] o_index_reg_index,    output logic        o_gen_reg_is_present,    output logic [ 2:0] o_gen_reg_index,    output logic [ 2:0] o_gen_reg_bit_width,    output logic        o_displacement_is_present,    output logic        o_displacement_size_8,    output logic        o_displacement_size_16,    output logic        o_displacement_size_32,    output logic        o_sib_is_present);
+    input  logic [ 1: 0] i_mod,
+    input  logic [ 2: 0] i_rm,
+    input  logic         i_w_is_present,
+    input  logic         i_w,
+    input  logic         i_default_operand_size,
+    output logic [ 2: 0] o_segment_reg_index,
+    output logic        o_base_reg_is_present,
+    output logic [ 2: 0] o_base_reg_index,
+    output logic        o_index_reg_is_present,
+    output logic [ 2: 0] o_index_reg_index,
+    output logic        o_gen_reg_is_present,
+    output logic [ 2: 0] o_gen_reg_index,
+    output logic [ 2: 0] o_gen_reg_bit_width,
+    output logic        o_displacement_is_present,
+    output logic        o_displacement_size_8,
+    output logic        o_displacement_size_16,
+    output logic        o_displacement_size_32,
+    output logic        o_sib_is_present
+);
 
 // sib_is_present is 1'b1 means this module's signal is invalid
 // need to check s-i-b byte for correct segment & base & index & displacement signal

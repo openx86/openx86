@@ -12,7 +12,17 @@ description: This module implements chip_ns16550_com.
 // ============================================================================
 
 module chip_ns16550_com (
-    input logic          i_cs_n,    input logic          i_rd_n,    input logic          i_wr_n,    input logic [ 2: 0]  i_a,    input logic [ 7: 0]  i_d,    output logic [ 7: 0] o_d,    input logic          i_rx_push,    input logic [ 7: 0]  i_rx_data,    input logic          reset_n,    input logic          clock);
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic [ 2: 0] i_a,
+    input  logic [ 7: 0] i_d,
+    output logic [ 7: 0] o_d,
+    input  logic         i_rx_push,
+    input  logic [ 7: 0] i_rx_data,
+    input  logic         reset_n,
+    input  logic         clock
+);
 
     logic [ 2: 0] off = i_a;
 

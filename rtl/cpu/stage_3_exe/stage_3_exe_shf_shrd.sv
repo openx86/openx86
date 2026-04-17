@@ -5,7 +5,11 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_shf_shrd.
 */
 module stage_3_exe_shf_shrd (
-    input logic [31: 0]  a,    input logic [31: 0]  b,    input logic [31: 0]  count,    output logic [31: 0] y);
+    input  logic [31: 0]  a,
+    input  logic [31: 0]  b,
+    input  logic [31: 0]  count,
+    output logic [31: 0] y
+);
     logic [ 4: 0] sh;
     logic [ 5: 0] sh6;
 

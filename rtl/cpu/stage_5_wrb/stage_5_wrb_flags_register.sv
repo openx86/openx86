@@ -26,7 +26,25 @@ useful when executing 8086 and 80286 code.
 
 module stage_5_wrb_flags_register (
     // ports
-    input logic          write_enable,    input logic [31: 0]  write_data,    output logic         CF,    output logic         PF,    output logic         AF,    output logic         ZF,    output logic         SF,    output logic         TF,    output logic         IF,    output logic         DF,    output logic         OF,    output logic [ 1:0]  IOPL,    output logic         NT,    output logic         RF,    output logic         VM,    output logic [31: 0] EFLAGS,    output logic [15: 0] FLAGS,    input logic          clock, reset_n);
+    input  logic          write_enable,
+    input  logic [31: 0]  write_data,
+    output logic         CF,
+    output logic         PF,
+    output logic         AF,
+    output logic         ZF,
+    output logic         SF,
+    output logic         TF,
+    output logic         IF,
+    output logic         DF,
+    output logic         OF,
+    output logic [ 1: 0] iOPL,
+    output logic         NT,
+    output logic         RF,
+    output logic         VM,
+    output logic [31: 0] EFLAGS,
+    output logic [15: 0] FLAGS,
+    input  logic          clock, reset_n
+);
 
 reg [31: 0] flags_reg;
 

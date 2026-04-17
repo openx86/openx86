@@ -16,7 +16,7 @@ module disk_ram_8_tb;
     logic        reset;
     logic        io_valid, io_we;
     logic [15: 0] io_addr;
-    logic [ 7: 0]  io_wdata, io_rdata;
+    logic [ 7: 0] io_wdata, io_rdata;
 
     logic ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
     logic ide_cs_n = !(io_valid && ide_hit);
@@ -66,7 +66,7 @@ module disk_ram_8_tb;
         .o_disk_sector_req   ( ide_sector_req )
     );
 
-    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
+    task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 1;

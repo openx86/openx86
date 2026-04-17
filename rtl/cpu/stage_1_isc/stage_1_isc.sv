@@ -14,23 +14,44 @@ module stage_1_isc (
     // ------------------------------------------------------------------------
     // Instruction fetch bus interface
     // ------------------------------------------------------------------------
-    output logic         o_code_vaild,    input logic          i_code_ready,    output logic [31: 0] o_code_address,    input logic [31: 0]  i_code_data_read,
+    output logic         o_code_vaild,
+    input  logic          i_code_ready,
+    output logic [31: 0] o_code_address,
+    input  logic [31: 0] i_code_data_read,
+
     // ------------------------------------------------------------------------
     // MMU backend bus interface
     // ------------------------------------------------------------------------
-    output logic         o_mmu_bus_vaild,    input logic          i_mmu_bus_ready,    output logic [31: 0] o_mmu_bus_addr,    input logic [31: 0]  i_mmu_bus_rdata,
+    output logic         o_mmu_bus_vaild,
+    input  logic          i_mmu_bus_ready,
+    output logic [31: 0] o_mmu_bus_addr,
+    input  logic [31: 0] i_mmu_bus_rdata,
+
     // ------------------------------------------------------------------------
     // CPU execution context inputs
     // ------------------------------------------------------------------------
-    input logic          i_protected_mode,    input logic [15: 0]  i_segment_selector [ 0: 5],    input logic [63: 0]  i_segment_descriptor [ 0: 5],    input logic [ 1: 0]  i_current_privilege_level,    input logic          i_paging_enable,    input logic [31: 0]  i_page_directory_base,    input logic          i_IP_vaild,
+    input  logic          i_protected_mode,
+    input  logic [15: 0] i_segment_selector [ 0: 5],
+    input  logic [63: 0] i_segment_descriptor [ 0: 5],
+    input  logic [ 1: 0] i_current_privilege_level,
+    input  logic          i_paging_enable,
+    input  logic [31: 0] i_page_directory_base,
+    input  logic          i_IP_vaild,
+
     // ------------------------------------------------------------------------
     // Decoded instruction stream outputs
     // ------------------------------------------------------------------------
-    output logic [ 7: 0] o_instruction [ 0:15],    output logic         o_instruction_ready,    output logic         o_segment_fault,
+    output logic [ 7: 0] o_instruction [ 0:15],
+    output logic         o_instruction_ready,
+    output logic         o_segment_fault,
+
     // ------------------------------------------------------------------------
     // Clock / reset
     // ------------------------------------------------------------------------
-    input logic [31: 0]  EIP,    input logic          reset_n,    input logic          clock);
+    input  logic [31: 0]  EIP,
+    input  logic          reset_n,
+    input  logic          clock
+);
 
     stage_1_isc_if_instruction_fetch u_if_instruction_fetch (
         .o_code_vaild              ( o_code_vaild ),

@@ -26,23 +26,23 @@ module openx86_soc_top #(
     // ------------------------------------------------------------------------
     output logic         o_ps2_kbd_clk_out,
     output logic         o_ps2_kbd_clk_oe,
-    input logic          i_ps2_kbd_clk_in,
+    input  logic          i_ps2_kbd_clk_in,
     output logic         o_ps2_kbd_dat_out,
     output logic         o_ps2_kbd_dat_oe,
-    input logic          i_ps2_kbd_dat_in,
+    input  logic          i_ps2_kbd_dat_in,
     output logic         o_ps2_aux_clk_out,
     output logic         o_ps2_aux_clk_oe,
-    input logic          i_ps2_aux_clk_in,
+    input  logic          i_ps2_aux_clk_in,
     output logic         o_ps2_aux_dat_out,
     output logic         o_ps2_aux_dat_oe,
-    input logic          i_ps2_aux_dat_in,
+    input  logic          i_ps2_aux_dat_in,
 
     // ------------------------------------------------------------------------
     // SDIO / SD 4-bit（IDE 盘体经片内主机；PHY 在片内）
     // ------------------------------------------------------------------------
     output logic         o_sdio_clk,
     inout logic          io_sdio_cmd,
-    inout logic [ 3: 0]  io_sdio_dat,
+    inout logic [ 3: 0] io_sdio_dat,
 
     // ------------------------------------------------------------------------
     // SDRAM physical interface (16-bit device)
@@ -63,8 +63,8 @@ module openx86_soc_top #(
     // ------------------------------------------------------------------------
     // clock: external 50MHz oscillator
     // reset_n: active-low reset input (board push-button / POR)
-    input logic          clock,
-    input logic          reset_n
+    input  logic          clock,
+    input  logic          reset_n
 );
 
     logic        bus_valid;
@@ -98,14 +98,14 @@ module openx86_soc_top #(
     logic        i_sdram_ready;
     logic        i_sdram_busy;
 
-    logic        sdr_phy_cs_n, sdr_phy_ras_n, sdr_phy_cas_n, sdr_phy_we_n;
-    logic [ 1: 0]  sdr_phy_ba;
-    logic [12: 0] sdr_phy_a;
-    logic [ 1: 0]  sdr_phy_dqm;
-    logic [15: 0] sdr_phy_dq_out;
-    logic        sdr_phy_dq_oe;
-    logic        sdr_phy_clk, sdr_phy_cke;
-    logic [15: 0] sdr_phy_dq_in;
+    logic        sdram_phy_cs_n, sdram_phy_ras_n, sdram_phy_cas_n, sdram_phy_we_n;
+    logic [ 1: 0]  sdram_phy_ba;
+    logic [12: 0] sdram_phy_a;
+    logic [ 1: 0]  sdram_phy_dqm;
+    logic [15: 0] sdram_phy_dq_out;
+    logic        sdram_phy_dq_oe;
+    logic        sdram_phy_clk, sdram_phy_cke;
+    logic [15: 0] sdram_phy_dq_in;
 
     logic        pic_intr;
 
@@ -130,20 +130,20 @@ module openx86_soc_top #(
         .reset_n            ( reset_n )
     );
 
-    // SDRAM DQ bus (temporary: only driven by controller when sdr_phy_dq_oe=1)
-    assign io_sdram_dq = sdr_phy_dq_oe ? sdr_phy_dq_out : 16'hZZZZ;
-    assign sdr_phy_dq_in = io_sdram_dq;
+    // SDRAM DQ bus (temporary: only driven by controller when sdram_phy_dq_oe=1)
+    assign io_sdram_dq = sdram_phy_dq_oe ? sdram_phy_dq_out : 16'hZZZZ;
+    assign sdram_phy_dq_in = io_sdram_dq;
 
     // Export SDRAM command/address pins to board
-    assign o_sdram_clk   = sdr_phy_clk;
-    assign o_sdram_cke   = sdr_phy_cke;
-    assign o_sdram_cs_n  = sdr_phy_cs_n;
-    assign o_sdram_ras_n = sdr_phy_ras_n;
-    assign o_sdram_cas_n = sdr_phy_cas_n;
-    assign o_sdram_we_n  = sdr_phy_we_n;
-    assign o_sdram_ba    = sdr_phy_ba;
-    assign o_sdram_a     = sdr_phy_a;
-    assign o_sdram_dqm   = sdr_phy_dqm;
+    assign o_sdram_clk   = sdram_phy_clk;
+    assign o_sdram_cke   = sdram_phy_cke;
+    assign o_sdram_cs_n  = sdram_phy_cs_n;
+    assign o_sdram_ras_n = sdram_phy_ras_n;
+    assign o_sdram_cas_n = sdram_phy_cas_n;
+    assign o_sdram_we_n  = sdram_phy_we_n;
+    assign o_sdram_ba    = sdram_phy_ba;
+    assign o_sdram_a     = sdram_phy_a;
+    assign o_sdram_dqm   = sdram_phy_dqm;
 
     bus_controller #(
         .USE_SDIO_DISK ( USE_SDIO_DISK )
@@ -231,18 +231,18 @@ module openx86_soc_top #(
         .o_rdata        ( i_sdram_rdata ),
         .o_ready        ( i_sdram_ready ),
         .o_busy         ( i_sdram_busy ),
-        .o_sdram_clk    ( sdr_phy_clk ),
-        .o_sdram_cke    ( sdr_phy_cke ),
-        .o_sdram_cs_n   ( sdr_phy_cs_n ),
-        .o_sdram_ras_n  ( sdr_phy_ras_n ),
-        .o_sdram_cas_n  ( sdr_phy_cas_n ),
-        .o_sdram_we_n   ( sdr_phy_we_n ),
-        .o_sdram_ba     ( sdr_phy_ba ),
-        .o_sdram_a      ( sdr_phy_a ),
-        .o_sdram_dqm    ( sdr_phy_dqm ),
-        .o_sdram_dq_out ( sdr_phy_dq_out ),
-        .o_sdram_dq_oe  ( sdr_phy_dq_oe ),
-        .i_sdram_dq_in  ( sdr_phy_dq_in )
+        .o_sdram_clk    ( sdram_phy_clk ),
+        .o_sdram_cke    ( sdram_phy_cke ),
+        .o_sdram_cs_n   ( sdram_phy_cs_n ),
+        .o_sdram_ras_n  ( sdram_phy_ras_n ),
+        .o_sdram_cas_n  ( sdram_phy_cas_n ),
+        .o_sdram_we_n   ( sdram_phy_we_n ),
+        .o_sdram_ba     ( sdram_phy_ba ),
+        .o_sdram_a      ( sdram_phy_a ),
+        .o_sdram_dqm    ( sdram_phy_dqm ),
+        .o_sdram_dq_out ( sdram_phy_dq_out ),
+        .o_sdram_dq_oe  ( sdram_phy_dq_oe ),
+        .i_sdram_dq_in  ( sdram_phy_dq_in )
     );
 
     // VGA Graphics Adapter: bus VRAM writes + VGA I/O decode (see rtl/bus_controller.sv)

@@ -40,7 +40,7 @@ module i8254_pit_tb;
 
     always #5 clock = ~clock;
 
-    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
+    task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
         @(posedge clock);
         valid = 1;
         we    = 1;

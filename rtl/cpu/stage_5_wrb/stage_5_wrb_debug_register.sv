@@ -19,7 +19,8 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 module stage_5_wrb_debug_register (
     // ports
-    input logic          write_enable,    input logic [ 2: 0]  write_index,    input logic [31: 0]  write_data,    output logic [31: 0] DR [ 0:  7],    input logic          clock, reset_n);
+    input  logic          write_enable,    input  logic [ 2: 0]  write_index,    input  logic [31: 0]  write_data,    output logic [31: 0] DR [ 0:  7],    input  logic          clock, reset_n
+);
 always_ff @(posedge clock or negedge reset_n) begin
     if (~reset_n) begin
         DR[0] <= 32'b0;

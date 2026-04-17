@@ -9,7 +9,14 @@ description: This module implements stage_3_exe_execute_muldiv_unit.
 // ============================================================================
 
 module stage_3_exe_execute_muldiv_unit (
-    input logic [ 2: 0]  i_op,    input logic [31: 0]  i_lo,    input logic [31: 0]  i_hi,    input logic [31: 0]  i_src,    output logic [31: 0] o_lo,    output logic [31: 0] o_hi,    output logic         o_div0);
+    input  logic [ 2: 0] i_op,
+    input  logic [31: 0] i_lo,
+    input  logic [31: 0] i_hi,
+    input  logic [31: 0] i_src,
+    output logic [31: 0] o_lo,
+    output logic [31: 0] o_hi,
+    output logic         o_div0
+);
 
     import stage_3_exe_execute_unit_pkg::*;
 

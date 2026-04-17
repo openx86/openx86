@@ -17,9 +17,25 @@ description: This module implements ps2_host_phy.
 module ps2_host_phy #(
     parameter int CLK_HZ = 50_000_000
 ) (
-    input logic          i_ps2_clk_in,    input logic          i_ps2_dat_in,    output logic         o_ps2_clk_out,    output logic         o_ps2_clk_oe,    output logic         o_ps2_dat_out,    output logic         o_ps2_dat_oe,    input logic          i_tx_req,    input logic [ 7: 0]  i_tx_byte,    // 主机 → 设备（单周期 i_tx_req 脉冲即可，o_tx_busy 期间勿重复请求）
-    output logic         o_tx_busy,    output logic         o_tx_done,    output logic         o_tx_err,    output logic         o_rx_strobe,    output logic [ 7: 0] o_rx_byte,    // 设备 → 主机
-    output logic         o_rx_err,    input logic          clock,    input logic          reset_n);
+    input  logic          i_ps2_clk_in,
+    input  logic          i_ps2_dat_in,
+    output logic         o_ps2_clk_out,
+    output logic         o_ps2_clk_oe,
+    output logic         o_ps2_dat_out,
+    output logic         o_ps2_dat_oe,
+    input  logic          i_tx_req,
+    input  logic [ 7: 0] i_tx_byte,
+    // 主机 → 设备（单周期 i_tx_req 脉冲即可，o_tx_busy 期间勿重复请求）
+    output logic         o_tx_busy,
+    output logic         o_tx_done,
+    output logic         o_tx_err,
+    output logic         o_rx_strobe,
+    output logic [ 7: 0] o_rx_byte,
+    // 设备 → 主机
+    output logic         o_rx_err,
+    input  logic          clock,
+    input  logic          reset_n
+);
 
     // --- 时间常量（与 CLK_HZ 成比例）-----------------------------------------
     // 抑制时钟阶段：≥100µs，取 150µs

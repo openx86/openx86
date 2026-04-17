@@ -9,7 +9,17 @@ description: This module implements sd_4bit_phy.
 // ============================================================================
 
 module sd_4bit_phy (
-    input logic          i_sd_clk,    input logic          i_host_cmd_out,    input logic          i_host_cmd_oe,    output logic         o_host_cmd_in,    input logic [ 3: 0]  i_host_dat_out,    input logic          i_host_dat_oe,    output logic [ 3: 0] o_host_dat_in,    output logic         o_sd_clk_pin,    inout logic          io_sd_cmd,    inout logic [ 3: 0]  io_sd_dat);
+    input  logic          i_sd_clk,
+    input  logic          i_host_cmd_out,
+    input  logic          i_host_cmd_oe,
+    output logic         o_host_cmd_in,
+    input  logic [ 3: 0] i_host_dat_out,
+    input  logic          i_host_dat_oe,
+    output logic [ 3: 0] o_host_dat_in,
+    output logic         o_sd_clk_pin,
+    inout logic          io_sd_cmd,
+    inout logic [ 3: 0] io_sd_dat
+);
 
     assign o_sd_clk_pin = i_sd_clk;
 

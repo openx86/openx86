@@ -15,7 +15,7 @@ module lpt_centronics_tb;
     logic        reset;
     logic        io_valid, io_we;
     logic [15: 0] io_addr;
-    logic [ 7: 0]  io_wdata, io_rdata;
+    logic [ 7: 0] io_wdata, io_rdata;
 
     logic lpt_hit = (io_addr >= 16'h0378) && (io_addr <= 16'h037F);
     logic cs_n    = !(io_valid && lpt_hit);
@@ -35,7 +35,7 @@ module lpt_centronics_tb;
 
     always #5 clock = ~clock;
 
-    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
+    task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 1;

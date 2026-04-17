@@ -19,7 +19,14 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 */
 
 module stage_5_wrb_segment_register (
-    input logic          write_enable,    input logic [ 2:0]   write_index,    input logic [15: 0]  write_selector,    input logic [63: 0]  write_descriptor,    output logic [15: 0] segment_selector [ 0:  5],    output logic [63: 0] descriptor_cache [ 0:  5],    input logic          clock, reset_n);
+    input  logic          write_enable,
+    input  logic [ 2: 0]   write_index,
+    input  logic [15: 0]  write_selector,
+    input  logic [63: 0]  write_descriptor,
+    output logic [15: 0] segment_selector [ 0:  5],
+    output logic [63: 0] descriptor_cache [ 0:  5],
+    input  logic          clock, reset_n
+);
 
 always_ff @(posedge clock or negedge reset_n) begin
     if (~reset_n) begin

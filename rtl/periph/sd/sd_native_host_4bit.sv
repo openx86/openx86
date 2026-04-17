@@ -10,7 +10,24 @@ description: This module implements sd_native_host_4bit.
 // ============================================================================
 
 module sd_native_host_4bit (
-    output logic         o_sd_clk,    output logic         o_phy_cmd_out,    output logic         o_phy_cmd_oe,    input logic          i_phy_cmd_in,    output logic [ 3: 0] o_phy_dat_out,    output logic         o_phy_dat_oe,    input logic [ 3: 0]  i_phy_dat_in,    input logic          i_start,    input logic [31: 0]  i_lba,    output logic         o_busy,    output logic         o_done,    output logic         o_err,    output logic         o_payload_we,    output logic [ 8: 0] o_payload_addr,    output logic [ 7: 0] o_payload_data,    input logic          reset_n,    input logic          clock);
+    output logic         o_sd_clk,
+    output logic         o_sd_phy_cmd_out,
+    output logic         o_sd_phy_cmd_oe,
+    input  logic          i_sd_phy_cmd_in,
+    output logic [ 3: 0] o_sd_phy_dat_out,
+    output logic         o_sd_phy_dat_oe,
+    input  logic [ 3: 0] i_sd_phy_dat_in,
+    input  logic          i_start,
+    input  logic [31: 0] i_lba,
+    output logic         o_busy,
+    output logic         o_done,
+    output logic         o_err,
+    output logic         o_payload_we,
+    output logic [ 8: 0] o_payload_addr,
+    output logic [ 7: 0] o_payload_data,
+    input  logic          reset_n,
+    input  logic          clock
+);
 
     function automatic logic [ 6: 0] crc7_40(input logic [39: 0] d);
         logic [ 6: 0] c;
@@ -25,7 +42,7 @@ module sd_native_host_4bit (
         return c;
     endfunction
 
-    function automatic logic [47: 0] mk_cmd(input logic [ 5: 0] idx, input logic [31: 0] arg);
+    function automatic logic [47: 0] mk_cmd(input logic [ 5: 0] idx, input  logic [31: 0] arg);
         logic [39: 0] h;
         logic [ 6: 0] cr;
         h  = {1'b0, 1'b1, idx, arg};
@@ -85,10 +102,10 @@ module sd_native_host_4bit (
             o_busy          <= 1'b0;
             o_done          <= 1'b0;
             o_err           <= 1'b0;
-            o_phy_cmd_out   <= 1'b1;
-            o_phy_cmd_oe    <= 1'b0;
-            o_phy_dat_out   <= 4'hF;
-            o_phy_dat_oe    <= 1'b0;
+            o_sd_phy_cmd_out   <= 1'b1;
+            o_sd_phy_cmd_oe    <= 1'b0;
+            o_sd_phy_dat_out   <= 4'hF;
+            o_sd_phy_dat_oe    <= 1'b0;
             o_payload_we    <= 1'b0;
             o_payload_addr  <= '0;
             o_payload_data  <= '0;
@@ -110,21 +127,21 @@ module sd_native_host_4bit (
             unique case (st)
                 H_IDLE: begin
                     o_err         <= 1'b0;
-                    o_phy_cmd_oe  <= 1'b0;
-                    o_phy_dat_oe  <= 1'b0;
-                    o_phy_dat_out <= 4'hF;
+                    o_sd_phy_cmd_oe  <= 1'b0;
+                    o_sd_phy_dat_oe  <= 1'b0;
+                    o_sd_phy_dat_out <= 4'hF;
                     if (i_start && !o_busy) begin
                         o_busy      <= 1'b1;
                         cmd_word    <= mk_cmd(6'd17, i_lba);
                         cmd_bit_cnt <= '0;
                         st          <= H_CMD_TX;
-                        o_phy_cmd_oe <= 1'b1;
+                        o_sd_phy_cmd_oe <= 1'b1;
                     end
                 end
 
                 H_CMD_TX: begin
                     if (fall_sd) begin
-                        o_phy_cmd_out <= cmd_word[47];
+                        o_sd_phy_cmd_out <= cmd_word[47];
                         cmd_word      <= {cmd_word[46: 0], 1'b1};
                         if (cmd_bit_cnt == 6'd47) begin
                             st      <= H_CMD_NCR;
@@ -135,7 +152,7 @@ module sd_native_host_4bit (
                 end
 
                 H_CMD_NCR: begin
-                    o_phy_cmd_oe <= 1'b0;
+                    o_sd_phy_cmd_oe <= 1'b0;
                     if (rise_sd) begin
                         if (ncr_cnt == 4'd2) begin
                             st           <= H_RESP_RX;
@@ -148,7 +165,7 @@ module sd_native_host_4bit (
 
                 H_RESP_RX: begin
                     if (rise_sd) begin
-                        resp_shift <= {resp_shift[46: 0], i_phy_cmd_in};
+                        resp_shift <= {resp_shift[46: 0], i_sd_phy_cmd_in};
                         if (resp_bit_cnt == 6'd47) begin
                             st          <= H_GAP_DAT;
                             dat_gap_cnt <= '0;
@@ -170,11 +187,11 @@ module sd_native_host_4bit (
                 H_DATA_TOKEN: begin
                     if (rise_sd) begin
                         if (tok_cnt == 2'd0) begin
-                            if (i_phy_dat_in != 4'hF)
+                            if (i_sd_phy_dat_in != 4'hF)
                                 o_err <= 1'b1;
                             tok_cnt <= 2'd1;
                         end else begin
-                            if (i_phy_dat_in != 4'hE)
+                            if (i_sd_phy_dat_in != 4'hE)
                                 o_err <= 1'b1;
                             st           <= H_DATA_BODY;
                             nibble_pair  <= 1'b0;
@@ -186,12 +203,12 @@ module sd_native_host_4bit (
                 H_DATA_BODY: begin
                     if (rise_sd) begin
                         if (!nibble_pair) begin
-                            nibble_lo   <= i_phy_dat_in;
+                            nibble_lo   <= i_sd_phy_dat_in;
                             nibble_pair <= 1'b1;
                         end else begin
                             o_payload_we   <= 1'b1;
                             o_payload_addr <= byte_wr_addr;
-                            o_payload_data <= {i_phy_dat_in, nibble_lo};
+                            o_payload_data <= {i_sd_phy_dat_in, nibble_lo};
                             nibble_pair    <= 1'b0;
                             if (byte_wr_addr == 9'd511) begin
                                 st      <= H_DATA_CRC;

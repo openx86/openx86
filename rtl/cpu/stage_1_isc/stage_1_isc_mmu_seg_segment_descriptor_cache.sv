@@ -16,12 +16,31 @@ description: segment_descriptor_cache
 `include "openx86_defs.h.sv"
 
 module stage_1_isc_mmu_seg_segment_descriptor_cache (
-    input logic          protect_enable,    input logic [15: 0]  segment_selector,    input logic [63: 0]  segment_descriptor,    input logic          is_code_segment,    input logic [15: 0]  write_data,    input logic          write_enable,    output logic         read_data,    output logic [31: 0] base,    output logic [31: 0] limit,    output logic [ 1:0]  present,    output logic         privilege_level,    output logic         accessed,    output logic         granularity,    output logic         expansion_direction,    output logic         readable,    output logic         writeable,    output logic         executable,    output logic         stack_size,    output logic         conforming_privilege);
+    input  logic         protect_enable,
+    input  logic [15: 0] segment_selector,
+    input  logic [63: 0] segment_descriptor,
+    input  logic         is_code_segment,
+    input  logic [15: 0] write_data,
+    input  logic         write_enable,
+    output logic         read_data,
+    output logic [31: 0] base,
+    output logic [31: 0] limit,
+    output logic [ 1: 0] present,
+    output logic         privilege_level,
+    output logic         accessed,
+    output logic         granularity,
+    output logic         expansion_direction,
+    output logic         readable,
+    output logic         writeable,
+    output logic         executable,
+    output logic         stack_size,
+    output logic         conforming_privilege
+);
 
 logic [31: 0] dec_base;
 logic [19: 0] dec_limit;
 logic        dec_present;
-logic [ 1:0] dec_privilege_level;
+logic [ 1: 0] dec_privilege_level;
 logic        dec_available_field;
 logic        dec_segment_type;
 logic        dec_granularity;

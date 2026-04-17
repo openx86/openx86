@@ -40,7 +40,15 @@ but is not used for effective address calculation.
 */
 
 module stage_5_wrb_general_propose_register (
-    input logic          write_enable,    input logic [ 2: 0]  write_index,    input logic [31: 0]  write_data,    output logic [31: 0] read__8 [ 0:  7],    output logic [31: 0] read_16 [ 0:  7],    output logic [31: 0] read_32 [ 0:  7],    input logic          reset_n,    input logic          clock);
+    input  logic          write_enable,
+    input  logic [ 2: 0]  write_index,
+    input  logic [31: 0]  write_data,
+    output logic [31: 0] read__8 [ 0:  7],
+    output logic [31: 0] read_16 [ 0:  7],
+    output logic [31: 0] read_32 [ 0:  7],
+    input  logic          reset_n,
+    input  logic          clock
+);
 
 // GENERAL DATA AND ADDRESS REGISTERS
 logic [31: 0] general_register [ 0:  7];

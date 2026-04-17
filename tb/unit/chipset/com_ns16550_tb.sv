@@ -15,7 +15,7 @@ module com_ns16550_tb;
     logic        reset;
     logic        io_valid, io_we;
     logic [15: 0] io_addr;
-    logic [ 7: 0]  io_wdata, io_rdata;
+    logic [ 7: 0] io_wdata, io_rdata;
     logic        rx_push;
     logic [ 7: 0]  rx_data;
 
@@ -39,7 +39,7 @@ module com_ns16550_tb;
 
     always #5 clock = ~clock;
 
-    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
+    task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 1;

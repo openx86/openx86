@@ -43,10 +43,22 @@ Lookaside Buffer).
 
 module stage_1_isc_mmu_pg_paging_unit (
     // handshake
-    input logic          i_vaild,    output logic         o_ready,    // signal
-    input logic [31: 0]  i_linear_address,    input logic [31: 0]  i_page_directory_base,    output logic [31: 0] o_physical_address,    // signal from stage_4_mem_bus_interface_unit
-    output logic         o_bus_vaild,    input logic          i_bus_ready,    output logic         o_bus_write_enable,    output logic [31: 0] o_bus_address,    input logic [31: 0]  i_bus_data_read,    output logic [31: 0] o_bus_data_write,    // common
-    input logic          clock, reset_n);
+    input  logic         i_vaild,
+    output logic         o_ready,
+    // signal
+    input  logic [31: 0] i_linear_address,
+    input  logic [31: 0] i_page_directory_base,
+    output logic [31: 0] o_physical_address,
+    // signal from stage_4_mem_bus_interface_unit
+    output logic         o_bus_vaild,
+    input  logic         i_bus_ready,
+    output logic         o_bus_write_enable,
+    output logic [31: 0] o_bus_address,
+    input  logic [31: 0] i_bus_data_read,
+    output logic [31: 0] o_bus_data_write,
+    // common
+    input  logic          clock, reset_n
+);
 
 logic  [ 9: 0] page_directory_index = i_linear_address[31: 22];
 logic  [ 9: 0] page_table_index     = i_linear_address[21: 12];

@@ -9,7 +9,17 @@ description: This module implements stage_2_dec_decode_x87_esc.
 // ============================================================================
 
 module stage_2_dec_decode_x87_esc (
-    input logic [ 7:0]   i_b0,    input logic [ 7:0]   i_b1,    output logic         o_is_esc,    output logic [ 1:0]  o_mod,    output logic [ 2:0]  o_reg,    output logic [ 2:0]  o_rm,    output logic [ 2:0]  o_esc_group,    output logic [31: 0] o_opmask,    output logic         o_modrm_required,    output logic         o_memory_operand);
+    input  logic [ 7: 0]   i_b0,
+    input  logic [ 7: 0]   i_b1,
+    output logic         o_is_esc,
+    output logic [ 1: 0] o_mod,
+    output logic [ 2: 0] o_reg,
+    output logic [ 2: 0] o_rm,
+    output logic [ 2: 0] o_esc_group,
+    output logic [31: 0] o_opmask,
+    output logic         o_modrm_required,
+    output logic         o_memory_operand
+);
 
     import stage_2_dec_decode_x87_pkg::*;
 

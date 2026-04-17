@@ -18,8 +18,8 @@ module rtc_mc146818_tb;
     logic        io_valid;
     logic        io_we;
     logic [15: 0] io_addr;
-    logic [ 7: 0]  io_wdata;
-    logic [ 7: 0]  io_rdata;
+    logic [ 7: 0] io_wdata;
+    logic [ 7: 0] io_rdata;
     logic        rtc_irq;
 
     logic rtc_hit = (io_addr == 16'h0070) | (io_addr == 16'h0071);
@@ -43,7 +43,7 @@ module rtc_mc146818_tb;
         .o_rtc_irq  ( rtc_irq )
     );
 
-    task automatic io_write(input logic [15: 0] a, input logic [ 7: 0] d);
+    task automatic io_write(input logic [15: 0] a, input  logic [ 7: 0] d);
         io_valid = 1;
         io_we    = 1;
         io_addr  = a;

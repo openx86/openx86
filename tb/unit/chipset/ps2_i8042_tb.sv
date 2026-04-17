@@ -15,8 +15,8 @@ module ps2_i8042_tb;
     logic        io_valid;
     logic        io_we;
     logic [15: 0] io_addr;
-    logic [ 7: 0]  io_wdata;
-    logic [ 7: 0]  io_rdata;
+    logic [ 7: 0] io_wdata;
+    logic [ 7: 0] io_rdata;
     logic        kbd_push;
     logic [ 7: 0]  kbd_data;
 

@@ -21,7 +21,19 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 `include "openx86_defs.h.sv"
 
 module stage_2_dec_decode_disp_imm (
-    input logic [ 7:0]   i_instruction [ 0:  7],    input logic          i_displacement_size_1,    input logic          i_displacement_size_2,    input logic          i_displacement_size_4,    input logic          i_immediate_size_1,    input logic          i_immediate_size_2,    input logic          i_immediate_size_4,    input logic          i_immediate_size_f,    output logic [31: 0] o_displacement,    output logic [31: 0] o_immediate,    output logic [ 3:0]  o_consume_bytes,    output logic         o_error);
+    input  logic [ 7: 0]   i_instruction [ 0:  7],
+    input  logic          i_displacement_size_1,
+    input  logic          i_displacement_size_2,
+    input  logic          i_displacement_size_4,
+    input  logic          i_immediate_size_1,
+    input  logic          i_immediate_size_2,
+    input  logic          i_immediate_size_4,
+    input  logic          i_immediate_size_f,
+    output logic [31: 0] o_displacement,
+    output logic [31: 0] o_immediate,
+    output logic [ 3: 0] o_consume_bytes,
+    output logic         o_error
+);
 
 logic [ 7: 0] instruction_for_immediate [ 0:  3];
 
@@ -44,7 +56,7 @@ always_comb begin
     endcase
 end
 
-logic [ 3:0] displacement_bytes;
+logic [ 3: 0] displacement_bytes;
 always_comb begin
     case (1'b1)
         i_displacement_size_1: displacement_bytes <= 4'h1;
@@ -55,7 +67,7 @@ always_comb begin
     endcase
 end
 
-logic [ 3:0] immediate_bytes;
+logic [ 3: 0] immediate_bytes;
 always_comb begin
     case (1'b1)
         i_immediate_size_1: immediate_bytes <= 4'h1;

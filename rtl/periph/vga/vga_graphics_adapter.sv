@@ -9,13 +9,28 @@ module vga_graphics_adapter (
     // bus
 
     // CPU I/O port access
-    input logic          io_en_w,    input logic          io_en_r,    input logic [15: 0]  io_addr,    input logic [ 7: 0]  io_data_w,    output logic [ 7: 0] io_data_r,
+    input  logic          io_en_w,
+    input  logic          io_en_r,
+    input  logic [15: 0] io_addr,
+    input  logic [ 7: 0] io_data_w,
+    output logic [ 7: 0] io_data_r,
+
     // CPU memory access (VRAM window)
-    input logic          mem_en_w,    input logic [19: 0]  mem_addr,    input logic [ 7: 0]  mem_data_w,
+    input  logic          mem_en_w,
+    input  logic [19: 0]  mem_addr,
+    input  logic [ 7: 0]  mem_data_w,
+
     // VGA physical signals
-    output logic         vga_hsync,    output logic         vga_vsync,    output logic [ 3: 0] vga_r,    output logic [ 3: 0] vga_g,    output logic [ 3: 0] vga_b,
+    output logic         vga_hsync,
+    output logic         vga_vsync,
+    output logic [ 3: 0] vga_r,
+    output logic [ 3: 0] vga_g,
+    output logic [ 3: 0] vga_b,
+
     // common
-    input logic          reset_n,    input logic          clock);
+    input  logic          reset_n,
+    input  logic          clock
+);
 
     // VGA VRAM 容量：307 KB = 314,368 字节
     localparam int VRAM_SIZE_BYTES = 640 * 480;  // 307,200 字节
@@ -48,11 +63,11 @@ module vga_graphics_adapter (
     // ------------------------------------------------------------------------
 
     // VGA 读 VRAM 接口（连接到 vga_port）
-    logic [VRAM_ADDR_WIDTH-1:0] vram_rd_addr;
+    logic [VRAM_ADDR_WIDTH-1: 0] vram_rd_addr;
     logic [ 7: 0]                 vram_rd_data;
 
     // CPU 写地址（截断到VRAM地址宽度内）
-    logic [VRAM_ADDR_WIDTH-1:0] vram_wr_addr;
+    logic [VRAM_ADDR_WIDTH-1: 0] vram_wr_addr;
 
     // 地址截断逻辑
     assign vram_wr_addr = mem_addr[VRAM_ADDR_WIDTH-1:0];
@@ -81,8 +96,8 @@ module vga_graphics_adapter (
     // ------------------------------------------------------------------------
     
     // 时序信号（从 vga_port 或文本模式模块获取）
-    logic [$clog2(800)-1:0] h_count;
-    logic [$clog2(525)-1:0] v_count;
+    logic [$clog2(800)-1: 0] h_count;
+    logic [$clog2(525)-1: 0] v_count;
     logic video_active;
     
     // 图形模式输出
@@ -101,8 +116,8 @@ module vga_graphics_adapter (
     logic [ 7: 0]  text_vram_attr_data;
     
     // 文本模式 VRAM 地址映射（文本模式使用 VRAM 的前 4000 字节）
-    logic [VRAM_ADDR_WIDTH-1:0] text_vram_rd_addr_char;
-    logic [VRAM_ADDR_WIDTH-1:0] text_vram_rd_addr_attr;
+    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_char;
+    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_attr;
     
     // 文本模式 VRAM 读取地址选择
     assign text_vram_rd_addr_char = text_vram_addr[12:  1];  // 字符码地址（偶数地址）

@@ -19,13 +19,22 @@ description: This module implements chip_mc146818_rtc.
 module chip_mc146818_rtc #(
     parameter int CLK_HZ = 8_000
 ) (
-    input logic          i_cs_n,    input logic          i_rd_n,    input logic          i_wr_n,    input logic          i_a0,    input logic [ 7: 0]  i_d,    // 0 = 索引口 0x70，1 = 数据口 0x71
-    output logic [ 7: 0] o_d,    output logic         o_rtc_irq,    input logic          clock,    input logic          reset_n);
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic         i_a0,
+    input  logic [ 7: 0] i_d,
+    // 0 = 索引口 0x70，1 = 数据口 0x71
+    output logic [ 7: 0] o_d,
+    output logic         o_rtc_irq,
+    input  logic         clock,
+    input  logic         reset_n
+);
 
     localparam int UIP_CYC = ((CLK_HZ * 244) / 1_000_000) > 0 ? ((CLK_HZ * 244) / 1_000_000) : 1;
     localparam int CW      = $clog2(CLK_HZ + 1);
-    localparam logic [CW-1:0] SUB_LAST = CW'(CLK_HZ - 1);
-    localparam logic [CW-1:0] UIP_START = (CLK_HZ > UIP_CYC) ? CW'(CLK_HZ - UIP_CYC) : CW'(0);
+    localparam logic [CW-1: 0] SUB_LAST = CW'(CLK_HZ - 1);
+    localparam logic [CW-1: 0] UIP_START = (CLK_HZ > UIP_CYC) ? CW'(CLK_HZ - UIP_CYC) : CW'(0);
 
     logic wr = !i_cs_n && !i_wr_n;
     logic rd = !i_cs_n && !i_rd_n;
@@ -47,7 +56,7 @@ module chip_mc146818_rtc #(
     logic [ 3: 0] month_bin;
     logic [ 7: 0] year_bin;
 
-    logic [CW-1:0] sub_sec;
+    logic [CW-1: 0] sub_sec;
     logic          uip_phase;
 
     logic reg_c_pf, reg_c_af, reg_c_uf, reg_c_irqf;
@@ -140,7 +149,7 @@ module chip_mc146818_rtc #(
         century_bcd = bcd_to_u8(cf);
     endfunction
 
-    function automatic int full_year(input logic [ 7: 0] cent_bcd, input logic [ 7: 0] ybin);
+    function automatic int full_year(input logic [ 7: 0] cent_bcd, input  logic [ 7: 0] ybin);
         full_year = century_bcd(cent_bcd) * 100 + ybin;
     endfunction
 
@@ -158,16 +167,16 @@ module chip_mc146818_rtc #(
     endfunction
 
     function automatic logic [ 7: 0] enc_sec_min(
-        input logic [ 5: 0] binv,
-        input logic bin_mode
+        input  logic [ 5: 0] binv,
+        input  logic bin_mode
     );
         enc_sec_min = bin_mode ? {2'b0, binv} : u6_to_bcd(binv);
     endfunction
 
     function automatic logic [ 7: 0] enc_hour(
-        input logic [ 4: 0] h24,
-        input logic bin_mode,
-        input logic is_24h
+        input  logic [ 4: 0] h24,
+        input  logic bin_mode,
+        input  logic is_24h
     );
         logic [ 4: 0] h12v;
         logic pm;
@@ -195,9 +204,9 @@ module chip_mc146818_rtc #(
     endfunction
 
     function automatic logic [ 4: 0] dec_hour(
-        input logic [ 7: 0] raw,
-        input logic bin_mode,
-        input logic is_24h
+        input  logic [ 7: 0] raw,
+        input  logic bin_mode,
+        input  logic is_24h
     );
         logic [ 4: 0] h;
         logic pm;
@@ -259,8 +268,8 @@ module chip_mc146818_rtc #(
     end
 
     function automatic logic alarm_field_ok(
-        input logic [ 7: 0] alarm_byte,
-        input logic [ 7: 0] time_byte
+        input  logic [ 7: 0] alarm_byte,
+        input  logic [ 7: 0] time_byte
     );
         alarm_field_ok = alarm_byte[7] || (alarm_byte == time_byte);
     endfunction

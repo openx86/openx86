@@ -19,22 +19,33 @@ module stage_1_isc_mmu_seg_segmentation_unit #(
     // ------------------------------------------------------------------------
     // Segmentation context inputs
     // ------------------------------------------------------------------------
-    input logic          i_protected_mode,                              // from CR0.PE (CR[0][0])    input logic [15: 0]  i_segment_selector [ 0: 5],                      // from segment register file    input logic [63: 0]  i_segment_descriptor [ 0: 5],                    // cached descriptors from segment register file    input logic [ 2: 0]  i_segment_index,                               // from stage_4_mem_bus_interface_unit module    input logic [ 1: 0]  i_current_privilege_level,                     // from flags register file    input logic [31: 0]  i_effective_address,                           // from stage_4_mem_bus_interface_unit module    input logic          i_write_enable,                                // from stage_4_mem_bus_interface_unit module
+    input  logic          i_protected_mode,                              // from CR0.PE (CR[0][0])
+    input  logic [15: 0] i_segment_selector [ 0: 5],                      // from segment register file
+    input  logic [63: 0] i_segment_descriptor [ 0: 5],                    // cached descriptors from segment register file
+    input  logic [ 2: 0] i_segment_index,                               // from stage_4_mem_bus_interface_unit module
+    input  logic [ 1: 0] i_current_privilege_level,                     // from flags register file
+    input  logic [31: 0] i_effective_address,                           // from stage_4_mem_bus_interface_unit module
+    input  logic          i_write_enable,                                // from stage_4_mem_bus_interface_unit module
+
     // ------------------------------------------------------------------------
     // Segmentation outputs
     // ------------------------------------------------------------------------
-    output logic [31: 0] o_linear_address,                              // to paging unit    output logic         o_segment_privilege_error,                     // to execute
+    output logic [31: 0] o_linear_address,                              // to paging unit
+    output logic         o_segment_privilege_error,                     // to execute
+
     // ------------------------------------------------------------------------
     // Clock / reset
     // ------------------------------------------------------------------------
-    input logic          clock,    input logic          reset_n);
+    input  logic          clock,
+    input  logic          reset_n
+);
 
 logic  [63: 0] segment_descriptor = i_segment_descriptor[i_segment_index];
 
 logic [31: 0] base;
 logic [19: 0] limit;
 logic        date_or_code_present;
-logic [ 1:0] date_or_code_privilege_level;
+logic [ 1: 0] date_or_code_privilege_level;
 logic        available_field;
 logic        segment_type;
 logic        date_or_code_granularity;

@@ -31,11 +31,16 @@ module chip_at24lc32_eeprom #(
     // ------------------------------------------------------------------------
     // I2C bus pins
     // ------------------------------------------------------------------------
-    input logic  i_scl,    input logic  i_sda,    output logic o_sda_oe, // 1 = drive low (0), 0 = release (Z)
+    input  logic i_scl,
+    input  logic i_sda,
+    output logic o_sda_oe, // 1 = drive low (0), 0 = release (Z)
+
     // ------------------------------------------------------------------------
     // Simulation clock / reset
     // ------------------------------------------------------------------------
-    input logic  clock,    input logic  reset_n);
+    input  logic clock,
+    input  logic reset_n
+);
 
     localparam int AW = $clog2(NUM_BYTES);
     localparam logic [ 3: 0] DEV_TYPE = 4'b1010; // 24xx EEPROM family
@@ -93,7 +98,7 @@ module chip_at24lc32_eeprom #(
         return (a7[ 6:  3] == DEV_TYPE) && (a7[ 2: 0] == A_PINS);
     endfunction
 
-    function automatic logic [AW-1:0] idx(input logic [15: 0] wa);
+    function automatic logic [AW-1: 0] idx(input logic [15: 0] wa);
         return wa[AW-1:0];
     endfunction
 

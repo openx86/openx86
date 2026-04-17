@@ -17,7 +17,18 @@ module sdram_x16_stub #(
     parameter int CAS_LATENCY       = 2,
     parameter int MEM_HALFWORDS_LG2 = 21
 ) (
-    input logic          clk,    input logic          cs_n,    input logic          ras_n,    input logic          cas_n,    input logic          we_n,    input logic [ 1: 0]  ba,    input logic [12: 0]  a,    input logic [15: 0]  host_dq_out,    input logic          host_dq_oe,    output logic [15: 0] model_dq,    output logic         model_dq_oe);
+    input  logic          clk,
+    input  logic          cs_n,
+    input  logic          ras_n,
+    input  logic          cas_n,
+    input  logic          we_n,
+    input  logic [ 1: 0]  ba,
+    input  logic [12: 0]  a,
+    input  logic [15: 0]  host_dq_out,
+    input  logic          host_dq_oe,
+    output logic [15: 0] model_dq,
+    output logic         model_dq_oe
+);
 
     localparam int AW = MEM_HALFWORDS_LG2;
     (* ram_style = "block" *)
@@ -29,9 +40,9 @@ module sdram_x16_stub #(
     logic cmd_rd  = !cs_n && ras_n && !cas_n && we_n;
     logic cmd_wr  = !cs_n && ras_n && !cas_n && !we_n;
 
-    logic [AW-1:0] lin_cmd = {active_row[ba], ba, a[ 7: 0]};
+    logic [AW-1: 0] lin_cmd = {active_row[ba], ba, a[ 7: 0]};
 
-    logic [AW-1:0] w_lin;
+    logic [AW-1: 0] w_lin;
     int unsigned   w_phase;
 
     typedef enum logic [ 2: 0] {
@@ -43,7 +54,7 @@ module sdram_x16_stub #(
 
     rd_st_t          rd_st;
     int unsigned     rd_wait;
-    logic [AW-1:0]   rd_lin;
+    logic [AW-1: 0]   rd_lin;
 
     integer ii;
     initial begin

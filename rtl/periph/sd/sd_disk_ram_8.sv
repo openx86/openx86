@@ -12,7 +12,16 @@ description: This module implements sd_disk_ram_8.
 module sd_disk_ram_8 #(
     parameter int BYTE_DEPTH = 524288
 ) (
-    input logic          i_we,    input logic [31: 0]  i_waddr,    input logic [ 7: 0]  i_wdata,    input logic [31: 0]  i_raddr_a,    input logic [31: 0]  i_raddr_b,    output logic [ 7: 0] o_rdata_a,    output logic [ 7: 0] o_rdata_b,    input logic          clock,    input logic          reset_n);
+    input  logic          i_we,
+    input  logic [31: 0] i_waddr,
+    input  logic [ 7: 0] i_wdata,
+    input  logic [31: 0] i_raddr_a,
+    input  logic [31: 0] i_raddr_b,
+    output logic [ 7: 0] o_rdata_a,
+    output logic [ 7: 0] o_rdata_b,
+    input  logic          clock,
+    input  logic          reset_n
+);
 
     logic [ 7: 0] mem [0:BYTE_DEPTH-1];
 

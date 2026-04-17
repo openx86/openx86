@@ -30,7 +30,13 @@ vectors, and exceptions. (See 2.9 Interrupts).
 */
 
 module stage_5_wrb_sar_interrupt_descriptor_table_register (
-    input logic          IDTR_write_enable,    input logic [15: 0]  IDTR_write_data_limit,    input logic [31: 0]  IDTR_write_data_base,    output logic [15: 0] IDTR_limit,    output logic [31: 0] IDTR_base,    input logic          clock, reset_n);
+    input  logic          IDTR_write_enable,
+    input  logic [15: 0] iDTR_write_data_limit,
+    input  logic [31: 0] iDTR_write_data_base,
+    output logic [15: 0] IDTR_limit,
+    output logic [31: 0] IDTR_base,
+    input  logic          clock, reset_n
+);
 
 // IDTR (Interrupt Descriptor Table Register)
 

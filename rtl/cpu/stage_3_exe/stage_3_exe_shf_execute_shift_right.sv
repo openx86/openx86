@@ -15,10 +15,14 @@ module stage_3_exe_shf_execute_shift_right #(
     BIT_WIDTH = 32
 ) (
     // ports
-    input logic [BIT_WIDTH-1:0]  operand,    input logic [BIT_WIDTH-1:0]  count,    input logic [BIT_WIDTH-1:0]  is_signed,    output logic [BIT_WIDTH-1:0] result);
+    input  logic [BIT_WIDTH-1: 0] operand,
+    input  logic [BIT_WIDTH-1: 0]  count,
+    input  logic [BIT_WIDTH-1: 0] is_signed,
+    output logic [BIT_WIDTH-1: 0] result
+);
 
 localparam int SHIFT_W = (BIT_WIDTH <= 1) ? 1 : $clog2(BIT_WIDTH);
-logic [SHIFT_W-1:0] shift_amt = count[SHIFT_W-1:0];
+logic [SHIFT_W-1: 0] shift_amt = count[SHIFT_W-1:0];
 
 assign result = is_signed[0]
     ? ($signed(operand) >>> shift_amt)

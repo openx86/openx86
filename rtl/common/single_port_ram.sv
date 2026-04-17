@@ -24,13 +24,19 @@ module single_port_ram #(
     parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读写端口
-    input logic                   we,    // 写使能    input logic [ADDR_WIDTH-1:0]  addr,  // 地址    input logic [DATA_WIDTH-1:0]  wdata, // 写数据    output logic [DATA_WIDTH-1:0] rdata, // 读数据
+    input  logic                  we,    // 写使能
+    input  logic [ADDR_WIDTH-1: 0] addr,  // 地址
+    input  logic [DATA_WIDTH-1: 0] wdata, // 写数据
+    output logic [DATA_WIDTH-1: 0] rdata, // 读数据
+
     
     // 时钟和复位
-    input logic                   clock,    input logic                   reset_n);
+    input  logic                  clock,
+    input  logic                  reset_n
+);
 
     // 存储器数组
-    logic [DATA_WIDTH-1:0] mem [0:DEPTH-1];
+    logic [DATA_WIDTH-1: 0] mem [0:DEPTH-1];
 
     // 写操作（同步写）
     always_ff @(posedge clock) begin

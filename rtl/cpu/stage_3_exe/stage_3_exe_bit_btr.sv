@@ -5,7 +5,11 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_bit_btr.
 */
 module stage_3_exe_bit_btr (
-    input logic [31: 0]  a,    input logic [31: 0]  bit_index,    output logic [31: 0] y,    output logic         cf);
+    input  logic [31: 0]  a,
+    input  logic [31: 0]  bit_index,
+    output logic [31: 0] y,
+    output logic         cf
+);
     logic [31: 0] mask;
 
     always_comb begin

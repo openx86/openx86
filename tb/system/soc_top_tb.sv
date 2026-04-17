@@ -14,12 +14,12 @@ module soc_top_tb;
     logic reset_n;
     logic        o_vga_hsync;
     logic        o_vga_vsync;
-    logic [ 3: 0]  o_vga_r;
-    logic [ 3: 0]  o_vga_g;
-    logic [ 3: 0]  o_vga_b;
+    logic [ 3: 0] o_vga_r;
+    logic [ 3: 0] o_vga_g;
+    logic [ 3: 0] o_vga_b;
     logic  [15: 0] sdram_dq;
     logic         io_sdio_cmd;
-    logic  [ 3: 0]  io_sdio_dat;
+    logic  [ 3: 0] io_sdio_dat;
     int          c;
 
     openx86_soc_top #(

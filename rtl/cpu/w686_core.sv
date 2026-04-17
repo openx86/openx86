@@ -11,20 +11,37 @@ description: This module implements w686_core.
 `include "w686_decode_outputs_decl.svh"
 
 module w686_core (
-    output logic         o_mmu_vaild,    input logic          i_mmu_ready,    output logic [31: 0] o_mmu_address,    input logic [31: 0]  i_mmu_data_read,
-    output logic         o_code_vaild,    input logic          i_code_ready,    output logic [31: 0] o_code_address,    input logic [31: 0]  i_code_data_read,
-    output logic         o_data_vaild,    input logic          i_data_ready,    output logic         o_data_write_enable,    output logic         o_data_io_access,    output logic [31: 0] o_data_address,    input logic [31: 0]  i_data_data_read,    output logic [31: 0] o_data_data_write,
-    input logic          reset_n,    input logic          clock);
+    output logic         o_mmu_vaild,
+    input  logic          i_mmu_ready,
+    output logic [31: 0] o_mmu_address,
+    input  logic [31: 0] i_mmu_data_read,
+
+    output logic         o_code_vaild,
+    input  logic          i_code_ready,
+    output logic [31: 0] o_code_address,
+    input  logic [31: 0] i_code_data_read,
+
+    output logic         o_data_vaild,
+    input  logic          i_data_ready,
+    output logic         o_data_write_enable,
+    output logic         o_data_io_access,
+    output logic [31: 0] o_data_address,
+    input  logic [31: 0] i_data_data_read,
+    output logic [31: 0] o_data_data_write,
+
+    input  logic          reset_n,
+    input  logic          clock
+);
 
     import stage_3_exe_execute_unit_pkg::*;
     import stage_2_dec_decode_x87_pkg::*;
 
     // --- GPR / 段 / 标志 / EIP / 控制寄存器（与原实现一致）---
     logic        write_enable;
-    logic [ 2:0] write_index;
+    logic [ 2: 0] write_index;
     logic [31: 0] write_data;
     logic        wb_write_enable;
-    logic [ 2:0] wb_write_index;
+    logic [ 2: 0] wb_write_index;
     logic [31: 0] wb_write_data;
     logic [31: 0] GPR_read__8 [ 0:  7];
     logic [31: 0] GPR_read_16 [ 0:  7];
@@ -42,11 +59,11 @@ module w686_core (
     );
 
     logic        SREG_write_enable;
-    logic [ 2:0] SREG_write_index;
+    logic [ 2: 0] SREG_write_index;
     logic [15: 0] SREG_write_selector;
     logic [63: 0] SREG_write_descriptor;
     logic        wb_SREG_write_enable;
-    logic [ 2:0] wb_SREG_write_index;
+    logic [ 2: 0] wb_SREG_write_index;
     logic [15: 0] wb_SREG_write_selector;
     logic [63: 0] wb_SREG_write_descriptor;
     logic [15: 0] segment_selector [ 0:  5];
@@ -68,7 +85,7 @@ module w686_core (
     logic         wb_FLAGS_write_enable;
     logic [31: 0]  wb_FLAGS_write_data;
     logic         CF, PF, AF, ZF, SF, TF, IF, DF, OF;
-    logic [ 1:0]  IOPL;
+    logic [ 1: 0] iOPL;
     logic         NT, RF, VM;
     logic [31: 0]  EFLAGS;
     logic [15: 0]  FLAGS;
@@ -246,7 +263,7 @@ module w686_core (
     assign o_data_data_write   = data_data_write;
 
     // --- 取指 ---
-    logic [ 7:0] instruction [ 0: 15];
+    logic [ 7: 0] instruction [ 0: 15];
     logic        instruction_ready;
     logic        if_segment_fault;
 
@@ -380,7 +397,7 @@ module w686_core (
     logic [31: 0] eu_agu_ea;
     logic [31: 0] lsu_linear_address = dseg_base_linear + eu_agu_ea;
 
-    logic [ 2:0] eu_md_op;
+    logic [ 2: 0] eu_md_op;
     logic [31: 0] eu_md_lo;
     logic [31: 0] eu_md_hi;
     logic [31: 0] eu_md_src;
@@ -1071,7 +1088,7 @@ module w686_core (
     logic        muldiv_pair_wait;
     logic [31: 0] muldiv_hi_latch;
     logic        lsu_last_was_store_r;
-    logic [ 2:0] lsu_ld_dst_reg;
+    logic [ 2: 0] lsu_ld_dst_reg;
 
     logic [63: 0] eu_x87_st0;
     logic [63: 0] eu_x87_st1;
@@ -1264,11 +1281,11 @@ module w686_core (
 
     logic [31: 0] xadd_a;
     logic [31: 0] sh_tmp;
-    logic [ 4:0] sh_cnt;
+    logic [ 4: 0] sh_cnt;
     logic        sh_cf;
     logic        sh_of;
     logic [31: 0] shadow_ret_stack [ 0: 15];
-    logic [ 3:0] shadow_ret_sp;
+    logic [ 3: 0] shadow_ret_sp;
 
     function automatic logic parity_even8(input logic [ 7: 0] v);
         parity_even8 = ~^v;
@@ -1279,13 +1296,13 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] write_status_flags(
-        input logic [31: 0] old_flags,
-        input logic        cf,
-        input logic        pf,
-        input logic        af,
-        input logic        zf,
-        input logic        sf,
-        input logic        of
+        input  logic [31: 0] old_flags,
+        input  logic        cf,
+        input  logic        pf,
+        input  logic        af,
+        input  logic        zf,
+        input  logic        sf,
+        input  logic        of
     );
         logic [31: 0] f;
         begin
@@ -1301,11 +1318,11 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] flags_from_eu_result(
-        input logic [31: 0] old_flags,
-        input logic [31: 0] result,
-        input logic        cf,
-        input logic        af,
-        input logic        of
+        input  logic [31: 0] old_flags,
+        input  logic [31: 0] result,
+        input  logic        cf,
+        input  logic        af,
+        input  logic        of
     );
         flags_from_eu_result = write_status_flags(
             old_flags,
@@ -1319,11 +1336,11 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] flags_from_eu_result8(
-        input logic [31: 0] old_flags,
-        input logic [31: 0] result,
-        input logic        cf,
-        input logic        af,
-        input logic        of
+        input  logic [31: 0] old_flags,
+        input  logic [31: 0] result,
+        input  logic        cf,
+        input  logic        af,
+        input  logic        of
     );
         flags_from_eu_result8 = write_status_flags(
             old_flags,
@@ -1337,8 +1354,8 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] flags_with_cf(
-        input logic [31: 0] old_flags,
-        input logic        cf
+        input  logic [31: 0] old_flags,
+        input  logic        cf
     );
         logic [31: 0] f;
         begin
@@ -1349,8 +1366,8 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] flags_with_zf(
-        input logic [31: 0] old_flags,
-        input logic        zf
+        input  logic [31: 0] old_flags,
+        input  logic        zf
     );
         logic [31: 0] f;
         begin
@@ -1361,9 +1378,9 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] flags_with_cf_af(
-        input logic [31: 0] old_flags,
-        input logic        cf,
-        input logic        af
+        input  logic [31: 0] old_flags,
+        input  logic        cf,
+        input  logic        af
     );
         logic [31: 0] f;
         begin
@@ -1375,9 +1392,9 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] flags_with_cf_of(
-        input logic [31: 0] old_flags,
-        input logic        cf,
-        input logic        of
+        input  logic [31: 0] old_flags,
+        input  logic        cf,
+        input  logic        of
     );
         logic [31: 0] f;
         begin
@@ -1389,10 +1406,10 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] flags_with_cf_pf_zf(
-        input logic [31: 0] old_flags,
-        input logic        cf,
-        input logic        pf,
-        input logic        zf
+        input  logic [31: 0] old_flags,
+        input  logic        cf,
+        input  logic        pf,
+        input  logic        zf
     );
         logic [31: 0] f;
         begin
@@ -1405,8 +1422,8 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] flags_preserve_cf(
-        input logic [31: 0] old_flags,
-        input logic [31: 0] new_flags
+        input  logic [31: 0] old_flags,
+        input  logic [31: 0] new_flags
     );
         logic [31: 0] f;
         begin
@@ -1417,28 +1434,28 @@ module w686_core (
     endfunction
 
     function automatic logic [31: 0] stack_push_esp(
-        input logic [31: 0] esp,
-        input logic [31: 0] bytes
+        input  logic [31: 0] esp,
+        input  logic [31: 0] bytes
     );
         stack_push_esp = esp - bytes;
     endfunction
 
     function automatic logic [31: 0] stack_pop_esp(
-        input logic [31: 0] esp,
-        input logic [31: 0] bytes
+        input  logic [31: 0] esp,
+        input  logic [31: 0] bytes
     );
         stack_pop_esp = esp + bytes;
     endfunction
 
     function automatic logic shadow_ret_has_entry(
-        input logic [ 3: 0] sp
+        input  logic [ 3: 0] sp
     );
         shadow_ret_has_entry = (sp != 4'd0);
     endfunction
 
     function automatic logic [31: 0] shadow_ret_top_or(
-        input logic [ 3: 0]  sp,
-        input logic [31: 0] fallback
+        input  logic [ 3: 0]  sp,
+        input  logic [31: 0] fallback
     );
         if (sp != 4'd0)
             shadow_ret_top_or = shadow_ret_stack[sp - 4'd1];
@@ -1447,8 +1464,8 @@ module w686_core (
     endfunction
 
     function automatic logic [15: 0] shadow_ret_top16_or(
-        input logic [ 3: 0]  sp,
-        input logic [15: 0] fallback
+        input  logic [ 3: 0]  sp,
+        input  logic [15: 0] fallback
     );
         if (sp != 4'd0)
             shadow_ret_top16_or = shadow_ret_stack[sp - 4'd1][15: 0];

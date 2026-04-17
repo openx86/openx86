@@ -18,8 +18,12 @@ description: This module implements edge_detect.
 
 module edge_detect (
     // ports
-    input logic  signal,    output logic pos_edge,    output logic neg_edge,    input logic  reset_n,
-    input logic  clock);
+    input  logic signal,
+    output logic pos_edge,
+    output logic neg_edge,
+    input  logic clock,
+    input  logic reset_n
+);
 
 logic signal_prev;
 

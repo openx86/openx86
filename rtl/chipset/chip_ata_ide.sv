@@ -17,7 +17,19 @@ module chip_ata_ide #(
     parameter bit USE_INTERNAL_DISK_MEM = 1,
     parameter bit USE_ASYNC_DISK = 1'b0
 ) (
-    input logic          i_cs_n,    input logic          i_rd_n,    input logic          i_wr_n,    input logic [15: 0]  i_addr,    input logic [ 7: 0]  i_d,    output logic [ 7: 0] o_d,    output logic [31: 0] o_disk_raddr,    input logic [ 7: 0]  i_disk_rdata,    input logic          i_disk_sector_ready,    output logic         o_disk_sector_req,    input logic          clock,    input logic          reset_n);
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic [15: 0] i_addr,
+    input  logic [ 7: 0] i_d,
+    output logic [ 7: 0] o_d,
+    output logic [31: 0] o_disk_raddr,
+    input  logic [ 7: 0] i_disk_rdata,
+    input  logic         i_disk_sector_ready,
+    output logic         o_disk_sector_req,
+    input  logic         clock,
+    input  logic         reset_n
+);
 
     typedef enum logic [ 2: 0] {
         ST_IDLE,
