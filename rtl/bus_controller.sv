@@ -19,7 +19,7 @@ description: This module implements bus_controller.
 // It is wrapped by `bus_controller` to keep a stable top-level bus port
 // interface while allowing the device-side to evolve.
 // ----------------------------------------------------------------------------
-module bus_controller_devices #(
+module bus_controller #(
     parameter bit  USE_REAL_PS2 = 1'b0,
     parameter int PS2_CLK_HZ   = 50_000_000,
     parameter bit  USE_SDIO_DISK = 1'b0
@@ -717,7 +717,7 @@ module bus_controller #(
     input  logic        clock,
     input  logic        reset_n
 );
-    bus_controller_devices #(
+    bus_controller #(
         .USE_REAL_PS2 ( USE_REAL_PS2 ),
         .PS2_CLK_HZ   ( PS2_CLK_HZ ),
         .USE_SDIO_DISK ( USE_SDIO_DISK )
