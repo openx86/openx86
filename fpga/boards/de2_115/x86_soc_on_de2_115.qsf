@@ -1350,4 +1350,14 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_graphics_
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_port.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_text_color.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga_text_intense.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/ide/ide_sd_sector_bridge.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/ps2/ps2_host_phy.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/sd/sd_4bit_phy.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/sd/sd_disk_ram_8.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/sd/sd_native_host_4bit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga/vga_font_rom.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga/vga_graphics_adapter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga/vga_port.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga/vga_text_color.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga/vga_text_intense.sv
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
