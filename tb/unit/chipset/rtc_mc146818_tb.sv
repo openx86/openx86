@@ -14,7 +14,7 @@ module rtc_mc146818_tb;
     localparam int RTC_HZ = 256;
 
     logic        clock = 0;
-    logic        reset;
+    logic        reset_n;
     logic        io_valid;
     logic        io_we;
     logic [15:  0] io_addr;
@@ -73,11 +73,11 @@ module rtc_mc146818_tb;
 
     initial begin
         logic [ 7:  0] v;
-        reset    = 1;
+        reset_n  = 0;
         io_valid = 0;
         io_we    = 0;
         repeat (4) @(posedge clock);
-        reset = 0;
+        reset_n = 1;
         @(posedge clock);
 
         set_index(7'h00);

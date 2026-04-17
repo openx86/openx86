@@ -67,6 +67,33 @@ module chip_mc146818_rtc #(
 
     wire read_c_pulse = rd && i_a0 && (index_reg[ 6:  0] == 7'h0C);
     logic read_c_d1;
+    wire rstn_i = (reset_n === 1'b0) ? 1'b0 : 1'b1;
+
+    // Power-up defaults mirror reset defaults for deterministic startup behavior.
+    initial begin
+        index_reg = '0;
+        for (int i = 0; i < 128; i++)
+            cmos_ram[i] = 8'h00;
+        sec_bin   = 6'd0;
+        min_bin   = 6'd0;
+        hour_bin  = 5'd0;
+        dow_bin   = 3'd2;
+        dom_bin   = 5'd6;
+        month_bin = 4'd10;
+        year_bin  = 8'd97;
+        sub_sec   = '0;
+        uip_phase = 1'b0;
+        reg_c_pf   = 1'b0;
+        reg_c_af   = 1'b0;
+        reg_c_uf   = 1'b0;
+        reg_c_irqf = 1'b0;
+        pie_div    = '0;
+        alarm_match_d = 1'b0;
+        read_c_d1  = 1'b0;
+        cmos_ram[10] = 8'h26;
+        cmos_ram[11] = 8'h02;
+        cmos_ram[50] = 8'h19;
+    end
 
     function automatic logic [ 7:  0] u8_to_bcd(input logic [ 7:  0] v);
         logic [ 7:  0] t;
@@ -290,8 +317,8 @@ module chip_mc146818_rtc #(
 
     assign o_rtc_irq = reg_c_irqf;
 
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clock or negedge rstn_i) begin
+        if (!rstn_i) begin
             index_reg <= '0;
             for (int i = 0; i < 128; i++)
                 cmos_ram[i] <= 8'h00;
