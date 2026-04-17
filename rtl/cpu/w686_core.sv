@@ -36,27 +36,13 @@ module w686_core (
     import stage_3_exe_execute_unit_pkg::*;
     import stage_2_dec_decode_x87_pkg::*;
 
-    // --- GPR / 段 / 标志 / EIP / 控制寄存器（与原实现一致）---
+    // --- GPR / 段 / 标志 / EIP / 控制寄存器 ---
     logic        write_enable;
     logic [ 2: 0] write_index;
     logic [31: 0] write_data;
     logic        wb_write_enable;
     logic [ 2: 0] wb_write_index;
     logic [31: 0] wb_write_data;
-    logic [31: 0] GPR_read__8 [ 0:  7];
-    logic [31: 0] GPR_read_16 [ 0:  7];
-    logic [31: 0] GPR_read_32 [ 0:  7];
-
-    stage_5_wrb_general_propose_register general_propose_register (
-        .write_enable ( wb_write_enable ),
-        .write_index ( wb_write_index ),
-        .write_data ( wb_write_data ),
-        .read__8 ( GPR_read__8 ),
-        .read_16 ( GPR_read_16 ),
-        .read_32 ( GPR_read_32 ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
-    );
 
     logic        SREG_write_enable;
     logic [ 2: 0] SREG_write_index;
@@ -66,33 +52,86 @@ module w686_core (
     logic [ 2: 0] wb_SREG_write_index;
     logic [15: 0] wb_SREG_write_selector;
     logic [63: 0] wb_SREG_write_descriptor;
-    logic [15: 0] segment_selector [ 0:  5];
-    logic [63: 0] descriptor_cache [ 0:  5];
-
-    stage_5_wrb_segment_register core_segment_register (
-        .write_enable ( wb_SREG_write_enable ),
-        .write_index ( wb_SREG_write_index ),
-        .write_selector ( wb_SREG_write_selector ),
-        .write_descriptor ( wb_SREG_write_descriptor ),
-        .segment_selector ( segment_selector ),
-        .descriptor_cache ( descriptor_cache ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
-    );
 
     logic         FLAGS_write_enable;
     logic [31: 0]  FLAGS_write_data;
     logic         wb_FLAGS_write_enable;
     logic [31: 0]  wb_FLAGS_write_data;
+
+    logic        IP_write_enable;
+    logic [31: 0] IP_write_data;
+    logic        wb_IP_write_enable;
+    logic [31: 0] wb_IP_write_data;
+
+    logic         CR_write_enable;
+    logic [ 2: 0] CR_write_index;
+    logic [31: 0] CR_write_data;
+    logic         wb_CR_write_enable;
+    logic [ 2: 0] wb_CR_write_index;
+    logic [31: 0] wb_CR_write_data;
+
+    logic         DR_write_enable;
+    logic [ 2: 0] DR_write_index;
+    logic [31: 0] DR_write_data;
+    logic         wb_DR_write_enable;
+    logic [ 2: 0] wb_DR_write_index;
+    logic [31: 0] wb_DR_write_data;
+
+    logic         TR_write_enable;
+    logic [ 2: 0] TR_write_index;
+    logic [31: 0] TR_write_data;
+    logic         wb_TR_write_enable;
+    logic [ 2: 0] wb_TR_write_index;
+    logic [31: 0] wb_TR_write_data;
+
+    logic [31: 0] GPR_read__8 [ 0:  7];
+    logic [31: 0] GPR_read_16 [ 0:  7];
+    logic [31: 0] GPR_read_32 [ 0:  7];
+    logic [15: 0] segment_selector [ 0:  5];
+    logic [63: 0] descriptor_cache [ 0:  5];
     logic         CF, PF, AF, ZF, SF, TF, IF, DF, OF;
     logic [ 1: 0] iOPL;
     logic         NT, RF, VM;
     logic [31: 0]  EFLAGS;
     logic [15: 0]  FLAGS;
+    logic [15: 0] IP;
+    logic [31: 0] EIP;
+    logic [31: 0] CR [ 0:  7];
+    logic         PE, MP, EM, TS, R, PG;
+    logic [19: 0] page_directory_base;
+    logic [31: 0] DR [ 0:  7];
+    logic [31: 0] TR [ 0:  7];
+    logic [15: 0] GDTR_limit;
+    logic [31: 0] GDTR_base;
+    logic [15: 0] IDTR_limit;
+    logic [31: 0] IDTR_base;
 
-    stage_5_wrb_flags_register core_flags_register (
-        .write_enable ( wb_FLAGS_write_enable ),
-        .write_data ( wb_FLAGS_write_data ),
+    w686_register_files u_register_files (
+        .wb_write_enable ( wb_write_enable ),
+        .wb_write_index ( wb_write_index ),
+        .wb_write_data ( wb_write_data ),
+        .wb_SREG_write_enable ( wb_SREG_write_enable ),
+        .wb_SREG_write_index ( wb_SREG_write_index ),
+        .wb_SREG_write_selector ( wb_SREG_write_selector ),
+        .wb_SREG_write_descriptor ( wb_SREG_write_descriptor ),
+        .wb_FLAGS_write_enable ( wb_FLAGS_write_enable ),
+        .wb_FLAGS_write_data ( wb_FLAGS_write_data ),
+        .wb_IP_write_enable ( wb_IP_write_enable ),
+        .wb_IP_write_data ( wb_IP_write_data ),
+        .wb_CR_write_enable ( wb_CR_write_enable ),
+        .wb_CR_write_index ( wb_CR_write_index ),
+        .wb_CR_write_data ( wb_CR_write_data ),
+        .wb_DR_write_enable ( wb_DR_write_enable ),
+        .wb_DR_write_index ( wb_DR_write_index ),
+        .wb_DR_write_data ( wb_DR_write_data ),
+        .wb_TR_write_enable ( wb_TR_write_enable ),
+        .wb_TR_write_index ( wb_TR_write_index ),
+        .wb_TR_write_data ( wb_TR_write_data ),
+        .GPR_read__8 ( GPR_read__8 ),
+        .GPR_read_16 ( GPR_read_16 ),
+        .GPR_read_32 ( GPR_read_32 ),
+        .segment_selector ( segment_selector ),
+        .descriptor_cache ( descriptor_cache ),
         .CF ( CF ),
         .PF ( PF ),
         .AF ( AF ),
@@ -102,46 +141,14 @@ module w686_core (
         .IF ( IF ),
         .DF ( DF ),
         .OF ( OF ),
-        .IOPL ( IOPL ),
+        .IOPL ( iOPL ),
         .NT ( NT ),
         .RF ( RF ),
         .VM ( VM ),
         .EFLAGS ( EFLAGS ),
         .FLAGS ( FLAGS ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
-    );
-
-    logic        IP_write_enable;
-    logic [31: 0] IP_write_data;
-    logic        wb_IP_write_enable;
-    logic [31: 0] wb_IP_write_data;
-    logic [15: 0] IP;
-    logic [31: 0] EIP;
-
-    stage_5_wrb_instruction_point_register core_instruction_point_register (
-        .write_enable ( wb_IP_write_enable ),
-        .write_data ( wb_IP_write_data ),
         .IP ( IP ),
         .EIP ( EIP ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
-    );
-
-    logic         CR_write_enable;
-    logic [ 2: 0] CR_write_index;
-    logic [31: 0] CR_write_data;
-    logic         wb_CR_write_enable;
-    logic [ 2: 0] wb_CR_write_index;
-    logic [31: 0] wb_CR_write_data;
-    logic [31: 0] CR [ 0:  7];
-    logic         PE, MP, EM, TS, R, PG;
-    logic [19: 0] page_directory_base;
-
-    stage_5_wrb_control_register core_control_register (
-        .write_enable ( wb_CR_write_enable ),
-        .write_index ( wb_CR_write_index ),
-        .write_data ( wb_CR_write_data ),
         .CR ( CR ),
         .PE ( PE ),
         .MP ( MP ),
@@ -150,78 +157,15 @@ module w686_core (
         .R ( R ),
         .PG ( PG ),
         .page_directory_base ( page_directory_base ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
-    );
-
-    logic         DR_write_enable;
-    logic [ 2: 0] DR_write_index;
-    logic [31: 0] DR_write_data;
-    logic         wb_DR_write_enable;
-    logic [ 2: 0] wb_DR_write_index;
-    logic [31: 0] wb_DR_write_data;
-    logic [31: 0] DR [ 0:  7];
-
-    stage_5_wrb_debug_register core_debug_register (
-        .write_enable ( wb_DR_write_enable ),
-        .write_index ( wb_DR_write_index ),
-        .write_data ( wb_DR_write_data ),
         .DR ( DR ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
-    );
-
-    logic         TR_write_enable;
-    logic [ 2: 0] TR_write_index;
-    logic [31: 0] TR_write_data;
-    logic         wb_TR_write_enable;
-    logic [ 2: 0] wb_TR_write_index;
-    logic [31: 0] wb_TR_write_data;
-    logic [31: 0] TR [ 0:  7];
-
-    stage_5_wrb_test_register core_test_register (
-        .write_enable ( wb_TR_write_enable ),
-        .write_index ( wb_TR_write_index ),
-        .write_data ( wb_TR_write_data ),
         .TR ( TR ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
-    );
-
-    logic        GDTR_write_enable;
-    logic [15: 0] GDTR_write_data_limit;
-    logic [31: 0] GDTR_write_data_base;
-    logic [15: 0] GDTR_limit;
-    logic [31: 0] GDTR_base;
-
-    stage_5_wrb_sar_global_descriptor_table_register core_global_descriptor_table_register (
-        .GDTR_write_enable ( GDTR_write_enable ),
-        .GDTR_write_data_limit ( GDTR_write_data_limit ),
-        .GDTR_write_data_base ( GDTR_write_data_base ),
         .GDTR_limit ( GDTR_limit ),
         .GDTR_base ( GDTR_base ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
-    );
-
-    logic        IDTR_write_enable;
-    logic [15: 0] IDTR_write_data_limit;
-    logic [31: 0] IDTR_write_data_base;
-    logic [15: 0] IDTR_limit;
-    logic [31: 0] IDTR_base;
-
-    stage_5_wrb_sar_interrupt_descriptor_table_register core_interrupt_descriptor_table_register (
-        .IDTR_write_enable ( IDTR_write_enable ),
-        .IDTR_write_data_limit ( IDTR_write_data_limit ),
-        .IDTR_write_data_base ( IDTR_write_data_base ),
         .IDTR_limit ( IDTR_limit ),
         .IDTR_base ( IDTR_base ),
         .clock ( clock ),
         .reset_n ( reset_n )
     );
-
-    assign GDTR_write_enable   = 1'b0;
-    assign IDTR_write_enable   = 1'b0;
 
     // CPL = CS.RPL
     logic [ 1: 0] current_privilege_level = segment_selector[`sreg_index_CS][ 1: 0];
