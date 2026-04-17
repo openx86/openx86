@@ -8,7 +8,7 @@ description: SD / BRAM disk backend for IDE — byte read + async sector load ha
 // sdcard_controller
 // ----------------------------------------------------------------------------
 // P_USE_SDIO_DISK=0: async byte read from internal image[].
-// P_USE_SDIO_DISK=1: sd_native_host_4bit fills sector_buf; sector_ready pulses
+// P_USE_SDIO_DISK=1: sdcard_native_host_4bit fills sector_buf; sector_ready pulses
 //   when load completes; data valid for i_disk_raddr in loaded LBA until next load.
 // ============================================================================
 
@@ -118,7 +118,7 @@ module sdcard_controller #(
 
             assign o_disk_sector_ready = sector_ready_hold;
 
-            sd_native_host_4bit u_sd_host (
+            sdcard_native_host_4bit u_sd_host (
                 .i_start        ( sd_start ),
                 .i_lba          ( sd_lba ),
                 .o_busy         ( sd_busy ),
@@ -127,13 +127,13 @@ module sdcard_controller #(
                 .o_payload_we   ( sd_payload_we ),
                 .o_payload_addr ( sd_payload_addr ),
                 .o_payload_data ( sd_payload_data ),
-                .o_sd_native_host_4bit_phy_clk     ( o_sdcard_controller_phy_clk ),
-                .o_sd_native_host_4bit_phy_cmd_out   ( o_sdcard_controller_phy_cmd_out ),
-                .o_sd_native_host_4bit_phy_cmd_oe    ( o_sdcard_controller_phy_cmd_oe ),
-                .i_sd_native_host_4bit_phy_cmd_in    ( i_sdcard_controller_phy_cmd_in ),
-                .o_sd_native_host_4bit_phy_dat_out   ( o_sdcard_controller_phy_dat_out ),
-                .o_sd_native_host_4bit_phy_dat_oe    ( o_sdcard_controller_phy_dat_oe ),
-                .i_sd_native_host_4bit_phy_dat_in    ( i_sdcard_controller_phy_dat_in ),
+                .o_sdcard_native_host_4bit_phy_clk     ( o_sdcard_controller_phy_clk ),
+                .o_sdcard_native_host_4bit_phy_cmd_out   ( o_sdcard_controller_phy_cmd_out ),
+                .o_sdcard_native_host_4bit_phy_cmd_oe    ( o_sdcard_controller_phy_cmd_oe ),
+                .i_sdcard_native_host_4bit_phy_cmd_in    ( i_sdcard_controller_phy_cmd_in ),
+                .o_sdcard_native_host_4bit_phy_dat_out   ( o_sdcard_controller_phy_dat_out ),
+                .o_sdcard_native_host_4bit_phy_dat_oe    ( o_sdcard_controller_phy_dat_oe ),
+                .i_sdcard_native_host_4bit_phy_dat_in    ( i_sdcard_controller_phy_dat_in ),
                 .clock          ( clock ),
                 .reset_n        ( reset_n )
             );

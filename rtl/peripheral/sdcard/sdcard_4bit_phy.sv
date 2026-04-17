@@ -5,12 +5,12 @@ repo: https://github.com/openx86/openx86
 description: SDIO 4-bit pad transceiver — host digital side to board inout CMD/DAT.
 */
 // ============================================================================
-// sd_4bit_phy
+// sdcard_4bit_phy
 // ----------------------------------------------------------------------------
 // Maps internal out/oe signals to external SD CMD / DAT[3:0] bidirectional pins.
 // ============================================================================
 
-module sd_4bit_phy (
+module sdcard_4bit_phy (
     input  logic         i_sd_clk,
     input  logic         i_host_cmd_out,
     input  logic         i_host_cmd_oe,

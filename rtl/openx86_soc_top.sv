@@ -199,7 +199,7 @@ module openx86_soc_top #(
         .reset_n            ( reset_n )
     );
 
-    sd_4bit_phy u_sdio_phy (
+    sdcard_4bit_phy u_sdio_phy (
         .i_sd_clk       ( b_sd_nat_clk ),
         .i_host_cmd_out ( b_sd_cmd_o ),
         .i_host_cmd_oe  ( b_sd_cmd_oe ),
