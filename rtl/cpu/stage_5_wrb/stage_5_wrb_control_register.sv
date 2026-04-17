@@ -53,7 +53,7 @@ module stage_5_wrb_control_register (
     input  logic         write_enable,
     input  logic [ 2: 0] write_index,
     input  logic [31: 0] write_data,
-    output logic [31: 0] CR [0:7],
+    output logic [31: 0] CR [ 0:  7],
     output logic         PE,
     output logic         MP,
     output logic         EM,
@@ -61,11 +61,10 @@ module stage_5_wrb_control_register (
     output logic         R,
     output logic         PG,
     output logic [19: 0] page_directory_base,
-    input  logic         clock, reset
-);
+    input  logic         clock, reset_n);
 
-always_ff @( posedge clock or posedge reset ) begin : ff_control_register
-    if (reset) begin
+always_ff @(posedge clock or negedge reset_n) begin : ff_control_register
+    if (~reset_n) begin
         CR[0] <= 32'b0;
         CR[1] <= 32'b0;
         CR[2] <= 32'b0;
@@ -88,6 +87,6 @@ assign TS = CR[0][3];
 assign R  = CR[0][4];
 assign PG = CR[0][31];
 
-assign page_directory_base = CR[3][31:12];
+assign page_directory_base = CR[3][31: 12];
 
 endmodule

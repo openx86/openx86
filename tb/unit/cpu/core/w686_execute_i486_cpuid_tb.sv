@@ -15,20 +15,20 @@ module w686_execute_i486_cpuid_tb;
     logic rst;
     logic insn_fire;
     logic op_cpuid;
-    logic [31:0] gpr_eax;
-    logic [31:0] gpr_ecx;
+    logic [31:  0] gpr_eax;
+    logic [31:  0] gpr_ecx;
     logic cpuid_busy;
     logic gpr_wr_en;
-    logic [2:0] gpr_wr_idx;
-    logic [31:0] gpr_wr_data;
+    logic [ 2:  0] gpr_wr_idx;
+    logic [31:  0] gpr_wr_data;
     logic cpuid_done_pulse;
     logic op_invd;
     logic op_wbinvd;
     logic op_invlpg;
-    logic [31:0] invlpg_ea;
+    logic [31:  0] invlpg_ea;
     logic cache_flush_pulse;
     logic invlpg_pulse;
-    logic [31:0] invlpg_linear_addr;
+    logic [31:  0] invlpg_linear_addr;
 
     initial begin
         clk = 0;

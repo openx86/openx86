@@ -7,20 +7,20 @@ description: This module implements eu_misc_protected_ops_tb.
 `timescale 1ns/1ns
 
 module eu_misc_protected_ops_tb;
-    logic [31:0] arpl_dst;
-    logic [31:0] arpl_src;
-    logic [31:0] arpl_y;
+    logic [31:  0] arpl_dst;
+    logic [31:  0] arpl_src;
+    logic [31:  0] arpl_y;
     logic        arpl_zf;
 
-    logic [31:0] lar_src;
-    logic [31:0] lar_y;
+    logic [31:  0] lar_src;
+    logic [31:  0] lar_y;
     logic        lar_zf;
 
-    logic [31:0] lsl_src;
-    logic [31:0] lsl_y;
+    logic [31:  0] lsl_src;
+    logic [31:  0] lsl_y;
     logic        lsl_zf;
 
-    logic [31:0] verr_selector;
+    logic [31:  0] verr_selector;
     logic        verr_zf;
 
     stage_3_exe_misc_arpl u_arpl (
@@ -47,7 +47,7 @@ module eu_misc_protected_ops_tb;
         .zf ( verr_zf )
     );
 
-    task automatic check(input logic cond, input [127:0] name);
+    task automatic check(input logic cond, input [127:  0] name);
         begin
             if (!cond) begin
                 $display("FAIL eu_misc_protected_ops %s", name);

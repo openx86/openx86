@@ -14,39 +14,39 @@ module ide_sd_native_disk_tb;
     logic        clock = 0;
     logic        reset;
     logic        io_valid, io_we;
-    logic [15:0] io_addr;
-    logic [7:0]  io_wdata, io_rdata;
+    logic [15:  0] io_addr;
+    logic [ 7:  0]  io_wdata, io_rdata;
 
     wire ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
     wire ide_cs_n = !(io_valid && ide_hit);
     wire ide_wr_n = !(io_valid && io_we && ide_hit);
     wire ide_rd_n = !(io_valid && !io_we && ide_hit);
 
-    logic [31:0] ide_raddr;
+    logic [31:  0] ide_raddr;
     logic        ide_sector_req;
     logic        ide_sector_ready;
-    logic [7:0]  disk_rdata_mux;
+    logic [ 7:  0]  disk_rdata_mux;
 
     logic        sd_start;
-    logic [31:0] sd_lba;
+    logic [31:  0] sd_lba;
     logic        sd_busy, sd_done, sd_err;
     logic        sd_payload_we;
-    logic [8:0]  sd_payload_addr;
-    logic [7:0]  sd_payload_data;
+    logic [ 8:  0]  sd_payload_addr;
+    logic [ 7:  0]  sd_payload_data;
 
     wire         sd_clk;
     wire         sd_cmd;
-    wire [3:0]   sd_dat;
+    wire [ 3:  0]   sd_dat;
 
     logic        host_cmd_oe;
     logic        host_cmd_o;
     logic        host_dat_oe;
-    logic [3:0]  host_dat_o;
+    logic [ 3:  0]  host_dat_o;
 
     logic        card_cmd_oe;
     logic        card_cmd_o;
     logic        card_dat_oe;
-    logic [3:0]  card_dat_o;
+    logic [ 3:  0]  card_dat_o;
 
     always #5 clock = ~clock;
 
@@ -54,8 +54,8 @@ module ide_sd_native_disk_tb;
     assign sd_dat = host_dat_oe ? host_dat_o : (card_dat_oe ? card_dat_o : 4'hF);
 
     sd_native_host_4bit u_host (
-        .i_clock        ( clock ),
-        .i_reset        ( reset ),
+        .clock        ( clock ),
+        .reset_n        ( reset_n ),
         .o_sd_clk       ( sd_clk ),
         .o_phy_cmd_out  ( host_cmd_o ),
         .o_phy_cmd_oe   ( host_cmd_oe ),
@@ -75,7 +75,7 @@ module ide_sd_native_disk_tb;
 
     sd_mmc_card_model_native u_card (
         .i_sd_clk      ( sd_clk ),
-        .i_reset       ( reset ),
+        .reset_n       ( reset_n ),
         .i_host_cmd_oe ( host_cmd_oe ),
         .i_host_cmd_o  ( host_cmd_o ),
         .i_sd_cmd_bus  ( sd_cmd ),
@@ -88,8 +88,8 @@ module ide_sd_native_disk_tb;
     );
 
     ide_sd_sector_bridge u_bridge (
-        .i_clock             ( clock ),
-        .i_reset             ( reset ),
+        .clock             ( clock ),
+        .reset_n             ( reset_n ),
         .i_ide_disk_raddr    ( ide_raddr ),
         .o_ide_disk_rdata    ( disk_rdata_mux ),
         .i_ide_sector_req    ( ide_sector_req ),
@@ -110,8 +110,8 @@ module ide_sd_native_disk_tb;
         .USE_INTERNAL_DISK_MEM(1'b0),
         .USE_ASYNC_DISK(1'b1)
     ) u_ide (
-        .i_clock             ( clock ),
-        .i_reset             ( reset ),
+        .clock             ( clock ),
+        .reset_n             ( reset_n ),
         .i_cs_n              ( ide_cs_n ),
         .i_rd_n              ( ide_rd_n ),
         .i_wr_n              ( ide_wr_n ),
@@ -124,7 +124,7 @@ module ide_sd_native_disk_tb;
         .o_disk_sector_req   ( ide_sector_req )
     );
 
-    task automatic wr(input logic [15:0] a, input logic [7:0] d);
+    task automatic wr(input logic [15:  0] a, input logic [ 7:  0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 1;
@@ -134,7 +134,7 @@ module ide_sd_native_disk_tb;
         io_valid = 0;
     endtask
 
-    task automatic rd(input logic [15:0] a, output logic [7:0] d);
+    task automatic rd(input logic [15:  0] a, output logic [ 7:  0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 0;
@@ -144,12 +144,12 @@ module ide_sd_native_disk_tb;
         io_valid = 0;
     endtask
 
-    logic [7:0] rb;
+    logic [ 7:  0] rb;
     int unsigned wait_cycles;
     logic seen_done;
 
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
+    always_ff @(posedge clock or negedge reset_n) begin
+        if (~reset_n) begin
             seen_done  <= 1'b0;
         end else begin
             if (sd_done)

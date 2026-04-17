@@ -15,14 +15,13 @@ module stage_2_dec (
     input  logic i_instruction_ready,
     output logic o_stage_valid,
     output logic o_insn_fire,
-    input  logic i_clock,
-    input  logic i_reset
-);
+    input  logic reset_n,
+    input  logic clock);
 
     logic instruction_ready_d1;
 
-    always_ff @(posedge i_clock or posedge i_reset) begin
-        if (i_reset)
+    always_ff @(posedge clock or negedge reset_n) begin
+        if (~reset_n)
             instruction_ready_d1 <= 1'b0;
         else
             instruction_ready_d1 <= i_instruction_ready;

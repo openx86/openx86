@@ -10,15 +10,13 @@ description: This module implements stage_3_exe_execute_unit.
 // ============================================================================
 
 module stage_3_exe_execute_unit (
-    input logic clk,
-    input logic rst,
 
     // --- AGU ---
-    input  logic [31:0] i_agu_base,
-    input  logic [31:0] i_agu_index,
+    input  logic [31:  0] i_agu_base,
+    input  logic [31:  0] i_agu_index,
     input  logic [ 1:0] i_agu_scale,
-    input  logic [31:0] i_agu_disp,
-    output logic [31:0] o_agu_effective_addr,
+    input  logic [31:  0] i_agu_disp,
+    output logic [31:  0] o_agu_effective_addr,
 
     // --- Branch ---
     input  logic        i_br_is_jcc,
@@ -28,31 +26,31 @@ module stage_3_exe_execute_unit (
     input  logic        i_br_ZF,
     input  logic        i_br_SF,
     input  logic        i_br_OF,
-    input  logic [31:0] i_br_eip,
-    input  logic [31:0] i_br_rel32,
-    input  logic signed [7:0] i_br_rel8,
+    input  logic [31:  0] i_br_eip,
+    input  logic [31:  0] i_br_rel32,
+    input  logic signed [ 7:  0] i_br_rel8,
     input  logic        i_br_use_rel8,
     output logic        o_br_taken,
-    output logic [31:0] o_br_target_eip,
+    output logic [31:  0] o_br_target_eip,
 
     // --- Mul/Div ---
-    input  logic [2:0]  i_md_op,
-    input  logic [31:0] i_md_lo,
-    input  logic [31:0] i_md_hi,
-    input  logic [31:0] i_md_src,
-    output logic [31:0] o_md_lo,
-    output logic [31:0] o_md_hi,
+    input  logic [ 2:  0]  i_md_op,
+    input  logic [31:  0] i_md_lo,
+    input  logic [31:  0] i_md_hi,
+    input  logic [31:  0] i_md_src,
+    output logic [31:  0] o_md_lo,
+    output logic [31:  0] o_md_hi,
     output logic        o_md_div0,
 
     // --- Integer op dispatch ---
     input  logic        i_int_valid,
     input  logic [ 5:0] i_int_op,
-    input  logic [31:0] i_int_a,
-    input  logic [31:0] i_int_b,
+    input  logic [31:  0] i_int_a,
+    input  logic [31:  0] i_int_b,
     input  logic        i_int_cf,
     input  logic        i_int_af,
-    input  logic [31:0] i_int_count,
-    output logic [31:0] o_int_result,
+    input  logic [31:  0] i_int_count,
+    output logic [31:  0] o_int_result,
     output logic        o_int_cf,
     output logic        o_int_af,
     output logic        o_int_zf,
@@ -60,14 +58,15 @@ module stage_3_exe_execute_unit (
     // --- X87 ---
     input  logic        i_x87_valid,
     input  logic [ 4:0] i_x87_op,
-    input  logic [63:0] i_x87_push_data,
+    input  logic [63:  0] i_x87_push_data,
     input  logic [ 2:0] i_x87_st_src,
-    output logic [63:0] o_x87_st0,
-    output logic [63:0] o_x87_st1,
+    output logic [63:  0] o_x87_st0,
+    output logic [63:  0] o_x87_st1,
     output logic        o_x87_zf,
     output logic        o_x87_pf,
-    output logic        o_x87_cf
-);
+    output logic        o_x87_cf,
+    input logic clk,
+    input logic rst);
 
     import stage_3_exe_execute_unit_pkg::*;
 
@@ -105,59 +104,59 @@ module stage_3_exe_execute_unit (
         .o_div0 ( o_md_div0 )
     );
 
-    logic [31:0] int_add_res;
-    logic [31:0] int_adc_res;
-    logic [31:0] int_sub_res;
-    logic [31:0] int_sbb_res;
-    logic [31:0] int_and_res;
-    logic [31:0] int_or_res;
-    logic [31:0] int_xor_res;
-    logic [31:0] int_not_res;
-    logic [31:0] int_neg_res;
-    logic [31:0] int_inc_res;
-    logic [31:0] int_dec_res;
-    logic [31:0] int_shl_res;
-    logic [31:0] int_shr_res;
-    logic [31:0] int_sar_res;
-    logic [31:0] int_shld_res;
-    logic [31:0] int_shrd_res;
-    logic [31:0] int_rol_res;
-    logic [31:0] int_ror_res;
-    logic [31:0] int_rcl_res;
-    logic [31:0] int_rcr_res;
-    logic [31:0] int_bsf_res;
-    logic [31:0] int_bsr_res;
-    logic [31:0] int_bt_res;
-    logic [31:0] int_bts_res;
-    logic [31:0] int_btr_res;
-    logic [31:0] int_btc_res;
-    logic [31:0] int_bswap_res;
-    logic [31:0] int_aaa_res;
-    logic [31:0] int_aas_res;
-    logic [31:0] int_daa_res;
-    logic [31:0] int_das_res;
-    logic [31:0] int_aad_res;
-    logic [31:0] int_aam_res;
-    logic [31:0] int_cbw_res;
-    logic [31:0] int_cdq_res;
-    logic [31:0] int_movsx_res;
-    logic [31:0] int_movzx_res;
-    logic [31:0] int_flag_status_res;
-    logic [31:0] int_lahf_res;
-    logic [31:0] int_sahf_res;
-    logic [31:0] int_xchg_res;
-    logic [31:0] int_xadd_res;
-    logic [31:0] int_cmpxchg_res;
-    logic [31:0] int_setcc_res;
-    logic [31:0] int_arpl_res;
-    logic [31:0] int_lar_res;
-    logic [31:0] int_lsl_res;
-    logic [31:0] int_stridx_step_res;
-    logic [31:0] int_imul_imm_res;
-    logic [31:0] int_clts_res;
-    logic [31:0] int_lmsw_res;
-    logic [31:0] int_smsw_res;
-    logic [31:0] int_loop_ctrl_res;
+    logic [31:  0] int_add_res;
+    logic [31:  0] int_adc_res;
+    logic [31:  0] int_sub_res;
+    logic [31:  0] int_sbb_res;
+    logic [31:  0] int_and_res;
+    logic [31:  0] int_or_res;
+    logic [31:  0] int_xor_res;
+    logic [31:  0] int_not_res;
+    logic [31:  0] int_neg_res;
+    logic [31:  0] int_inc_res;
+    logic [31:  0] int_dec_res;
+    logic [31:  0] int_shl_res;
+    logic [31:  0] int_shr_res;
+    logic [31:  0] int_sar_res;
+    logic [31:  0] int_shld_res;
+    logic [31:  0] int_shrd_res;
+    logic [31:  0] int_rol_res;
+    logic [31:  0] int_ror_res;
+    logic [31:  0] int_rcl_res;
+    logic [31:  0] int_rcr_res;
+    logic [31:  0] int_bsf_res;
+    logic [31:  0] int_bsr_res;
+    logic [31:  0] int_bt_res;
+    logic [31:  0] int_bts_res;
+    logic [31:  0] int_btr_res;
+    logic [31:  0] int_btc_res;
+    logic [31:  0] int_bswap_res;
+    logic [31:  0] int_aaa_res;
+    logic [31:  0] int_aas_res;
+    logic [31:  0] int_daa_res;
+    logic [31:  0] int_das_res;
+    logic [31:  0] int_aad_res;
+    logic [31:  0] int_aam_res;
+    logic [31:  0] int_cbw_res;
+    logic [31:  0] int_cdq_res;
+    logic [31:  0] int_movsx_res;
+    logic [31:  0] int_movzx_res;
+    logic [31:  0] int_flag_status_res;
+    logic [31:  0] int_lahf_res;
+    logic [31:  0] int_sahf_res;
+    logic [31:  0] int_xchg_res;
+    logic [31:  0] int_xadd_res;
+    logic [31:  0] int_cmpxchg_res;
+    logic [31:  0] int_setcc_res;
+    logic [31:  0] int_arpl_res;
+    logic [31:  0] int_lar_res;
+    logic [31:  0] int_lsl_res;
+    logic [31:  0] int_stridx_step_res;
+    logic [31:  0] int_imul_imm_res;
+    logic [31:  0] int_clts_res;
+    logic [31:  0] int_lmsw_res;
+    logic [31:  0] int_smsw_res;
+    logic [31:  0] int_loop_ctrl_res;
     logic        int_cmpxchg_zf;
     logic        int_arpl_zf;
     logic        int_lar_zf;
@@ -183,11 +182,11 @@ module stage_3_exe_execute_unit (
     logic        int_das_cf;
 
     function automatic logic add_cf(
-        input logic [31:0] a,
-        input logic [31:0] b,
+        input logic [31:  0] a,
+        input logic [31:  0] b,
         input logic        carry_in
     );
-        logic [32:0] sum;
+        logic [32:  0] sum;
         begin
             sum = { 1'b0, a } + { 1'b0, b } + { 32'd0, carry_in };
             add_cf = sum[32];
@@ -195,23 +194,23 @@ module stage_3_exe_execute_unit (
     endfunction
 
     function automatic logic add_af(
-        input logic [31:0] a,
-        input logic [31:0] b,
+        input logic [31:  0] a,
+        input logic [31:  0] b,
         input logic        carry_in
     );
-        logic [4:0] nibble_sum;
+        logic [ 4:  0] nibble_sum;
         begin
-            nibble_sum = { 1'b0, a[3:0] } + { 1'b0, b[3:0] } + { 4'd0, carry_in };
+            nibble_sum = { 1'b0, a[ 3:  0] } + { 1'b0, b[ 3:  0] } + { 4'd0, carry_in };
             add_af = nibble_sum[4];
         end
     endfunction
 
     function automatic logic sub_cf(
-        input logic [31:0] a,
-        input logic [31:0] b,
+        input logic [31:  0] a,
+        input logic [31:  0] b,
         input logic        borrow_in
     );
-        logic [32:0] diff;
+        logic [32:  0] diff;
         begin
             diff = { 1'b0, a } - { 1'b0, b } - { 32'd0, borrow_in };
             sub_cf = diff[32];
@@ -219,14 +218,14 @@ module stage_3_exe_execute_unit (
     endfunction
 
     function automatic logic sub_af(
-        input logic [31:0] a,
-        input logic [31:0] b,
+        input logic [31:  0] a,
+        input logic [31:  0] b,
         input logic        borrow_in
     );
-        logic [4:0] b_term;
+        logic [ 4:  0] b_term;
         begin
-            b_term = { 1'b0, b[3:0] } + { 4'd0, borrow_in };
-            sub_af = ({ 1'b0, a[3:0] } < b_term);
+            b_term = { 1'b0, b[ 3:  0] } + { 4'd0, borrow_in };
+            sub_af = ({ 1'b0, a[ 3:  0] } < b_term);
         end
     endfunction
 
@@ -456,13 +455,13 @@ module stage_3_exe_execute_unit (
 
     stage_3_exe_misc_movsx u_int_movsx (
         .a ( i_int_a ),
-        .width ( i_int_count[1:0] ),
+        .width ( i_int_count[ 1:  0] ),
         .y ( int_movsx_res )
     );
 
     stage_3_exe_misc_movzx u_int_movzx (
         .a ( i_int_a ),
-        .width ( i_int_count[1:0] ),
+        .width ( i_int_count[ 1:  0] ),
         .y ( int_movzx_res )
     );
 
@@ -500,7 +499,7 @@ module stage_3_exe_execute_unit (
 
     stage_3_exe_misc_setcc u_int_setcc (
         .flags ( i_int_a ),
-        .tttn ( i_int_count[3:0] ),
+        .tttn ( i_int_count[ 3:  0] ),
         .y ( int_setcc_res )
     );
 
@@ -560,7 +559,7 @@ module stage_3_exe_execute_unit (
     stage_3_exe_misc_loop_ctrl u_int_loop_ctrl (
         .ecx ( i_int_a ),
         .zf ( i_int_b[0] ),
-        .mode ( i_int_count[1:0] ),
+        .mode ( i_int_count[ 1:  0] ),
         .ecx_next ( int_loop_ctrl_res ),
         .taken ( int_loop_ctrl_taken )
     );
@@ -629,37 +628,37 @@ module stage_3_exe_execute_unit (
                 end
                 INT_SHL: begin
                     o_int_result = int_shl_res;
-                    if (i_int_count[4:0] != 5'd0)
-                        o_int_cf = i_int_a[32 - i_int_count[4:0]];
+                    if (i_int_count[ 4:  0] != 5'd0)
+                        o_int_cf = i_int_a[32 - i_int_count[ 4:  0]];
                 end
                 INT_SHR: begin
                     o_int_result = int_shr_res;
-                    if (i_int_count[4:0] != 5'd0)
-                        o_int_cf = i_int_a[i_int_count[4:0] - 5'd1];
+                    if (i_int_count[ 4:  0] != 5'd0)
+                        o_int_cf = i_int_a[i_int_count[ 4:  0] - 5'd1];
                 end
                 INT_SAR: begin
                     o_int_result = int_sar_res;
-                    if (i_int_count[4:0] != 5'd0)
-                        o_int_cf = i_int_a[i_int_count[4:0] - 5'd1];
+                    if (i_int_count[ 4:  0] != 5'd0)
+                        o_int_cf = i_int_a[i_int_count[ 4:  0] - 5'd1];
                 end
                 INT_SHLD: begin
                     o_int_result = int_shld_res;
-                    if (i_int_count[4:0] != 5'd0)
-                        o_int_cf = i_int_a[32 - i_int_count[4:0]];
+                    if (i_int_count[ 4:  0] != 5'd0)
+                        o_int_cf = i_int_a[32 - i_int_count[ 4:  0]];
                 end
                 INT_SHRD: begin
                     o_int_result = int_shrd_res;
-                    if (i_int_count[4:0] != 5'd0)
-                        o_int_cf = i_int_a[i_int_count[4:0] - 5'd1];
+                    if (i_int_count[ 4:  0] != 5'd0)
+                        o_int_cf = i_int_a[i_int_count[ 4:  0] - 5'd1];
                 end
                 INT_ROL: begin
                     o_int_result = int_rol_res;
-                    if (i_int_count[4:0] != 5'd0)
+                    if (i_int_count[ 4:  0] != 5'd0)
                         o_int_cf = int_rol_res[0];
                 end
                 INT_ROR: begin
                     o_int_result = int_ror_res;
-                    if (i_int_count[4:0] != 5'd0)
+                    if (i_int_count[ 4:  0] != 5'd0)
                         o_int_cf = int_ror_res[31];
                 end
                 INT_RCL: begin

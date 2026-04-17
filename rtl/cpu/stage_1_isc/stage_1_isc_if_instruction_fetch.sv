@@ -16,36 +16,35 @@ module stage_1_isc_if_instruction_fetch (
     // signal from stage_4_mem_bus_interface_unit
     output logic        o_code_vaild,
     input  logic        i_code_ready,
-    output logic [31:0] o_code_address,
-    input  logic [31:0] i_code_data_read,
+    output logic [31:  0] o_code_address,
+    input  logic [31:  0] i_code_data_read,
     // MMU page-table walk (higher BIU priority than code/data)
     output logic        o_mmu_bus_vaild,
     input  logic        i_mmu_bus_ready,
-    output logic [31:0] o_mmu_bus_addr,
-    input  logic [31:0] i_mmu_bus_rdata,
+    output logic [31:  0] o_mmu_bus_addr,
+    input  logic [31:  0] i_mmu_bus_rdata,
     // signal from outside
     input  logic        i_protected_mode,
-    input  logic [15:0] i_segment_selector [0:5],
-    input  logic [63:0] i_segment_descriptor [0:5],
+    input  logic [15:  0] i_segment_selector [ 0:  5],
+    input  logic [63:  0] i_segment_descriptor [ 0:  5],
     input  logic [ 1:0] i_current_privilege_level,
     input  logic        i_paging_enable,
-    input  logic [31:0] i_page_directory_base,
+    input  logic [31:  0] i_page_directory_base,
     // signal from execute unit
     input  logic        i_IP_vaild,
     // instruction fetch
-    output logic [ 7:0] o_instruction [0:15],
+    output logic [ 7:0] o_instruction [ 0: 15],
     output logic        o_instruction_ready,
     output logic        o_segment_fault,
     // instruction pointer register file
-    input  logic [31:0] EIP,
+    input  logic [31:  0] EIP,
     // common
-    input  logic        clock, reset
-);
+    input  logic        clock, reset_n);
 
 logic        i_vaild;
 logic        o_ready;
 logic        if_mmu_bus_we;
-logic [31:0] if_mmu_bus_wdata;
+logic [31:  0] if_mmu_bus_wdata;
 logic        if_seg_fault;
 
 // 请求段转换：在 IP 有效时根据当前 EIP 计算物理取指地址
@@ -74,7 +73,7 @@ stage_1_isc_mmu_memory_management_unit #(
     .i_bus_data_read ( i_mmu_bus_rdata ),
     .o_bus_data_write ( if_mmu_bus_wdata ),
     .clock ( clock ),
-    .reset ( reset )
+    .reset_n ( reset_n )
 );
 
 assign o_segment_fault = if_seg_fault;
@@ -84,8 +83,8 @@ enum logic {
     STATE_WAIT_FOR_IP_VALID = 1'h0
 } state;
 
-always_ff @(posedge clock or posedge reset) begin
-    if (reset) begin
+always_ff @(posedge clock or negedge reset_n) begin
+    if (~reset_n) begin
         state <= STATE_WAIT_FOR_IP_VALID;
     end else begin
         unique case (state)
@@ -112,8 +111,8 @@ end
 
 logic [ 1:0] bytes_index;
 
-always_ff @(posedge clock or posedge reset) begin
-    if (reset) begin
+always_ff @(posedge clock or negedge reset_n) begin
+    if (~reset_n) begin
         o_code_vaild <= 0;
         bytes_index <= 0;
     end else begin
@@ -133,40 +132,40 @@ always_ff @(posedge clock or posedge reset) begin
                         unique case (bytes_index)
                             2'h0: begin
                                 o_instruction[0*4:0*4+3] <= '{
-                                    i_code_data_read[31:24],
-                                    i_code_data_read[23:16],
+                                    i_code_data_read[31: 24],
+                                    i_code_data_read[23: 16],
                                     i_code_data_read[15: 8],
                                     i_code_data_read[ 7: 0]
                                 };
                             end
                             2'h1: begin
                                 o_instruction[1*4:1*4+3] <= '{
-                                    i_code_data_read[31:24],
-                                    i_code_data_read[23:16],
+                                    i_code_data_read[31: 24],
+                                    i_code_data_read[23: 16],
                                     i_code_data_read[15: 8],
                                     i_code_data_read[ 7: 0]
                                 };
                             end
                             2'h2: begin
                                 o_instruction[2*4:2*4+3] <= '{
-                                    i_code_data_read[31:24],
-                                    i_code_data_read[23:16],
+                                    i_code_data_read[31: 24],
+                                    i_code_data_read[23: 16],
                                     i_code_data_read[15: 8],
                                     i_code_data_read[ 7: 0]
                                 };
                             end
                             2'h3: begin
                                 o_instruction[3*4:3*4+3] <= '{
-                                    i_code_data_read[31:24],
-                                    i_code_data_read[23:16],
+                                    i_code_data_read[31: 24],
+                                    i_code_data_read[23: 16],
                                     i_code_data_read[15: 8],
                                     i_code_data_read[ 7: 0]
                                 };
                             end
                         endcase
                         // o_instruction[bytes_index*4:bytes_index*4+3] <= '{
-                        //     i_code_data_read[31:24],
-                        //     i_code_data_read[23:16],
+                        //     i_code_data_read[31: 24],
+                        //     i_code_data_read[23: 16],
                         //     i_code_data_read[15: 8],
                         //     i_code_data_read[ 7: 0]
                         // };

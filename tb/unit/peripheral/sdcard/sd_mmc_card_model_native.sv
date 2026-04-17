@@ -10,23 +10,22 @@ description: This module implements sd_mmc_card_model_native.
 
 module sd_mmc_card_model_native (
     input  logic       i_sd_clk,
-    input  logic       i_reset,
     input  logic       i_host_cmd_oe,
     input  logic       i_host_cmd_o,
     input  logic       i_sd_cmd_bus,
     output logic       o_card_cmd_oe,
     output logic       o_card_cmd_o,
-    input  logic [3:0] i_host_dat_oe,
-    input  logic [3:0] i_host_dat_o,
+    input  logic [ 3:  0] i_host_dat_oe,
+    input  logic [ 3:  0] i_host_dat_o,
     output logic       o_card_dat_oe,
-    output logic [3:0] o_card_dat_o
-);
+    output logic [ 3:  0] o_card_dat_o);
+    input  logic       reset_n
 
-    logic [47:0] cmd_sr;
-    logic [6:0]  cmd_bc;
+    logic [47:  0] cmd_sr;
+    logic [ 6:  0]  cmd_bc;
     logic        host_oe_d;
 
-    typedef enum logic [2:0] {
+    typedef enum logic [ 2:  0] {
         C_IDLE,
         C_CMD_IN,
         C_RESP_OUT,
@@ -39,14 +38,14 @@ module sd_mmc_card_model_native (
 
     cst_t cst;
 
-    logic [5:0]  resp_bc;
-    logic [47:0] r1_sh;
-    logic [3:0]  gap_c;
+    logic [ 5:  0]  resp_bc;
+    logic [47:  0] r1_sh;
+    logic [ 3:  0]  gap_c;
     logic        pay_low_nibble;
-    logic [8:0]  byte_ix;
-    logic [2:0]  crc_c;
+    logic [ 8:  0]  byte_ix;
+    logic [ 2:  0]  crc_c;
 
-    logic [7:0] sector [0:511];
+    logic [ 7:  0] sector [ 0: 511];
 
     integer si;
     initial begin
@@ -56,8 +55,8 @@ module sd_mmc_card_model_native (
         sector[1] = 8'h5A;
     end
 
-    always_ff @(posedge i_sd_clk or posedge i_reset) begin
-        if (i_reset)
+    always_ff @(posedge i_sd_clk or negedge reset_n) begin
+        if (~reset_n)
             host_oe_d <= 1'b0;
         else
             host_oe_d <= i_host_cmd_oe;
@@ -65,8 +64,8 @@ module sd_mmc_card_model_native (
 
     wire host_cmd_fall = host_oe_d & ~i_host_cmd_oe;
 
-    always_ff @(posedge i_sd_clk or posedge i_reset) begin
-        if (i_reset) begin
+    always_ff @(posedge i_sd_clk or negedge reset_n) begin
+        if (~reset_n) begin
             cst            <= C_IDLE;
             cmd_sr         <= '0;
             cmd_bc         <= '0;
@@ -96,7 +95,7 @@ module sd_mmc_card_model_native (
 
                 C_CMD_IN: begin
                     if (i_host_cmd_oe) begin
-                        cmd_sr <= {cmd_sr[46:0], i_sd_cmd_bus};
+                        cmd_sr <= {cmd_sr[46:  0], i_sd_cmd_bus};
                         cmd_bc <= cmd_bc + 7'd1;
                     end else if (host_cmd_fall) begin
                         // Accept command with a tolerant bit count so minor
@@ -122,7 +121,7 @@ module sd_mmc_card_model_native (
                         o_card_cmd_oe <= 1'b0;
                     end else begin
                         o_card_cmd_o <= r1_sh[47];
-                        r1_sh        <= {r1_sh[46:0], 1'b0};
+                        r1_sh        <= {r1_sh[46:  0], 1'b0};
                         resp_bc      <= resp_bc + 6'd1;
                     end
                 end
@@ -150,10 +149,10 @@ module sd_mmc_card_model_native (
 
                 C_PAYLOAD: begin
                     if (pay_low_nibble) begin
-                        o_card_dat_o   <= sector[byte_ix][3:0];
+                        o_card_dat_o   <= sector[byte_ix][ 3:  0];
                         pay_low_nibble <= 1'b0;
                     end else begin
-                        o_card_dat_o   <= sector[byte_ix][7:4];
+                        o_card_dat_o   <= sector[byte_ix][ 7:  4];
                         pay_low_nibble <= 1'b1;
                         if (byte_ix == 9'd511) begin
                             cst   <= C_CRC;

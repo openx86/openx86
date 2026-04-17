@@ -16,17 +16,17 @@ module vga_graphics_adapter_tb;
     logic        reset;
     logic        io_en_w;
     logic        io_en_r;
-    logic [15:0] io_addr;
-    logic [7:0]  io_data_w;
-    logic [7:0]  io_data_r;
+    logic [15:  0] io_addr;
+    logic [ 7:  0]  io_data_w;
+    logic [ 7:  0]  io_data_r;
     logic        mem_en_w;
-    logic [19:0] mem_addr;
-    logic [7:0]  mem_data_w;
+    logic [19:  0] mem_addr;
+    logic [ 7:  0]  mem_data_w;
     logic        vga_hsync;
     logic        vga_vsync;
-    logic [3:0]  vga_r;
-    logic [3:0]  vga_g;
-    logic [3:0]  vga_b;
+    logic [ 3:  0]  vga_r;
+    logic [ 3:  0]  vga_g;
+    logic [ 3:  0]  vga_b;
     int          vsync_count;
 
     vga_graphics_adapter dut (
@@ -44,7 +44,7 @@ module vga_graphics_adapter_tb;
         .vga_g     ( vga_g     ),
         .vga_b     ( vga_b     ),
         .clock     ( clock     ),
-        .reset     ( reset     )
+        .reset_n     ( reset     )
     );
 
     // 时钟生成（25.175MHz，VGA标准像素时钟）
@@ -193,7 +193,7 @@ module vga_graphics_adapter_tb;
         for (int mode = 0; mode < 3; mode++) begin
             io_en_w = 1;
             io_addr = 16'h03C0;
-            io_data_w = mode[1:0];
+            io_data_w = mode[ 1:  0];
             #40;
             io_en_w = 0;
             $display("  切换到模式: %0d", mode);

@@ -14,7 +14,7 @@ description: This package defines shared declarations for stage_3_exe_execute_un
 package stage_3_exe_execute_unit_pkg;
 
     // 聚合顶层选择的执行簇（由译码/微码驱动）
-    typedef enum logic [3:0] {
+    typedef enum logic [ 3:  0] {
         EU_CLUSTER_IDLE = 4'h0,
         EU_CLUSTER_AGU    = 4'h1,
         EU_CLUSTER_LSU    = 4'h2,
@@ -24,7 +24,7 @@ package stage_3_exe_execute_unit_pkg;
     } eu_cluster_e;
 
     // 乘除单元操作
-    typedef enum logic [2:0] {
+    typedef enum logic [ 2:  0] {
         MD_NOP    = 3'd0,
         MD_MULU32 = 3'd1,
         MD_IMUL32 = 3'd2,
@@ -33,7 +33,7 @@ package stage_3_exe_execute_unit_pkg;
     } muldiv_op_e;
 
     // X87 子操作（简化整数/位级模型，非完整 IEEE 管线）
-    typedef enum logic [4:0] {
+    typedef enum logic [ 4:  0] {
         X87_NOP   = 5'd0,
         X87_FLD   = 5'd1,
         X87_FSTP  = 5'd2,
@@ -67,7 +67,7 @@ package stage_3_exe_execute_unit_pkg;
     } x87_op_e;
 
     // Unified integer op selector used by stage_3_exe_execute_unit dispatch.
-    typedef enum logic [5:0] {
+    typedef enum logic [ 5:  0] {
         INT_NOP = 6'd0,
         INT_ADD = 6'd1,
         INT_ADC = 6'd2,

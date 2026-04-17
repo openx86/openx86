@@ -31,12 +31,11 @@ module stage_2_dec_decode_sib (
     output logic [ 2:0] o_base_reg_index,
     output logic        o_displacement_size_1,
     output logic        o_displacement_size_4,
-    output logic        o_effecitve_address_undefined
-);
+    output logic        o_effecitve_address_undefined);
 
-wire [1:0] sib_7_6 = i_sib[7:6];
-wire [2:0] sib_5_3 = i_sib[5:3];
-wire [2:0] sib_2_0 = i_sib[2:0];
+wire [ 1:  0] sib_7_6 = i_sib[ 7:  6];
+wire [ 2:  0] sib_5_3 = i_sib[ 5:  3];
+wire [ 2:  0] sib_2_0 = i_sib[ 2:  0];
 
 wire mod_00 = (i_mod == 2'b00);
 wire mod_01 = (i_mod == 2'b01);

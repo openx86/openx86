@@ -13,24 +13,23 @@ description: This module implements instruction_fetch_tb.
 
 `timescale 1ns/1ns
 module instruction_fetch_tb (
-    // ports
-);
+    // ports);
 
 logic        bus_read_vaild;
 logic        bus_read_ready;
-logic [31:0] bus_read_address;
-logic [31:0] bus_read_data;
-logic [31:0] program_counter;
+logic [31:  0] bus_read_address;
+logic [31:  0] bus_read_data;
+logic [31:  0] program_counter;
 logic        program_counter_valid;
-logic [ 7:0] instruction [0:9];
-logic [ 7:0] instruction_full [0:15];
+logic [ 7:0] instruction [ 0:  9];
+logic [ 7:0] instruction_full [ 0: 15];
 logic        instruction_ready;
-logic        clock, reset;
-logic [15:0] segment_selector [0:5];
-logic [63:0] segment_descriptor [0:5];
+logic        clock, reset_n;
+logic [15:  0] segment_selector [ 0:  5];
+logic [63:  0] segment_descriptor [ 0:  5];
 logic        segment_fault_unused;
 logic        mmu_bus_valid_unused;
-logic [31:0] mmu_bus_addr_unused;
+logic [31:  0] mmu_bus_addr_unused;
 
 stage_1_isc fetch_inst (
     .o_code_vaild              ( bus_read_vaild ),
@@ -53,7 +52,7 @@ stage_1_isc fetch_inst (
     .o_segment_fault           ( segment_fault_unused ),
     .EIP                       ( program_counter ),
     .clock                     ( clock ),
-    .reset                     ( reset )
+    .reset_n                     ( reset_n )
 );
 
 always_comb begin
@@ -62,13 +61,13 @@ always_comb begin
     end
 end
 
-reg [31:0] i;
+reg [31:  0] i;
 int unsigned wait_cycles;
 
 always #1 clock = ~clock;
 
-always_ff @(posedge clock or posedge reset) begin
-    if (reset) begin
+always_ff @(posedge clock or negedge reset_n) begin
+    if (~reset_n) begin
         bus_read_ready <= 1'b0;
         bus_read_data  <= 32'h0;
     end else begin

@@ -22,21 +22,21 @@ module dual_port_rom #(
     parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读端口A
-    input  logic [ADDR_WIDTH-1:0]   addra,          // 端口A地址
-    output logic [DATA_WIDTH-1:0]   rdataa,         // 端口A读数据
+    input  logic [ADDR_WIDTH-1:0]   addra,          // 端口A地址,
+    output logic [DATA_WIDTH-1:0]   rdataa,         // 端口A读数据,
 
     // 读端口B
-    input  logic [ADDR_WIDTH-1:0]   addrb,          // 端口B地址
-    output logic [DATA_WIDTH-1:0]   rdatab,         // 端口B读数据
+    input  logic [ADDR_WIDTH-1:0]   addrb,          // 端口B地址,
+    output logic [DATA_WIDTH-1:0]   rdatab,         // 端口B读数据,
 
     input  logic                    clock,
-    input  logic                    reset
+    input  logic                    reset_n
 );
 
     logic [DATA_WIDTH-1:0] rom [0:DEPTH-1];
 
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (~reset_n) begin
             rdataa <= '0;
         end else begin
             rdataa <= rom[addra];
@@ -44,7 +44,7 @@ module dual_port_rom #(
     end
 
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (~reset_n) begin
             rdatab <= '0;
         end else begin
             rdatab <= rom[addrb];

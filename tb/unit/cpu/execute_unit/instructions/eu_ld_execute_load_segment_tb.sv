@@ -9,15 +9,15 @@ description: This module implements eu_ld_execute_load_segment_tb.
 
 module eu_ld_execute_load_segment_tb;
     logic        protected_mode_enable;
-    logic [15:0] index_segment_register;
-    logic [15:0] index_general_register;
+    logic [15:  0] index_segment_register;
+    logic [15:  0] index_general_register;
     logic [ 7:0] greg__8;
-    logic [15:0] greg_16;
-    logic [31:0] greg_32;
-    logic [15:0] write_enable;
-    logic [15:0] write_index;
-    logic [15:0] write_selector;
-    logic [63:0] write_descriptor;
+    logic [15:  0] greg_16;
+    logic [31:  0] greg_32;
+    logic [15:  0] write_enable;
+    logic [15:  0] write_index;
+    logic [15:  0] write_selector;
+    logic [63:  0] write_descriptor;
     logic        valid;
     logic        ready;
 

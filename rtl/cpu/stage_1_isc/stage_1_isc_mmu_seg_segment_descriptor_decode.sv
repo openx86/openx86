@@ -36,8 +36,8 @@ segment
 
 module stage_1_isc_mmu_seg_segment_descriptor_decode (
     // ports
-    output logic [31:0] o_base,
-    output logic [19:0] o_limit,
+    output logic [31:  0] o_base,
+    output logic [19:  0] o_limit,
     output logic        o_date_or_code_present,
     output logic [ 1:0] o_date_or_code_privilege_level,
     output logic        o_available_field,
@@ -50,10 +50,9 @@ module stage_1_isc_mmu_seg_segment_descriptor_decode (
     output logic        o_code_conforming,
     output logic        o_code_readable,
     output logic        o_date_or_code_accessed,
-    input  logic [63:0] i_descriptor
-);
+    input  logic [63:  0] i_descriptor);
 
-typedef enum logic [3:0] {
+typedef enum logic [ 3:  0] {
     SYS_SEG_TYPE_INVALID_80286 = 4'h0,
     SYS_SEG_TYPE_AVAILABLE_80286_TSS = 4'h1,
     SYS_SEG_TYPE_LDT = 4'h2,
@@ -72,17 +71,17 @@ typedef enum logic [3:0] {
     SYS_SEG_TYPE_80386_TRAP_GATE = 4'hF
 } system_segment_type_t;
 
-wire [15: 0] o_base_15__0 = i_descriptor[63:48];
+wire [15: 0] o_base_15__0 = i_descriptor[63: 48];
 wire [ 7: 0] o_base_23_16 = i_descriptor[ 7: 0];
-wire [ 7: 0] o_base_31_24 = i_descriptor[31:24];
+wire [ 7: 0] o_base_31_24 = i_descriptor[31: 24];
 
-wire [ 7: 0] o_limit_15__0 = i_descriptor[47:32];
-wire [ 7: 0] o_limit_19_16 = i_descriptor[19:16];
+wire [ 7: 0] o_limit_15__0 = i_descriptor[47: 32];
+wire [ 7: 0] o_limit_19_16 = i_descriptor[19: 16];
 
 assign o_base                                = { o_base_31_24, o_base_23_16, o_base_15__0 };
 assign o_limit                               = { o_limit_19_16, o_limit_15__0 };
 assign o_date_or_code_present                = i_descriptor[15];
-assign o_date_or_code_privilege_level        = i_descriptor[14:13];
+assign o_date_or_code_privilege_level        = i_descriptor[14: 13];
 assign o_available_field                     = i_descriptor[20];
 assign o_segment_type                        = i_descriptor[12];
 assign o_date_or_code_granularity            = i_descriptor[23];

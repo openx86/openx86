@@ -7,11 +7,11 @@ description: This module implements eu_misc_cr0_ctrl_tb.
 `timescale 1ns/1ns
 
 module eu_misc_cr0_ctrl_tb;
-    logic [31:0] cr0;
-    logic [31:0] src;
-    logic [31:0] clts_y;
-    logic [31:0] lmsw_y;
-    logic [31:0] smsw_y;
+    logic [31:  0] cr0;
+    logic [31:  0] src;
+    logic [31:  0] clts_y;
+    logic [31:  0] lmsw_y;
+    logic [31:  0] smsw_y;
 
     stage_3_exe_misc_clts u_clts (
         .cr0 ( cr0 ),
@@ -29,7 +29,7 @@ module eu_misc_cr0_ctrl_tb;
         .y ( smsw_y )
     );
 
-    task automatic check(input logic cond, input [127:0] name);
+    task automatic check(input logic cond, input [127:  0] name);
         begin
             if (!cond) begin
                 $display("FAIL eu_misc_cr0_ctrl %s", name);

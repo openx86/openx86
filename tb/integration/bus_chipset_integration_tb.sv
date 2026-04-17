@@ -17,31 +17,31 @@ module bus_chipset_integration_tb;
     logic        bus_busy;
     logic        bus_we;
     logic        bus_io;
-    logic [31:0] bus_addr;
-    logic [31:0] bus_rdata;
-    logic [31:0] bus_wdata;
+    logic [31:  0] bus_addr;
+    logic [31:  0] bus_rdata;
+    logic [31:  0] bus_wdata;
 
     logic        vga_mem_en_w;
-    logic [19:0] vga_mem_addr;
-    logic [7:0]  vga_mem_data_w;
+    logic [19:  0] vga_mem_addr;
+    logic [ 7:  0]  vga_mem_data_w;
     logic        vga_io_en_w;
     logic        vga_io_en_r;
-    logic [15:0] vga_io_addr;
-    logic [7:0]  vga_io_data_w;
-    logic [7:0]  vga_io_data_r;
+    logic [15:  0] vga_io_addr;
+    logic [ 7:  0]  vga_io_data_w;
+    logic [ 7:  0]  vga_io_data_r;
 
     logic        o_sdram_en;
     logic        o_sdram_we;
-    logic [23:0] o_sdram_addr_off;
-    logic [31:0] o_sdram_wdata;
-    logic [31:0] i_sdram_rdata;
+    logic [23:  0] o_sdram_addr_off;
+    logic [31:  0] o_sdram_wdata;
+    logic [31:  0] i_sdram_rdata;
     logic        i_sdram_ready;
     logic        i_sdram_busy;
 
-    logic [15:0] bios_addr;
-    logic [31:0] bios_rdata;
-    logic [16:0] ext_bios_addr;
-    logic [31:0] ext_bios_rdata;
+    logic [15:  0] bios_addr;
+    logic [31:  0] bios_rdata;
+    logic [16:  0] ext_bios_addr;
+    logic [31:  0] ext_bios_rdata;
 
     bus_controller u_bus_controller (
         .i_bus_valid        ( bus_valid ),
@@ -91,8 +91,8 @@ module bus_chipset_integration_tb;
         .o_sdio_dat_oe ( ),
         .i_sdio_dat_i  ( 4'hF ),
         .o_pic_intr ( ),
-        .i_clock            ( clock ),
-        .i_reset            ( reset )
+        .clock            ( clock ),
+        .reset_n            ( reset_n )
     );
 
     assign i_sdram_rdata = 32'h0;
@@ -121,7 +121,7 @@ module bus_chipset_integration_tb;
         bus_addr  = 32'h0000_0080;
         @(posedge clock);
         wait (bus_ready);
-        if (bus_rdata[7:0] !== 8'h00)
+        if (bus_rdata[ 7:  0] !== 8'h00)
             $display("FAIL bus chipset read %h", bus_rdata);
         else
             $display("PASS bus_chipset_integration");

@@ -19,64 +19,63 @@ module stage_5_wrb_wb_write_back_unit (
     // --- GPR ---
     input  logic        i_gpr_write_enable,
     input  logic [ 2:0] i_gpr_write_index,
-    input  logic [31:0] i_gpr_write_data,
+    input  logic [31:  0] i_gpr_write_data,
     output logic        o_gpr_write_enable,
     output logic [ 2:0] o_gpr_write_index,
-    output logic [31:0] o_gpr_write_data,
+    output logic [31:  0] o_gpr_write_data,
 
     // --- Segment registers ---
     input  logic        i_sreg_write_enable,
     input  logic [ 2:0] i_sreg_write_index,
-    input  logic [15:0] i_sreg_write_selector,
-    input  logic [63:0] i_sreg_write_descriptor,
+    input  logic [15:  0] i_sreg_write_selector,
+    input  logic [63:  0] i_sreg_write_descriptor,
     output logic        o_sreg_write_enable,
     output logic [ 2:0] o_sreg_write_index,
-    output logic [15:0] o_sreg_write_selector,
-    output logic [63:0] o_sreg_write_descriptor,
+    output logic [15:  0] o_sreg_write_selector,
+    output logic [63:  0] o_sreg_write_descriptor,
 
     // --- FLAGS/EIP ---
     input  logic        i_flags_write_enable,
-    input  logic [31:0] i_flags_write_data,
+    input  logic [31:  0] i_flags_write_data,
     output logic        o_flags_write_enable,
-    output logic [31:0] o_flags_write_data,
+    output logic [31:  0] o_flags_write_data,
 
     input  logic        i_ip_write_enable,
-    input  logic [31:0] i_ip_write_data,
+    input  logic [31:  0] i_ip_write_data,
     output logic        o_ip_write_enable,
-    output logic [31:0] o_ip_write_data,
+    output logic [31:  0] o_ip_write_data,
 
     // --- Control/Debug/Test registers ---
     input  logic        i_cr_write_enable,
     input  logic [ 2:0] i_cr_write_index,
-    input  logic [31:0] i_cr_write_data,
+    input  logic [31:  0] i_cr_write_data,
     output logic        o_cr_write_enable,
     output logic [ 2:0] o_cr_write_index,
-    output logic [31:0] o_cr_write_data,
+    output logic [31:  0] o_cr_write_data,
 
     input  logic        i_dr_write_enable,
     input  logic [ 2:0] i_dr_write_index,
-    input  logic [31:0] i_dr_write_data,
+    input  logic [31:  0] i_dr_write_data,
     output logic        o_dr_write_enable,
     output logic [ 2:0] o_dr_write_index,
-    output logic [31:0] o_dr_write_data,
+    output logic [31:  0] o_dr_write_data,
 
     input  logic        i_tr_write_enable,
     input  logic [ 2:0] i_tr_write_index,
-    input  logic [31:0] i_tr_write_data,
+    input  logic [31:  0] i_tr_write_data,
     output logic        o_tr_write_enable,
     output logic [ 2:0] o_tr_write_index,
-    output logic [31:0] o_tr_write_data,
+    output logic [31:  0] o_tr_write_data,
 
     // --- Memory bus commit path ---
     input  logic        i_mem_valid,
     input  logic        i_mem_write_enable,
-    input  logic [31:0] i_mem_address,
-    input  logic [31:0] i_mem_write_data,
+    input  logic [31:  0] i_mem_address,
+    input  logic [31:  0] i_mem_write_data,
     output logic        o_mem_valid,
     output logic        o_mem_write_enable,
-    output logic [31:0] o_mem_address,
-    output logic [31:0] o_mem_write_data
-);
+    output logic [31:  0] o_mem_address,
+    output logic [31:  0] o_mem_write_data);
 
     always_comb begin
         o_gpr_write_enable = i_gpr_write_enable;

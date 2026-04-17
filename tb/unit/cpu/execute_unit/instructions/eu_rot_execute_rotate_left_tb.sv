@@ -7,7 +7,7 @@ description: This module implements eu_rot_execute_rotate_left_tb.
 `timescale 1ns/1ns
 
 module eu_rot_execute_rotate_left_tb;
-    logic [31:0] op, cnt, y;
+    logic [31:  0] op, cnt, y;
 
     stage_3_exe_rot_execute_rotate_left u_dut (
         .operand(op),

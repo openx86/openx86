@@ -5,17 +5,16 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_misc_daa.
 */
 module stage_3_exe_misc_daa (
-    input  logic [31:0] a,
+    input  logic [31:  0] a,
     input  logic        af_in,
     input  logic        cf_in,
-    output logic [31:0] y,
+    output logic [31:  0] y,
     output logic        af_out,
-    output logic        cf_out
-);
-    logic [7:0] al;
+    output logic        cf_out);
+    logic [ 7:  0] al;
 
     always_comb begin
-        al = a[7:0];
+        al = a[ 7:  0];
         af_out = af_in;
         cf_out = cf_in;
 
@@ -29,7 +28,7 @@ module stage_3_exe_misc_daa (
             cf_out = 1'b1;
         end
 
-        y = { a[31:8], al };
+        y = { a[31:  8], al };
     end
 
 endmodule

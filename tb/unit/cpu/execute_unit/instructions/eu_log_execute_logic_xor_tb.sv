@@ -7,7 +7,7 @@ description: This module implements eu_log_execute_logic_xor_tb.
 `timescale 1ns/1ns
 
 module eu_log_execute_logic_xor_tb;
-    logic [31:0] a, b, y;
+    logic [31:  0] a, b, y;
 
     stage_3_exe_log_execute_logic_xor u_dut (
         .operand_1(a),

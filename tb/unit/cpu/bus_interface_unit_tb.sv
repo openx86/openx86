@@ -11,31 +11,31 @@ module bus_interface_unit_tb #(
 ) (
     // ports
 );
-logic clock, reset;
+logic clock, reset_n;
 always #(clock_period/2) clock = ~clock;
 
 logic        i_mmu_vaild;
 logic        o_mmu_ready;
-logic [31:0] i_mmu_address;
-logic [31:0] o_mmu_data_read;
+logic [31:  0] i_mmu_address;
+logic [31:  0] o_mmu_data_read;
 logic        i_code_vaild;
 logic        o_code_ready;
-logic [31:0] i_code_address;
-logic [31:0] o_code_data_read;
+logic [31:  0] i_code_address;
+logic [31:  0] o_code_data_read;
 logic        i_data_vaild;
 logic        o_data_ready;
 logic        i_data_write_enable;
 logic        i_data_io_access;
-logic [31:0] i_data_address;
-logic [31:0] o_data_data_read;
-logic [31:0] i_data_data_write;
+logic [31:  0] i_data_address;
+logic [31:  0] o_data_data_read;
+logic [31:  0] i_data_data_write;
 logic        o_bus_vaild;
 logic        i_bus_ready;
 logic        i_bus_busy;
 logic        o_bus_write_enable;
-logic [31:0] o_bus_address;
-logic [31:0] i_bus_data_read;
-logic [31:0] o_bus_data_write;
+logic [31:  0] o_bus_address;
+logic [31:  0] i_bus_data_read;
+logic [31:  0] o_bus_data_write;
 
 initial begin
     clock = 1;
@@ -160,8 +160,8 @@ stage_4_mem_bus_interface_unit tb_bus_interface_unit (
     .o_bus_address       ( o_bus_address ),
     .i_bus_data_read     ( i_bus_data_read ),
     .o_bus_data_write    ( o_bus_data_write ),
-    .i_clock             ( clock ),
-    .i_reset             ( reset )
+    .clock             ( clock ),
+    .reset_n             ( reset_n )
 );
 
 endmodule

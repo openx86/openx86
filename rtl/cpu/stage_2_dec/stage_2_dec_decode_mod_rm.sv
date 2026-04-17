@@ -82,8 +82,7 @@ module stage_2_dec_decode_mod_rm (
     output logic        o_displacement_size_8,
     output logic        o_displacement_size_16,
     output logic        o_displacement_size_32,
-    output logic        o_sib_is_present
-);
+    output logic        o_sib_is_present);
 
 // sib_is_present is 1'b1 means this module's signal is invalid
 // need to check s-i-b byte for correct segment & base & index & displacement signal

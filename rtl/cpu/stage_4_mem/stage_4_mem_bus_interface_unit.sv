@@ -14,39 +14,38 @@ description: This module implements stage_4_mem_bus_interface_unit.
 module stage_4_mem_bus_interface_unit (
     input  logic        i_mmu_vaild,
     output logic        o_mmu_ready,
-    input  logic [31:0] i_mmu_address,
-    output logic [31:0] o_mmu_data_read,
+    input  logic [31:  0] i_mmu_address,
+    output logic [31:  0] o_mmu_data_read,
 
     input  logic        i_code_vaild,
     output logic        o_code_ready,
-    input  logic [31:0] i_code_address,
-    output logic [31:0] o_code_data_read,
+    input  logic [31:  0] i_code_address,
+    output logic [31:  0] o_code_data_read,
 
     input  logic        i_data_vaild,
     output logic        o_data_ready,
     input  logic        i_data_write_enable,
     input  logic        i_data_io_access,
-    input  logic [31:0] i_data_address,
-    output logic [31:0] o_data_data_read,
-    input  logic [31:0] i_data_data_write,
+    input  logic [31:  0] i_data_address,
+    output logic [31:  0] o_data_data_read,
+    input  logic [31:  0] i_data_data_write,
 
     output logic        o_bus_vaild,
     input  logic        i_bus_ready,
     input  logic        i_bus_busy,
     output logic        o_bus_write_enable,
     output logic        o_bus_io_access,
-    output logic [31:0] o_bus_address,
-    input  logic [31:0] i_bus_data_read,
-    output logic [31:0] o_bus_data_write,
+    output logic [31:  0] o_bus_address,
+    input  logic [31:  0] i_bus_data_read,
+    output logic [31:  0] o_bus_data_write,
 
-    input  logic        i_clock, i_reset
-);
+    input  logic        clock, reset_n);
 
 assign o_mmu_data_read  = i_bus_data_read;
 assign o_code_data_read = i_bus_data_read;
 assign o_data_data_read = i_bus_data_read;
 
-typedef enum logic [2:0] {
+typedef enum logic [ 2:  0] {
     S_IDLE,
     S_MMU,
     S_CODE,
@@ -55,8 +54,8 @@ typedef enum logic [2:0] {
 
 biu_state_e state;
 
-always_ff @(posedge i_clock or posedge i_reset) begin
-    if (i_reset) begin
+always_ff @(posedge clock or negedge reset_n) begin
+    if (~reset_n) begin
         state <= S_IDLE;
         o_bus_vaild <= 1'b0;
         o_bus_write_enable <= 1'b0;

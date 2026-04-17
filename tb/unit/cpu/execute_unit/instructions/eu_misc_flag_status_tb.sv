@@ -9,9 +9,9 @@ description: This module implements eu_misc_flag_status_tb.
 module eu_misc_flag_status_tb;
     import stage_3_exe_execute_unit_pkg::*;
 
-    logic [31:0] flags_in;
+    logic [31:  0] flags_in;
     logic [ 5:0] op;
-    logic [31:0] flags_out;
+    logic [31:  0] flags_out;
 
     stage_3_exe_misc_flag_status u_dut (
         .flags_in ( flags_in ),

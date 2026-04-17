@@ -10,31 +10,30 @@ description: This module implements stage_3_exe_execute_x87_fpu.
 // ============================================================================
 
 module stage_3_exe_execute_x87_fpu (
-    input  logic        clk,
-    input  logic        rst,
     input  logic        i_valid,
     input  logic [ 4:0] i_op,
-    input  logic [63:0] i_push_data,
+    input  logic [63:  0] i_push_data,
     input  logic [ 2:0] i_st_src,
-    output logic [63:0] o_st0,
-    output logic [63:0] o_st1,
+    output logic [63:  0] o_st0,
+    output logic [63:  0] o_st1,
     output logic        o_zf,
     output logic        o_pf,
-    output logic        o_cf
-);
+    output logic        o_cf,
+    input  logic        clk,
+    input  logic        rst);
 
     import stage_3_exe_execute_unit_pkg::*;
 
-    logic [63:0] phys [0:7];
+    logic [63:  0] phys [ 0:  7];
     logic [ 2:0] top;
     logic        zf_r;
     logic        pf_r;
     logic        cf_r;
-    logic [63:0] swap_tmp;
+    logic [63:  0] swap_tmp;
 
-    wire [2:0] p0 = top + 3'd0;
-    wire [2:0] p1 = top + 3'd1;
-    wire [2:0] px = top + i_st_src;
+    wire [ 2:  0] p0 = top + 3'd0;
+    wire [ 2:  0] p1 = top + 3'd1;
+    wire [ 2:  0] px = top + i_st_src;
 
     always_ff @(posedge clk) begin
         if (rst) begin

@@ -27,7 +27,7 @@ useful when executing 8086 and 80286 code.
 module stage_5_wrb_flags_register (
     // ports
     input  logic        write_enable,
-    input  logic [31:0] write_data,
+    input  logic [31:  0] write_data,
     output logic        CF,
     output logic        PF,
     output logic        AF,
@@ -41,15 +41,14 @@ module stage_5_wrb_flags_register (
     output logic        NT,
     output logic        RF,
     output logic        VM,
-    output logic [31:0] EFLAGS,
-    output logic [15:0] FLAGS,
-    input  logic        clock, reset
-);
+    output logic [31:  0] EFLAGS,
+    output logic [15:  0] FLAGS,
+    input  logic        clock, reset_n);
 
-reg [31:0] flags_reg;
+reg [31:  0] flags_reg;
 
-always_ff @( posedge clock or posedge reset ) begin
-    if (reset) begin
+always_ff @(posedge clock or negedge reset_n) begin
+    if (~reset_n) begin
         flags_reg <= 32'b0;
     end else begin
         if (write_enable) begin
@@ -61,8 +60,8 @@ always_ff @( posedge clock or posedge reset ) begin
     end
 end
 
-assign EFLAGS = flags_reg[31:0];
-assign FLAGS  = flags_reg[15:0];
+assign EFLAGS = flags_reg[31:  0];
+assign FLAGS  = flags_reg[15:  0];
 
 assign CF   = flags_reg[    0];
 assign PF   = flags_reg[    2];
@@ -73,7 +72,7 @@ assign TF   = flags_reg[    8];
 assign IF   = flags_reg[    9];
 assign DF   = flags_reg[   10];
 assign OF   = flags_reg[   11];
-assign IOPL = flags_reg[13:12];
+assign IOPL = flags_reg[13: 12];
 assign NT   = flags_reg[   14];
 assign RF   = flags_reg[   16];
 assign VM   = flags_reg[   17];

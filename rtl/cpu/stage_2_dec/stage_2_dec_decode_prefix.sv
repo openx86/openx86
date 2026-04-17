@@ -30,20 +30,19 @@ module stage_2_dec_decode_prefix (
     output logic        o_group_3_is_present,
     output logic        o_group_4_is_present,
     output logic        o_is_present,
-    output logic [ 2:0] o_segment_override_index
-);
+    output logic [ 2:0] o_segment_override_index);
 
-wire   segment_override_CS = i_instruction[7:0] == 8'h2E;
-wire   segment_override_DS = i_instruction[7:0] == 8'h36;
-wire   segment_override_ES = i_instruction[7:0] == 8'h3E;
-wire   segment_override_FS = i_instruction[7:0] == 8'h26;
-wire   segment_override_GS = i_instruction[7:0] == 8'h64;
-wire   segment_override_SS = i_instruction[7:0] == 8'h65;
+wire   segment_override_CS = i_instruction[ 7:  0] == 8'h2E;
+wire   segment_override_DS = i_instruction[ 7:  0] == 8'h36;
+wire   segment_override_ES = i_instruction[ 7:  0] == 8'h3E;
+wire   segment_override_FS = i_instruction[ 7:  0] == 8'h26;
+wire   segment_override_GS = i_instruction[ 7:  0] == 8'h64;
+wire   segment_override_SS = i_instruction[ 7:  0] == 8'h65;
 
-assign o_group_1_lock_bus              = i_instruction[7:0] == 8'hF0;
-assign o_group_1_repeat_not_equal      = i_instruction[7:0] == 8'hF2;
-assign o_group_1_repeat_equal          = i_instruction[7:0] == 8'hF3;
-assign o_group_1_bound                 = i_instruction[7:0] == 8'hF2;
+assign o_group_1_lock_bus              = i_instruction[ 7:  0] == 8'hF0;
+assign o_group_1_repeat_not_equal      = i_instruction[ 7:  0] == 8'hF2;
+assign o_group_1_repeat_equal          = i_instruction[ 7:  0] == 8'hF3;
+assign o_group_1_bound                 = i_instruction[ 7:  0] == 8'hF2;
 assign o_group_2_segment_override      =
 segment_override_CS |
 segment_override_DS |
@@ -52,10 +51,10 @@ segment_override_FS |
 segment_override_GS |
 segment_override_SS |
 0;
-assign o_group_2_hint_branch_not_taken = i_instruction[7:0] == 8'h2E;
-assign o_group_2_hint_branch_taken     = i_instruction[7:0] == 8'h3E;
-assign o_group_3_operand_size          = i_instruction[7:0] == 8'h66;
-assign o_group_4_address_size          = i_instruction[7:0] == 8'h67;
+assign o_group_2_hint_branch_not_taken = i_instruction[ 7:  0] == 8'h2E;
+assign o_group_2_hint_branch_taken     = i_instruction[ 7:  0] == 8'h3E;
+assign o_group_3_operand_size          = i_instruction[ 7:  0] == 8'h66;
+assign o_group_4_address_size          = i_instruction[ 7:  0] == 8'h67;
 
 assign o_group_1_is_present = o_group_1_lock_bus | o_group_1_repeat_not_equal | o_group_1_repeat_equal | o_group_1_bound;
 assign o_group_2_is_present = o_group_2_segment_override | o_group_2_hint_branch_not_taken | o_group_2_hint_branch_taken;

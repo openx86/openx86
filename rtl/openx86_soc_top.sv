@@ -12,27 +12,26 @@ module openx86_soc_top #(
     parameter bit USE_SDIO_DISK = 1'b0
 ) (
     // ------------------------------------------------------------------------
-    // Board-level clock / reset
+    // Board-level clock / reset_n
     // ------------------------------------------------------------------------
     // i_clk_50m: external 50MHz oscillator
-    // i_reset_n: active-low reset input (board push-button / POR)
+    // reset_n: active-low reset input (board push-button / POR)
     input  logic        i_clk_50m,
-    input  logic        i_reset_n,
+    output logic        o_vga_hsync,
 
     // ------------------------------------------------------------------------
     // VGA (RGB444 + sync)
     // ------------------------------------------------------------------------
-    output logic        o_vga_hsync,
     output logic        o_vga_vsync,
-    output logic [3:0]  o_vga_r,
-    output logic [3:0]  o_vga_g,
-    output logic [3:0]  o_vga_b,
+    output logic [ 3:  0]  o_vga_r,
+    output logic [ 3:  0]  o_vga_g,
+    output logic [ 3:  0]  o_vga_b,
+    output logic        o_ps2_kbd_clk_out,
 
     // ------------------------------------------------------------------------
     // PS/2 ports (open-drain). Each line is (out, oe, in).
     // oe=1 and out=0 means drive-low; oe=0 means Hi-Z (pulled-up externally).
     // ------------------------------------------------------------------------
-    output logic        o_ps2_kbd_clk_out,
     output logic        o_ps2_kbd_clk_oe,
     input  logic        i_ps2_kbd_clk_in,
     output logic        o_ps2_kbd_dat_out,
@@ -44,74 +43,75 @@ module openx86_soc_top #(
     output logic        o_ps2_aux_dat_out,
     output logic        o_ps2_aux_dat_oe,
     input  logic        i_ps2_aux_dat_in,
+    output logic        o_sdio_clk,
 
     // ------------------------------------------------------------------------
     // SDIO / SD 4-bit（IDE 盘体经片内主机；PHY 在片内）
     // ------------------------------------------------------------------------
-    output logic        o_sdio_clk,
     inout  wire         io_sdio_cmd,
-    inout  wire [3:0]   io_sdio_dat,
+    inout  wire [ 3:  0]   io_sdio_dat,
+    output logic        o_sdram_clk,
 
     // ------------------------------------------------------------------------
     // SDRAM physical interface (16-bit device)
     // ------------------------------------------------------------------------
-    output logic        o_sdram_clk,
     output logic        o_sdram_cke,
     output logic        o_sdram_cs_n,
     output logic        o_sdram_ras_n,
     output logic        o_sdram_cas_n,
     output logic        o_sdram_we_n,
-    output logic [1:0]  o_sdram_ba,
-    output logic [12:0] o_sdram_a,
-    output logic [1:0]  o_sdram_dqm,
-    inout  wire [15:0]  io_sdram_dq
+    output logic [ 1:  0]  o_sdram_ba,
+    output logic [12:  0] o_sdram_a,
+    output logic [ 1:  0]  o_sdram_dqm,
+    inout  wire [15:  0]  io_sdram_dq,
+    input  logic        reset_n
 );
 
     // Internal clock/reset (keep existing naming for now)
     logic clock;
     logic reset;
     assign clock = i_clk_50m;
-    assign reset = ~i_reset_n;
+    assign reset = ~reset_n;
 
     logic        bus_valid;
     logic        bus_ready;
     logic        bus_busy;
     logic        bus_we;
     logic        bus_io;
-    logic [31:0] bus_addr;
-    logic [31:0] bus_rdata;
-    logic [31:0] bus_wdata;
+    logic [31:  0] bus_addr;
+    logic [31:  0] bus_rdata;
+    logic [31:  0] bus_wdata;
 
     logic        vga_mem_en_w;
-    logic [19:0] vga_mem_addr;
-    logic [7:0]  vga_mem_data_w;
+    logic [19:  0] vga_mem_addr;
+    logic [ 7:  0]  vga_mem_data_w;
     logic        vga_io_en_w;
     logic        vga_io_en_r;
-    logic [15:0] vga_io_addr;
-    logic [7:0]  vga_io_data_w;
-    logic [7:0]  vga_io_data_r;
+    logic [15:  0] vga_io_addr;
+    logic [ 7:  0]  vga_io_data_w;
+    logic [ 7:  0]  vga_io_data_r;
 
-    logic [15:0] bios_addr;
-    logic [31:0] bios_rdata;
-    logic [16:0] ext_bios_addr;
-    logic [31:0] ext_bios_rdata;
+    logic [15:  0] bios_addr;
+    logic [31:  0] bios_rdata;
+    logic [16:  0] ext_bios_addr;
+    logic [31:  0] ext_bios_rdata;
 
     logic        o_sdram_en;
     logic        o_sdram_we;
-    logic [23:0] o_sdram_addr_off;
-    logic [31:0] o_sdram_wdata;
-    logic [31:0] i_sdram_rdata;
+    logic [23:  0] o_sdram_addr_off;
+    logic [31:  0] o_sdram_wdata;
+    logic [31:  0] i_sdram_rdata;
     logic        i_sdram_ready;
     logic        i_sdram_busy;
 
     logic        sdr_phy_cs_n, sdr_phy_ras_n, sdr_phy_cas_n, sdr_phy_we_n;
-    logic [1:0]  sdr_phy_ba;
-    logic [12:0] sdr_phy_a;
-    logic [1:0]  sdr_phy_dqm;
-    logic [15:0] sdr_phy_dq_out;
+    logic [ 1:  0]  sdr_phy_ba;
+    logic [12:  0] sdr_phy_a;
+    logic [ 1:  0]  sdr_phy_dqm;
+    logic [15:  0] sdr_phy_dq_out;
     logic        sdr_phy_dq_oe;
     logic        sdr_phy_clk, sdr_phy_cke;
-    logic [15:0] sdr_phy_dq_in;
+    logic [15:  0] sdr_phy_dq_in;
 
     logic        pic_intr;
 
@@ -119,9 +119,9 @@ module openx86_soc_top #(
     logic        b_sd_cmd_o;
     logic        b_sd_cmd_oe;
     logic        b_nat_cmd_i;
-    logic [3:0]  b_sd_dat_o;
+    logic [ 3:  0]  b_sd_dat_o;
     logic        b_sd_dat_oe;
-    logic [3:0]  b_nat_dat_i;
+    logic [ 3:  0]  b_nat_dat_i;
 
     w686_cpu u_cpu (
         .bus_vaild        ( bus_valid ),
@@ -133,7 +133,7 @@ module openx86_soc_top #(
         .bus_read_data    ( bus_rdata ),
         .bus_write_data   ( bus_wdata ),
         .clock            ( clock ),
-        .reset            ( reset )
+        .reset_n            ( reset_n )
     );
 
     // SDRAM DQ bus (temporary: only driven by controller when sdr_phy_dq_oe=1)
@@ -201,8 +201,8 @@ module openx86_soc_top #(
         .o_sdio_dat_oe ( b_sd_dat_oe ),
         .i_sdio_dat_i  ( b_nat_dat_i ),
         .o_pic_intr         ( pic_intr ),
-        .i_clock            ( clock ),
-        .i_reset            ( reset )
+        .clock            ( clock ),
+        .reset_n            ( reset_n )
     );
 
     sd_4bit_phy u_sdio_phy (
@@ -229,7 +229,7 @@ module openx86_soc_top #(
         .REFRESH_CYCLES  ( 390 )
     ) u_sdram (
         .clk            ( clock ),
-        .rst            ( reset ),
+        .rst            ( reset_n ),
         .i_en           ( o_sdram_en ),
         .i_we           ( o_sdram_we ),
         .i_addr_off     ( o_sdram_addr_off ),
@@ -267,14 +267,14 @@ module openx86_soc_top #(
         .vga_g        ( o_vga_g          ),
         .vga_b        ( o_vga_b          ),
         .clock        ( clock            ),
-        .reset        ( reset            )
+        .reset_n        ( reset            )
     );
 
     // 系统 BIOS 0xF0000–0xFFFFF + 扩展 ROM 0xC0000–0xDFFFF → 后端 EEPROM（镜像：128KB 扩展 + 64KB 系统）
     // 使用 24LC32（4KiB）做后端：地址在 192KiB 线性镜像上取模映射到 4KiB
     chip_pc_bios_eeprom u_bios_24lc32 (
         .clock               ( clock ),
-        .reset               ( reset ),
+        .reset_n               ( reset_n ),
         .i_sys_bios_byte_off ( bios_addr ),
         .i_ext_bios_byte_off ( ext_bios_addr ),
         .o_sys_bios_rdata    ( bios_rdata ),

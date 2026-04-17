@@ -21,7 +21,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 `include "openx86_defs.h.sv"
 
 module stage_2_dec_decode_disp_imm (
-    input  logic [ 7:0] i_instruction [0:7],
+    input  logic [ 7:0] i_instruction [ 0:  7],
     input  logic        i_displacement_size_1,
     input  logic        i_displacement_size_2,
     input  logic        i_displacement_size_4,
@@ -29,29 +29,28 @@ module stage_2_dec_decode_disp_imm (
     input  logic        i_immediate_size_2,
     input  logic        i_immediate_size_4,
     input  logic        i_immediate_size_f,
-    output logic [31:0] o_displacement,
-    output logic [31:0] o_immediate,
+    output logic [31:  0] o_displacement,
+    output logic [31:  0] o_immediate,
     output logic [ 3:0] o_consume_bytes,
-    output logic        o_error
-);
+    output logic        o_error);
 
-logic [7:0] instruction_for_immediate [0:3];
+logic [ 7:  0] instruction_for_immediate [ 0:  3];
 
 always_comb begin
     case (1'b1)
-        i_displacement_size_1: begin instruction_for_immediate <= i_instruction[1:1+3]; o_displacement <= {24'b0, i_instruction[0][7:0]}; end
-        i_displacement_size_2: begin instruction_for_immediate <= i_instruction[2:2+3]; o_displacement <= {16'b0, i_instruction[1][7:0], i_instruction[0][7:0]}; end
-        i_displacement_size_4: begin instruction_for_immediate <= i_instruction[4:4+3]; o_displacement <= {       i_instruction[3][7:0], i_instruction[2][7:0], i_instruction[1][7:0], i_instruction[0][7:0]}; end
+        i_displacement_size_1: begin instruction_for_immediate <= i_instruction[1:1+3]; o_displacement <= {24'b0, i_instruction[0][ 7:  0]}; end
+        i_displacement_size_2: begin instruction_for_immediate <= i_instruction[2:2+3]; o_displacement <= {16'b0, i_instruction[1][ 7:  0], i_instruction[0][ 7:  0]}; end
+        i_displacement_size_4: begin instruction_for_immediate <= i_instruction[4:4+3]; o_displacement <= {       i_instruction[3][ 7:  0], i_instruction[2][ 7:  0], i_instruction[1][ 7:  0], i_instruction[0][ 7:  0]}; end
         default              : begin instruction_for_immediate <= i_instruction[0:0+3]; o_displacement <= 32'b0; end
     endcase
 end
 
 always_comb begin
     case (1'b1)
-        i_immediate_size_1: o_immediate <= {24'b0, instruction_for_immediate[0][7:0]};
-        i_immediate_size_2: o_immediate <= {16'b0, instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
-        i_immediate_size_4: o_immediate <= {       instruction_for_immediate[3][7:0], instruction_for_immediate[2][7:0], instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
-        i_immediate_size_f: o_immediate <= {       instruction_for_immediate[3][7:0], instruction_for_immediate[2][7:0], instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
+        i_immediate_size_1: o_immediate <= {24'b0, instruction_for_immediate[0][ 7:  0]};
+        i_immediate_size_2: o_immediate <= {16'b0, instruction_for_immediate[1][ 7:  0], instruction_for_immediate[0][ 7:  0]};
+        i_immediate_size_4: o_immediate <= {       instruction_for_immediate[3][ 7:  0], instruction_for_immediate[2][ 7:  0], instruction_for_immediate[1][ 7:  0], instruction_for_immediate[0][ 7:  0]};
+        i_immediate_size_f: o_immediate <= {       instruction_for_immediate[3][ 7:  0], instruction_for_immediate[2][ 7:  0], instruction_for_immediate[1][ 7:  0], instruction_for_immediate[0][ 7:  0]};
         default:               o_immediate <= 32'b0;
     endcase
 end

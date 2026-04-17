@@ -24,27 +24,27 @@ description: This module implements chip_at24lc32_eeprom.
 // ============================================================================
 
 module chip_at24lc32_eeprom #(
-    parameter logic [2:0] A_PINS = 3'b000,
+    parameter logic [ 2:  0] A_PINS = 3'b000,
     parameter int         NUM_BYTES = 4096,
     parameter int         PAGE_BYTES = 32
 ) (
-    input  logic i_clock,
-    input  logic i_reset,
-
     input  logic i_scl,
     input  logic i_sda,
-    output logic o_sda_oe   // 1 = drive low (0), 0 = release (Z)
+
+    output logic o_sda_oe,   // 1 = drive low (0), 0 = release (Z),
+    input  logic clock,
+    input  logic reset_n
 );
 
     localparam int AW = $clog2(NUM_BYTES);
-    localparam logic [3:0] DEV_TYPE = 4'b1010; // 24xx EEPROM family
+    localparam logic [ 3:  0] DEV_TYPE = 4'b1010; // 24xx EEPROM family
 
     (* ramstyle = "M9K" *)
-    logic [7:0] mem[0:NUM_BYTES-1];
+    logic [ 7:  0] mem[0:NUM_BYTES-1];
 
     logic scl_q, sda_q;
-    always_ff @(posedge i_clock) begin
-        if (i_reset) begin
+    always_ff @(posedge clock) begin
+        if (~reset_n) begin
             scl_q <= 1'b1;
             sda_q <= 1'b1;
         end else begin
@@ -59,7 +59,7 @@ module chip_at24lc32_eeprom #(
     wire start_cond = (sda_q == 1'b1) && (i_sda == 1'b0) && (i_scl == 1'b1);
     wire stop_cond  = (sda_q == 1'b0) && (i_sda == 1'b1) && (i_scl == 1'b1);
 
-    typedef enum logic [3:0] {
+    typedef enum logic [ 3:  0] {
         ST_IDLE,
         ST_RECV_CTRL,
         ST_ACK_CTRL,
@@ -75,29 +75,29 @@ module chip_at24lc32_eeprom #(
 
     state_t state;
 
-    logic [7:0] shreg;
-    logic [2:0] bitcnt;
+    logic [ 7:  0] shreg;
+    logic [ 2:  0] bitcnt;
     logic       rw;
     logic       addr_match;
 
-    logic [15:0] word_addr;
-    logic [15:0] write_base;
+    logic [15:  0] word_addr;
+    logic [15:  0] write_base;
 
-    logic [7:0]  tx_byte;
-    logic [2:0]  tx_bit;
+    logic [ 7:  0]  tx_byte;
+    logic [ 2:  0]  tx_bit;
 
-    function automatic logic is_ctrl_match(input logic [7:0] ctrl);
-        logic [6:0] a7;
-        a7 = ctrl[7:1];
-        return (a7[6:3] == DEV_TYPE) && (a7[2:0] == A_PINS);
+    function automatic logic is_ctrl_match(input logic [ 7:  0] ctrl);
+        logic [ 6:  0] a7;
+        a7 = ctrl[ 7:  1];
+        return (a7[ 6:  3] == DEV_TYPE) && (a7[ 2:  0] == A_PINS);
     endfunction
 
-    function automatic logic [AW-1:0] idx(input logic [15:0] wa);
+    function automatic logic [AW-1:0] idx(input logic [15:  0] wa);
         return wa[AW-1:0];
     endfunction
 
-    always_ff @(posedge i_clock) begin
-        if (i_reset) begin
+    always_ff @(posedge clock) begin
+        if (~reset_n) begin
             o_sda_oe    <= 1'b0;
             state       <= ST_IDLE;
             shreg       <= 8'h00;
@@ -129,19 +129,19 @@ module chip_at24lc32_eeprom #(
                         shreg[bitcnt] <= i_sda;
                         if (bitcnt == 0) begin
                             if (state == ST_RECV_CTRL) begin
-                                addr_match <= is_ctrl_match({shreg[7:1], i_sda});
+                                addr_match <= is_ctrl_match({shreg[ 7:  1], i_sda});
                                 rw         <= i_sda;
                                 state      <= ST_ACK_CTRL;
                             end else if (state == ST_RECV_AH) begin
-                                word_addr[15:8] <= {shreg[7:1], i_sda};
+                                word_addr[15:  8] <= {shreg[ 7:  1], i_sda};
                                 state           <= ST_ACK_AH;
                             end else if (state == ST_RECV_AL) begin
-                                word_addr[7:0] <= {shreg[7:1], i_sda};
-                                write_base <= {word_addr[15:8], {shreg[7:1], i_sda}} & ~(PAGE_BYTES-1);
+                                word_addr[ 7:  0] <= {shreg[ 7:  1], i_sda};
+                                write_base <= {word_addr[15:  8], {shreg[ 7:  1], i_sda}} & ~(PAGE_BYTES-1);
                                 state      <= ST_ACK_AL;
                             end else begin
                                 if (addr_match) begin
-                                    mem[idx(word_addr)] <= {shreg[7:1], i_sda};
+                                    mem[idx(word_addr)] <= {shreg[ 7:  1], i_sda};
                                     if (((word_addr + 1) & (PAGE_BYTES-1)) == 0)
                                         word_addr <= write_base;
                                     else

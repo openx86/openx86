@@ -11,13 +11,13 @@ module vga_port_tb;
 
     logic                    clock;
     logic                    reset;
-    logic [7:0]              vram_rd_addr;
-    logic [7:0]              vram_rd_data;
+    logic [ 7:  0]              vram_rd_addr;
+    logic [ 7:  0]              vram_rd_data;
     logic                    vga_hsync;
     logic                    vga_vsync;
-    logic [3:0]              vga_r;
-    logic [3:0]              vga_g;
-    logic [3:0]              vga_b;
+    logic [ 3:  0]              vga_r;
+    logic [ 3:  0]              vga_g;
+    logic [ 3:  0]              vga_b;
     logic [$clog2(800)-1:0]  h_count;
     logic [$clog2(525)-1:0]  v_count;
     logic                    video_active;
@@ -27,12 +27,12 @@ module vga_port_tb;
     integer                  non_visible_pixels;
 
     // 模拟VRAM数据
-    logic [7:0] vram_mem [0:255];
+    logic [ 7:  0] vram_mem [ 0: 255];
     
     initial begin
         // 初始化VRAM数据
         for (int i = 0; i < 256; i++) begin
-            vram_mem[i] = i[7:0];
+            vram_mem[i] = i[ 7:  0];
         end
     end
 
@@ -57,7 +57,7 @@ module vga_port_tb;
         .v_count      ( v_count      ),
         .video_active ( video_active  ),
         .clock        ( clock        ),
-        .reset        ( reset        )
+        .reset_n        ( reset        )
     );
 
     // 时钟生成（25.175MHz，VGA标准像素时钟）

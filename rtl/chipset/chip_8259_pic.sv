@@ -14,19 +14,18 @@ description: This module implements chip_8259_pic.
 // ============================================================================
 
 module chip_8259_pic (
-    input  logic        i_clock,
-    input  logic        i_reset,
     input  logic        i_cs_n,
     input  logic        i_rd_n,
     input  logic        i_wr_n,
     input  logic        i_a0,
-    input  logic [7:0]  i_d,
-    output logic [7:0]  o_d,
-    input  logic [7:0]  i_ir,
-    output logic        o_intr
-);
+    input  logic [ 7:  0]  i_d,
+    output logic [ 7:  0]  o_d,
+    input  logic [ 7:  0]  i_ir,
+    output logic        o_intr,
+    input  logic        reset_n,
+    input  logic        clock);
 
-    typedef enum logic [2:0] {
+    typedef enum logic [ 2:  0] {
         ST_RESET,
         ST_ICW2,
         ST_ICW3,
@@ -37,21 +36,21 @@ module chip_8259_pic (
     pic_state_e           state;
     logic                 need_icw3;
     logic                 need_icw4;
-    logic [7:0]           icw1;
-    logic [7:0]           icw2_vec;
-    logic [7:0]           icw3;
-    logic [7:0]           icw4;
-    logic [7:0]           imr;
-    logic [7:0]           irr;
-    logic [7:0]           isr;
+    logic [ 7:  0]           icw1;
+    logic [ 7:  0]           icw2_vec;
+    logic [ 7:  0]           icw3;
+    logic [ 7:  0]           icw4;
+    logic [ 7:  0]           imr;
+    logic [ 7:  0]           irr;
+    logic [ 7:  0]           isr;
 
     wire wr = !i_cs_n && !i_wr_n;
     wire rd = !i_cs_n && !i_rd_n;
 
     assign o_intr = (state == ST_READY) && (|(i_ir & ~imr));
 
-    always_ff @(posedge i_clock or posedge i_reset) begin
-        if (i_reset) begin
+    always_ff @(posedge clock or negedge reset_n) begin
+        if (~reset_n) begin
             state     <= ST_RESET;
             need_icw3 <= 1'b0;
             need_icw4 <= 1'b0;

@@ -45,17 +45,16 @@ segment, if it is 0 then the segment is a system segment.
 
 module stage_5_wrb_sar_global_descriptor_table_register (
     input  logic        GDTR_write_enable,
-    input  logic [15:0] GDTR_write_data_limit,
-    input  logic [31:0] GDTR_write_data_base,
-    output logic [15:0] GDTR_limit,
-    output logic [31:0] GDTR_base,
-    input  logic        clock, reset
-);
+    input  logic [15:  0] GDTR_write_data_limit,
+    input  logic [31:  0] GDTR_write_data_base,
+    output logic [15:  0] GDTR_limit,
+    output logic [31:  0] GDTR_base,
+    input  logic        clock, reset_n);
 
 // GDTR (Global Descriptor Table Register)
 
-always_ff @( posedge clock or posedge reset ) begin
-    if (reset) begin
+always_ff @(posedge clock or negedge reset_n) begin
+    if (~reset_n) begin
         GDTR_limit <= 16'b0;
         GDTR_base <= 32'b0;
     end else begin
@@ -70,7 +69,7 @@ always_ff @( posedge clock or posedge reset ) begin
 end
 
 // GDT cache
-// reg [63:0] GDT_cache [8192];
+// reg [63:  0] GDT_cache [8192];
 // write GDT cache to SRAM on board like DE2-xx serials board ...
 // for example, DE-35 has a 512-KB SRAM and model id is IS61LV25616
 // A0-A17, D0-D15

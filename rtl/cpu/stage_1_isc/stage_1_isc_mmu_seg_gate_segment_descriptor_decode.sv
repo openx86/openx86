@@ -46,16 +46,15 @@ trap gates is that the interrupt gate disables interrupts (resets the IF bit) wh
 
 module stage_1_isc_mmu_seg_gate_segment_descriptor_decode (
     // ports
-    output logic [15:0] o_selector,
-    output logic [31:0] o_offset,
+    output logic [15:  0] o_selector,
+    output logic [31:  0] o_offset,
     output logic        o_present,
     output logic [ 1:0] o_privilege_level,
     output logic        o_gate_segment_type,
     output logic [ 4:0] o_word_count,
-    input  logic [63:0] i_descriptor
-);
+    input  logic [63:  0] i_descriptor);
 
-typedef enum logic [3:0] {
+typedef enum logic [ 3:  0] {
     // GATE_SEG_TYPE_INVALID_80286 = 4'h0,
     // GATE_SEG_TYPE_AVAILABLE_80286_TSS = 4'h1,
     // GATE_SEG_TYPE_LDT = 4'h2,
@@ -74,10 +73,10 @@ typedef enum logic [3:0] {
     GATE_SEG_TYPE_80386_TRAP_GATE = 4'hF
 } gate_segment_type_t;
 
-assign o_selector          = i_descriptor[63:48];
-assign o_offset            = i_descriptor[47:16];
+assign o_selector          = i_descriptor[63: 48];
+assign o_offset            = i_descriptor[47: 16];
 assign o_present           = i_descriptor[   15];
-assign o_privilege_level   = i_descriptor[14:13];
+assign o_privilege_level   = i_descriptor[14: 13];
 assign o_gate_segment_type = i_descriptor[11: 8];
 
 endmodule

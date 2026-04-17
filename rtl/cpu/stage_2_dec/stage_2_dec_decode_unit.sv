@@ -16,7 +16,7 @@ description: decode unit (模块名与文件名 stage_2_dec_decode_unit 一致)
 `include "openx86_defs.h.sv"
 
 module stage_2_dec_decode_unit (
-    input  logic [ 7:0] i_instruction [0:15],
+    input  logic [ 7:0] i_instruction [ 0: 15],
     input  logic        i_default_operand_size,
     output logic        o_opcode_x86_AAA_ASCII_adjust_after_add,
     output logic        o_opcode_x86_AAD_ASCII_AX_before_div,
@@ -247,23 +247,22 @@ module stage_2_dec_decode_unit (
     output logic        o_gen_reg_is_present_from_mod_rm,
     output logic [ 2:0] o_gen_reg_index_from_mod_rm,
     output logic [ 2:0] o_gen_reg_bit_width_from_mod_rm,
-    output logic [31:0] o_displacement,
-    output logic [31:0] o_immediate,
+    output logic [31:  0] o_displacement,
+    output logic [31:  0] o_immediate,
     output logic [ 3:0] o_consume_bytes,
     output logic        o_error,
     output logic        o_x87_is_esc,
     output logic [ 2:0] o_x87_esc_group,
-    output logic [31:0] o_x87_opmask,
+    output logic [31:  0] o_x87_opmask,
     output logic        o_x87_memory_operand,
     output logic        o_x87_modrm_required,
     output logic [ 1:0] o_x87_mod,
     output logic [ 2:0] o_x87_reg,
     output logic [ 2:0] o_x87_rm,
     output logic [ 1:0] o_dbg_modrm_mod,
-    output logic [ 1:0] o_sib_scale_factor
-);
+    output logic [ 1:0] o_sib_scale_factor);
 
-logic [ 7:0] prefix_instruction [0:3];
+logic [ 7:0] prefix_instruction [ 0:  3];
 logic        prefix_o_group_1_lock_bus;
 logic        prefix_o_group_1_repeat_not_equal;
 logic        prefix_o_group_1_repeat_equal;
@@ -283,7 +282,7 @@ logic        prefix_o_consume_bytes_prefix_2;
 logic        prefix_o_consume_bytes_prefix_3;
 logic        prefix_o_consume_bytes_prefix_4;
 logic        prefix_o_error;
-assign prefix_instruction = i_instruction[0:3];
+assign prefix_instruction = i_instruction[ 0:  3];
 stage_2_dec_decode_prefix_all deocde_decode_prefix_all (
     .i_instruction ( prefix_instruction ),
     .o_group_1_lock_bus ( prefix_o_group_1_lock_bus ),
@@ -317,7 +316,7 @@ always_comb begin
     endcase
 end
 
-logic [ 7:0] opcode_instruction [0:3];
+logic [ 7:0] opcode_instruction [ 0:  3];
 always_comb begin
     unique case (1'b1)
         prefix_o_consume_bytes_prefix_1: opcode_instruction <= i_instruction[1:1+3];
@@ -329,7 +328,7 @@ always_comb begin
 end
 
 logic        x87_esc_int;
-logic [31:0] x87_opmask_int;
+logic [31:  0] x87_opmask_int;
 logic [ 2:0] x87_grp_int;
 logic        x87_mem_int;
 logic        x87_modrm_req_int;
@@ -569,7 +568,7 @@ stage_2_dec_decode_opcode_x86 deocde_decode_opcode_x86 (
     .i_instruction ( opcode_instruction )
 );
 
-logic [ 7:0] field_instruction [0:3];
+logic [ 7:0] field_instruction [ 0:  3];
 logic [ 3:0] field_o_tttn;
 logic        field_o_gen_reg_index_is_present;
 logic [ 2:0] field_o_gen_reg_index;
@@ -946,7 +945,7 @@ always_comb begin
     end
 end
 
-logic [ 7:0] disp_imm_i_instruction [0:7];
+logic [ 7:0] disp_imm_i_instruction [ 0:  7];
 logic        disp_imm_i_displacement_size_1;
 logic        disp_imm_i_displacement_size_2;
 logic        disp_imm_i_displacement_size_4;
@@ -954,8 +953,8 @@ logic        disp_imm_i_immediate_size_1;
 logic        disp_imm_i_immediate_size_2;
 logic        disp_imm_i_immediate_size_4;
 logic        disp_imm_i_immediate_size_f;
-logic [31:0] disp_imm_o_displacement;
-logic [31:0] disp_imm_o_immediate;
+logic [31:  0] disp_imm_o_displacement;
+logic [31:  0] disp_imm_o_immediate;
 logic [ 3:0] disp_imm_o_consume_bytes;
 logic        disp_imm_o_error;
 // assign disp_imm_i_instruction = i_instruction[offset_disp_imm:+7];

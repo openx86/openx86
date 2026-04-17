@@ -21,12 +21,12 @@ module ps2_host_phy_tb;
     logic rst;
 
     logic        tx_req;
-    logic [7:0]  tx_byte;
+    logic [ 7:  0]  tx_byte;
     logic        tx_busy;
     logic        tx_done;
     logic        tx_err;
     logic        rx_strobe;
-    logic [7:0]  rx_byte;
+    logic [ 7:  0]  rx_byte;
     logic        rx_err;
 
     logic host_clk_oe, host_clk_out;
@@ -44,8 +44,8 @@ module ps2_host_phy_tb;
     ps2_host_phy #(
         .CLK_HZ ( CLK_HZ )
     ) dut (
-        .i_clock       ( clk ),
-        .i_reset       ( rst ),
+        .clock       ( clk ),
+        .reset_n       ( rst ),
         .i_ps2_clk_in  ( pin_clk_in ),
         .i_ps2_dat_in  ( pin_dat_in ),
         .o_ps2_clk_out ( host_clk_out ),
@@ -64,7 +64,7 @@ module ps2_host_phy_tb;
 
     // 单周期脉冲捕获（便于在任务结束后检查）
     logic        cap_rx_stb;
-    logic [7:0]  cap_rx_data;
+    logic [ 7:  0]  cap_rx_data;
     logic        cap_tx_done;
     logic        cap_tx_err;
     logic        cap_rx_err;
@@ -93,9 +93,9 @@ module ps2_host_phy_tb;
     initial clk = 1'b0;
     always #(CLK_HALF_NS) clk = ~clk;
 
-    task automatic device_send_to_host(input logic [7:0] payload);
+    task automatic device_send_to_host(input logic [ 7:  0] payload);
         automatic logic        odd_par = ~(^payload);
-        automatic logic [10:0] frame = { 1'b1, odd_par, payload, 1'b0 };
+        automatic logic [10:  0] frame = { 1'b1, odd_par, payload, 1'b0 };
         int                     n;
         use_wire_model = 1'b0;
         manual_clk     = 1'b1;
@@ -174,9 +174,9 @@ module ps2_host_phy_tb;
         rst = 1'b0;
         repeat (8) @(posedge clk);
         begin
-            automatic logic [7:0]  p   = 8'h01;
+            automatic logic [ 7:  0]  p   = 8'h01;
             automatic logic        op  = ~(^p);
-            automatic logic [10:0] fr  = { 1'b0, op, p, 1'b0 };
+            automatic logic [10:  0] fr  = { 1'b0, op, p, 1'b0 };
             int                    k;
             use_wire_model = 1'b0;
             manual_clk     = 1'b1;

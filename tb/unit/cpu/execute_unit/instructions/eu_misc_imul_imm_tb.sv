@@ -7,9 +7,9 @@ description: This module implements eu_misc_imul_imm_tb.
 `timescale 1ns/1ns
 
 module eu_misc_imul_imm_tb;
-    logic [31:0] a;
-    logic [31:0] b;
-    logic [31:0] y;
+    logic [31:  0] a;
+    logic [31:  0] b;
+    logic [31:  0] y;
     logic        overflow;
 
     stage_3_exe_misc_imul_imm u_dut (
@@ -19,7 +19,7 @@ module eu_misc_imul_imm_tb;
         .overflow ( overflow )
     );
 
-    task automatic check(input logic cond, input [127:0] name);
+    task automatic check(input logic cond, input [127:  0] name);
         begin
             if (!cond) begin
                 $display("FAIL stage_3_exe_misc_imul_imm %s", name);

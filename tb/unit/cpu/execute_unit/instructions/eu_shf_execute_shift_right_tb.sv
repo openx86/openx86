@@ -7,7 +7,7 @@ description: This module implements eu_shf_execute_shift_right_tb.
 `timescale 1ns/1ns
 
 module eu_shf_execute_shift_right_tb;
-    logic [31:0] op, cnt, is_signed, y;
+    logic [31:  0] op, cnt, is_signed, y;
 
     stage_3_exe_shf_execute_shift_right u_dut (
         .operand(op),

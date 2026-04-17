@@ -5,26 +5,25 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_rot_rcr.
 */
 module stage_3_exe_rot_rcr (
-    input  logic [31:0] a,
-    input  logic [31:0] count,
+    input  logic [31:  0] a,
+    input  logic [31:  0] count,
     input  logic        cf_in,
-    output logic [31:0] y,
-    output logic        cf_out
-);
-    logic [31:0] tmp;
-    logic [4:0]  sh;
+    output logic [31:  0] y,
+    output logic        cf_out);
+    logic [31:  0] tmp;
+    logic [ 4:  0]  sh;
     logic        cf;
     logic        next_cf;
 
     always_comb begin
         tmp = a;
-        sh = count[4:0];
+        sh = count[ 4:  0];
         cf = cf_in;
 
         for (int i = 0; i < 32; i++) begin
             if (i < sh) begin
                 next_cf = tmp[0];
-                tmp = { cf, tmp[31:1] };
+                tmp = { cf, tmp[31:  1] };
                 cf = next_cf;
             end
         end

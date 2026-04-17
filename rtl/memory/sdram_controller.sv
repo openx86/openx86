@@ -17,9 +17,9 @@ description: This module implements sdram_controller.
 //
 // NOTE:
 // - Address mapping assumes 16MB window and a simplified geometry:
-//     row[12:0] = halfword_addr[22:10]
-//     bank[1:0] = halfword_addr[9:8]
-//     col[8:0]  = {1'b0, halfword_addr[7:0]}
+//     row[12:  0] = halfword_addr[22: 10]
+//     bank[ 1:  0] = halfword_addr[ 9:  8]
+//     col[ 8:  0]  = {1'b0, halfword_addr[ 7:  0]}
 // - This maps exactly 16MB: 2^13 rows * 4 banks * 256 cols * 2 bytes = 16MB
 // ============================================================================
 
@@ -44,9 +44,9 @@ module sdram_controller #(
     // Host (SoC 中仅由 bus_controller 的 o_sdram_* 驱动；CPU 经 bus_controller 访问)
     input  logic        i_en,
     input  logic        i_we,
-    input  logic [23:0] i_addr_off,
-    input  logic [31:0] i_wdata,
-    output logic [31:0] o_rdata,
+    input  logic [23:  0] i_addr_off,
+    input  logic [31:  0] i_wdata,
+    output logic [31:  0] o_rdata,
     output logic        o_ready,
     output logic        o_busy,
 
@@ -57,12 +57,12 @@ module sdram_controller #(
     output logic        o_sdram_ras_n,
     output logic        o_sdram_cas_n,
     output logic        o_sdram_we_n,
-    output logic [1:0]  o_sdram_ba,
-    output logic [12:0] o_sdram_a,
-    output logic [1:0]  o_sdram_dqm,
-    output logic [15:0] o_sdram_dq_out,
+    output logic [ 1:  0]  o_sdram_ba,
+    output logic [12:  0] o_sdram_a,
+    output logic [ 1:  0]  o_sdram_dqm,
+    output logic [15:  0] o_sdram_dq_out,
     output logic        o_sdram_dq_oe,
-    input  logic [15:0] i_sdram_dq_in
+    input  logic [15:  0] i_sdram_dq_in
 );
 
     // SDRAM clock is the same as system clock for bring-up
@@ -73,7 +73,7 @@ module sdram_controller #(
     // ------------------------------------------------------------------------
     // Command encoding (active low)
     // ------------------------------------------------------------------------
-    typedef enum logic [2:0] {
+    typedef enum logic [ 2:  0] {
         CMD_NOP,
         CMD_PRECHARGE_ALL,
         CMD_AUTO_REFRESH,
@@ -131,30 +131,30 @@ module sdram_controller #(
     // ------------------------------------------------------------------------
     // Address mapping helpers
     // ------------------------------------------------------------------------
-    logic [22:0] halfword_addr; // 16-bit addressed (byte_off >> 1)
-    assign halfword_addr = i_addr_off[23:1];
+    logic [22:  0] halfword_addr; // 16-bit addressed (byte_off >> 1)
+    assign halfword_addr = i_addr_off[23:  1];
 
-    wire [12:0] row  = halfword_addr[22:10];
-    wire [1:0]  bank = halfword_addr[9:8];
-    wire [8:0]  col  = {1'b0, halfword_addr[7:0]}; // burst start col
+    wire [12:  0] row  = halfword_addr[22: 10];
+    wire [ 1:  0]  bank = halfword_addr[ 9:  8];
+    wire [ 8:  0]  col  = {1'b0, halfword_addr[ 7:  0]}; // burst start col
 
     // ------------------------------------------------------------------------
     // Mode register value: BL=2, burst sequential, CAS=CAS, write burst=programmed
-    // A[2:0]=BL, A[3]=BT, A[6:4]=CAS, A[9]=WB
+    // A[ 2:  0]=BL, A[3]=BT, A[ 6:  4]=CAS, A[9]=WB
     // ------------------------------------------------------------------------
-    function automatic logic [12:0] mode_reg_value(input int cas_lat);
-        logic [12:0] mr;
+    function automatic logic [12:  0] mode_reg_value(input int cas_lat);
+        logic [12:  0] mr;
         begin
             mr = 13'b0;
             // BL=2
-            mr[2:0] = 3'b001;
+            mr[ 2:  0] = 3'b001;
             // BT=0 (sequential)
             mr[3]   = 1'b0;
             // CAS
             unique case (cas_lat)
-                2: mr[6:4] = 3'b010;
-                3: mr[6:4] = 3'b011;
-                default: mr[6:4] = 3'b010;
+                2: mr[ 6:  4] = 3'b010;
+                3: mr[ 6:  4] = 3'b011;
+                default: mr[ 6:  4] = 3'b010;
             endcase
             // WB=0 (programmed burst length)
             mr[9] = 1'b0;
@@ -165,7 +165,7 @@ module sdram_controller #(
     // ------------------------------------------------------------------------
     // Init + refresh + transaction FSM
     // ------------------------------------------------------------------------
-    typedef enum logic [4:0] {
+    typedef enum logic [ 4:  0] {
         ST_INIT_WAIT,
         ST_INIT_PRE,
         ST_INIT_TRP,
@@ -193,15 +193,15 @@ module sdram_controller #(
     st_t st;
     int unsigned ctr;
 
-    logic [23:0] lat_addr;
+    logic [23:  0] lat_addr;
     logic        lat_we;
-    logic [31:0] lat_wdata;
+    logic [31:  0] lat_wdata;
 
     logic refresh_due;
     int unsigned refresh_ctr;
 
     // dq output for writes
-    logic [15:0] dq_out_r;
+    logic [15:  0] dq_out_r;
     logic        dq_oe_r;
     assign o_sdram_dq_out = dq_out_r;
     assign o_sdram_dq_oe  = dq_oe_r;
@@ -230,7 +230,7 @@ module sdram_controller #(
             CMD_READ_AP,
             CMD_WRITE_AP: begin
                 o_sdram_ba = bank;
-                o_sdram_a[8:0] = col;
+                o_sdram_a[ 8:  0] = col;
                 // Auto-precharge: A10=1
                 o_sdram_a[10] = 1'b1;
             end
@@ -390,23 +390,23 @@ module sdram_controller #(
                 end
                 ST_READ_BEAT0: begin
                     // Lower 16 bits
-                    o_rdata[15:0] <= i_sdram_dq_in;
+                    o_rdata[15:  0] <= i_sdram_dq_in;
                     st <= ST_READ_BEAT1;
                 end
                 ST_READ_BEAT1: begin
                     // Upper 16 bits
-                    o_rdata[31:16] <= i_sdram_dq_in;
+                    o_rdata[31: 16] <= i_sdram_dq_in;
                     st <= ST_DONE;
                 end
 
                 // Write path: drive 2 beats then wait tWR
                 ST_WRITE_BEAT0: begin
-                    dq_out_r <= lat_wdata[15:0];
+                    dq_out_r <= lat_wdata[15:  0];
                     dq_oe_r  <= 1'b1;
                     st       <= ST_WRITE_BEAT1;
                 end
                 ST_WRITE_BEAT1: begin
-                    dq_out_r <= lat_wdata[31:16];
+                    dq_out_r <= lat_wdata[31: 16];
                     dq_oe_r  <= 1'b1;
                     ctr      <= 0;
                     st       <= ST_TWR;

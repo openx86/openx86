@@ -14,22 +14,22 @@ module vga_text_color_tb;
 
     logic                    clock;
     logic                    reset;
-    logic [12:0]             vram_rd_addr;
-    logic [7:0]              vram_char_data;
-    logic [7:0]              vram_attr_data;
-    logic [7:0]              font_char_code;
-    logic [3:0]              font_row_index;
-    logic [7:0]              font_data;
-    logic [3:0]              vga_r;
-    logic [3:0]              vga_g;
-    logic [3:0]              vga_b;
+    logic [12:  0]             vram_rd_addr;
+    logic [ 7:  0]              vram_char_data;
+    logic [ 7:  0]              vram_attr_data;
+    logic [ 7:  0]              font_char_code;
+    logic [ 3:  0]              font_row_index;
+    logic [ 7:  0]              font_data;
+    logic [ 3:  0]              vga_r;
+    logic [ 3:  0]              vga_g;
+    logic [ 3:  0]              vga_b;
     logic [$clog2(800)-1:0]  h_count;
     logic [$clog2(525)-1:0]  v_count;
     logic                    video_active;
 
     // 模拟文本VRAM（80x25 = 2000字符 = 4000字节）
     // 偶数地址：字符码，奇数地址：属性字节
-    logic [7:0] text_vram [0:3999];
+    logic [ 7:  0] text_vram [ 0: 3999];
     
     initial begin
         // 初始化文本VRAM
@@ -75,11 +75,11 @@ module vga_text_color_tb;
     end
 
     // 模拟时序生成器
-    logic [9:0] h_cnt;
-    logic [9:0] v_cnt;
+    logic [ 9:  0] h_cnt;
+    logic [ 9:  0] v_cnt;
     
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
+    always_ff @(posedge clock or negedge reset_n) begin
+        if (~reset_n) begin
             h_cnt <= '0;
             v_cnt <= '0;
             video_active <= 0;
@@ -116,7 +116,7 @@ module vga_text_color_tb;
         .v_count      ( v_count        ),
         .video_active ( video_active   ),
         .clock        ( clock          ),
-        .reset        ( reset          )
+        .reset_n        ( reset          )
     );
 
     // 时钟生成（25.175MHz，VGA标准像素时钟）
@@ -141,14 +141,14 @@ module vga_text_color_tb;
         v_cnt = 0;
         #100;
         $display("  位置 (0,0): char_col=%0d, char_row=%0d, vram_addr=0x%04h", 
-                 h_cnt[9:3], v_cnt[8:4], vram_rd_addr);
+                 h_cnt[ 9:  3], v_cnt[ 8:  4], vram_rd_addr);
         
         // 设置到第一行第二列
         h_cnt = 8;
         v_cnt = 0;
         #100;
         $display("  位置 (1,0): char_col=%0d, char_row=%0d, vram_addr=0x%04h", 
-                 h_cnt[9:3], v_cnt[8:4], vram_rd_addr);
+                 h_cnt[ 9:  3], v_cnt[ 8:  4], vram_rd_addr);
 
         // 测试2: 检查属性解码
         $display("\n测试2: 检查属性解码");
@@ -158,7 +158,7 @@ module vga_text_color_tb;
         #200;  // 等待流水线
         $display("  字符码: 0x%02h, 属性: 0x%02h", vram_char_data, vram_attr_data);
         $display("  前景色: %0d, 背景色: %0d", 
-                 vram_attr_data[3:0], vram_attr_data[6:4]);
+                 vram_attr_data[ 3:  0], vram_attr_data[ 6:  4]);
 
         // 测试3: 检查颜色输出
         $display("\n测试3: 检查颜色输出");

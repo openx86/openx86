@@ -14,19 +14,19 @@ module soc_top_tb;
     logic reset_n;
     logic        o_vga_hsync;
     logic        o_vga_vsync;
-    logic [3:0]  o_vga_r;
-    logic [3:0]  o_vga_g;
-    logic [3:0]  o_vga_b;
-    wire  [15:0] sdram_dq;
+    logic [ 3:  0]  o_vga_r;
+    logic [ 3:  0]  o_vga_g;
+    logic [ 3:  0]  o_vga_b;
+    wire  [15:  0] sdram_dq;
     wire         io_sdio_cmd;
-    wire  [3:0]  io_sdio_dat;
+    wire  [ 3:  0]  io_sdio_dat;
     int          c;
 
     openx86_soc_top #(
         .USE_SDIO_DISK ( 1'b0 )
     ) dut (
         .i_clk_50m   ( clock ),
-        .i_reset_n   ( reset_n ),
+        .reset_n   ( reset_n ),
         .o_vga_hsync ( o_vga_hsync ),
         .o_vga_vsync ( o_vga_vsync ),
         .o_vga_r     ( o_vga_r     ),

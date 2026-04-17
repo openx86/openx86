@@ -21,17 +21,17 @@ module single_port_rom #(
     parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读端口
-    input  logic [ADDR_WIDTH-1:0]   addr,            // 地址
-    output logic [DATA_WIDTH-1:0]   rdata,           // 读数据
+    input  logic [ADDR_WIDTH-1:0]   addr,            // 地址,
+    output logic [DATA_WIDTH-1:0]   rdata,           // 读数据,
 
     input  logic                    clock,
-    input  logic                    reset
+    input  logic                    reset_n
 );
 
     logic [DATA_WIDTH-1:0] rom [0:DEPTH-1];
 
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (~reset_n) begin
             rdata <= '0;
         end else begin
             rdata <= rom[addr];

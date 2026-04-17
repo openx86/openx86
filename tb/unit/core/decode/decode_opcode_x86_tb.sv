@@ -10,7 +10,7 @@ description: This module implements decode_opcode_x86_tb.
 module decode_opcode_x86_tb;
 
     // 指令字节数组（最多4字节用于解码opcode）
-    logic [7:0] i_instruction [0:3];
+    logic [ 7:  0] i_instruction [ 0:  3];
     
     // 所有opcode输出信号
     logic o_opcode_x86_AAA_ASCII_adjust_after_add;
@@ -455,7 +455,7 @@ module decode_opcode_x86_tb;
     int fail_count = 0;
 
     // 设置指令字节的任务
-    task set_instruction(bit [7:0] byte0, bit [7:0] byte1 = 8'h00, bit [7:0] byte2 = 8'h00, bit [7:0] byte3 = 8'h00);
+    task set_instruction(bit [ 7:  0] byte0, bit [ 7:  0] byte1 = 8'h00, bit [ 7:  0] byte2 = 8'h00, bit [ 7:  0] byte3 = 8'h00);
         i_instruction[0] = byte0;
         i_instruction[1] = byte1;
         i_instruction[2] = byte2;
@@ -503,7 +503,7 @@ module decode_opcode_x86_tb;
     endtask
 
     // 测试用例：验证单个opcode
-    task test_single_opcode(string opcode_name, bit [7:0] byte0, bit [7:0] byte1 = 8'h00, bit [7:0] byte2 = 8'h00, bit [7:0] byte3 = 8'h00, bit expected_opcode);
+    task test_single_opcode(string opcode_name, bit [ 7:  0] byte0, bit [ 7:  0] byte1 = 8'h00, bit [ 7:  0] byte2 = 8'h00, bit [ 7:  0] byte3 = 8'h00, bit expected_opcode);
         bit actual_opcode;
         
         // 设置指令

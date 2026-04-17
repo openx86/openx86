@@ -14,16 +14,16 @@ module vga_font_rom_tb;
 
     logic        clock;
     logic        reset;
-    logic [7:0]  char_code;
-    logic [3:0]  row_index;
-    logic [7:0]  font_data;
+    logic [ 7:  0]  char_code;
+    logic [ 3:  0]  row_index;
+    logic [ 7:  0]  font_data;
 
     vga_font_rom dut (
         .char_code  ( char_code  ),
         .row_index  ( row_index  ),
         .font_data  ( font_data  ),
         .clock      ( clock      ),
-        .reset      ( reset      )
+        .reset_n      ( reset      )
     );
 
     // 时钟生成（25.175MHz，VGA标准像素时钟）
@@ -48,7 +48,7 @@ module vga_font_rom_tb;
         $display("\n测试1: 读取字符'A' (ASCII 0x41) 的所有行");
         char_code = 8'h41;  // 'A'
         for (int i = 0; i < 16; i++) begin
-            row_index = i[3:0];
+            row_index = i[ 3:  0];
             #40;
             $display("  字符'A' 第%2d行: data=0x%02h (二进制: %08b)", i, font_data, font_data);
         end
@@ -57,7 +57,7 @@ module vga_font_rom_tb;
         $display("\n测试2: 读取字符'0' (ASCII 0x30) 的所有行");
         char_code = 8'h30;  // '0'
         for (int i = 0; i < 16; i++) begin
-            row_index = i[3:0];
+            row_index = i[ 3:  0];
             #40;
             $display("  字符'0' 第%2d行: data=0x%02h", i, font_data);
         end
@@ -66,7 +66,7 @@ module vga_font_rom_tb;
         $display("\n测试3: 读取字符'@' (ASCII 0x40) 的所有行");
         char_code = 8'h40;  // '@'
         for (int i = 0; i < 16; i++) begin
-            row_index = i[3:0];
+            row_index = i[ 3:  0];
             #40;
             $display("  字符'@' 第%2d行: data=0x%02h", i, font_data);
         end
@@ -121,7 +121,7 @@ module vga_font_rom_tb;
         for (int c = 0; c < 5; c++) begin
             char_code = 8'h41 + c;  // 'A' 到 'E'
             for (int r = 0; r < 3; r++) begin
-                row_index = r[3:0];
+                row_index = r[ 3:  0];
                 #40;
                 $display("  字符'%c' 第%2d行: data=0x%02h", 8'h41 + c, r, font_data);
             end

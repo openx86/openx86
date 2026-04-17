@@ -15,22 +15,22 @@ module disk_ram_8_tb;
     logic        clock = 0;
     logic        reset;
     logic        io_valid, io_we;
-    logic [15:0] io_addr;
-    logic [7:0]  io_wdata, io_rdata;
+    logic [15:  0] io_addr;
+    logic [ 7:  0]  io_wdata, io_rdata;
 
     wire ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
     wire ide_cs_n = !(io_valid && ide_hit);
     wire ide_wr_n = !(io_valid && io_we && ide_hit);
     wire ide_rd_n = !(io_valid && !io_we && ide_hit);
 
-    logic [31:0] ide_raddr;
-    logic [7:0]  disk_a, disk_b;
+    logic [31:  0] ide_raddr;
+    logic [ 7:  0]  disk_a, disk_b;
 
     always #5 clock = ~clock;
 
     sd_disk_ram_8 #(.BYTE_DEPTH(512 * 16)) u_disk (
-        .i_clock   ( clock ),
-        .i_reset   ( reset ),
+        .clock   ( clock ),
+        .reset_n   ( reset_n ),
         .i_we      ( 1'b0 ),
         .i_waddr   ( 32'h0 ),
         .i_wdata   ( 8'h0 ),
@@ -52,8 +52,8 @@ module disk_ram_8_tb;
         .USE_INTERNAL_DISK_MEM(1'b0),
         .USE_ASYNC_DISK(1'b0)
     ) u_ide (
-        .i_clock             ( clock ),
-        .i_reset             ( reset ),
+        .clock             ( clock ),
+        .reset_n             ( reset_n ),
         .i_cs_n              ( ide_cs_n ),
         .i_rd_n              ( ide_rd_n ),
         .i_wr_n              ( ide_wr_n ),
@@ -66,7 +66,7 @@ module disk_ram_8_tb;
         .o_disk_sector_req   ( ide_sector_req )
     );
 
-    task automatic wr(input logic [15:0] a, input logic [7:0] d);
+    task automatic wr(input logic [15:  0] a, input logic [ 7:  0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 1;
@@ -76,7 +76,7 @@ module disk_ram_8_tb;
         io_valid = 0;
     endtask
 
-    task automatic rd(input logic [15:0] a, output logic [7:0] d);
+    task automatic rd(input logic [15:  0] a, output logic [ 7:  0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 0;
@@ -86,7 +86,7 @@ module disk_ram_8_tb;
         io_valid = 0;
     endtask
 
-    logic [7:0] rb;
+    logic [ 7:  0] rb;
     initial begin
         reset = 1;
         io_valid = 0;

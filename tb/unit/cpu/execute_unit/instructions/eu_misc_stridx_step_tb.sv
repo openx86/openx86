@@ -7,9 +7,9 @@ description: This module implements eu_misc_stridx_step_tb.
 `timescale 1ns/1ns
 
 module eu_misc_stridx_step_tb;
-    logic [31:0] idx;
+    logic [31:  0] idx;
     logic        df;
-    logic [31:0] y;
+    logic [31:  0] y;
 
     stage_3_exe_misc_stridx_step u_dut (
         .idx ( idx ),
@@ -17,7 +17,7 @@ module eu_misc_stridx_step_tb;
         .y ( y )
     );
 
-    task automatic check(input logic cond, input [127:0] name);
+    task automatic check(input logic cond, input [127:  0] name);
         begin
             if (!cond) begin
                 $display("FAIL stage_3_exe_misc_stridx_step %s", name);

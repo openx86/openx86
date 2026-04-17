@@ -13,7 +13,7 @@ description: This module implements edge_detect.
 //
 // 设计要点：
 // - 通过寄存 `signal_prev` 与当前 `signal` 比较得到边沿。
-// - 异步复位（posedge reset）将输出与 `signal_prev` 清零。
+// - 异步复位（negedge reset_n）将输出与 `signal_prev` 清零。
 // ============================================================================
 
 module edge_detect (
@@ -21,14 +21,15 @@ module edge_detect (
     input  logic        signal,
     output logic        pos_edge,
     output logic        neg_edge,
-    input  logic        clock,
-    input  logic        reset
+    input  logic        reset_n,
+
+    input  logic        clock
 );
 
 logic signal_prev;
 
-always_ff @(posedge clock or posedge reset) begin
-    if (reset) begin
+always_ff @(posedge clock or negedge reset_n) begin
+    if (~reset_n) begin
         pos_edge <= 0;
         neg_edge <= 0;
         signal_prev <= 0;

@@ -17,9 +17,9 @@ module sdram_controller_tb;
     logic        rst;
     logic        i_en;
     logic        i_we;
-    logic [23:0] i_addr_off;
-    logic [31:0] i_wdata;
-    logic [31:0] o_rdata;
+    logic [23:  0] i_addr_off;
+    logic [31:  0] i_wdata;
+    logic [31:  0] o_rdata;
     logic        o_ready;
     logic        o_busy;
 
@@ -29,14 +29,14 @@ module sdram_controller_tb;
     logic        o_sdram_ras_n;
     logic        o_sdram_cas_n;
     logic        o_sdram_we_n;
-    logic [1:0]  o_sdram_ba;
-    logic [12:0] o_sdram_a;
-    logic [1:0]  o_sdram_dqm;
-    logic [15:0] o_sdram_dq_out;
+    logic [ 1:  0]  o_sdram_ba;
+    logic [12:  0] o_sdram_a;
+    logic [ 1:  0]  o_sdram_dqm;
+    logic [15:  0] o_sdram_dq_out;
     logic        o_sdram_dq_oe;
-    logic [15:0] i_sdram_dq_in;
+    logic [15:  0] i_sdram_dq_in;
 
-    logic [15:0] stub_dq;
+    logic [15:  0] stub_dq;
     logic        stub_oe;
 
     assign i_sdram_dq_in = o_sdram_dq_oe ? o_sdram_dq_out : (stub_oe ? stub_dq : 16'hZZZZ);

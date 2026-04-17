@@ -37,7 +37,7 @@ module true_dual_port_ram_tb;
         .DEPTH      ( DEPTH      )
     ) dut (
         .clock  ( clock  ),
-        .reset  ( reset  ),
+        .reset_n  ( reset  ),
         .wea    ( wea    ),
         .addra  ( addra  ),
         .wdataa ( wdataa ),

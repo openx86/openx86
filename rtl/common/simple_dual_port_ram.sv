@@ -34,7 +34,7 @@ module simple_dual_port_ram #(
 
     // 时钟与复位（放在末尾）
     input  logic                    clock,
-    input  logic                    reset
+    input  logic                    reset_n
 );
 
     // 存储器数组
@@ -42,7 +42,7 @@ module simple_dual_port_ram #(
 
     // 写操作（同步写）
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (~reset_n) begin
             // 可选：清零或保持
         end else begin
             if (we) begin
@@ -53,7 +53,7 @@ module simple_dual_port_ram #(
 
     // 读操作（同步读，在时钟上升沿后输出）
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (~reset_n) begin
             rdata <= '0;
         end else begin
             if (re) begin

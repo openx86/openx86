@@ -24,8 +24,8 @@ module w686_cpu (
     // input  logic        precessor_extension_request,
     // input  logic        interrupt_request,
     // input  logic        non_maskable_interrupt_request,
-    // inout  logic [31:0] data,
-    // output logic [31:2] address,
+    // inout  logic [31:  0] data,
+    // output logic [31:  2] address,
     // output logic [ 3:0] byte_enables_n,
     // output logic        write_read_n,
     // output logic        data_control_n,
@@ -37,30 +37,29 @@ module w686_cpu (
     input  logic        bus_busy,
     output logic        bus_write_enable,
     output logic        bus_io_access,
-    output logic [31:0] bus_address,
-    input  logic [31:0] bus_read_data,
-    output logic [31:0] bus_write_data,
-    input  logic        clock,
-    input  logic        reset
-);
+    output logic [31:  0] bus_address,
+    input  logic [31:  0] bus_read_data,
+    output logic [31:  0] bus_write_data,
+    input  logic        reset_n,
+    input  logic        clock);
 
 logic        mmu_vaild;
 logic        mmu_ready;
-logic [31:0] mmu_address;
-logic [31:0] mmu_data_read;
+logic [31:  0] mmu_address;
+logic [31:  0] mmu_data_read;
 
 logic        code_vaild;
 logic        code_ready;
-logic [31:0] code_address;
-logic [31:0] code_data_read;
+logic [31:  0] code_address;
+logic [31:  0] code_data_read;
 
 logic        data_vaild;
 logic        data_ready;
 logic        data_write_enable;
 logic        data_io_access;
-logic [31:0] data_address;
-logic [31:0] data_data_read;
-logic [31:0] data_data_write;
+logic [31:  0] data_address;
+logic [31:  0] data_data_read;
+logic [31:  0] data_data_write;
 
 w686_core core_0 (
     .o_mmu_vaild        ( mmu_vaild ),
@@ -79,7 +78,7 @@ w686_core core_0 (
     .i_data_data_read   ( data_data_read ),
     .o_data_data_write  ( data_data_write ),
     .clock              ( clock ),
-    .reset              ( reset )
+    .reset_n              ( reset_n )
 );
 
 stage_4_mem_bus_interface_unit biu_0 (
@@ -106,8 +105,8 @@ stage_4_mem_bus_interface_unit biu_0 (
     .o_bus_address      ( bus_address ),
     .i_bus_data_read    ( bus_read_data ),
     .o_bus_data_write   ( bus_write_data ),
-    .i_clock            ( clock ),
-    .i_reset            ( reset )
+    .clock            ( clock ),
+    .reset_n            ( reset_n )
 );
 
 // TODO: shared cache

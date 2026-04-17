@@ -7,7 +7,7 @@ description: This module implements eu_ari_execute_arithmetic_sbb_tb.
 `timescale 1ns/1ns
 
 module eu_ari_execute_arithmetic_sbb_tb;
-    logic [31:0] a, b, y;
+    logic [31:  0] a, b, y;
     logic        cf;
 
     stage_3_exe_ari_execute_arithmetic_sbb u_dut (

@@ -41,7 +41,7 @@ module simple_dual_port_ram_tb;
         .raddr ( raddr ),
         .rdata ( rdata ),
         .clock ( clock ),
-        .reset ( reset )
+        .reset_n ( reset_n )
     );
 
     // 时钟生成

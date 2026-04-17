@@ -24,7 +24,7 @@ may be placed in any order relative to each other.
 — Lock and repeat prefixes:
 • LOCK prefix is encoded using F0H.
 • REPNE/REPNZ prefix is encoded using F2H. Repeat-Not-Zero prefix applies only to string and
-input/output instructions. (F2H is also used as a mandatory prefix for some instructions.)
+input/output instructions. (F2H is also used as a mandatory prefix for some instructions.),
 • REP or REPE/REPZ is encoded using F3H. The repeat prefix applies only to string and input/output
 instructions. F3H is also used as a mandatory prefix for POPCNT, LZCNT and ADOX instructions.
 — Bound prefix is encoded using F2H if the following conditions are true:
@@ -56,7 +56,7 @@ Kevin McGrath and Dave Christie, "The AMD x86-64 Architecture: Extending the x86
 
 `include "openx86_defs.h.sv"
 module stage_2_dec_decode_prefix_all (
-    input  logic [ 7:0] i_instruction [0:3],
+    input  logic [ 7:0] i_instruction [ 0:  3],
     output logic        o_group_1_lock_bus,
     output logic        o_group_1_repeat_not_equal,
     output logic        o_group_1_repeat_equal,
@@ -75,24 +75,23 @@ module stage_2_dec_decode_prefix_all (
     output logic        o_consume_bytes_prefix_2,
     output logic        o_consume_bytes_prefix_3,
     output logic        o_consume_bytes_prefix_4,
-    output logic        o_error
-);
+    output logic        o_error);
 
-logic        group_1_lock_bus [0:3];
-logic        group_1_repeat_not_equal [0:3];
-logic        group_1_repeat_equal [0:3];
-logic        group_1_bound [0:3];
-logic        group_2_segment_override [0:3];
-logic        group_2_hint_branch_not_taken [0:3];
-logic        group_2_hint_branch_taken [0:3];
-logic        group_3_operand_size [0:3];
-logic        group_4_address_size [0:3];
-logic        group_1_is_present [0:3];
-logic        group_2_is_present [0:3];
-logic        group_3_is_present [0:3];
-logic        group_4_is_present [0:3];
-logic        is_present [0:3];
-logic [ 2:0] segment_override_index [0:3];
+logic        group_1_lock_bus [ 0:  3];
+logic        group_1_repeat_not_equal [ 0:  3];
+logic        group_1_repeat_equal [ 0:  3];
+logic        group_1_bound [ 0:  3];
+logic        group_2_segment_override [ 0:  3];
+logic        group_2_hint_branch_not_taken [ 0:  3];
+logic        group_2_hint_branch_taken [ 0:  3];
+logic        group_3_operand_size [ 0:  3];
+logic        group_4_address_size [ 0:  3];
+logic        group_1_is_present [ 0:  3];
+logic        group_2_is_present [ 0:  3];
+logic        group_3_is_present [ 0:  3];
+logic        group_4_is_present [ 0:  3];
+logic        is_present [ 0:  3];
+logic [ 2:0] segment_override_index [ 0:  3];
 
 wire  [ 2:0] sum_group_1 = ({2'b0, group_1_is_present[0]} + {2'b0, group_1_is_present[1]} + {2'b0, group_1_is_present[2]} + {2'b0, group_1_is_present[3]});
 wire  [ 2:0] sum_group_2 = ({2'b0, group_2_is_present[0]} + {2'b0, group_2_is_present[1]} + {2'b0, group_2_is_present[2]} + {2'b0, group_2_is_present[3]});

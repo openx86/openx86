@@ -17,24 +17,24 @@ description: This module implements ps2_host_phy.
 module ps2_host_phy #(
     parameter int CLK_HZ = 50_000_000
 ) (
-    input  logic        i_clock,
-    input  logic        i_reset,
     input  logic        i_ps2_clk_in,
     input  logic        i_ps2_dat_in,
     output logic        o_ps2_clk_out,
     output logic        o_ps2_clk_oe,
     output logic        o_ps2_dat_out,
     output logic        o_ps2_dat_oe,
-    // 主机 → 设备（单周期 i_tx_req 脉冲即可，o_tx_busy 期间勿重复请求）
     input  logic        i_tx_req,
-    input  logic [7:0]  i_tx_byte,
+    input  logic [ 7:  0]  i_tx_byte,
+    // 主机 → 设备（单周期 i_tx_req 脉冲即可，o_tx_busy 期间勿重复请求）
     output logic        o_tx_busy,
     output logic        o_tx_done,
     output logic        o_tx_err,
-    // 设备 → 主机
     output logic        o_rx_strobe,
-    output logic [7:0]  o_rx_byte,
-    output logic        o_rx_err
+    output logic [ 7:  0]  o_rx_byte,
+    // 设备 → 主机
+    output logic        o_rx_err,
+    input  logic        clock,
+    input  logic        reset_n
 );
 
     // --- 时间常量（与 CLK_HZ 成比例）-----------------------------------------
@@ -49,8 +49,8 @@ module ps2_host_phy #(
     logic clk_s1, clk_s2, dat_s1, dat_s2;
     logic clk_prev;
 
-    always_ff @(posedge i_clock or posedge i_reset) begin
-        if (i_reset) begin
+    always_ff @(posedge clock or negedge reset_n) begin
+        if (~reset_n) begin
             clk_s1 <= 1'b1;
             clk_s2 <= 1'b1;
             dat_s1 <= 1'b1;
@@ -63,8 +63,8 @@ module ps2_host_phy #(
         end
     end
 
-    always_ff @(posedge i_clock or posedge i_reset) begin
-        if (i_reset)
+    always_ff @(posedge clock or negedge reset_n) begin
+        if (~reset_n)
             clk_prev <= 1'b1;
         else
             clk_prev <= clk_s2;
@@ -73,7 +73,7 @@ module ps2_host_phy #(
     wire ps2_clk_falling = clk_prev & ~clk_s2;
 
     // --- 主状态机 -----------------------------------------------------------
-    typedef enum logic [3:0] {
+    typedef enum logic [ 3:  0] {
         S_IDLE,
         S_TX_INHIBIT_CLK,
         S_TX_ASSERT_REQ,
@@ -84,16 +84,16 @@ module ps2_host_phy #(
     } state_t;
 
     state_t state;
-    logic [15:0] cnt_inhibit;
-    logic [3:0]  bit_index;
-    logic [10:0] shift_tx;
-    logic [10:0] shift_rx;
-    logic [31:0] cnt_ack_timeout;
+    logic [15:  0] cnt_inhibit;
+    logic [ 3:  0]  bit_index;
+    logic [10:  0] shift_tx;
+    logic [10:  0] shift_rx;
+    logic [31:  0] cnt_ack_timeout;
 
     assign o_tx_busy = (state != S_IDLE);
 
-    always_ff @(posedge i_clock or posedge i_reset) begin
-        if (i_reset) begin
+    always_ff @(posedge clock or negedge reset_n) begin
+        if (~reset_n) begin
             state           <= S_IDLE;
             cnt_inhibit     <= '0;
             bit_index       <= '0;
@@ -124,7 +124,7 @@ module ps2_host_phy #(
                     o_ps2_dat_out <= 1'b1;
                     cnt_inhibit     <= '0;
                     bit_index       <= '0;
-                    cnt_ack_timeout <= CYCLES_ACK_TIMEOUT_MS2[31:0];
+                    cnt_ack_timeout <= CYCLES_ACK_TIMEOUT_MS2[31:  0];
                     shift_rx        <= '0;
 
                     if (i_tx_req) begin
@@ -142,7 +142,7 @@ module ps2_host_phy #(
                     o_ps2_clk_out <= 1'b0;
                     o_ps2_dat_oe  <= 1'b0;
                     o_ps2_dat_out <= 1'b1;
-                    if (cnt_inhibit < CYCLES_INHIBIT_150US[15:0])
+                    if (cnt_inhibit < CYCLES_INHIBIT_150US[15:  0])
                         cnt_inhibit <= cnt_inhibit + 16'd1;
                     else
                         state <= S_TX_ASSERT_REQ;
@@ -169,7 +169,7 @@ module ps2_host_phy #(
                         else begin
                             o_ps2_dat_oe <= 1'b0;
                             state        <= S_TX_WAIT_ACK;
-                            cnt_ack_timeout <= CYCLES_ACK_TIMEOUT_MS2[31:0];
+                            cnt_ack_timeout <= CYCLES_ACK_TIMEOUT_MS2[31:  0];
                         end
                     end
                 end
@@ -194,7 +194,7 @@ module ps2_host_phy #(
                         state <= S_IDLE;
                 end
 
-                // 接收：前 10 拍存 shift_rx[0:9]，第 11 拍采样停止位并校验
+                // 接收：前 10 拍存 shift_rx[ 0:  9]，第 11 拍采样停止位并校验
                 S_RX_SAMPLE: begin
                     if (ps2_clk_falling) begin
                         if (bit_index < 4'd10) begin
@@ -202,8 +202,8 @@ module ps2_host_phy #(
                             bit_index           <= bit_index + 4'd1;
                         end else if (bit_index == 4'd10) begin
                             if (shift_rx[0] == 1'b0 && dat_s2 == 1'b1
-                                && (^{ shift_rx[9:1] })) begin
-                                o_rx_byte   <= shift_rx[8:1];
+                                && (^{ shift_rx[ 9:  1] })) begin
+                                o_rx_byte   <= shift_rx[ 8:  1];
                                 o_rx_strobe <= 1'b1;
                             end else
                                 o_rx_err <= 1'b1;

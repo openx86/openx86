@@ -29,7 +29,7 @@ module single_port_ram_tb;
         .DEPTH      ( DEPTH      )
     ) dut (
         .clock  ( clock  ),
-        .reset  ( reset  ),
+        .reset_n  ( reset  ),
         .we     ( we     ),
         .addr   ( addr   ),
         .wdata  ( wdata  ),

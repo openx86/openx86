@@ -24,19 +24,19 @@ module true_dual_port_ram #(
     parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (    
     // 端口A（通常用于CPU访问）
-    input  logic                    wea,             // 端口A写使能
-    input  logic [ADDR_WIDTH-1:0]   addra,           // 端口A地址
-    input  logic [DATA_WIDTH-1:0]   wdataa,          // 端口A写数据
-    output logic [DATA_WIDTH-1:0]   rdataa,          // 端口A读数据
+    input  logic                    wea,             // 端口A写使能,
+    input  logic [ADDR_WIDTH-1:0]   addra,           // 端口A地址,
+    input  logic [DATA_WIDTH-1:0]   wdataa,          // 端口A写数据,
+    output logic [DATA_WIDTH-1:0]   rdataa,          // 端口A读数据,
     
     // 端口B（通常用于VGA读取）
-    input  logic                    web,             // 端口B写使能（可选，如果只需要读则固定为0）
-    input  logic [ADDR_WIDTH-1:0]   addrb,           // 端口B地址
-    input  logic [DATA_WIDTH-1:0]   wdatab,          // 端口B写数据
-    output logic [DATA_WIDTH-1:0]   rdatab,           // 端口B读数据
+    input  logic                    web,             // 端口B写使能（可选，如果只需要读则固定为0）,
+    input  logic [ADDR_WIDTH-1:0]   addrb,           // 端口B地址,
+    input  logic [DATA_WIDTH-1:0]   wdatab,          // 端口B写数据,
+    output logic [DATA_WIDTH-1:0]   rdatab,           // 端口B读数据,
     
     input  logic                    clock,
-    input  logic                    reset
+    input  logic                    reset_n
 );
 
     // 存储器数组
@@ -44,7 +44,7 @@ module true_dual_port_ram #(
 
     // 端口A写操作（同步写）
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (~reset_n) begin
             // 复位时可以选择清零，也可以保持（取决于应用需求）
         end else begin
             if (wea) begin
@@ -55,7 +55,7 @@ module true_dual_port_ram #(
 
     // 端口A读操作（同步读）
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (~reset_n) begin
             rdataa <= '0;
         end else begin
             rdataa <= mem[addra];
@@ -64,7 +64,7 @@ module true_dual_port_ram #(
 
     // 端口B写操作（同步写）
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (~reset_n) begin
             // 复位时可以选择清零，也可以保持
         end else begin
             if (web) begin
@@ -75,7 +75,7 @@ module true_dual_port_ram #(
 
     // 端口B读操作（同步读）
     always_ff @(posedge clock) begin
-        if (reset) begin
+        if (~reset_n) begin
             rdatab <= '0;
         end else begin
             rdatab <= mem[addrb];

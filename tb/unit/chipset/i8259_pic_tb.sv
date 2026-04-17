@@ -13,10 +13,10 @@ module i8259_pic_tb;
     logic        reset;
     logic        valid;
     logic        we;
-    logic [15:0] addr;
-    logic [7:0]  wdata;
-    logic [7:0]  rdata;
-    logic [7:0]  ir;
+    logic [15:  0] addr;
+    logic [ 7:  0]  wdata;
+    logic [ 7:  0]  rdata;
+    logic [ 7:  0]  ir;
     logic        intr;
 
     wire hit   = (addr >= 16'h0020) && (addr <= 16'h0021);
@@ -25,8 +25,8 @@ module i8259_pic_tb;
     wire rd_n  = !(valid && !we && hit);
 
     chip_8259_pic dut (
-        .i_clock    ( clock ),
-        .i_reset    ( reset ),
+        .clock    ( clock ),
+        .reset_n    ( reset_n ),
         .i_cs_n     ( cs_n ),
         .i_rd_n     ( rd_n ),
         .i_wr_n     ( wr_n ),
@@ -39,7 +39,7 @@ module i8259_pic_tb;
 
     always #5 clock = ~clock;
 
-    task automatic wr(input logic [15:0] a, input logic [7:0] d);
+    task automatic wr(input logic [15:  0] a, input logic [ 7:  0] d);
         @(posedge clock);
         valid = 1;
         we    = 1;

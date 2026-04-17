@@ -17,19 +17,17 @@ module chip_i8042_ps2 #(
     parameter bit  USE_REAL_PS2 = 1'b0,
     parameter int CLK_HZ       = 50_000_000
 ) (
-    input  logic        i_clock,
-    input  logic        i_reset,
     input  logic        i_cs_n,
     input  logic        i_rd_n,
     input  logic        i_wr_n,
-    // 0 = 数据口 0x60，1 = 状态/命令 0x64
     input  logic        i_a0,
-    input  logic [7:0]  i_d,
-    output logic [7:0]  o_d,
+    input  logic [ 7:  0]  i_d,
+    // 0 = 数据口 0x60，1 = 状态/命令 0x64
+    output logic [ 7:  0]  o_d,
     input  logic        i_kbd_push,
-    input  logic [7:0]  i_kbd_data,
+    input  logic [ 7:  0]  i_kbd_data,
     input  logic        i_aux_push,
-    input  logic [7:0]  i_aux_data,
+    input  logic [ 7:  0]  i_aux_data,
     output logic        o_kbd_irq,
     output logic        o_aux_irq,
     output logic        o_ps2_kbd_clk_out,
@@ -43,7 +41,9 @@ module chip_i8042_ps2 #(
     input  logic        i_ps2_aux_clk_in,
     output logic        o_ps2_aux_dat_out,
     output logic        o_ps2_aux_dat_oe,
-    input  logic        i_ps2_aux_dat_in
+    input  logic        i_ps2_aux_dat_in,
+    input  logic        clock,
+    input  logic        reset_n
 );
 
     wire wr = !i_cs_n && !i_wr_n;
@@ -52,10 +52,10 @@ module chip_i8042_ps2 #(
     localparam int KBD_D = 16;
     localparam int AUX_D = 16;
 
-    logic [7:0] kbd_fifo [0:KBD_D-1];
-    logic [7:0] aux_fifo [0:AUX_D-1];
-    logic [3:0] kbd_wptr, kbd_rptr, kbd_count;
-    logic [3:0] aux_wptr, aux_rptr, aux_count;
+    logic [ 7:  0] kbd_fifo [0:KBD_D-1];
+    logic [ 7:  0] aux_fifo [0:AUX_D-1];
+    logic [ 3:  0] kbd_wptr, kbd_rptr, kbd_count;
+    logic [ 3:  0] aux_wptr, aux_rptr, aux_count;
     logic       use_aux_out;
 
     wire kbd_obf = (kbd_count != 4'h0);
@@ -70,38 +70,38 @@ module chip_i8042_ps2 #(
     logic aux_parity_err;
 
     logic        kbd_tx_req;
-    logic [7:0]  kbd_tx_byte;
+    logic [ 7:  0]  kbd_tx_byte;
     logic        kbd_tx_busy;
     logic        kbd_rx_str;
-    logic [7:0]  kbd_rx_dat;
+    logic [ 7:  0]  kbd_rx_dat;
     logic        kbd_rx_err;
     logic        kbd_tx_done;
     logic        kbd_tx_err;
 
     logic        aux_tx_req;
-    logic [7:0]  aux_tx_byte;
+    logic [ 7:  0]  aux_tx_byte;
     logic        aux_tx_busy;
     logic        aux_rx_str;
-    logic [7:0]  aux_rx_dat;
+    logic [ 7:  0]  aux_rx_dat;
     logic        aux_rx_err;
     logic        aux_tx_done;
     logic        aux_tx_err;
 
     logic        kbd_tx_pending;
-    logic [7:0]  kbd_tx_hold;
+    logic [ 7:  0]  kbd_tx_hold;
     logic        aux_tx_pending;
-    logic [7:0]  aux_tx_hold;
+    logic [ 7:  0]  aux_tx_hold;
     logic        rd_data_port_d;
 
     wire obf_stat = use_aux_out ? aux_obf : kbd_obf;
     wire ibf_stat = kbd_tx_pending | aux_tx_pending;
-    wire [7:0] kbd_head = kbd_fifo[kbd_rptr];
-    wire [7:0] aux_head = aux_fifo[aux_rptr];
+    wire [ 7:  0] kbd_head = kbd_fifo[kbd_rptr];
+    wire [ 7:  0] aux_head = aux_fifo[aux_rptr];
 
     assign o_kbd_irq = kbd_if_en && kbd_irq_en && kbd_obf;
     assign o_aux_irq = aux_if_en && aux_irq_en && aux_obf;
 
-    wire [7:0] status_rd = {
+    wire [ 7:  0] status_rd = {
         1'b0,
         aux_obf,
         1'b0,
@@ -117,8 +117,8 @@ module chip_i8042_ps2 #(
             ps2_host_phy #(
                 .CLK_HZ ( CLK_HZ )
             ) u_kbd_phy (
-                .i_clock       ( i_clock ),
-                .i_reset       ( i_reset ),
+                .clock       ( clock ),
+                .reset_n       ( reset_n ),
                 .i_ps2_clk_in  ( i_ps2_kbd_clk_in ),
                 .i_ps2_dat_in  ( i_ps2_kbd_dat_in ),
                 .o_ps2_clk_out ( o_ps2_kbd_clk_out ),
@@ -138,8 +138,8 @@ module chip_i8042_ps2 #(
             ps2_host_phy #(
                 .CLK_HZ ( CLK_HZ )
             ) u_aux_phy (
-                .i_clock       ( i_clock ),
-                .i_reset       ( i_reset ),
+                .clock       ( clock ),
+                .reset_n       ( reset_n ),
                 .i_ps2_clk_in  ( i_ps2_aux_clk_in ),
                 .i_ps2_dat_in  ( i_ps2_aux_dat_in ),
                 .o_ps2_clk_out ( o_ps2_aux_clk_out ),
@@ -179,8 +179,8 @@ module chip_i8042_ps2 #(
         end
     endgenerate
 
-    always_ff @(posedge i_clock or posedge i_reset) begin
-        if (i_reset) begin
+    always_ff @(posedge clock or negedge reset_n) begin
+        if (~reset_n) begin
             kbd_wptr       <= '0;
             kbd_rptr       <= '0;
             kbd_count      <= '0;

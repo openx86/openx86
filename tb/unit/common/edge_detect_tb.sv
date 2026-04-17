@@ -12,7 +12,7 @@ module edge_detect_tb #(
     // ports
 );
 
-logic clock, reset;
+logic clock, reset_n;
 logic signal;
 
 always #(clock_period/2) clock = ~clock;
@@ -48,7 +48,7 @@ edge_detect edge_detect_inst (
     .pos_edge ( pos_edge ),
     .neg_edge ( neg_edge ),
     .clock ( clock ),
-    .reset ( reset )
+    .reset_n ( reset_n )
 );
 
 endmodule

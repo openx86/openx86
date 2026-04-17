@@ -7,10 +7,10 @@ description: This module implements eu_shf_shld_tb.
 `timescale 1ns/1ns
 
 module eu_shf_shld_tb;
-    logic [31:0] a;
-    logic [31:0] b;
-    logic [31:0] c;
-    logic [31:0] y;
+    logic [31:  0] a;
+    logic [31:  0] b;
+    logic [31:  0] c;
+    logic [31:  0] y;
 
     stage_3_exe_shf_shld u_dut (
         .a ( a ),

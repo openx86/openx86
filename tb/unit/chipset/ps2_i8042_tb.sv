@@ -14,11 +14,11 @@ module ps2_i8042_tb;
     logic        reset;
     logic        io_valid;
     logic        io_we;
-    logic [15:0] io_addr;
-    logic [7:0]  io_wdata;
-    logic [7:0]  io_rdata;
+    logic [15:  0] io_addr;
+    logic [ 7:  0]  io_wdata;
+    logic [ 7:  0]  io_rdata;
     logic        kbd_push;
-    logic [7:0]  kbd_data;
+    logic [ 7:  0]  kbd_data;
 
     wire ps2_hit = (io_addr == 16'h0060) | (io_addr == 16'h0064);
     wire cs_n    = !(io_valid && ps2_hit);
@@ -28,8 +28,8 @@ module ps2_i8042_tb;
     chip_i8042_ps2 #(
         .USE_REAL_PS2 ( 1'b0 )
     ) dut (
-        .i_clock     ( clock ),
-        .i_reset     ( reset ),
+        .clock     ( clock ),
+        .reset_n     ( reset_n ),
         .i_cs_n      ( cs_n ),
         .i_rd_n      ( rd_n ),
         .i_wr_n      ( wr_n ),
