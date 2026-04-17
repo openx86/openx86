@@ -52,22 +52,25 @@ module i8237_dma_tb;
     always #5 clock = ~clock;
 
     task automatic io_write(input logic [15: 0] i_a, input logic [ 7: 0] i_d);
-        @(posedge clock);
+        @(negedge clock);
         valid = 1'b1;
         we    = 1'b1;
         addr  = i_a;
         wdata = i_d;
         @(posedge clock);
+        @(negedge clock);
         valid = 1'b0;
+        we    = 1'b0;
     endtask
 
     task automatic io_read(input logic [15: 0] i_a, output logic [ 7: 0] o_q);
-        @(posedge clock);
+        @(negedge clock);
         valid = 1'b1;
         we    = 1'b0;
         addr  = i_a;
         @(posedge clock);
         o_q = rdata;
+        @(negedge clock);
         valid = 1'b0;
     endtask
 

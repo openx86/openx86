@@ -5,9 +5,11 @@ repo: https://github.com/openx86/openx86
 description: This module implements chip_8254_pit.
 */
 // ============================================================================
-// Intel 8254 PIT — 最小寄存器级模型（可综合）
-// 主机接口：nCS/nRD/nWR + A[ 1: 0]（00–10 通道，11 控制字）
-// 读端口返回当前计数低 8 位（简化）
+// Intel 8254 PIT — simplified synthesizable model
+// - Implements control-word decode, RW formats (LSB/MSB/LSB->MSB), and counter
+//   latch command.
+// - Aligns Mode 0 / Mode 2 / Mode 3 output behavior with datasheet timing.
+// - Keeps the existing project bus interface (single clock domain, no GATE pins).
 // ============================================================================
 
 module chip_8254_pit (
@@ -24,134 +26,405 @@ module chip_8254_pit (
     input  logic         clock
 );
 
-    logic [15: 0] reload0, reload1, reload2;
-    logic [15: 0] count0, count1, count2;
-    logic [ 2: 0]  mode0, mode1, mode2;
-    logic        wr_lo0, wr_lo1, wr_lo2;
+    localparam logic [ 2: 0] LP_MODE0 = 3'd0;
+    localparam logic [ 2: 0] LP_MODE1 = 3'd1;
+    localparam logic [ 2: 0] LP_MODE2 = 3'd2;
+    localparam logic [ 2: 0] LP_MODE3 = 3'd3;
+    localparam logic [ 2: 0] LP_MODE4 = 3'd4;
+    localparam logic [ 2: 0] LP_MODE5 = 3'd5;
 
-    logic        out0_r, out1_r, out2_r;
-    assign o_out0 = out0_r;
-    assign o_out1 = out1_r;
-    assign o_out2 = out2_r;
+    logic [16: 0] reload          [0:2];
+    logic [16: 0] count           [0:2];
+    logic [16: 0] latch_count     [0:2];
+    logic [ 2: 0] mode            [0:2];
+    logic [ 1: 0] rw_fmt          [0:2];
+    logic          bcd_en         [0:2];
+    logic [ 7: 0] pending_lsb     [0:2];
+    logic          write_wait_msb [0:2];
+    logic          load_pending   [0:2];
+    logic          run_en         [0:2];
+    logic          out_r          [0:2];
+    logic          latch_valid    [0:2];
+    logic          read_msb_phase [0:2];
 
-    logic wr = !i_cs_n && !i_wr_n;
-    logic rd = !i_cs_n && !i_rd_n;
+    logic          mode2_low_pulse [0:2];
+    logic          mode45_low_pulse [0:2];
+    logic          mode3_phase_high [0:2];
+    logic [16: 0] mode3_high_ticks [0:2];
+    logic [16: 0] mode3_low_ticks  [0:2];
+    logic [16: 0] mode3_phase_ticks [0:2];
+
+    logic wr;
+    logic rd;
+    assign wr = (!i_cs_n) && (!i_wr_n);
+    assign rd = (!i_cs_n) && (!i_rd_n);
+
+    assign o_out0 = out_r[0];
+    assign o_out1 = out_r[1];
+    assign o_out2 = out_r[2];
+
+    function automatic logic [ 2: 0] f_decode_mode(input logic [ 2: 0] i_mode_raw);
+        unique case (i_mode_raw)
+            3'b000: f_decode_mode = LP_MODE0;
+            3'b001: f_decode_mode = LP_MODE1;
+            3'b010: f_decode_mode = LP_MODE2;
+            3'b011: f_decode_mode = LP_MODE3;
+            3'b100: f_decode_mode = LP_MODE4;
+            3'b101: f_decode_mode = LP_MODE5;
+            3'b110: f_decode_mode = LP_MODE2;
+            3'b111: f_decode_mode = LP_MODE3;
+            default: f_decode_mode = LP_MODE0;
+        endcase
+    endfunction
+
+    function automatic logic [16: 0] f_bcd_to_count(input logic [15: 0] i_raw);
+        int unsigned d0;
+        int unsigned d1;
+        int unsigned d2;
+        int unsigned d3;
+        int unsigned v;
+
+        d0 = (i_raw[ 3: 0] > 4'd9) ? 4'd0 : i_raw[ 3: 0];
+        d1 = (i_raw[ 7: 4] > 4'd9) ? 4'd0 : i_raw[ 7: 4];
+        d2 = (i_raw[11: 8] > 4'd9) ? 4'd0 : i_raw[11: 8];
+        d3 = (i_raw[15:12] > 4'd9) ? 4'd0 : i_raw[15:12];
+        v  = (d3 * 1000) + (d2 * 100) + (d1 * 10) + d0;
+        if (v == 0)
+            f_bcd_to_count = 17'd10000;
+        else
+            f_bcd_to_count = v[16:0];
+    endfunction
+
+    function automatic logic [16: 0] f_effective_reload(
+        input logic [15: 0] i_raw,
+        input logic [ 2: 0] i_mode,
+        input logic         i_bcd
+    );
+        logic [16: 0] v;
+        if (i_bcd)
+            v = f_bcd_to_count(i_raw);
+        else
+            v = (i_raw == 16'h0000) ? 17'd65536 : { 1'b0, i_raw };
+
+        if (((i_mode == LP_MODE2) || (i_mode == LP_MODE3)) && (v < 17'd2))
+            v = 17'd2;
+
+        f_effective_reload = v;
+    endfunction
+
+    function automatic logic [16: 0] f_mode3_high_ticks(input logic [16: 0] i_reload);
+        f_mode3_high_ticks = (i_reload + 17'd1) >> 1;
+    endfunction
+
+    function automatic logic [16: 0] f_mode3_low_ticks(input logic [16: 0] i_reload);
+        f_mode3_low_ticks = i_reload >> 1;
+    endfunction
+
+    function automatic logic [15: 0] f_count_to_bcd(input logic [16: 0] i_count);
+        int unsigned v;
+        int unsigned d0;
+        int unsigned d1;
+        int unsigned d2;
+        int unsigned d3;
+
+        v  = (i_count == 17'd10000) ? 0 : i_count;
+        v  = v % 10000;
+        d3 = v / 1000;
+        v  = v % 1000;
+        d2 = v / 100;
+        v  = v % 100;
+        d1 = v / 10;
+        d0 = v % 10;
+        f_count_to_bcd = { d3[3:0], d2[3:0], d1[3:0], d0[3:0] };
+    endfunction
+
+    function automatic logic [15: 0] f_count_to_bus(
+        input logic [16: 0] i_count,
+        input logic         i_bcd
+    );
+        if (i_bcd)
+            f_count_to_bus = f_count_to_bcd(i_count);
+        else if (i_count == 17'd65536)
+            f_count_to_bus = 16'h0000;
+        else
+            f_count_to_bus = i_count[15:0];
+    endfunction
+
+    function automatic logic [ 7: 0] f_pick_read_byte(
+        input logic [15: 0] i_value,
+        input logic [ 1: 0] i_rw,
+        input logic         i_msb_phase
+    );
+        unique case (i_rw)
+            2'b01: f_pick_read_byte = i_value[ 7: 0];
+            2'b10: f_pick_read_byte = i_value[15: 8];
+            2'b11: f_pick_read_byte = i_msb_phase ? i_value[15: 8] : i_value[ 7: 0];
+            default: f_pick_read_byte = i_value[ 7: 0];
+        endcase
+    endfunction
 
     always_ff @(posedge clock or negedge reset_n) begin
+        int ch;
+        logic [ 1: 0] cw_rw;
+        logic [ 2: 0] cw_mode;
+        logic [15: 0] raw_count;
+        logic [16: 0] new_reload;
+
         if (~reset_n) begin
-            reload0 <= 16'hFFFF;
-            reload1 <= 16'hFFFF;
-            reload2 <= 16'hFFFF;
-            count0  <= 16'hFFFF;
-            count1  <= 16'hFFFF;
-            count2  <= 16'hFFFF;
-            mode0   <= 3'd3;
-            mode1   <= 3'd3;
-            mode2   <= 3'd3;
-            wr_lo0  <= 1'b1;
-            wr_lo1  <= 1'b1;
-            wr_lo2  <= 1'b1;
-            out0_r  <= 1'b1;
-            out1_r  <= 1'b1;
-            out2_r  <= 1'b1;
+            for (ch = 0; ch < 3; ch = ch + 1) begin
+                reload[ch]           <= 17'd65536;
+                count[ch]            <= 17'd65536;
+                latch_count[ch]      <= 17'd0;
+                mode[ch]             <= LP_MODE3;
+                rw_fmt[ch]           <= 2'b11;
+                bcd_en[ch]           <= 1'b0;
+                pending_lsb[ch]      <= 8'h00;
+                write_wait_msb[ch]   <= 1'b1;
+                load_pending[ch]     <= 1'b0;
+                run_en[ch]           <= 1'b0;
+                out_r[ch]            <= 1'b1;
+                latch_valid[ch]      <= 1'b0;
+                read_msb_phase[ch]   <= 1'b0;
+                mode2_low_pulse[ch]  <= 1'b0;
+                mode45_low_pulse[ch] <= 1'b0;
+                mode3_phase_high[ch] <= 1'b1;
+                mode3_high_ticks[ch] <= 17'd1;
+                mode3_low_ticks[ch]  <= 17'd1;
+                mode3_phase_ticks[ch] <= 17'd1;
+            end
         end else begin
-            if (wr && i_a == 2'b11) begin
-                if (i_d[ 7:  6] != 2'b11) begin
-                    unique case (i_d[ 7:  6])
-                        2'd0: begin
-                            mode0 <= i_d[ 3:  1];
-                            wr_lo0 <= 1'b1;
-                        end
-                        2'd1: begin
-                            mode1 <= i_d[ 3:  1];
-                            wr_lo1 <= 1'b1;
-                        end
-                        2'd2: begin
-                            mode2 <= i_d[ 3:  1];
-                            wr_lo2 <= 1'b1;
-                        end
-                        default: ;
-                    endcase
+            if (wr && (i_a == 2'b11)) begin
+                if (i_d[ 7: 6] != 2'b11) begin
+                    ch    = i_d[ 7: 6];
+                    cw_rw = i_d[ 5: 4];
+
+                    if (cw_rw == 2'b00) begin
+                        latch_count[ch]    <= count[ch];
+                        latch_valid[ch]    <= 1'b1;
+                        read_msb_phase[ch] <= 1'b0;
+                    end else begin
+                        cw_mode = f_decode_mode(i_d[ 3: 1]);
+
+                        mode[ch]             <= cw_mode;
+                        rw_fmt[ch]           <= cw_rw;
+                        bcd_en[ch]           <= i_d[0];
+                        write_wait_msb[ch]   <= (cw_rw == 2'b11);
+                        load_pending[ch]     <= 1'b0;
+                        run_en[ch]           <= 1'b0;
+                        latch_valid[ch]      <= 1'b0;
+                        read_msb_phase[ch]   <= 1'b0;
+                        mode2_low_pulse[ch]  <= 1'b0;
+                        mode45_low_pulse[ch] <= 1'b0;
+                        mode3_phase_high[ch] <= 1'b1;
+                        mode3_high_ticks[ch] <= 17'd1;
+                        mode3_low_ticks[ch]  <= 17'd1;
+                        mode3_phase_ticks[ch] <= 17'd1;
+
+                        if (cw_mode == LP_MODE0)
+                            out_r[ch] <= 1'b0;
+                        else
+                            out_r[ch] <= 1'b1;
+                    end
                 end
-            end else if (wr && i_a != 2'b11) begin
-                unique case (i_a)
-                    2'd0: begin
-                        if (wr_lo0) begin
-                            reload0[ 7: 0] <= i_d;
-                            wr_lo0 <= 1'b0;
+            end else if (wr && (i_a != 2'b11)) begin
+                ch = i_a;
+
+                unique case (rw_fmt[ch])
+                    2'b01: begin
+                        raw_count = { 8'h00, i_d };
+                        new_reload = f_effective_reload(raw_count, mode[ch], bcd_en[ch]);
+
+                        reload[ch]           <= new_reload;
+                        load_pending[ch]     <= 1'b1;
+                        run_en[ch]           <= 1'b1;
+                        write_wait_msb[ch]   <= 1'b1;
+                        latch_valid[ch]      <= 1'b0;
+                        read_msb_phase[ch]   <= 1'b0;
+                        mode2_low_pulse[ch]  <= 1'b0;
+                        mode45_low_pulse[ch] <= 1'b0;
+
+                        if (mode[ch] == LP_MODE0)
+                            out_r[ch] <= 1'b0;
+                    end
+                    2'b10: begin
+                        raw_count = { i_d, 8'h00 };
+                        new_reload = f_effective_reload(raw_count, mode[ch], bcd_en[ch]);
+
+                        reload[ch]           <= new_reload;
+                        load_pending[ch]     <= 1'b1;
+                        run_en[ch]           <= 1'b1;
+                        write_wait_msb[ch]   <= 1'b1;
+                        latch_valid[ch]      <= 1'b0;
+                        read_msb_phase[ch]   <= 1'b0;
+                        mode2_low_pulse[ch]  <= 1'b0;
+                        mode45_low_pulse[ch] <= 1'b0;
+
+                        if (mode[ch] == LP_MODE0)
+                            out_r[ch] <= 1'b0;
+                    end
+                    2'b11: begin
+                        if (write_wait_msb[ch]) begin
+                            pending_lsb[ch]    <= i_d;
+                            write_wait_msb[ch] <= 1'b0;
+                            latch_valid[ch]    <= 1'b0;
+                            read_msb_phase[ch] <= 1'b0;
+
+                            if (mode[ch] == LP_MODE0) begin
+                                run_en[ch] <= 1'b0;
+                                out_r[ch]  <= 1'b0;
+                            end
                         end else begin
-                            reload0[15:  8] <= i_d;
-                            reload0 <= { i_d, reload0[ 7: 0] };
-                            count0  <= ({ i_d, reload0[ 7: 0] } == 16'h0) ? 16'hFFFF : { i_d, reload0[ 7: 0] };
-                            wr_lo0 <= 1'b1;
+                            raw_count = { i_d, pending_lsb[ch] };
+                            new_reload = f_effective_reload(raw_count, mode[ch], bcd_en[ch]);
+
+                            reload[ch]           <= new_reload;
+                            load_pending[ch]     <= 1'b1;
+                            run_en[ch]           <= 1'b1;
+                            write_wait_msb[ch]   <= 1'b1;
+                            latch_valid[ch]      <= 1'b0;
+                            read_msb_phase[ch]   <= 1'b0;
+                            mode2_low_pulse[ch]  <= 1'b0;
+                            mode45_low_pulse[ch] <= 1'b0;
+
+                            if (mode[ch] == LP_MODE0)
+                                out_r[ch] <= 1'b0;
                         end
                     end
-                    2'd1: begin
-                        if (wr_lo1) begin
-                            reload1[ 7: 0] <= i_d;
-                            wr_lo1 <= 1'b0;
-                        end else begin
-                            reload1[15:  8] <= i_d;
-                            reload1 <= { i_d, reload1[ 7: 0] };
-                            count1  <= ({ i_d, reload1[ 7: 0] } == 16'h0) ? 16'hFFFF : { i_d, reload1[ 7: 0] };
-                            wr_lo1 <= 1'b1;
-                        end
+                    default: begin
+                        write_wait_msb[ch] <= 1'b1;
                     end
-                    2'd2: begin
-                        if (wr_lo2) begin
-                            reload2[ 7: 0] <= i_d;
-                            wr_lo2 <= 1'b0;
-                        end else begin
-                            reload2[15:  8] <= i_d;
-                            reload2 <= { i_d, reload2[ 7: 0] };
-                            count2  <= ({ i_d, reload2[ 7: 0] } == 16'h0) ? 16'hFFFF : { i_d, reload2[ 7: 0] };
-                            wr_lo2 <= 1'b1;
-                        end
-                    end
-                    default: ;
                 endcase
             end else begin
-                if (count0 != 16'h0) begin
-                    if (mode0 == 3'd3) begin
-                        if (count0 <= 16'd2) begin
-                            count0 <= reload0 == 16'h0 ? 16'hFFFF : reload0;
-                            out0_r <= ~out0_r;
-                        end else
-                            count0 <= count0 - 16'd2;
-                    end else begin
-                        count0 <= count0 - 16'd1;
-                        if (count0 == 16'd1) begin
-                            out0_r <= ~out0_r;
-                            count0 <= reload0 == 16'h0 ? 16'hFFFF : reload0;
+                for (ch = 0; ch < 3; ch = ch + 1) begin
+                    if (load_pending[ch]) begin
+                        load_pending[ch]    <= 1'b0;
+                        run_en[ch]          <= 1'b1;
+                        count[ch]           <= reload[ch];
+                        mode2_low_pulse[ch] <= 1'b0;
+                        mode45_low_pulse[ch] <= 1'b0;
+
+                        if (mode[ch] == LP_MODE0 || mode[ch] == LP_MODE1)
+                            out_r[ch] <= 1'b0;
+                        else
+                            out_r[ch] <= 1'b1;
+
+                        if (mode[ch] == LP_MODE3) begin
+                            mode3_phase_high[ch] <= 1'b1;
+                            mode3_high_ticks[ch] <= f_mode3_high_ticks(reload[ch]);
+                            mode3_low_ticks[ch]  <= f_mode3_low_ticks(reload[ch]);
+                            mode3_phase_ticks[ch] <= f_mode3_high_ticks(reload[ch]);
                         end
+                    end else if (run_en[ch]) begin
+                        unique case (mode[ch])
+                            LP_MODE0,
+                            LP_MODE1: begin
+                                if (count[ch] > 17'd1) begin
+                                    count[ch] <= count[ch] - 17'd1;
+                                end else if (count[ch] == 17'd1) begin
+                                    count[ch] <= 17'd0;
+                                    out_r[ch] <= 1'b1;
+                                    run_en[ch] <= 1'b0;
+                                end
+                            end
+                            LP_MODE2: begin
+                                if (mode2_low_pulse[ch]) begin
+                                    mode2_low_pulse[ch] <= 1'b0;
+                                    out_r[ch]           <= 1'b1;
+                                    count[ch]           <= reload[ch];
+                                end else if (count[ch] > 17'd2) begin
+                                    count[ch] <= count[ch] - 17'd1;
+                                end else begin
+                                    count[ch]          <= 17'd1;
+                                    out_r[ch]          <= 1'b0;
+                                    mode2_low_pulse[ch] <= 1'b1;
+                                end
+                            end
+                            LP_MODE3: begin
+                                if (mode3_phase_ticks[ch] > 17'd1) begin
+                                    mode3_phase_ticks[ch] <= mode3_phase_ticks[ch] - 17'd1;
+                                end else if (mode3_phase_high[ch]) begin
+                                    mode3_phase_high[ch] <= 1'b0;
+                                    out_r[ch] <= 1'b0;
+                                    if (mode3_low_ticks[ch] == 17'd0)
+                                        mode3_phase_ticks[ch] <= 17'd1;
+                                    else
+                                        mode3_phase_ticks[ch] <= mode3_low_ticks[ch];
+                                end else begin
+                                    mode3_phase_high[ch] <= 1'b1;
+                                    out_r[ch] <= 1'b1;
+                                    if (mode3_high_ticks[ch] == 17'd0)
+                                        mode3_phase_ticks[ch] <= 17'd1;
+                                    else
+                                        mode3_phase_ticks[ch] <= mode3_high_ticks[ch];
+                                end
+
+                                if (count[ch] > 17'd1)
+                                    count[ch] <= count[ch] - 17'd1;
+                                else
+                                    count[ch] <= reload[ch];
+                            end
+                            LP_MODE4,
+                            LP_MODE5: begin
+                                if (mode45_low_pulse[ch]) begin
+                                    mode45_low_pulse[ch] <= 1'b0;
+                                    out_r[ch]            <= 1'b1;
+                                    run_en[ch]           <= 1'b0;
+                                end else if (count[ch] > 17'd1) begin
+                                    count[ch] <= count[ch] - 17'd1;
+                                end else if (count[ch] == 17'd1) begin
+                                    count[ch]           <= 17'd0;
+                                    out_r[ch]           <= 1'b0;
+                                    mode45_low_pulse[ch] <= 1'b1;
+                                end
+                            end
+                            default: begin
+                                if (count[ch] > 17'd1)
+                                    count[ch] <= count[ch] - 17'd1;
+                                else if (count[ch] == 17'd1) begin
+                                    count[ch] <= 17'd0;
+                                    out_r[ch] <= 1'b1;
+                                    run_en[ch] <= 1'b0;
+                                end
+                            end
+                        endcase
                     end
                 end
-                if (count1 != 16'h0 && mode1 == 3'd3) begin
-                    if (count1 <= 16'd2) begin
-                        count1 <= reload1 == 16'h0 ? 16'hFFFF : reload1;
-                        out1_r <= ~out1_r;
-                    end else
-                        count1 <= count1 - 16'd2;
-                end
-                if (count2 != 16'h0 && mode2 == 3'd3) begin
-                    if (count2 <= 16'd2) begin
-                        count2 <= reload2 == 16'h0 ? 16'hFFFF : reload2;
-                        out2_r <= ~out2_r;
-                    end else
-                        count2 <= count2 - 16'd2;
+            end
+
+            if (rd && (i_a != 2'b11)) begin
+                ch = i_a;
+                if (rw_fmt[ch] == 2'b11) begin
+                    if (read_msb_phase[ch]) begin
+                        read_msb_phase[ch] <= 1'b0;
+                        if (latch_valid[ch])
+                            latch_valid[ch] <= 1'b0;
+                    end else begin
+                        read_msb_phase[ch] <= 1'b1;
+                    end
+                end else begin
+                    if (latch_valid[ch])
+                        latch_valid[ch] <= 1'b0;
                 end
             end
         end
     end
 
     always_comb begin
+        logic [15: 0] read0;
+        logic [15: 0] read1;
+        logic [15: 0] read2;
+
+        read0 = latch_valid[0] ? f_count_to_bus(latch_count[0], bcd_en[0]) : f_count_to_bus(count[0], bcd_en[0]);
+        read1 = latch_valid[1] ? f_count_to_bus(latch_count[1], bcd_en[1]) : f_count_to_bus(count[1], bcd_en[1]);
+        read2 = latch_valid[2] ? f_count_to_bus(latch_count[2], bcd_en[2]) : f_count_to_bus(count[2], bcd_en[2]);
+
         o_d = 8'hFF;
         if (rd) begin
             unique case (i_a)
-                2'd0: o_d = count0[ 7: 0];
-                2'd1: o_d = count1[ 7: 0];
-                2'd2: o_d = count2[ 7: 0];
-                default:  o_d = 8'hFF;
+                2'd0: o_d = f_pick_read_byte(read0, rw_fmt[0], read_msb_phase[0]);
+                2'd1: o_d = f_pick_read_byte(read1, rw_fmt[1], read_msb_phase[1]);
+                2'd2: o_d = f_pick_read_byte(read2, rw_fmt[2], read_msb_phase[2]);
+                default: o_d = 8'hFF;
             endcase
         end
     end

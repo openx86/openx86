@@ -24,21 +24,80 @@ module chip_ns16550_com (
     input  logic         clock
 );
 
-    logic [ 2: 0] off = i_a;
+    localparam logic [ 3: 0] LP_IIR_NONE = 4'b0001;
+    localparam logic [ 3: 0] LP_IIR_MS   = 4'b0000;
+    localparam logic [ 3: 0] LP_IIR_THRE = 4'b0010;
+    localparam logic [ 3: 0] LP_IIR_RDA  = 4'b0100;
+
+    logic [ 2: 0] off;
 
     logic [ 7: 0] rbr;
-    logic       rbr_valid;
+    logic         rbr_valid;
     logic [ 7: 0] ier;
     logic [ 7: 0] fcr;
     logic [ 7: 0] lcr;
     logic [ 7: 0] mcr;
     logic [ 7: 0] scr;
-    logic [ 7: 0] dll, dlm;
+    logic [ 7: 0] dll;
+    logic [ 7: 0] dlm;
 
-    logic dlab = lcr[7];
+    logic         dlab;
+    logic         wr;
+    logic         rd;
 
-    logic wr = !i_cs_n && !i_wr_n;
-    logic rd = !i_cs_n && !i_rd_n;
+    logic         thr_empty;
+    logic         tx_empty;
+    logic         tx_drain_pending;
+    logic         thre_irq_pending;
+
+    logic [ 3: 0] msr_status;
+    logic [ 3: 0] msr_status_prev;
+    logic [ 3: 0] msr_delta;
+    logic [ 7: 0] msr;
+
+    logic         irq_rda;
+    logic         irq_thre;
+    logic         irq_ms;
+    logic [ 3: 0] iir_code;
+    logic [ 1: 0] iir_fifo_bits;
+    logic [ 7: 0] iir;
+
+    logic [ 7: 0] lsr;
+
+    assign off  = i_a;
+    assign dlab = lcr[7];
+    assign wr   = !i_cs_n && !i_wr_n;
+    assign rd   = !i_cs_n && !i_rd_n;
+
+    assign irq_rda  = ier[0] && rbr_valid;
+    assign irq_thre = ier[1] && thre_irq_pending;
+    assign irq_ms   = ier[3] && (|msr_delta);
+
+    always_comb begin
+        if (mcr[4])
+            // loopback mode: MSR[7:4] reflects internal modem outputs
+            msr_status = {mcr[3], mcr[2], mcr[0], mcr[1]};
+        else
+            // external modem inputs are not modeled in this chipset bridge
+            msr_status = 4'b0000;
+    end
+
+    always_comb begin
+        // implemented priorities: RDA > THRE > Modem Status
+        if (irq_rda)
+            iir_code = LP_IIR_RDA;
+        else if (irq_thre)
+            iir_code = LP_IIR_THRE;
+        else if (irq_ms)
+            iir_code = LP_IIR_MS;
+        else
+            iir_code = LP_IIR_NONE;
+    end
+
+    assign iir_fifo_bits = fcr[0] ? 2'b11 : 2'b00;
+    assign iir           = {iir_fifo_bits, 2'b00, iir_code[3:1], iir_code[0]};
+    assign lsr           = {1'b0, tx_empty, thr_empty, 1'b0, 1'b0, 1'b0, 1'b0, rbr_valid};
+    assign msr           = {msr_status, msr_delta};
 
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
@@ -46,12 +105,37 @@ module chip_ns16550_com (
             rbr_valid <= 1'b0;
             ier       <= 8'h0;
             fcr       <= 8'h0;
-            lcr       <= 8'h03;
+            lcr       <= 8'h00;
             mcr       <= 8'h0;
             scr       <= 8'h0;
             dll       <= 8'h01;
             dlm       <= 8'h0;
+
+            thr_empty        <= 1'b1;
+            tx_empty         <= 1'b1;
+            tx_drain_pending <= 1'b0;
+            thre_irq_pending <= 1'b1;
+
+            msr_status_prev <= 4'b0000;
+            msr_delta       <= 4'b0000;
         end else begin
+            if (tx_drain_pending) begin
+                tx_drain_pending <= 1'b0;
+                thr_empty        <= 1'b1;
+                tx_empty         <= 1'b1;
+                thre_irq_pending <= 1'b1;
+            end
+
+            if (msr_status[0] != msr_status_prev[0])
+                msr_delta[0] <= 1'b1;
+            if (msr_status[1] != msr_status_prev[1])
+                msr_delta[1] <= 1'b1;
+            if (msr_status_prev[2] && !msr_status[2])
+                msr_delta[2] <= 1'b1;
+            if (msr_status[3] != msr_status_prev[3])
+                msr_delta[3] <= 1'b1;
+            msr_status_prev <= msr_status;
+
             if (i_rx_push) begin
                 rbr       <= i_rx_data;
                 rbr_valid <= 1'b1;
@@ -62,6 +146,11 @@ module chip_ns16550_com (
                         if (dlab)
                             dll <= i_d;
                         else begin
+                            thr_empty        <= 1'b0;
+                            tx_empty         <= 1'b0;
+                            tx_drain_pending <= 1'b1;
+                            thre_irq_pending <= 1'b0;
+
                             if (mcr[4]) begin
                                 rbr       <= i_d;
                                 rbr_valid <= 1'b1;
@@ -71,23 +160,51 @@ module chip_ns16550_com (
                     3'd1: begin
                         if (dlab)
                             dlm <= i_d;
-                        else
-                            ier <= i_d;
+                        else begin
+                            ier <= {i_d[7:6], 2'b00, i_d[3:0]};
+                            if (!ier[1] && i_d[1] && thr_empty)
+                                thre_irq_pending <= 1'b1;
+                        end
                     end
-                    3'd2: fcr <= i_d;
+                    3'd2: begin
+                        // FCR is write-only; bit[0] gates FIFO-specific controls,
+                        // bit[4] (DMA-end signaling) remains directly writable.
+                        fcr <= {
+                            (i_d[0] ? i_d[7:6] : 2'b00),
+                            1'b0,
+                            i_d[4],
+                            (i_d[0] ? i_d[3] : 1'b0),
+                            2'b00,
+                            i_d[0]
+                        };
+
+                        if (i_d[0] && i_d[1])
+                            rbr_valid <= 1'b0;
+                        if (i_d[0] && i_d[2]) begin
+                            thr_empty        <= 1'b1;
+                            tx_empty         <= 1'b1;
+                            tx_drain_pending <= 1'b0;
+                            thre_irq_pending <= 1'b1;
+                        end
+                    end
                     3'd3: lcr <= i_d;
-                    3'd4: mcr <= i_d;
+                    3'd4: mcr <= {3'b000, i_d[4:0]};
                     3'd5: ; // LSR read-only
                     3'd6: ; // MSR
                     3'd7: scr <= i_d;
                 endcase
-            end else if (rd && off == 3'd0 && !dlab && rbr_valid) begin
-                rbr_valid <= 1'b0;
             end
+
+            if (rd && off == 3'd0 && !dlab && !i_rx_push)
+                rbr_valid <= 1'b0;
+
+            if (rd && off == 3'd6)
+                msr_delta <= 4'b0000;
+
+            if (rd && off == 3'd2 && iir_code == LP_IIR_THRE)
+                thre_irq_pending <= 1'b0;
         end
     end
-
-    logic [ 7: 0] lsr = { 1'b0, 1'b0, 1'b1, 1'b1, 4'b0000, rbr_valid };
 
     always_comb begin
         o_d = 8'hFF;
@@ -95,11 +212,11 @@ module chip_ns16550_com (
             unique case (off)
                 3'd0: o_d = dlab ? dll : rbr;
                 3'd1: o_d = dlab ? dlm : ier;
-                3'd2: o_d = 8'hC1;
+                3'd2: o_d = iir;
                 3'd3: o_d = lcr;
                 3'd4: o_d = mcr;
                 3'd5: o_d = lsr;
-                3'd6: o_d = 8'hB0;
+                3'd6: o_d = msr;
                 3'd7: o_d = scr;
             endcase
         end

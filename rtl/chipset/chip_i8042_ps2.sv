@@ -65,7 +65,10 @@ module chip_i8042_ps2 #(
     logic aux_if_en;
     logic kbd_irq_en;
     logic aux_irq_en;
+    logic last_wr_cmd;
     logic next_wr_to_aux;
+    logic cmd_d2_pending;
+    logic cmd_d3_pending;
     logic kbd_parity_err;
     logic aux_parity_err;
 
@@ -93,8 +96,9 @@ module chip_i8042_ps2 #(
     logic [ 7: 0]  aux_tx_hold;
     logic        rd_data_port_d;
 
-    logic obf_stat = use_aux_out ? aux_obf : kbd_obf;
-    logic ibf_stat = kbd_tx_pending | aux_tx_pending;
+    logic obf_stat = kbd_obf | aux_obf;
+    logic obf_from_aux = aux_obf && (use_aux_out || !kbd_obf);
+    logic ibf_stat = kbd_tx_pending | aux_tx_pending | next_wr_to_aux | cmd_d2_pending | cmd_d3_pending;
     logic [ 7: 0] kbd_head = kbd_fifo[kbd_rptr];
     logic [ 7: 0] aux_head = aux_fifo[aux_rptr];
 
@@ -102,12 +106,12 @@ module chip_i8042_ps2 #(
     assign o_aux_irq = aux_if_en && aux_irq_en && aux_obf;
 
     logic [ 7: 0] status_rd = {
-        1'b0,
-        aux_obf,
-        1'b0,
-        1'b0,
         kbd_parity_err | aux_parity_err,
-        kbd_parity_err | aux_parity_err,
+        1'b0,
+        obf_from_aux,
+        1'b0,
+        last_wr_cmd,
+        1'b0,
         ibf_stat,
         obf_stat
     };
@@ -192,7 +196,10 @@ module chip_i8042_ps2 #(
             aux_if_en      <= 1'b1;
             kbd_irq_en     <= 1'b1;
             aux_irq_en     <= 1'b1;
+            last_wr_cmd    <= 1'b0;
             next_wr_to_aux <= 1'b0;
+            cmd_d2_pending <= 1'b0;
+            cmd_d3_pending <= 1'b0;
             kbd_parity_err <= 1'b0;
             aux_parity_err <= 1'b0;
             kbd_tx_req     <= 1'b0;
@@ -212,6 +219,8 @@ module chip_i8042_ps2 #(
                 kbd_fifo[kbd_wptr] <= kbd_rx_dat;
                 kbd_wptr           <= kbd_wptr + 4'h1;
                 kbd_count          <= kbd_count + 4'h1;
+                if ((kbd_count == 4'h0) && (aux_count == 4'h0))
+                    use_aux_out <= 1'b0;
             end
             if (USE_REAL_PS2 && kbd_rx_err)
                 kbd_parity_err <= 1'b1;
@@ -220,6 +229,8 @@ module chip_i8042_ps2 #(
                 aux_fifo[aux_wptr] <= aux_rx_dat;
                 aux_wptr           <= aux_wptr + 4'h1;
                 aux_count          <= aux_count + 4'h1;
+                if ((kbd_count == 4'h0) && (aux_count == 4'h0))
+                    use_aux_out <= 1'b1;
             end
             if (USE_REAL_PS2 && aux_rx_err)
                 aux_parity_err <= 1'b1;
@@ -228,38 +239,71 @@ module chip_i8042_ps2 #(
                 kbd_fifo[kbd_wptr] <= i_kbd_data;
                 kbd_wptr           <= kbd_wptr + 4'h1;
                 kbd_count          <= kbd_count + 4'h1;
+                if ((kbd_count == 4'h0) && (aux_count == 4'h0))
+                    use_aux_out <= 1'b0;
             end
             if (i_aux_push && (aux_count < AUX_D)) begin
                 aux_fifo[aux_wptr] <= i_aux_data;
                 aux_wptr           <= aux_wptr + 4'h1;
                 aux_count          <= aux_count + 4'h1;
+                if ((kbd_count == 4'h0) && (aux_count == 4'h0))
+                    use_aux_out <= 1'b1;
             end
 
             if (wr && i_a0) begin
+                last_wr_cmd <= 1'b1;
                 unique case (i_d)
-                    8'hD4: next_wr_to_aux <= 1'b1;
-                    8'hD3, 8'hD2: next_wr_to_aux <= 1'b0;
+                    8'hD4: begin
+                        next_wr_to_aux <= 1'b1;
+                        cmd_d2_pending <= 1'b0;
+                        cmd_d3_pending <= 1'b0;
+                    end
+                    8'hD2: begin
+                        cmd_d2_pending <= 1'b1;
+                        cmd_d3_pending <= 1'b0;
+                        next_wr_to_aux <= 1'b0;
+                    end
+                    8'hD3: begin
+                        cmd_d2_pending <= 1'b0;
+                        cmd_d3_pending <= 1'b1;
+                        next_wr_to_aux <= 1'b0;
+                    end
                     8'hAE: kbd_if_en <= 1'b1;
                     8'hAD: kbd_if_en <= 1'b0;
-                    8'hA7: aux_if_en <= 1'b1;
-                    8'hA8: aux_if_en <= 1'b0;
+                    8'hA7: aux_if_en <= 1'b0;
+                    8'hA8: aux_if_en <= 1'b1;
                     default: ;
                 endcase
-                if (i_d == 8'hD4)
-                    use_aux_out <= 1'b1;
-                else if (i_d == 8'hD3 || i_d == 8'hD2)
-                    use_aux_out <= 1'b0;
             end
 
             if (wr && !i_a0) begin
-                if (USE_REAL_PS2) begin
-                    if (next_wr_to_aux && aux_if_en) begin
-                        if (!aux_tx_busy && !aux_tx_pending) begin
-                            aux_tx_req  <= 1'b1;
-                            aux_tx_byte <= i_d;
-                        end else if (!aux_tx_pending) begin
-                            aux_tx_pending <= 1'b1;
-                            aux_tx_hold    <= i_d;
+                last_wr_cmd <= 1'b0;
+                if (cmd_d2_pending) begin
+                    if (kbd_count < KBD_D) begin
+                        kbd_fifo[kbd_wptr] <= i_d;
+                        kbd_wptr           <= kbd_wptr + 4'h1;
+                        kbd_count          <= kbd_count + 4'h1;
+                        use_aux_out        <= 1'b0;
+                    end
+                    cmd_d2_pending <= 1'b0;
+                end else if (cmd_d3_pending) begin
+                    if (aux_count < AUX_D) begin
+                        aux_fifo[aux_wptr] <= i_d;
+                        aux_wptr           <= aux_wptr + 4'h1;
+                        aux_count          <= aux_count + 4'h1;
+                        use_aux_out        <= 1'b1;
+                    end
+                    cmd_d3_pending <= 1'b0;
+                end else if (USE_REAL_PS2) begin
+                    if (next_wr_to_aux) begin
+                        if (aux_if_en) begin
+                            if (!aux_tx_busy && !aux_tx_pending) begin
+                                aux_tx_req  <= 1'b1;
+                                aux_tx_byte <= i_d;
+                            end else if (!aux_tx_pending) begin
+                                aux_tx_pending <= 1'b1;
+                                aux_tx_hold    <= i_d;
+                            end
                         end
                     end else if (kbd_if_en) begin
                         if (!kbd_tx_busy && !kbd_tx_pending) begin
@@ -291,12 +335,16 @@ module chip_i8042_ps2 #(
                 aux_tx_pending <= 1'b0;
 
             if (rd_data_port_d && !(rd && !i_a0)) begin
-                if (use_aux_out && aux_obf) begin
+                if (obf_from_aux && aux_obf) begin
                     aux_rptr  <= aux_rptr + 4'h1;
                     aux_count <= aux_count - 4'h1;
-                end else if (!use_aux_out && kbd_obf) begin
+                    if ((aux_count == 4'h1) && kbd_obf)
+                        use_aux_out <= 1'b0;
+                end else if (kbd_obf) begin
                     kbd_rptr  <= kbd_rptr + 4'h1;
                     kbd_count <= kbd_count - 4'h1;
+                    if ((kbd_count == 4'h1) && aux_obf)
+                        use_aux_out <= 1'b1;
                 end
             end
 
@@ -309,7 +357,7 @@ module chip_i8042_ps2 #(
         o_d = 8'hFF;
         if (rd) begin
             if (!i_a0) begin
-                if (use_aux_out && aux_obf)
+                if (obf_from_aux)
                     o_d = aux_head;
                 else if (kbd_obf)
                     o_d = kbd_head;

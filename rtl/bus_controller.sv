@@ -72,6 +72,7 @@ module bus_controller #(
     output logic         o_ps2_kbd_dat_out,
     output logic         o_ps2_kbd_dat_oe,
     input  logic         i_ps2_kbd_dat_in,
+
     output logic         o_ps2_aux_clk_out,
     output logic         o_ps2_aux_clk_oe,
     input  logic         i_ps2_aux_clk_in,
@@ -217,61 +218,59 @@ assign is_chipset_io = is_other_io_access && (
 localparam int CHIP_DISK_IMAGE_BYTES = 512 * 2048;
 localparam int CHIP_DISK_SECTOR_CNT  = CHIP_DISK_IMAGE_BYTES / 512;
 
-logic [15: 0] chip_io_addr = i_bus_address[15: 0];
-logic        chip_io_vld  = is_chipset_io && i_bus_valid;
-logic        chip_io_we   = i_bus_write_enable;
+logic [15: 0] chip_io_addr;
+logic        chip_io_vld;
+logic        chip_io_we;
 
 logic [ 7: 0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
 
-logic hit_dma   = (chip_io_addr <= 16'h000F)
-               | ((chip_io_addr >= 16'h0080) & (chip_io_addr <= 16'h008F))
-               | ((chip_io_addr >= 16'h00C0) & (chip_io_addr <= 16'h00DF));
-logic hit_pic_m = (chip_io_addr >= 16'h0020) & (chip_io_addr <= 16'h0021);
-logic hit_pic_s = (chip_io_addr >= 16'h00A0) & (chip_io_addr <= 16'h00A1);
-logic hit_pit   = (chip_io_addr >= 16'h0040) & (chip_io_addr <= 16'h0043);
-logic hit_ps2   = (chip_io_addr == 16'h0060) | (chip_io_addr == 16'h0064);
-logic hit_rtc   = (chip_io_addr == 16'h0070) | (chip_io_addr == 16'h0071);
-logic hit_com   = (chip_io_addr >= 16'h03F8) & (chip_io_addr <= 16'h03FF);
-logic hit_lpt   = (chip_io_addr >= 16'h0378) & (chip_io_addr <= 16'h037F);
-logic hit_ide   = ((chip_io_addr >= 16'h01F0) & (chip_io_addr <= 16'h01F7)) | (chip_io_addr == 16'h03F6);
+logic hit_dma;
+logic hit_pic_m;
+logic hit_pic_s;
+logic hit_pit;
+logic hit_ps2;
+logic hit_rtc;
+logic hit_com;
+logic hit_lpt;
+logic hit_ide;
 
-logic vld = chip_io_vld;
+logic vld;
 
-logic cs_dma_n   = !(vld & hit_dma);
-logic rd_dma_n   = !(vld & !chip_io_we & hit_dma);
-logic wr_dma_n   = !(vld &  chip_io_we & hit_dma);
+logic cs_dma_n;
+logic rd_dma_n;
+logic wr_dma_n;
 
-logic cs_pic_m_n = !(vld & hit_pic_m);
-logic rd_pic_m_n = !(vld & !chip_io_we & hit_pic_m);
-logic wr_pic_m_n = !(vld &  chip_io_we & hit_pic_m);
+logic cs_pic_m_n;
+logic rd_pic_m_n;
+logic wr_pic_m_n;
 
-logic cs_pic_s_n = !(vld & hit_pic_s);
-logic rd_pic_s_n = !(vld & !chip_io_we & hit_pic_s);
-logic wr_pic_s_n = !(vld &  chip_io_we & hit_pic_s);
+logic cs_pic_s_n;
+logic rd_pic_s_n;
+logic wr_pic_s_n;
 
-logic cs_pit_n   = !(vld & hit_pit);
-logic rd_pit_n   = !(vld & !chip_io_we & hit_pit);
-logic wr_pit_n   = !(vld &  chip_io_we & hit_pit);
+logic cs_pit_n;
+logic rd_pit_n;
+logic wr_pit_n;
 
-logic cs_ps2_n   = !(vld & hit_ps2);
-logic rd_ps2_n   = !(vld & !chip_io_we & hit_ps2);
-logic wr_ps2_n   = !(vld &  chip_io_we & hit_ps2);
+logic cs_ps2_n;
+logic rd_ps2_n;
+logic wr_ps2_n;
 
-logic cs_rtc_n   = !(vld & hit_rtc);
-logic rd_rtc_n   = !(vld & !chip_io_we & hit_rtc);
-logic wr_rtc_n   = !(vld &  chip_io_we & hit_rtc);
+logic cs_rtc_n;
+logic rd_rtc_n;
+logic wr_rtc_n;
 
-logic cs_com_n   = !(vld & hit_com);
-logic rd_com_n   = !(vld & !chip_io_we & hit_com);
-logic wr_com_n   = !(vld &  chip_io_we & hit_com);
+logic cs_com_n;
+logic rd_com_n;
+logic wr_com_n;
 
-logic cs_lpt_n   = !(vld & hit_lpt);
-logic rd_lpt_n   = !(vld & !chip_io_we & hit_lpt);
-logic wr_lpt_n   = !(vld &  chip_io_we & hit_lpt);
+logic cs_lpt_n;
+logic rd_lpt_n;
+logic wr_lpt_n;
 
-logic cs_ide_n   = !(vld & hit_ide);
-logic rd_ide_n   = !(vld & !chip_io_we & hit_ide);
-logic wr_ide_n   = !(vld &  chip_io_we & hit_ide);
+logic cs_ide_n;
+logic rd_ide_n;
+logic wr_ide_n;
 
 logic       pit_out0;
 logic       intr_m, intr_s;
@@ -280,7 +279,63 @@ logic [ 7: 0] ir_m;
 logic       rtc_irq;
 logic       ps2_kbd_irq;
 logic       ps2_aux_irq;
-logic [ 7: 0] pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
+logic [ 7: 0] pic_slave_ir_merged;
+
+assign chip_io_addr = i_bus_address[15: 0];
+assign chip_io_vld  = is_chipset_io && i_bus_valid;
+assign chip_io_we   = i_bus_write_enable;
+
+assign hit_dma   = (chip_io_addr <= 16'h000F)
+                | ((chip_io_addr >= 16'h0080) & (chip_io_addr <= 16'h008F))
+                | ((chip_io_addr >= 16'h00C0) & (chip_io_addr <= 16'h00DF));
+assign hit_pic_m = (chip_io_addr >= 16'h0020) & (chip_io_addr <= 16'h0021);
+assign hit_pic_s = (chip_io_addr >= 16'h00A0) & (chip_io_addr <= 16'h00A1);
+assign hit_pit   = (chip_io_addr >= 16'h0040) & (chip_io_addr <= 16'h0043);
+assign hit_ps2   = (chip_io_addr == 16'h0060) | (chip_io_addr == 16'h0064);
+assign hit_rtc   = (chip_io_addr == 16'h0070) | (chip_io_addr == 16'h0071);
+assign hit_com   = (chip_io_addr >= 16'h03F8) & (chip_io_addr <= 16'h03FF);
+assign hit_lpt   = (chip_io_addr >= 16'h0378) & (chip_io_addr <= 16'h037F);
+assign hit_ide   = ((chip_io_addr >= 16'h01F0) & (chip_io_addr <= 16'h01F7)) | (chip_io_addr == 16'h03F6);
+
+assign vld = chip_io_vld;
+
+assign cs_dma_n   = !(vld & hit_dma);
+assign rd_dma_n   = !(vld & !chip_io_we & hit_dma);
+assign wr_dma_n   = !(vld &  chip_io_we & hit_dma);
+
+assign cs_pic_m_n = !(vld & hit_pic_m);
+assign rd_pic_m_n = !(vld & !chip_io_we & hit_pic_m);
+assign wr_pic_m_n = !(vld &  chip_io_we & hit_pic_m);
+
+assign cs_pic_s_n = !(vld & hit_pic_s);
+assign rd_pic_s_n = !(vld & !chip_io_we & hit_pic_s);
+assign wr_pic_s_n = !(vld &  chip_io_we & hit_pic_s);
+
+assign cs_pit_n   = !(vld & hit_pit);
+assign rd_pit_n   = !(vld & !chip_io_we & hit_pit);
+assign wr_pit_n   = !(vld &  chip_io_we & hit_pit);
+
+assign cs_ps2_n   = !(vld & hit_ps2);
+assign rd_ps2_n   = !(vld & !chip_io_we & hit_ps2);
+assign wr_ps2_n   = !(vld &  chip_io_we & hit_ps2);
+
+assign cs_rtc_n   = !(vld & hit_rtc);
+assign rd_rtc_n   = !(vld & !chip_io_we & hit_rtc);
+assign wr_rtc_n   = !(vld &  chip_io_we & hit_rtc);
+
+assign cs_com_n   = !(vld & hit_com);
+assign rd_com_n   = !(vld & !chip_io_we & hit_com);
+assign wr_com_n   = !(vld &  chip_io_we & hit_com);
+
+assign cs_lpt_n   = !(vld & hit_lpt);
+assign rd_lpt_n   = !(vld & !chip_io_we & hit_lpt);
+assign wr_lpt_n   = !(vld &  chip_io_we & hit_lpt);
+
+assign cs_ide_n   = !(vld & hit_ide);
+assign rd_ide_n   = !(vld & !chip_io_we & hit_ide);
+assign wr_ide_n   = !(vld &  chip_io_we & hit_ide);
+
+assign pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
 
 assign ir_m[0]    = pit_out0;
 assign ir_m[1]    = ps2_kbd_irq;
