@@ -24,7 +24,7 @@ description: This module implements chip_at24lc32_eeprom.
 // ============================================================================
 
 module chip_at24lc32_eeprom #(
-    parameter logic [2:0] A_PINS     = 3'b000,
+    parameter logic [ 2: 0] A_PINS     = 3'b000,
     parameter int         NUM_BYTES  = 4096,
     parameter int         PAGE_BYTES = 32
 ) (

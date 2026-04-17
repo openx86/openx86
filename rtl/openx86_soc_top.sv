@@ -17,9 +17,9 @@ module openx86_soc_top #(
     // ------------------------------------------------------------------------
     output logic       o_vga_hsync,
     output logic       o_vga_vsync,
-    output logic [3:0] o_vga_r,
-    output logic [3:0] o_vga_g,
-    output logic [3:0] o_vga_b,
+    output logic [ 3: 0] o_vga_r,
+    output logic [ 3: 0] o_vga_g,
+    output logic [ 3: 0] o_vga_b,
 
     // ------------------------------------------------------------------------
     // PS/2 ports (open-drain). Each line is (out, oe, in).
@@ -42,7 +42,7 @@ module openx86_soc_top #(
     // ------------------------------------------------------------------------
     output logic       o_sdio_clk,
     inout  logic         io_sdio_cmd,
-    inout  logic [3:0]   io_sdio_dat,
+    inout  logic [ 3: 0]   io_sdio_dat,
 
     // ------------------------------------------------------------------------
     // SDRAM physical interface (16-bit device)
@@ -53,10 +53,10 @@ module openx86_soc_top #(
     output logic        o_sdram_ras_n,
     output logic        o_sdram_cas_n,
     output logic        o_sdram_we_n,
-    output logic [1:0]  o_sdram_ba,
-    output logic [12:0] o_sdram_a,
-    output logic [1:0]  o_sdram_dqm,
-    inout  logic [15:0] io_sdram_dq,
+    output logic [ 1: 0]  o_sdram_ba,
+    output logic [12: 0] o_sdram_a,
+    output logic [ 1: 0]  o_sdram_dqm,
+    inout  logic [15: 0] io_sdram_dq,
 
     // ------------------------------------------------------------------------
     // Board-level clock / reset_n
