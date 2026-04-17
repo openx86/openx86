@@ -5,6 +5,21 @@
 - These rules apply to all testbench files under `tb/**/*.sv`.
 - Files under `rtl/` MUST be synthesizable SystemVerilog.
 
+## File Header Comment Rules (Mandatory)
+- Every `*.sv` file MUST start with the following header comment block at the top of the file.
+- `description` MUST be filled with a concise module/function description.
+
+Template:
+
+```systemverilog
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: {desc_text}
+*/
+```
+
 ## 1) Port List Rules (Mandatory)
 - All module ports MUST use `logic` type.
 - Direction prefixes are mandatory:
@@ -106,6 +121,7 @@ module example_module (
 - Use deterministic reset/startup sequencing in all TBs.
 
 ## 11) Review Checklist
+- [ ] Every `*.sv` starts with the standard project header comment block.
 - [ ] Ports follow direction prefixes (`i_`, `o_`, `b_`).
 - [ ] PHY ports follow `{dir}_{module}_phy_{name}`.
 - [ ] `clock` and `reset_n` are the final ports.
