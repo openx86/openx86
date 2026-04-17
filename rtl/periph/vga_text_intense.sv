@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements vga_text_intense.
+*/
 // VGA 淡色文本模式（CGA 兼容模式）
 // 支持 80x25 字符，使用淡色调色板
 // 属性字节格式：[7:闪烁][6:4背景色][3:0前景色]

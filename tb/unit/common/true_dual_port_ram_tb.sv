@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements true_dual_port_ram_tb.
+*/
 // project: openx86
 // module: true_dual_port_ram_tb
 // description: test true_dual_port_ram module
@@ -160,7 +166,7 @@ module true_dual_port_ram_tb;
 
         $display("\n=== 双口RAM测试完成 ===");
         #100;
-        $stop();
+        $finish;
     end
 
 endmodule

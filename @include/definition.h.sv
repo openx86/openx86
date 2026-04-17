@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This SystemVerilog source file provides shared definitions for openx86.
+*/
 `ifndef OPENX86_DEFINITION_H_SV
 `define OPENX86_DEFINITION_H_SV
 

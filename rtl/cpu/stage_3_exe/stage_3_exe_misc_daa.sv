@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_misc_daa.
+*/
 module stage_3_exe_misc_daa (
     input  logic [31:0] a,
     input  logic        af_in,

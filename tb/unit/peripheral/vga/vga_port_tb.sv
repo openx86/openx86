@@ -1,6 +1,9 @@
-// project: openx86
-// module: vga_port_tb
-// description: test vga_port module
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements vga_port_tb.
+*/
 
 `timescale 1ns/1ns
 
@@ -18,6 +21,10 @@ module vga_port_tb;
     logic [$clog2(800)-1:0]  h_count;
     logic [$clog2(525)-1:0]  v_count;
     logic                    video_active;
+    integer                  frame_count;
+    integer                  hsync_count;
+    integer                  visible_pixels;
+    integer                  non_visible_pixels;
 
     // 模拟VRAM数据
     logic [7:0] vram_mem [0:255];
@@ -76,41 +83,34 @@ module vga_port_tb;
 
         // 测试2: 等待一个完整的帧
         $display("\n测试2: 等待一个完整的帧");
-        int frame_count = 0;
-        logic prev_vsync = 1;
-        
-        // 等待VSYNC上升沿（帧开始）
-        wait(vga_vsync == 1 && prev_vsync == 0);
+        frame_count = 0;
+
+        @(posedge vga_vsync);
         $display("  检测到帧开始 (VSYNC上升沿)");
-        
-        // 等待VSYNC下降沿（垂直同步开始）
-        wait(vga_vsync == 0);
+
+        @(negedge vga_vsync);
         $display("  检测到垂直同步开始 (VSYNC下降沿)");
-        
-        // 等待VSYNC上升沿（垂直同步结束）
-        wait(vga_vsync == 1);
+
+        @(posedge vga_vsync);
         $display("  检测到垂直同步结束 (VSYNC上升沿)");
         frame_count++;
         $display("  完成帧 %d", frame_count);
 
         // 测试3: 检查水平同步信号
         $display("\n测试3: 检查水平同步信号");
-        int hsync_count = 0;
-        logic prev_hsync = 1;
-        
+        hsync_count = 0;
+
         // 等待几个HSYNC周期
         for (int i = 0; i < 10; i++) begin
-            wait(vga_hsync == 0 && prev_hsync == 1);
+            @(negedge vga_hsync);
             hsync_count++;
             $display("  检测到水平同步 %d (h_count=%0d, v_count=%0d)", hsync_count, h_count, v_count);
-            wait(vga_hsync == 1);
-            prev_hsync = vga_hsync;
         end
 
         // 测试4: 检查可见区域
         $display("\n测试4: 检查可见区域");
-        int visible_pixels = 0;
-        int non_visible_pixels = 0;
+        visible_pixels = 0;
+        non_visible_pixels = 0;
         
         // 等待进入可见区域
         wait(video_active == 1);

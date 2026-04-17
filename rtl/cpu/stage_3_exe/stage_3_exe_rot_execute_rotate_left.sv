@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_rot_execute_rotate_left.
+*/
 // ============================================================================
 // execute_rotate_left
 // ----------------------------------------------------------------------------

@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements chip_8237_dma.
+*/
 // ============================================================================
 // Intel 8237 DMA — 寄存器占位模型（无真实 ISA 总线主控周期）
 // 主机接口：nCS/nRD/nWR + i_addr[15:0]（仅当片选有效时由上层保证地址落在

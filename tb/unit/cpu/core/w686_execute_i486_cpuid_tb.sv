@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements w686_execute_i486_cpuid_tb.
+*/
 // ============================================================================
 // stage_3_exe_w686_core_execute_i486 — CPUID 多周期写回冒烟（iverilog -g2012 / Verilator）
 // ============================================================================

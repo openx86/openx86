@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements decode_tb.
+*/
 // project: w80386dx
 // author: Chang Wei<changwei1006@gmail.com>
 // repo: https://github.com/openx86/w80386dx
@@ -295,7 +301,7 @@ initial begin
     #2; instruction[0:15] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
     #16;
 
-    $stop();
+    $finish;
 end
 
 endmodule

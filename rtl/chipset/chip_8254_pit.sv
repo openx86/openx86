@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements chip_8254_pit.
+*/
 // ============================================================================
 // Intel 8254 PIT — 最小寄存器级模型（可综合）
 // 主机接口：nCS/nRD/nWR + A[1:0]（00–10 通道，11 控制字）

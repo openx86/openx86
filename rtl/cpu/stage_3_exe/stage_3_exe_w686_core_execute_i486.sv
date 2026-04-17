@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_w686_core_execute_i486.
+*/
 // ============================================================================
 // stage_3_exe_w686_core_execute_i486 — 80486 模式：多周期 CPUID、INVD/WBINVD/INVLPG 占位
 // ============================================================================

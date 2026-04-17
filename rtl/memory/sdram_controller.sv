@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements sdram_controller.
+*/
 // ============================================================================
 // SDRAM Controller (real PHY) — minimal bring-up @ 50MHz
 // ----------------------------------------------------------------------------

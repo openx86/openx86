@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements vga_port.
+*/
 // ============================================================================
 // vga_port
 // ----------------------------------------------------------------------------
@@ -88,7 +94,7 @@ module vga_port (
     // 可见区域
     assign h_visible    = (h_count < H_VISIBLE);
     assign v_visible    = (v_count < V_VISIBLE);
-    assign video_active = h_visible && v_visible;
+    assign video_active = (!reset) && h_visible && v_visible;
 
     // 同步信号（VGA 标准为负极性）
     always_ff @(posedge clock or posedge reset) begin

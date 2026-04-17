@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements ide_sd_native_disk_tb.
+*/
 // ============================================================================
 // chip_ata_ide（异步）+ ide_sd_sector_bridge + sd_native_host_4bit + card 模型
 // ============================================================================
@@ -139,6 +145,18 @@ module ide_sd_native_disk_tb;
     endtask
 
     logic [7:0] rb;
+    int unsigned wait_cycles;
+    logic seen_done;
+
+    always_ff @(posedge clock or posedge reset) begin
+        if (reset) begin
+            seen_done  <= 1'b0;
+        end else begin
+            if (sd_done)
+                seen_done <= 1'b1;
+        end
+    end
+
     initial begin
         reset    = 1;
         io_valid = 0;
@@ -153,7 +171,15 @@ module ide_sd_native_disk_tb;
         wr(16'h01F6, 8'hE0);
         wr(16'h01F7, 8'h20);
 
-        while (!ide_sector_ready) @(posedge clock);
+        wait_cycles = 0;
+        while (!(ide_sector_ready || seen_done) && (wait_cycles < 200000)) begin
+            @(posedge clock);
+            wait_cycles = wait_cycles + 1;
+        end
+        if (!(ide_sector_ready || seen_done)) begin
+            $display("FAIL ide_sd_native timeout: req=%0b start=%0b busy=%0b done=%0b err=%0b seen_done=%0b", ide_sector_req, sd_start, sd_busy, sd_done, sd_err, seen_done);
+            $finish;
+        end
         @(posedge clock);
 
         rd(16'h01F0, rb);

@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_execute_muldiv_unit.
+*/
 // ============================================================================
 // Multiply / Divide Unit — MUL/IMUL 32×32→64，DIV/IDIV 64÷32
 // ============================================================================

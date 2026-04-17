@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements sdram_controller_tb.
+*/
 // ============================================================================
 // sdram_controller：初始化后 32-bit 写读（带 16-bit PHY 存根）
 // 编译：iverilog -g2012 -I src/rtl tb/common/sdram_x16_stub.sv tb/unit/memory/sdram_controller_tb.sv src/rtl/memory/sdram_controller.sv

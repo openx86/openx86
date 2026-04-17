@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements w686_core.
+*/
 // ============================================================================
 // w686_core — 80486 级取指/译码/执行闭环（core-side pipeline）
 // ============================================================================

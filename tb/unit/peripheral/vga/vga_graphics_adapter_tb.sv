@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements vga_graphics_adapter_tb.
+*/
 // project: openx86
 // module: vga_graphics_adapter_tb
 // description: test vga_graphics_adapter (VGA Graphics Adapter)
@@ -21,6 +27,7 @@ module vga_graphics_adapter_tb;
     logic [3:0]  vga_r;
     logic [3:0]  vga_g;
     logic [3:0]  vga_b;
+    int          vsync_count;
 
     vga_graphics_adapter dut (
         .io_en_w   ( io_en_w   ),
@@ -143,21 +150,19 @@ module vga_graphics_adapter_tb;
 
         // 测试9: 检查VGA同步信号
         $display("\n测试9: 检查VGA同步信号");
-        int vsync_count = 0;
-        logic prev_vsync = 1;
-        
+        vsync_count = 0;
+
         // 等待VSYNC上升沿
-        wait(vga_vsync == 1 && prev_vsync == 0);
+        @(posedge vga_vsync);
         vsync_count++;
         $display("  检测到VSYNC上升沿 %d", vsync_count);
-        
+
         // 等待VSYNC下降沿
-        wait(vga_vsync == 0);
+        @(negedge vga_vsync);
         $display("  检测到VSYNC下降沿");
-        
+
         // 等待HSYNC
-        logic prev_hsync = 1;
-        wait(vga_hsync == 0 && prev_hsync == 1);
+        @(negedge vga_hsync);
         $display("  检测到HSYNC下降沿");
 
         // 测试10: 检查颜色输出

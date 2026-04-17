@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements com_ns16550_tb.
+*/
 // ============================================================================
 // com_ns16550 testbench — 写 THR + 回环读 RBR，读 LSR（ISA 并行口）
 // ============================================================================

@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements dual_port_rom_tb.
+*/
 // project: openx86
 // module: dual_port_rom_tb
 // description: test dual_port_rom module
@@ -56,9 +62,9 @@ module dual_port_rom_tb;
     initial begin
         // 等待ROM初始化完成
         #1;
-        // 手动设置ROM数据（通过force，仅用于测试）
+        // 手动设置ROM数据（用于测试）
         for (int i = 0; i < DEPTH; i++) begin
-            force dut.rom[i] = test_data[i];
+            dut.rom[i] = test_data[i];
         end
     end
 
@@ -164,7 +170,7 @@ module dual_port_rom_tb;
 
         $display("\n=== 双口ROM测试完成 ===");
         #100;
-        $stop();
+        $finish;
     end
 
 endmodule

@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_5_wrb.
+*/
 // ============================================================================
 // stage_5_wrb
 // ----------------------------------------------------------------------------
@@ -65,7 +71,7 @@ module stage_5_wrb (
     output logic [31:0] o_mem_write_data
 );
 
-    wb_write_back_unit u_wb_write_back_unit (
+    stage_5_wrb_wb_write_back_unit u_wb_write_back_unit (
         .i_gpr_write_enable    ( i_gpr_write_enable ),
         .i_gpr_write_index     ( i_gpr_write_index ),
         .i_gpr_write_data      ( i_gpr_write_data ),

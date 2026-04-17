@@ -1,4 +1,10 @@
 /*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_2_dec_decode_disp_imm.
+*/
+/*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
@@ -32,7 +38,7 @@ module stage_2_dec_decode_disp_imm (
 logic [7:0] instruction_for_immediate [0:3];
 
 always_comb begin
-    unique case (1'b1)
+    case (1'b1)
         i_displacement_size_1: begin instruction_for_immediate <= i_instruction[1:1+3]; o_displacement <= {24'b0, i_instruction[0][7:0]}; end
         i_displacement_size_2: begin instruction_for_immediate <= i_instruction[2:2+3]; o_displacement <= {16'b0, i_instruction[1][7:0], i_instruction[0][7:0]}; end
         i_displacement_size_4: begin instruction_for_immediate <= i_instruction[4:4+3]; o_displacement <= {       i_instruction[3][7:0], i_instruction[2][7:0], i_instruction[1][7:0], i_instruction[0][7:0]}; end
@@ -41,7 +47,7 @@ always_comb begin
 end
 
 always_comb begin
-    unique case (1'b1)
+    case (1'b1)
         i_immediate_size_1: o_immediate <= {24'b0, instruction_for_immediate[0][7:0]};
         i_immediate_size_2: o_immediate <= {16'b0, instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
         i_immediate_size_4: o_immediate <= {       instruction_for_immediate[3][7:0], instruction_for_immediate[2][7:0], instruction_for_immediate[1][7:0], instruction_for_immediate[0][7:0]};
@@ -52,7 +58,7 @@ end
 
 logic [ 3:0] displacement_bytes;
 always_comb begin
-    unique case (1'b1)
+    case (1'b1)
         i_displacement_size_1: displacement_bytes <= 4'h1;
         i_displacement_size_2: displacement_bytes <= 4'h2;
         i_displacement_size_4: displacement_bytes <= 4'h4;
@@ -63,7 +69,7 @@ end
 
 logic [ 3:0] immediate_bytes;
 always_comb begin
-    unique case (1'b1)
+    case (1'b1)
         i_immediate_size_1: immediate_bytes <= 4'h1;
         i_immediate_size_2: immediate_bytes <= 4'h2;
         i_immediate_size_4: immediate_bytes <= 4'h4;

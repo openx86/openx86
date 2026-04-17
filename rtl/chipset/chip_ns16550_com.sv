@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements chip_ns16550_com.
+*/
 // ============================================================================
 // NS16550 兼容 UART — COM1
 // 主机接口：nCS/nRD/nWR + A[2:0]（相对基址 0x3F8 的寄存器偏移）

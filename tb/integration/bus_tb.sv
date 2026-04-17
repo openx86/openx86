@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements bus_tb.
+*/
 // ============================================================================
 // Bus Controller Testbench
 // 测试总线控制器的地址解码和外设路由功能

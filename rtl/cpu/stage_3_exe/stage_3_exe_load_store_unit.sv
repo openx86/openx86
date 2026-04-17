@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_load_store_unit.
+*/
 // ============================================================================
 // Load / Store Unit (LSU)
 // 将执行侧访存请求转换为对总线/存储器端口的握手（valid/ready）

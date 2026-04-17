@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements bus_controller.
+*/
 // ============================================================================
 // Bus Controller Module
 // 根据 IBM PC 兼容机标准和 Intel 标准实现总线控制器
@@ -13,7 +19,7 @@
 // It is wrapped by `bus_controller` to keep a stable top-level bus port
 // interface while allowing the device-side to evolve.
 // ----------------------------------------------------------------------------
-module bus_controller #(
+module bus_controller_devices #(
     parameter bit  USE_REAL_PS2 = 1'b0,
     parameter int PS2_CLK_HZ   = 50_000_000,
     parameter bit  USE_SDIO_DISK = 1'b0
@@ -224,7 +230,7 @@ logic        chip_ide_sector_req_w;
 
 generate
     if (!USE_SDIO_DISK) begin : g_disk_ram
-        disk_ram_8 #(
+        sd_disk_ram_8 #(
             .BYTE_DEPTH ( CHIP_DISK_IMAGE_BYTES )
         ) u_disk_image (
             .i_clock   ( i_clock ),
@@ -710,7 +716,7 @@ module bus_controller #(
     input  logic        i_clock,
     input  logic        i_reset
 );
-    bus_controller #(
+    bus_controller_devices #(
         .USE_REAL_PS2 ( USE_REAL_PS2 ),
         .PS2_CLK_HZ   ( PS2_CLK_HZ ),
         .USE_SDIO_DISK ( USE_SDIO_DISK )

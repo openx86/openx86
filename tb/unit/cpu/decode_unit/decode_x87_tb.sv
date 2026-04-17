@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements decode_x87_tb.
+*/
 // ============================================================================
 // decode_x87_esc 冒烟：D8 C1 = FADD ST0,ST1（mod=11 reg=000 rm=001）
 // ============================================================================

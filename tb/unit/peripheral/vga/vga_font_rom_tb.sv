@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements vga_font_rom_tb.
+*/
 // project: openx86
 // module: vga_font_rom_tb
 // description: test vga_font_rom module
@@ -24,7 +30,7 @@ module vga_font_rom_tb;
     always #19.86 clock = ~clock;
 
     initial begin
-        $readmemh("rtl/periph/vga_font_8x16.hex", dut.font_rom_inst.font_rom_inst.rom);
+        $readmemh("rtl/periph/vga_font_8x16.hex", dut.font_rom_inst.rom);
         clock     = 0;
         reset     = 1;
         char_code = '0;

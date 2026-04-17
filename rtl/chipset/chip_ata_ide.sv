@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements chip_ata_ide.
+*/
 // ============================================================================
 // IDE ATA 主通道 PIO — 简化寄存器 + 扇区读
 // 主机接口：nCS/nRD/nWR + i_addr[15:0]（0x1F0–0x1F7、0x3F6；译码由上层完成）
@@ -40,6 +46,7 @@ module chip_ata_ide #(
     logic [7:0]  error_r;
     logic [8:0]  buf_ptr;
     logic [31:0] mem_off;
+    logic        rd_data_d;
 
     localparam logic [7:0] ST_RDY = 8'h40;
     localparam logic [7:0] ST_DRQ_F = 8'h08;
@@ -93,6 +100,7 @@ module chip_ata_ide #(
             error_r    <= '0;
             buf_ptr    <= '0;
             mem_off    <= '0;
+            rd_data_d  <= 1'b0;
         end else if (async_on && state == ST_WAIT_SECTOR && i_disk_sector_ready) begin
             state   <= ST_DRQ;
             buf_ptr <= '0;
@@ -120,7 +128,9 @@ module chip_ata_ide #(
                 16'h03F6: ;
                 default: ;
             endcase
-        end else if (rd && i_addr == 16'h01F0 && state == ST_DRQ) begin
+        end
+
+        if (rd_data_d && !(rd && i_addr == 16'h01F0 && state == ST_DRQ)) begin
             if (buf_ptr == (9'(SECTOR_BYTES) - 9'd1)) begin
                 state   <= ST_IDLE;
                 status  <= ST_RDY;
@@ -128,6 +138,8 @@ module chip_ata_ide #(
             end else
                 buf_ptr <= buf_ptr + 9'h1;
         end
+
+        rd_data_d <= (rd && i_addr == 16'h01F0 && state == ST_DRQ);
     end
 
     assign o_disk_sector_req = async_on && (state == ST_WAIT_SECTOR);

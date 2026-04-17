@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This package defines shared declarations for stage_3_exe_execute_unit_pkg.
+*/
 // ============================================================================
 // execute_unit 公共类型与常量（供 AGU / LSU / Branch / MulDiv / X87 子模块使用）
 // ============================================================================

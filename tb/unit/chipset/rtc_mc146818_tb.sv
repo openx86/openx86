@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements rtc_mc146818_tb.
+*/
 // ============================================================================
 // rtc_mc146818 仿真：小 CLK_HZ 加速秒进位、SET、BCD 年、读 Reg C 清中断
 // ============================================================================

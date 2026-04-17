@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_execute_unit.
+*/
 // ============================================================================
 // stage_3_exe_execute_unit — AGU / Branch / MulDiv / X87 子模块聚合顶层
 // 译码/微码侧通过选择信号驱动各簇；此处为直连端口便于 SoC 集成

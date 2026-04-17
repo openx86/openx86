@@ -1,9 +1,15 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements sd_disk_ram_8.
+*/
 // ============================================================================
 // 共享 8 位盘映像 RAM — IDE 与 SD 模型双读口 + 单写口
 // 阵列内容不在本模块初始化；仿真由 testbench 或上层绑定逻辑装载。
 // ============================================================================
 
-module disk_ram_8 #(
+module sd_disk_ram_8 #(
     parameter int BYTE_DEPTH = 524288
 ) (
     input  logic        i_clock,

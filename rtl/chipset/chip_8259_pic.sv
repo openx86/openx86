@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements chip_8259_pic.
+*/
 // ============================================================================
 // Intel 8259 PIC — 单片简化模型（可级联）
 // 主机接口：ISA 式 nCS/nRD/nWR + A0（0=命令/OCW，1=数据/IMR）

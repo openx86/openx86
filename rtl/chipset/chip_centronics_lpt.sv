@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements chip_centronics_lpt.
+*/
 // ============================================================================
 // IBM PC 并行口（LPT1）— Centronics 风格寄存器级模型
 // 主机接口：nCS/nRD/nWR + A[2:0]（相对基址 0x378）

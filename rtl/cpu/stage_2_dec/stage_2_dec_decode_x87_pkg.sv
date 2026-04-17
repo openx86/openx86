@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This package defines shared declarations for stage_2_dec_decode_x87_pkg.
+*/
 // ============================================================================
 // X87 ESC (D8–DF) 译码 — 位掩码与常量（与 decode_x87_esc 配套）
 // 参考：Intel SDM Vol 2 Table A-15 ~ A-22（ModR/M 与 opcode 扩展）

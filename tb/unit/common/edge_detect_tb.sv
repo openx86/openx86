@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements edge_detect_tb.
+*/
 `timescale 1ns/1ns
 module edge_detect_tb #(
     // parameters
@@ -33,7 +39,7 @@ initial begin
 
     #4;
 
-    $stop();
+    $finish;
 end
 
 logic pos_edge, neg_edge;

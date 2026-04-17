@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements ps2_i8042_tb.
+*/
 // ============================================================================
 // TB: chip_i8042_ps2（ISA 并行口）
 // ============================================================================

@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements vga_graphics_adapter.
+*/
 // VGA Graphics Adapter — VRAM window 0xA0000–0xBFFFF + VGA I/O 0x03C0–0x03DF
 module vga_graphics_adapter (
     // bus

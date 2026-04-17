@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements i8259_pic_tb.
+*/
 // ============================================================================
 // i8259_pic testbench — 单主片初始化 + IMR + 中断线（ISA 并行口）
 // ============================================================================

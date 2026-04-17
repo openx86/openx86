@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements chip_i8042_ps2.
+*/
 // ============================================================================
 // Intel 8042 键盘控制器 — 键盘 + PS/2 鼠标（AUX）
 // 0x60: 数据口（读输出缓冲 / 写发往当前端口）
@@ -85,6 +91,7 @@ module chip_i8042_ps2 #(
     logic [7:0]  kbd_tx_hold;
     logic        aux_tx_pending;
     logic [7:0]  aux_tx_hold;
+    logic        rd_data_port_d;
 
     wire obf_stat = use_aux_out ? aux_obf : kbd_obf;
     wire ibf_stat = kbd_tx_pending | aux_tx_pending;
@@ -196,6 +203,7 @@ module chip_i8042_ps2 #(
             kbd_tx_hold    <= '0;
             aux_tx_pending <= 1'b0;
             aux_tx_hold    <= '0;
+            rd_data_port_d <= 1'b0;
         end else begin
             kbd_tx_req <= 1'b0;
             aux_tx_req <= 1'b0;
@@ -282,7 +290,7 @@ module chip_i8042_ps2 #(
             if (USE_REAL_PS2 && aux_tx_err)
                 aux_tx_pending <= 1'b0;
 
-            if (rd && !i_a0) begin
+            if (rd_data_port_d && !(rd && !i_a0)) begin
                 if (use_aux_out && aux_obf) begin
                     aux_rptr  <= aux_rptr + 4'h1;
                     aux_count <= aux_count - 4'h1;
@@ -291,6 +299,8 @@ module chip_i8042_ps2 #(
                     kbd_count <= kbd_count - 4'h1;
                 end
             end
+
+            rd_data_port_d <= (rd && !i_a0);
 
         end
     end

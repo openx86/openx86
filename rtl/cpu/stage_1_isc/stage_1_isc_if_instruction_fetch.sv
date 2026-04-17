@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_1_isc_if_instruction_fetch.
+*/
 // project: w80386dx
 // author: Chang Wei<changwei1006@gmail.com>
 // repo: https://github.com/openx86/w80386dx
@@ -91,7 +97,7 @@ always_ff @(posedge clock or posedge reset) begin
                 end
             end
             STATE_WAIT_FOR_CODE_DATA_READY: begin
-                if (i_code_ready) begin
+                if (i_code_ready && (bytes_index == 2'h3)) begin
                     state <= STATE_WAIT_FOR_IP_VALID;
                 end else begin
                     state <= STATE_WAIT_FOR_CODE_DATA_READY;

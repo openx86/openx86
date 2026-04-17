@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements chip_at24lc32_eeprom.
+*/
 // ============================================================================
 // AT24LC32 / 24LC32 I2C EEPROM (32 Kbit = 4096 x 8) — behavioral model
 //

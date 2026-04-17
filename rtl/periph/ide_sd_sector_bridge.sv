@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements ide_sd_sector_bridge.
+*/
 // ============================================================================
 // IDE 异步扇区缓冲 ↔ SD 原生主机
 // ============================================================================
@@ -22,8 +28,7 @@ module ide_sd_sector_bridge (
     logic [7:0] sector_ram[0:511];
     logic       sd_run;
     logic       req_d;
-    logic       done_d;
-    logic       pulse_ready;
+    logic       ready_latched;
     logic       pending_start;
 
     always_ff @(posedge i_clock or posedge i_reset) begin
@@ -70,21 +75,16 @@ module ide_sd_sector_bridge (
 
     always_ff @(posedge i_clock or posedge i_reset) begin
         if (i_reset)
-            done_d <= 1'b0;
-        else
-            done_d <= i_sd_done;
+            ready_latched <= 1'b0;
+        else begin
+            if (req_on)
+                ready_latched <= 1'b0;
+            else if (sd_run && i_sd_done)
+                ready_latched <= 1'b1;
+        end
     end
 
-    wire done_rise = i_sd_done && !done_d;
-
-    always_ff @(posedge i_clock or posedge i_reset) begin
-        if (i_reset)
-            pulse_ready <= 1'b0;
-        else
-            pulse_ready <= done_rise && !i_sd_err;
-    end
-
-    assign o_ide_sector_ready = pulse_ready;
+    assign o_ide_sector_ready = ready_latched;
 
     integer bi;
     always_ff @(posedge i_clock or posedge i_reset) begin

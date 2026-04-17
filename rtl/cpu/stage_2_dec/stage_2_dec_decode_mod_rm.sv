@@ -1,4 +1,10 @@
 /*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_2_dec_decode_mod_rm.
+*/
+/*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
@@ -113,11 +119,11 @@ wire mod_10_SS_16_bit = mod_10 & (rm_010 | rm_011 | rm_110);
 
 wire mod_00_DS_32_bit = mod_00;
 wire mod_01_DS_32_bit = mod_01 & ~rm_101;
-wire mod_10_DS_32_bit = mod_01 & ~rm_101;
+wire mod_10_DS_32_bit = mod_10 & ~rm_101;
 
-wire mod_00_SS_32_bit = mod_00;
+wire mod_00_SS_32_bit = 1'b0;
 wire mod_01_SS_32_bit = mod_01 & rm_101;
-wire mod_10_SS_32_bit = mod_01 & rm_101;
+wire mod_10_SS_32_bit = mod_10 & rm_101;
 
 wire DS_16_bit = mod_00_DS_16_bit | mod_01_DS_16_bit | mod_10_DS_16_bit;
 wire SS_16_bit = mod_00_SS_16_bit | mod_01_SS_16_bit | mod_10_SS_16_bit;
@@ -166,16 +172,16 @@ assign o_base_reg_is_present = base_reg_size_16 | base_reg_size_32;
 
 
 // index register
-wire index_mod_xx__SI = ~mod_11 & (rm_000 | rm_010 | rm_100);
-wire index_mod_xx__DI = ~mod_11 & (rm_001 | rm_011 | rm_101);
-wire index_mod_xx_EAX = ~mod_11 & rm_000;
-wire index_mod_xx_ECX = ~mod_11 & rm_001;
-wire index_mod_xx_EDX = ~mod_11 & rm_010;
-wire index_mod_xx_EBX = ~mod_11 & rm_011;
+wire index_mod_xx__SI = default_operation_size_16 & ~mod_11 & (rm_000 | rm_010 | rm_100);
+wire index_mod_xx__DI = default_operation_size_16 & ~mod_11 & (rm_001 | rm_011 | rm_101);
+wire index_mod_xx_EAX = default_operation_size_32 & ~mod_11 & rm_000;
+wire index_mod_xx_ECX = default_operation_size_32 & ~mod_11 & rm_001;
+wire index_mod_xx_EDX = default_operation_size_32 & ~mod_11 & rm_010;
+wire index_mod_xx_EBX = default_operation_size_32 & ~mod_11 & rm_011;
 wire index_mod_xx_ESP = 0;
-wire index_mod_xx_EBP = (mod_01 | mod_10) & rm_101;
-wire index_mod_xx_ESI = ~mod_11 & rm_110;
-wire index_mod_xx_EDI = ~mod_11 & rm_111;
+wire index_mod_xx_EBP = default_operation_size_32 & (mod_01 | mod_10) & rm_101;
+wire index_mod_xx_ESI = default_operation_size_32 & ~mod_11 & rm_110;
+wire index_mod_xx_EDI = default_operation_size_32 & ~mod_11 & rm_111;
 
 always_comb begin
     unique case (1'b1)
@@ -210,7 +216,7 @@ assign o_index_reg_is_present = index_reg_size_16 | index_reg_size_32;
 // displacement_length
 assign o_displacement_size_8  = mod_01;
 assign o_displacement_size_16 = default_operation_size_16 & ((mod_00 & rm_110) | mod_10);
-assign o_displacement_size_32 = default_operation_size_32 & ((mod_00 & rm_110) | mod_10);
+assign o_displacement_size_32 = default_operation_size_32 & ((mod_00 & rm_101) | mod_10);
 assign o_displacement_is_present = o_displacement_size_8 | o_displacement_size_16 | o_displacement_size_32;
 
 // always_comb begin

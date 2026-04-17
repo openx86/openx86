@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements ps2_host_phy.
+*/
 // ============================================================================
 // PS/2 主机侧物理层（单端口）
 // 路径: rtl/periph — 由 rtl/chipset/chip_i8042_ps2 例化

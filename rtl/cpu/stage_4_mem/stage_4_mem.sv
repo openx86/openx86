@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_4_mem.
+*/
 // ============================================================================
 // stage_4_mem
 // ----------------------------------------------------------------------------
@@ -25,7 +31,7 @@ module stage_4_mem (
     input  logic        i_mem_ready
 );
 
-    am_access_memory u_am_access_memory (
+    stage_4_mem_access_memory u_am_access_memory (
         .clk         ( clk ),
         .rst         ( rst ),
         .i_start     ( i_start ),

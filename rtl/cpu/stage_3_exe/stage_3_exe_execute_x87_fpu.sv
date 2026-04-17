@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_execute_x87_fpu.
+*/
 // ============================================================================
 // X87 FPU 子集（栈式寄存器 ST0–ST7）
 // 数值为 64 位有符号整数路径（可综合）；后续可替换为 IEEE754 软浮点

@@ -1,4 +1,10 @@
 /*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_1_isc_mmu_seg_segment_descriptor_encode.
+*/
+/*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
@@ -61,7 +67,7 @@ assign descriptor = {
     data_expansion_direction_code_conforming,
     data_writeable_code_readable,
     date_or_code_accessed,
-    base[23:16],
+    base[23:16]
 };
 
 endmodule

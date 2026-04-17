@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_1_isc.
+*/
 // ============================================================================
 // stage_1_isc
 // ----------------------------------------------------------------------------
@@ -32,7 +38,7 @@ module stage_1_isc (
     input  logic        reset
 );
 
-    if_instruction_fetch u_if_instruction_fetch (
+    stage_1_isc_if_instruction_fetch u_if_instruction_fetch (
         .o_code_vaild              ( o_code_vaild ),
         .i_code_ready              ( i_code_ready ),
         .o_code_address            ( o_code_address ),

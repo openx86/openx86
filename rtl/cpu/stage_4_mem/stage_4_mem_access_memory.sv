@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_4_mem_access_memory.
+*/
 module stage_4_mem_access_memory (
     input  logic        clk,
     input  logic        rst,

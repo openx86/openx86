@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements sd_4bit_phy.
+*/
 // ============================================================================
 // SD 原生总线焊盘 — 主机侧驱动/采样（卡端接外部上拉与 SD 器件）
 // ============================================================================

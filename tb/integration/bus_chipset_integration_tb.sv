@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements bus_chipset_integration_tb.
+*/
 // ============================================================================
 // bus + chipset 集成读冒烟（I/O 0x0080 DMA 页寄存器）
 // ============================================================================

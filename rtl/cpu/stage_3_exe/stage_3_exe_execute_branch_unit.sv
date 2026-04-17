@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_execute_branch_unit.
+*/
 // ============================================================================
 // Branch Unit — 近分支相对位移与 Jcc 条件判定（386 子集）
 // ============================================================================

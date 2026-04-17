@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements ps2_host_phy_tb.
+*/
 // ============================================================================
 // ps2_host_phy testbench
 // - 设备→主机：空闲时直接驱动 DUT 输入（模拟设备位带）

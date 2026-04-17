@@ -1,6 +1,12 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements disk_ram_8_tb.
+*/
 // ============================================================================
-// disk_ram_8 + chip_ata_ide（外部盘）读 LBA0
-// 文件名匹配 test_all_modules.sh 自动加入 disk_ram_8.sv
+// sd_disk_ram_8 + chip_ata_ide（外部盘）读 LBA0
+// 文件名匹配 test_all_modules.sh 自动加入 sd_disk_ram_8.sv
 // ============================================================================
 `timescale 1ns/1ps
 
@@ -22,7 +28,7 @@ module disk_ram_8_tb;
 
     always #5 clock = ~clock;
 
-    disk_ram_8 #(.BYTE_DEPTH(512 * 16)) u_disk (
+    sd_disk_ram_8 #(.BYTE_DEPTH(512 * 16)) u_disk (
         .i_clock   ( clock ),
         .i_reset   ( reset ),
         .i_we      ( 1'b0 ),
@@ -99,7 +105,7 @@ module disk_ram_8_tb;
         if (rb !== 8'hA5)
             $display("FAIL disk_ram+ide expect A5 got %h", rb);
         else
-            $display("PASS disk_ram_8_tb");
+            $display("PASS sd_sd_disk_ram_8_tb");
         $finish;
     end
 

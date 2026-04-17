@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_ari_execute_arithmetic_sbb.
+*/
 // ============================================================================
 // stage_3_exe_ari_execute_arithmetic_sbb — 带借位减法（SBB）
 // ----------------------------------------------------------------------------

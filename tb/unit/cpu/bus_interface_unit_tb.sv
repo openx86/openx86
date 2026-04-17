@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements bus_interface_unit_tb.
+*/
 `timescale 1ns/1ns
 module bus_interface_unit_tb #(
     // parameters
@@ -128,7 +134,7 @@ initial begin
 
     #(clock_period * 4);
 
-    $stop();
+    $finish;
 end
 
 stage_4_mem_bus_interface_unit tb_bus_interface_unit (

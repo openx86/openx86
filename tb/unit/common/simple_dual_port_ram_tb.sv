@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements simple_dual_port_ram_tb.
+*/
 // project: openx86
 // module: simple_dual_port_ram_tb
 // description: test simple_dual_port_ram module
@@ -218,7 +224,7 @@ module simple_dual_port_ram_tb;
 
         $display("\n=== 简单双口RAM测试完成 ===");
         #100;
-        $stop();
+        $finish;
     end
 
 endmodule

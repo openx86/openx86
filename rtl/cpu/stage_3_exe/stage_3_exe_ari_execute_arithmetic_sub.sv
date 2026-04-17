@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_ari_execute_arithmetic_sub.
+*/
 // ============================================================================
 // stage_3_exe_ari_execute_arithmetic_sub — 普通减法（SUB）
 // ----------------------------------------------------------------------------

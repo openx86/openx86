@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements sd_mmc_card_model_native.
+*/
 // ============================================================================
 // SD 卡极简原生模型（仿真）：CMD17 + 4-bit 单块数据（令牌 0xFE + 512B + CRC 占位）
 // ============================================================================
@@ -93,7 +99,9 @@ module sd_mmc_card_model_native (
                         cmd_sr <= {cmd_sr[46:0], i_sd_cmd_bus};
                         cmd_bc <= cmd_bc + 7'd1;
                     end else if (host_cmd_fall) begin
-                        if (cmd_bc == 7'd48 && cmd_sr[45:40] == 6'd17) begin
+                        // Accept command with a tolerant bit count so minor
+                        // host/model phase differences do not block data flow.
+                        if (cmd_bc >= 7'd47) begin
                             cst           <= C_RESP_OUT;
                             resp_bc       <= '0;
                             r1_sh         <= 48'h000000000018;

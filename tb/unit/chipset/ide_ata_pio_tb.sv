@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements ide_ata_pio_tb.
+*/
 // ============================================================================
 // TB: chip_ata_ide（ISA 并行口）
 // ============================================================================

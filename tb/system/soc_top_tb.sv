@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements soc_top_tb.
+*/
 // ============================================================================
 // openx86_soc_top smoke test — 复位后运行固定周期（w686_cpu + bus_controller + SDRAM 窗口）
 // ============================================================================
@@ -14,6 +20,7 @@ module soc_top_tb;
     wire  [15:0] sdram_dq;
     wire         io_sdio_cmd;
     wire  [3:0]  io_sdio_dat;
+    int          c;
 
     openx86_soc_top #(
         .USE_SDIO_DISK ( 1'b0 )
@@ -135,7 +142,7 @@ module soc_top_tb;
         #25;
         reset_n = 1'b1;
 
-        int c = 0;
+        c = 0;
         while (c < 5000) begin
             @(posedge clock);
             c++;

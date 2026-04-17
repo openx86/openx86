@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This package defines shared declarations for chip_pkg.
+*/
 // ============================================================================
 // IBM PC/AT 典型 I/O 端口常量（与 rtl/bus_controller.sv 译码一致）
 // 首版为寄存器级模型，非全部硬件周期精确。

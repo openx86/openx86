@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements eu_rot_rcl_tb.
+*/
 `timescale 1ns/1ns
 
 module eu_rot_rcl_tb;

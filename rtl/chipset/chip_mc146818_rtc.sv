@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements chip_mc146818_rtc.
+*/
 // ============================================================================
 // MC146818 兼容 RTC/CMOS（IBM PC/AT 语义）
 // 0x70: 索引低 7 位；bit7 = NMI 屏蔽（仅存储，不参与寻址）

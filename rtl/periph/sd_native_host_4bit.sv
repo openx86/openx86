@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements sd_native_host_4bit.
+*/
 // ============================================================================
 // SD/MMC 原生 4-bit 单块读主机（与 sd_mmc_card_model_native 配对仿真）
 // sd_clk = i_clock 二分频；CMD 在下降沿改变、上升沿采样；DAT 上升沿采样 4-bit

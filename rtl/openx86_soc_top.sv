@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements openx86_soc_top.
+*/
 // ============================================================================
 // Minimal SoC: w686_cpu 仅接 bus_controller；SDRAM/ROM/VGA/chipset 均由总线控制器译码后驱动
 // ============================================================================

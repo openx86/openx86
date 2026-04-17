@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This SystemVerilog source file provides shared definitions for openx86.
+*/
 `ifndef OPENX86_DEFS_SVH
 `define OPENX86_DEFS_SVH
 
@@ -19,6 +25,7 @@
 `define cpuid_logical_processors_count 8'b0
 `define cpuid_local_APIC_id 8'b0
 
+`define cpuid_feature_fpu           1'b0
 `define cpuid_feature_vme            1'b0
 `define cpuid_feature_de             1'b0
 `define cpuid_feature_pse            1'b0

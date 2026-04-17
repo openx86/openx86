@@ -1,3 +1,9 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements stage_3_exe_misc_cmpxchg.
+*/
 module stage_3_exe_misc_cmpxchg (
     input  logic [31:0] acc,
     input  logic [31:0] dst,
