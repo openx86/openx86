@@ -10,7 +10,7 @@ module eu_misc_flag_status_tb;
     import stage_3_exe_execute_unit_pkg::*;
 
     logic [31: 0] flags_in;
-    logic [ 5:0] op;
+    logic [ 5: 0] op;
     logic [31: 0] flags_out;
 
     stage_3_exe_misc_flag_status u_dut (

@@ -8,7 +8,7 @@ description: This module implements eu_misc_movzx_tb.
 
 module eu_misc_movzx_tb;
     logic [31: 0] a;
-    logic [ 1:0] width;
+    logic [ 1: 0] width;
     logic [31: 0] y;
 
     stage_3_exe_misc_movzx u_dut (

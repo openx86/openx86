@@ -8,18 +8,18 @@ description: This module implements wb_write_back_unit_tb.
 
 module wb_write_back_unit_tb;
     logic        i_gpr_write_enable;
-    logic [ 2:0] i_gpr_write_index;
+    logic [ 2: 0] i_gpr_write_index;
     logic [31: 0] i_gpr_write_data;
     logic        o_gpr_write_enable;
-    logic [ 2:0] o_gpr_write_index;
+    logic [ 2: 0] o_gpr_write_index;
     logic [31: 0] o_gpr_write_data;
 
     logic        i_sreg_write_enable;
-    logic [ 2:0] i_sreg_write_index;
+    logic [ 2: 0] i_sreg_write_index;
     logic [15: 0] i_sreg_write_selector;
     logic [63: 0] i_sreg_write_descriptor;
     logic        o_sreg_write_enable;
-    logic [ 2:0] o_sreg_write_index;
+    logic [ 2: 0] o_sreg_write_index;
     logic [15: 0] o_sreg_write_selector;
     logic [63: 0] o_sreg_write_descriptor;
 
@@ -34,24 +34,24 @@ module wb_write_back_unit_tb;
     logic [31: 0] o_ip_write_data;
 
     logic        i_cr_write_enable;
-    logic [ 2:0] i_cr_write_index;
+    logic [ 2: 0] i_cr_write_index;
     logic [31: 0] i_cr_write_data;
     logic        o_cr_write_enable;
-    logic [ 2:0] o_cr_write_index;
+    logic [ 2: 0] o_cr_write_index;
     logic [31: 0] o_cr_write_data;
 
     logic        i_dr_write_enable;
-    logic [ 2:0] i_dr_write_index;
+    logic [ 2: 0] i_dr_write_index;
     logic [31: 0] i_dr_write_data;
     logic        o_dr_write_enable;
-    logic [ 2:0] o_dr_write_index;
+    logic [ 2: 0] o_dr_write_index;
     logic [31: 0] o_dr_write_data;
 
     logic        i_tr_write_enable;
-    logic [ 2:0] i_tr_write_index;
+    logic [ 2: 0] i_tr_write_index;
     logic [31: 0] i_tr_write_data;
     logic        o_tr_write_enable;
-    logic [ 2:0] o_tr_write_index;
+    logic [ 2: 0] o_tr_write_index;
     logic [31: 0] o_tr_write_data;
 
     logic        i_mem_valid;

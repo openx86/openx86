@@ -8,7 +8,7 @@ description: This module implements eu_misc_setcc_tb.
 
 module eu_misc_setcc_tb;
     logic [31: 0] flags;
-    logic [ 3:0] tttn;
+    logic [ 3: 0] tttn;
     logic [31: 0] y;
 
     stage_3_exe_misc_setcc u_dut (

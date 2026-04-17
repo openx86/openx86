@@ -15,20 +15,20 @@ module instruction_fetch_tb (
     // ports
 );
 
-logic        bus_read_vaild;
-logic        bus_read_ready;
+logic         bus_read_vaild;
+logic         bus_read_ready;
 logic [31: 0] bus_read_address;
 logic [31: 0] bus_read_data;
 logic [31: 0] program_counter;
-logic        program_counter_valid;
-logic [ 7:0] instruction [ 0:  9];
-logic [ 7:0] instruction_full [ 0: 15];
-logic        instruction_ready;
-logic        clock, reset_n;
+logic         program_counter_valid;
+logic [ 7: 0] instruction [ 0:  9];
+logic [ 7: 0] instruction_full [ 0: 15];
+logic         instruction_ready;
+logic         clock, reset_n;
 logic [15: 0] segment_selector [ 0:  5];
 logic [63: 0] segment_descriptor [ 0:  5];
-logic        segment_fault_unused;
-logic        mmu_bus_valid_unused;
+logic         segment_fault_unused;
+logic         mmu_bus_valid_unused;
 logic [31: 0] mmu_bus_addr_unused;
 
 stage_1_isc fetch_inst (

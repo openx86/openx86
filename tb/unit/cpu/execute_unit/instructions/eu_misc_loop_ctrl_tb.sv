@@ -9,7 +9,7 @@ description: This module implements eu_misc_loop_ctrl_tb.
 module eu_misc_loop_ctrl_tb;
     logic [31: 0] ecx;
     logic        zf;
-    logic [ 1:0] mode;
+    logic [ 1: 0] mode;
     logic [31: 0] ecx_next;
     logic        taken;
 
