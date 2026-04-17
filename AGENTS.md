@@ -5,7 +5,7 @@
 - These rules apply to all testbench files under `tb/**/*.sv`.
 - Files under `rtl/` MUST be synthesizable SystemVerilog.
 
-## File Header Comment Rules (Mandatory)
+## File Header Comment Rules
 - Every `*.sv` file MUST start with the following header comment block at the top of the file.
 - `description` MUST be filled with a concise module/function description.
 
@@ -20,7 +20,7 @@ description: {desc_text}
 */
 ```
 
-## 1) Port List Rules (Mandatory)
+## 1) Port List Rules
 - All module ports MUST use `logic` type.
 - Direction prefixes are mandatory:
   - `input`  -> `i_`
@@ -50,12 +50,12 @@ module example_module (
 );
 ```
 
-## 2) Signal Type Rules (Mandatory)
+## 2) Signal Type Rules
 - Use `logic` for all internal signals.
 - Do NOT use `wire` or `reg` in project RTL/TB coding style.
 - Use `typedef enum logic [...]` for FSM states.
 
-## 3) Synthesizability Rules for rtl/**/*.sv (Mandatory)
+## 3) Synthesizability Rules for rtl/**/*.sv
 - RTL under `rtl/` MUST be synthesizable.
 - Prohibited in `rtl/`:
   - `initial` blocks for design behavior (except vendor-safe ROM init wrappers with review).
@@ -83,6 +83,13 @@ module example_module (
 - Shared constants/types SHOULD be placed under `rtl/common/` or `@include/`.
 - Use explicit package/include dependencies; avoid hidden compile order coupling.
 
+## Device/Peripheral Integration Rules
+- Modules under `rtl/device/` MUST be controllers that can be attached to the X86 CPU bus (directly or through `bus_controller`).
+- New bus-visible functionality MUST be added in `rtl/device/` as a controller, with clear bus-side interface and address decode integration.
+- Modules under `rtl/peripheral/` are external/peripheral logic only (PHY/protocol/device-side), and MUST NOT be directly mapped onto the X86 CPU bus.
+- Every peripheral in `rtl/peripheral/` MUST be accessed through a controller in `rtl/device/` before reaching the CPU bus.
+- `rtl/bus_controller.sv` (or the designated top-level bus integration module) is the only place to expose device controllers to the CPU bus address space.
+
 ## 6) Naming and Style Conventions
 - Parameters: `P_*`
 - Localparams: `LP_*`
@@ -103,12 +110,12 @@ module example_module (
 - Multi-bit CDC: handshake/FIFO/gray-code scheme.
 - Do not sample async external inputs directly into deep logic.
 
-## 9) Testbench Mapping Rules (Mandatory)
+## 9) Testbench Mapping Rules
 - Testbench files MUST be placed under `tb/`.
 - `tb/` hierarchy and filenames MUST map 1:1 to `rtl/` modules.
   - Example mapping:
-    - RTL: `rtl/periph/sd/sd_native_host_4bit.sv`
-    - TB:  `tb/periph/sd/sd_native_host_4bit_tb.sv`
+    - RTL: `rtl/peripheral/sd/sd_native_host_4bit.sv`
+    - TB:  `tb/peripheral/sd/sd_native_host_4bit_tb.sv`
 - Each synthesizable RTL module SHOULD have at least one dedicated testbench.
 - Testbench code may use non-synthesizable constructs, but only under `tb/`.
 
@@ -128,5 +135,7 @@ module example_module (
 - [ ] Width formatting is `[31: 0]` style with aligned columns.
 - [ ] All ports/signals use `logic`.
 - [ ] `rtl/**/*.sv` content is synthesizable.
+- [ ] New CPU-bus-visible modules are implemented as controllers under `rtl/device/`.
+- [ ] `rtl/peripheral/` modules are connected through `rtl/device/` controllers, not directly CPU-bus mapped.
 - [ ] `tb/` path and testbench name match RTL module 1:1.
 - [ ] CDC/reset/FSM style follows project rules.
