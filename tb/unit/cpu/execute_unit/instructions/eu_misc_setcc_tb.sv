@@ -5,7 +5,7 @@ module eu_misc_setcc_tb;
     logic [ 3:0] tttn;
     logic [31:0] y;
 
-    stage_3_exe_eu_misc_setcc u_dut (
+    stage_3_exe_misc_setcc u_dut (
         .flags ( flags ),
         .tttn ( tttn ),
         .y ( y )
@@ -15,7 +15,7 @@ module eu_misc_setcc_tb;
         begin
             #1;
             if (y[0] !== expected) begin
-                $display("FAIL stage_3_exe_eu_misc_setcc %s", name);
+                $display("FAIL stage_3_exe_misc_setcc %s", name);
                 $finish(1);
             end
         end

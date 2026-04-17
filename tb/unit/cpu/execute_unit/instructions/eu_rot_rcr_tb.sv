@@ -7,7 +7,7 @@ module eu_rot_rcr_tb;
     logic [31:0] y;
     logic        cf_out;
 
-    stage_3_exe_eu_rot_rcr u_dut (
+    stage_3_exe_rot_rcr u_dut (
         .a ( a ),
         .count ( c ),
         .cf_in ( cf_in ),
@@ -21,7 +21,7 @@ module eu_rot_rcr_tb;
         cf_in = 1'b1;
         #1;
         if (y !== 32'h8000_0000 || cf_out !== 1'b1) begin
-            $display("FAIL stage_3_exe_eu_rot_rcr step1");
+            $display("FAIL stage_3_exe_rot_rcr step1");
             $finish(1);
         end
 
@@ -30,7 +30,7 @@ module eu_rot_rcr_tb;
         cf_in = 1'b0;
         #1;
         if (y !== 32'h4000_0000 || cf_out !== 1'b0) begin
-            $display("FAIL stage_3_exe_eu_rot_rcr step2");
+            $display("FAIL stage_3_exe_rot_rcr step2");
             $finish(1);
         end
 

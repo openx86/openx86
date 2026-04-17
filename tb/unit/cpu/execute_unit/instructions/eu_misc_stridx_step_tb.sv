@@ -5,7 +5,7 @@ module eu_misc_stridx_step_tb;
     logic        df;
     logic [31:0] y;
 
-    stage_3_exe_eu_misc_stridx_step u_dut (
+    stage_3_exe_misc_stridx_step u_dut (
         .idx ( idx ),
         .df ( df ),
         .y ( y )
@@ -14,7 +14,7 @@ module eu_misc_stridx_step_tb;
     task automatic check(input logic cond, input [127:0] name);
         begin
             if (!cond) begin
-                $display("FAIL stage_3_exe_eu_misc_stridx_step %s", name);
+                $display("FAIL stage_3_exe_misc_stridx_step %s", name);
                 $finish(1);
             end
         end

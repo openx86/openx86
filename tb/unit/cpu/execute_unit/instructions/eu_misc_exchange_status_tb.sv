@@ -20,31 +20,31 @@ module eu_misc_exchange_status_tb;
     logic [31:0] cmpxchg_y;
     logic        cmpxchg_zf;
 
-    stage_3_exe_eu_misc_lahf u_lahf (
+    stage_3_exe_misc_lahf u_lahf (
         .eax_in ( eax_in ),
         .flags_in ( flags_in ),
         .eax_out ( eax_out )
     );
 
-    stage_3_exe_eu_misc_sahf u_sahf (
+    stage_3_exe_misc_sahf u_sahf (
         .flags_in ( flags_in ),
         .eax_in ( eax_in ),
         .flags_out ( flags_out )
     );
 
-    stage_3_exe_eu_misc_xchg u_xchg (
+    stage_3_exe_misc_xchg u_xchg (
         .a ( xchg_a ),
         .b ( xchg_b ),
         .y ( xchg_y )
     );
 
-    stage_3_exe_eu_misc_xadd u_xadd (
+    stage_3_exe_misc_xadd u_xadd (
         .a ( xadd_a ),
         .b ( xadd_b ),
         .y ( xadd_y )
     );
 
-    stage_3_exe_eu_misc_cmpxchg u_cmpxchg (
+    stage_3_exe_misc_cmpxchg u_cmpxchg (
         .acc ( cmpxchg_acc ),
         .dst ( cmpxchg_dst ),
         .src ( cmpxchg_src ),
@@ -57,7 +57,7 @@ module eu_misc_exchange_status_tb;
         flags_in = 32'h0000_00D4;
         #1;
         if (eax_out !== 32'hA1B2_D5D4) begin
-            $display("FAIL stage_3_exe_eu_misc_lahf");
+            $display("FAIL stage_3_exe_misc_lahf");
             $finish(1);
         end
 
@@ -69,11 +69,11 @@ module eu_misc_exchange_status_tb;
             flags_out[4] !== eax_in[12] ||
             flags_out[2] !== eax_in[10] ||
             flags_out[0] !== eax_in[8]) begin
-            $display("FAIL stage_3_exe_eu_misc_sahf flag bits");
+            $display("FAIL stage_3_exe_misc_sahf flag bits");
             $finish(1);
         end
         if (flags_out[11] !== flags_in[11] || flags_out[1] !== flags_in[1]) begin
-            $display("FAIL stage_3_exe_eu_misc_sahf preserved bits");
+            $display("FAIL stage_3_exe_misc_sahf preserved bits");
             $finish(1);
         end
 
@@ -81,7 +81,7 @@ module eu_misc_exchange_status_tb;
         xchg_b = 32'hAABB_CCDD;
         #1;
         if (xchg_y !== 32'hAABB_CCDD) begin
-            $display("FAIL stage_3_exe_eu_misc_xchg");
+            $display("FAIL stage_3_exe_misc_xchg");
             $finish(1);
         end
 
@@ -89,7 +89,7 @@ module eu_misc_exchange_status_tb;
         xadd_b = 32'h0000_0002;
         #1;
         if (xadd_y !== 32'h0000_1236) begin
-            $display("FAIL stage_3_exe_eu_misc_xadd");
+            $display("FAIL stage_3_exe_misc_xadd");
             $finish(1);
         end
 
@@ -98,7 +98,7 @@ module eu_misc_exchange_status_tb;
         cmpxchg_src = 32'hAABB_CCDD;
         #1;
         if (cmpxchg_zf !== 1'b1 || cmpxchg_y !== 32'hAABB_CCDD) begin
-            $display("FAIL stage_3_exe_eu_misc_cmpxchg equal path");
+            $display("FAIL stage_3_exe_misc_cmpxchg equal path");
             $finish(1);
         end
 
@@ -107,7 +107,7 @@ module eu_misc_exchange_status_tb;
         cmpxchg_src = 32'hAABB_CCDD;
         #1;
         if (cmpxchg_zf !== 1'b0 || cmpxchg_y !== 32'h0000_1234) begin
-            $display("FAIL stage_3_exe_eu_misc_cmpxchg mismatch path");
+            $display("FAIL stage_3_exe_misc_cmpxchg mismatch path");
             $finish(1);
         end
 

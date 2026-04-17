@@ -17,26 +17,26 @@ module eu_misc_protected_ops_tb;
     logic [31:0] verr_selector;
     logic        verr_zf;
 
-    stage_3_exe_eu_misc_arpl u_arpl (
+    stage_3_exe_misc_arpl u_arpl (
         .dst ( arpl_dst ),
         .src ( arpl_src ),
         .y ( arpl_y ),
         .zf ( arpl_zf )
     );
 
-    stage_3_exe_eu_misc_lar u_lar (
+    stage_3_exe_misc_lar u_lar (
         .src ( lar_src ),
         .y ( lar_y ),
         .zf ( lar_zf )
     );
 
-    stage_3_exe_eu_misc_lsl u_lsl (
+    stage_3_exe_misc_lsl u_lsl (
         .src ( lsl_src ),
         .y ( lsl_y ),
         .zf ( lsl_zf )
     );
 
-    stage_3_exe_eu_misc_verr u_verr (
+    stage_3_exe_misc_verr u_verr (
         .selector ( verr_selector ),
         .zf ( verr_zf )
     );

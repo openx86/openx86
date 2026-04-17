@@ -6,7 +6,7 @@ module eu_bit_btr_tb;
     logic [31:0] y;
     logic        cf;
 
-    stage_3_exe_eu_bit_btr u_dut (
+    stage_3_exe_bit_btr u_dut (
         .a ( a ),
         .bit_index ( b ),
         .y ( y ),
@@ -18,14 +18,14 @@ module eu_bit_btr_tb;
         b = 32'd3;
         #1;
         if (cf !== 1'b1 || y !== 32'h0000_0000) begin
-            $display("FAIL stage_3_exe_eu_bit_btr clear");
+            $display("FAIL stage_3_exe_bit_btr clear");
             $finish(1);
         end
 
         a = y;
         #1;
         if (cf !== 1'b0 || y !== 32'h0000_0000) begin
-            $display("FAIL stage_3_exe_eu_bit_btr keep");
+            $display("FAIL stage_3_exe_bit_btr keep");
             $finish(1);
         end
 

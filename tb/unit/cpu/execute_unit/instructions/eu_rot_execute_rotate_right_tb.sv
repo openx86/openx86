@@ -3,7 +3,7 @@
 module eu_rot_execute_rotate_right_tb;
     logic [31:0] op, cnt, y;
 
-    stage_3_exe_eu_rot_execute_rotate_right u_dut (
+    stage_3_exe_rot_execute_rotate_right u_dut (
         .operand(op),
         .count(cnt),
         .result(y)

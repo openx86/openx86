@@ -60,7 +60,7 @@ package stage_3_exe_execute_unit_pkg;
         X87_FDIVR   = 5'd29
     } x87_op_e;
 
-    // Unified integer op selector used by stage_3_exe_eu_execute_unit dispatch.
+    // Unified integer op selector used by stage_3_exe_execute_unit dispatch.
     typedef enum logic [5:0] {
         INT_NOP = 6'd0,
         INT_ADD = 6'd1,

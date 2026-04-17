@@ -4,7 +4,7 @@ module eu_misc_cbw_tb;
     logic [31:0] a;
     logic [31:0] y;
 
-    stage_3_exe_eu_misc_cbw u_dut (
+    stage_3_exe_misc_cbw u_dut (
         .a ( a ),
         .y ( y )
     );
@@ -13,14 +13,14 @@ module eu_misc_cbw_tb;
         a = 32'h0000_8001;
         #1;
         if (y !== 32'hFFFF_8001) begin
-            $display("FAIL stage_3_exe_eu_misc_cbw sign");
+            $display("FAIL stage_3_exe_misc_cbw sign");
             $finish(1);
         end
 
         a = 32'h0000_7F01;
         #1;
         if (y !== 32'h0000_7F01) begin
-            $display("FAIL stage_3_exe_eu_misc_cbw positive");
+            $display("FAIL stage_3_exe_misc_cbw positive");
             $finish(1);
         end
 

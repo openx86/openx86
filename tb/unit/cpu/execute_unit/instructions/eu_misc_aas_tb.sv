@@ -7,7 +7,7 @@ module eu_misc_aas_tb;
     logic        af_out;
     logic        cf_out;
 
-    stage_3_exe_eu_misc_aas u_dut (
+    stage_3_exe_misc_aas u_dut (
         .a ( a ),
         .af_in ( af_in ),
         .y ( y ),
@@ -20,7 +20,7 @@ module eu_misc_aas_tb;
         af_in = 1'b0;
         #1;
         if ((y !== 32'h0000_0105) || (af_out !== 1'b1) || (cf_out !== 1'b1)) begin
-            $display("FAIL stage_3_exe_eu_misc_aas adjust");
+            $display("FAIL stage_3_exe_misc_aas adjust");
             $finish(1);
         end
 
@@ -28,7 +28,7 @@ module eu_misc_aas_tb;
         af_in = 1'b0;
         #1;
         if ((y !== 32'h0000_0209) || (af_out !== 1'b0) || (cf_out !== 1'b0)) begin
-            $display("FAIL stage_3_exe_eu_misc_aas no-adjust");
+            $display("FAIL stage_3_exe_misc_aas no-adjust");
             $finish(1);
         end
 
