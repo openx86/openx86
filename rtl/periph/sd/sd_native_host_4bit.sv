@@ -77,8 +77,8 @@ module sd_native_host_4bit (
     logic [ 8: 0]  byte_wr_addr;
     logic [ 1: 0]  crc_nib;
 
-    wire fall_sd = sd_clk_d & ~sd_clk_r;
-    wire rise_sd = ~sd_clk_d & sd_clk_r;
+    logic fall_sd = sd_clk_d & ~sd_clk_r;
+    logic rise_sd = ~sd_clk_d & sd_clk_r;
 
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n)

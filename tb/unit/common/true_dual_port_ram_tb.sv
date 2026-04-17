@@ -5,7 +5,6 @@ repo: https://github.com/openx86/openx86
 description: This module implements true_dual_port_ram_tb.
 */
 // project: openx86
-// module: true_dual_port_ram_tb
 // description: test true_dual_port_ram module
 
 `timescale 1ns/1ns

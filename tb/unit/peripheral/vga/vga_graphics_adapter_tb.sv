@@ -5,7 +5,6 @@ repo: https://github.com/openx86/openx86
 description: This module implements vga_graphics_adapter_tb.
 */
 // project: openx86
-// module: vga_graphics_adapter_tb
 // description: test vga_graphics_adapter (VGA Graphics Adapter)
 
 `timescale 1ns/1ns

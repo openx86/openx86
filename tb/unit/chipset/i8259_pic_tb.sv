@@ -19,10 +19,10 @@ module i8259_pic_tb;
     logic [ 7: 0]  ir;
     logic        intr;
 
-    wire hit   = (addr >= 16'h0020) && (addr <= 16'h0021);
-    wire cs_n  = !(valid && hit);
-    wire wr_n  = !(valid && we && hit);
-    wire rd_n  = !(valid && !we && hit);
+    logic hit   = (addr >= 16'h0020) && (addr <= 16'h0021);
+    logic cs_n  = !(valid && hit);
+    logic wr_n  = !(valid && we && hit);
+    logic rd_n  = !(valid && !we && hit);
 
     chip_8259_pic dut (
         .clock    ( clock ),

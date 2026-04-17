@@ -34,28 +34,28 @@ module stage_2_dec_decode_sib (
     output logic        o_effecitve_address_undefined
 );
 
-wire [ 1: 0] sib_7_6 = i_sib[ 7:  6];
-wire [ 2: 0] sib_5_3 = i_sib[ 5:  3];
-wire [ 2: 0] sib_2_0 = i_sib[ 2: 0];
+logic [ 1: 0] sib_7_6 = i_sib[ 7:  6];
+logic [ 2: 0] sib_5_3 = i_sib[ 5:  3];
+logic [ 2: 0] sib_2_0 = i_sib[ 2: 0];
 
-wire mod_00 = (i_mod == 2'b00);
-wire mod_01 = (i_mod == 2'b01);
-wire mod_10 = (i_mod == 2'b10);
-wire mod_11 = (i_mod == 2'b11);
+logic mod_00 = (i_mod == 2'b00);
+logic mod_01 = (i_mod == 2'b01);
+logic mod_10 = (i_mod == 2'b10);
+logic mod_11 = (i_mod == 2'b11);
 
-wire base_000 = (sib_2_0 == 3'b000);
-wire base_001 = (sib_2_0 == 3'b001);
-wire base_010 = (sib_2_0 == 3'b010);
-wire base_011 = (sib_2_0 == 3'b011);
-wire base_100 = (sib_2_0 == 3'b100);
-wire base_101 = (sib_2_0 == 3'b101);
-wire base_110 = (sib_2_0 == 3'b110);
-wire base_111 = (sib_2_0 == 3'b111);
+logic base_000 = (sib_2_0 == 3'b000);
+logic base_001 = (sib_2_0 == 3'b001);
+logic base_010 = (sib_2_0 == 3'b010);
+logic base_011 = (sib_2_0 == 3'b011);
+logic base_100 = (sib_2_0 == 3'b100);
+logic base_101 = (sib_2_0 == 3'b101);
+logic base_110 = (sib_2_0 == 3'b110);
+logic base_111 = (sib_2_0 == 3'b111);
 
-wire seg_SS_mod_00 = mod_00 & base_100;
-wire seg_SS_mod_01 = mod_01 & (base_100 | base_101);
-wire seg_SS_mod_10 = mod_10 & (base_100 | base_101);
-wire seg_SS_mod_xx = seg_SS_mod_00 | seg_SS_mod_01 | seg_SS_mod_10;
+logic seg_SS_mod_00 = mod_00 & base_100;
+logic seg_SS_mod_01 = mod_01 & (base_100 | base_101);
+logic seg_SS_mod_10 = mod_10 & (base_100 | base_101);
+logic seg_SS_mod_xx = seg_SS_mod_00 | seg_SS_mod_01 | seg_SS_mod_10;
 
 assign o_segment_reg_index = seg_SS_mod_xx ? `index_reg_seg__SS : `index_reg_seg__DS;
 
@@ -67,7 +67,6 @@ assign o_index_reg_is_present  = (o_index_reg_index != 3'b100);
 assign o_base_reg_is_present   = ~(mod_00 & base_101);
 
 // displacement
-// assign o_displacement_size__0 = mod_00 & ~base_101;
 assign o_displacement_size_1 = mod_01;
 assign o_displacement_size_4 = mod_10 | (mod_00 & base_101);
 

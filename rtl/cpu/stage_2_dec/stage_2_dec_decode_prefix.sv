@@ -33,12 +33,12 @@ module stage_2_dec_decode_prefix (
     output logic [ 2:0] o_segment_override_index
 );
 
-wire   segment_override_CS = i_instruction[ 7: 0] == 8'h2E;
-wire   segment_override_DS = i_instruction[ 7: 0] == 8'h36;
-wire   segment_override_ES = i_instruction[ 7: 0] == 8'h3E;
-wire   segment_override_FS = i_instruction[ 7: 0] == 8'h26;
-wire   segment_override_GS = i_instruction[ 7: 0] == 8'h64;
-wire   segment_override_SS = i_instruction[ 7: 0] == 8'h65;
+logic   segment_override_CS = i_instruction[ 7: 0] == 8'h2E;
+logic   segment_override_DS = i_instruction[ 7: 0] == 8'h36;
+logic   segment_override_ES = i_instruction[ 7: 0] == 8'h3E;
+logic   segment_override_FS = i_instruction[ 7: 0] == 8'h26;
+logic   segment_override_GS = i_instruction[ 7: 0] == 8'h64;
+logic   segment_override_SS = i_instruction[ 7: 0] == 8'h65;
 
 assign o_group_1_lock_bus              = i_instruction[ 7: 0] == 8'hF0;
 assign o_group_1_repeat_not_equal      = i_instruction[ 7: 0] == 8'hF2;

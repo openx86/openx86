@@ -16,7 +16,6 @@ description: This module implements stage_3_exe_ari_execute_arithmetic_mul.
 // ============================================================================
 
 module stage_3_exe_ari_execute_arithmetic_mul #(
-    // parameter
     BIT_WIDTH = 32
 ) (
     // ports

@@ -5,7 +5,6 @@ repo: https://github.com/openx86/openx86
 description: This module implements dual_port_rom_tb.
 */
 // project: openx86
-// module: dual_port_rom_tb
 // description: test dual_port_rom module
 
 `timescale 1ns/1ns

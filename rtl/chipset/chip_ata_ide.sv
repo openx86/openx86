@@ -52,10 +52,10 @@ module chip_ata_ide #(
     localparam logic [ 7: 0] ST_DRQ_F = 8'h08;
     localparam logic [ 7: 0] ST_BSY = 8'h80;
 
-    wire async_on = USE_ASYNC_DISK && !USE_INTERNAL_DISK_MEM;
+    logic async_on = USE_ASYNC_DISK && !USE_INTERNAL_DISK_MEM;
 
-    wire [31: 0] mem_bytes = SECTOR_BYTES * SECTOR_COUNT;
-    wire [31: 0] byte_addr  = mem_off * 32'(SECTOR_BYTES) + { 23'h0, buf_ptr };
+    logic [31: 0] mem_bytes = SECTOR_BYTES * SECTOR_COUNT;
+    logic [31: 0] byte_addr  = mem_off * 32'(SECTOR_BYTES) + { 23'h0, buf_ptr };
 
     assign o_disk_raddr = byte_addr;
 
@@ -63,8 +63,8 @@ module chip_ata_ide #(
     logic [ 7: 0] disk_mem [0:DM_DEPTH-1];
     logic [ 7: 0] disk_rdata_mux;
 
-    wire wr = !i_cs_n && !i_wr_n;
-    wire rd = !i_cs_n && !i_rd_n;
+    logic wr = !i_cs_n && !i_wr_n;
+    logic rd = !i_cs_n && !i_rd_n;
 
     always_comb begin
         if (USE_INTERNAL_DISK_MEM) begin

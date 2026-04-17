@@ -32,9 +32,9 @@ module stage_3_exe_execute_x87_fpu (
     logic        cf_r;
     logic [63: 0] swap_tmp;
 
-    wire [ 2: 0] p0 = top + 3'd0;
-    wire [ 2: 0] p1 = top + 3'd1;
-    wire [ 2: 0] px = top + i_st_src;
+    logic [ 2: 0] p0 = top + 3'd0;
+    logic [ 2: 0] p1 = top + 3'd1;
+    logic [ 2: 0] px = top + i_st_src;
 
     always_ff @(posedge clk) begin
         if (rst) begin

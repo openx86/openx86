@@ -19,10 +19,10 @@ module com_ns16550_tb;
     logic        rx_push;
     logic [ 7: 0]  rx_data;
 
-    wire com_hit = (io_addr >= 16'h03F8) && (io_addr <= 16'h03FF);
-    wire cs_n    = !(io_valid && com_hit);
-    wire wr_n    = !(io_valid && io_we && com_hit);
-    wire rd_n    = !(io_valid && !io_we && com_hit);
+    logic com_hit = (io_addr >= 16'h03F8) && (io_addr <= 16'h03FF);
+    logic cs_n    = !(io_valid && com_hit);
+    logic wr_n    = !(io_valid && io_we && com_hit);
+    logic rd_n    = !(io_valid && !io_we && com_hit);
 
     chip_ns16550_com dut (
         .clock    ( clock ),

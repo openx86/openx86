@@ -63,7 +63,7 @@ module sd_mmc_card_model_native (
             host_oe_d <= i_host_cmd_oe;
     end
 
-    wire host_cmd_fall = host_oe_d & ~i_host_cmd_oe;
+    logic host_cmd_fall = host_oe_d & ~i_host_cmd_oe;
 
     always_ff @(posedge i_sd_clk or negedge reset_n) begin
         if (~reset_n) begin

@@ -34,7 +34,7 @@ module stage_3_exe_ld_execute_load_segment (
     output logic        ready
 );
 
-wire is_code_segment_index = index_segment_register == `sreg_index_CS;
+logic is_code_segment_index = index_segment_register == `sreg_index_CS;
 
 logic [31: 0] encode_base;
 logic [19: 0] encode_limit;
@@ -49,22 +49,22 @@ logic        encode_data_expansion_direction_code_conforming;
 logic        encode_data_writeable_code_readable;
 logic        encode_date_or_code_accessed;
 
-wire [63: 0] encode_descriptor;
+logic [63: 0] encode_descriptor;
 
-wire [31: 0] decode_base;
-wire [19: 0] decode_limit;
-wire        decode_present;
-wire [ 1:0] decode_privilege_level;
-wire        decode_available_field;
-wire        decode_descriptor_type;
-wire        decode_date_or_code_granularity;
-wire        decode_date_or_code_default_operation_size;
-wire        decode_date_or_code_executable;
-wire        decode_data_expansion_direction;
-wire        decode_data_writeable;
-wire        decode_code_conforming;
-wire        decode_code_readable;
-wire        decode_date_or_code_accessed;
+logic [31: 0] decode_base;
+logic [19: 0] decode_limit;
+logic        decode_present;
+logic [ 1:0] decode_privilege_level;
+logic        decode_available_field;
+logic        decode_descriptor_type;
+logic        decode_date_or_code_granularity;
+logic        decode_date_or_code_default_operation_size;
+logic        decode_date_or_code_executable;
+logic        decode_data_expansion_direction;
+logic        decode_data_writeable;
+logic        decode_code_conforming;
+logic        decode_code_readable;
+logic        decode_date_or_code_accessed;
 
 stage_1_isc_mmu_seg_segment_descriptor_encode u_segment_descriptor_encode (
     .base                                     ( encode_base ),

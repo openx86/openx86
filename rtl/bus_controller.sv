@@ -21,7 +21,7 @@ description: This module implements bus_controller.
 // ----------------------------------------------------------------------------
 module bus_controller #(
     parameter bit  USE_REAL_PS2 = 1'b0,
-    parameter int PS2_CLK_HZ   = 50_000_000,
+    parameter int  PS2_CLK_HZ   = 50_000_000,
     parameter bit  USE_SDIO_DISK = 1'b0
 ) (
     // CPU 总线接口
@@ -30,39 +30,38 @@ module bus_controller #(
     output logic        o_bus_busy,
     input  logic        i_bus_write_enable,
     input  logic        i_bus_io_access,  // 1=I/O访问, 0=内存访问 (类似x86的M/IO#信号)
-,
-    input  logic [31: 0] i_bus_address,
-    output logic [31: 0] o_bus_data_read,
-    input  logic [31: 0] i_bus_data_write,
+    input  logic [31:0] i_bus_address,
+    output logic [31:0] o_bus_data_read,
+    input  logic [31:0] i_bus_data_write,
 
     // VGA 内存访问接口（VRAM窗口 0xA0000-0xBFFFF）
     // 注意：VGA VRAM 通常是只写的（从CPU角度），VGA控制器自己读取显示
     output logic        o_vga_mem_en_w,
-    output logic [19: 0] o_vga_mem_addr,
-    output logic [ 7: 0]  o_vga_mem_data_w,
+    output logic [19:0] o_vga_mem_addr,
+    output logic [7:0]  o_vga_mem_data_w,
 
     // VGA I/O 端口接口（0x03C0-0x03DF）
     output logic        o_vga_io_en_w,
     output logic        o_vga_io_en_r,
-    output logic [15: 0] o_vga_io_addr,
-    output logic [ 7: 0]  o_vga_io_data_w,
-    input  logic [ 7: 0]  i_vga_io_data_r,
+    output logic [15:0] o_vga_io_addr,
+    output logic [7:0]  o_vga_io_data_w,
+    input  logic [7:0]  i_vga_io_data_r,
 
     // BIOS ROM 接口（系统 BIOS 64KB）
     // 使用简单的ROM接口：addr, rdata
-    output logic [15: 0] o_bios_addr,
-    input  logic [31: 0] i_bios_rdata,
+    output logic [15:0] o_bios_addr,
+    input  logic [31:0] i_bios_rdata,
 
     // 扩展 BIOS ROM 接口（128KB）
-    output logic [16: 0] o_ext_bios_addr,
-    input  logic [31: 0] i_ext_bios_rdata,
+    output logic [16:0] o_ext_bios_addr,
+    input  logic [31:0] i_ext_bios_rdata,
 
     // SDRAM：640KB 常规内存 + 16MB 窗口（0x0100_0000）共用 sdram_controller
     output logic        o_sdram_en,
     output logic        o_sdram_we,
-    output logic [23: 0] o_sdram_addr_off,
-    output logic [31: 0] o_sdram_wdata,
-    input  logic [31: 0] i_sdram_rdata,
+    output logic [23:0] o_sdram_addr_off,
+    output logic [31:0] o_sdram_wdata,
+    input  logic [31:0] i_sdram_rdata,
     input  logic        i_sdram_ready,
     input  logic        i_sdram_busy,
 
@@ -85,9 +84,9 @@ module bus_controller #(
     output logic        o_sdio_cmd_o,
     output logic        o_sdio_cmd_oe,
     input  logic        i_sdio_cmd_i,
-    output logic [ 3: 0]  o_sdio_dat_o,
+    output logic [3:0]  o_sdio_dat_o,
     output logic        o_sdio_dat_oe,
-    input  logic [ 3: 0]  i_sdio_dat_i,
+    input  logic [3:0]  i_sdio_dat_i,
 
     // PIC 主片中断输出（接 CPU INTR）
     output logic        o_pic_intr,
@@ -218,9 +217,9 @@ assign is_chipset_io = is_other_io_access && (
 localparam int CHIP_DISK_IMAGE_BYTES = 512 * 2048;
 localparam int CHIP_DISK_SECTOR_CNT  = CHIP_DISK_IMAGE_BYTES / 512;
 
-wire [15: 0] chip_io_addr = i_bus_address[15: 0];
-wire        chip_io_vld  = is_chipset_io && i_bus_valid;
-wire        chip_io_we   = i_bus_write_enable;
+logic [15: 0] chip_io_addr = i_bus_address[15: 0];
+logic        chip_io_vld  = is_chipset_io && i_bus_valid;
+logic        chip_io_we   = i_bus_write_enable;
 
 logic [31: 0] chip_ide_disk_raddr;
 logic [ 7: 0]  chip_ide_disk_rdata_ram;
@@ -302,55 +301,55 @@ endgenerate
 
 logic [ 7: 0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
 
-wire hit_dma   = (chip_io_addr <= 16'h000F)
+logic hit_dma   = (chip_io_addr <= 16'h000F)
                | ((chip_io_addr >= 16'h0080) & (chip_io_addr <= 16'h008F))
                | ((chip_io_addr >= 16'h00C0) & (chip_io_addr <= 16'h00DF));
-wire hit_pic_m = (chip_io_addr >= 16'h0020) & (chip_io_addr <= 16'h0021);
-wire hit_pic_s = (chip_io_addr >= 16'h00A0) & (chip_io_addr <= 16'h00A1);
-wire hit_pit   = (chip_io_addr >= 16'h0040) & (chip_io_addr <= 16'h0043);
-wire hit_ps2   = (chip_io_addr == 16'h0060) | (chip_io_addr == 16'h0064);
-wire hit_rtc   = (chip_io_addr == 16'h0070) | (chip_io_addr == 16'h0071);
-wire hit_com   = (chip_io_addr >= 16'h03F8) & (chip_io_addr <= 16'h03FF);
-wire hit_lpt   = (chip_io_addr >= 16'h0378) & (chip_io_addr <= 16'h037F);
-wire hit_ide   = ((chip_io_addr >= 16'h01F0) & (chip_io_addr <= 16'h01F7)) | (chip_io_addr == 16'h03F6);
+logic hit_pic_m = (chip_io_addr >= 16'h0020) & (chip_io_addr <= 16'h0021);
+logic hit_pic_s = (chip_io_addr >= 16'h00A0) & (chip_io_addr <= 16'h00A1);
+logic hit_pit   = (chip_io_addr >= 16'h0040) & (chip_io_addr <= 16'h0043);
+logic hit_ps2   = (chip_io_addr == 16'h0060) | (chip_io_addr == 16'h0064);
+logic hit_rtc   = (chip_io_addr == 16'h0070) | (chip_io_addr == 16'h0071);
+logic hit_com   = (chip_io_addr >= 16'h03F8) & (chip_io_addr <= 16'h03FF);
+logic hit_lpt   = (chip_io_addr >= 16'h0378) & (chip_io_addr <= 16'h037F);
+logic hit_ide   = ((chip_io_addr >= 16'h01F0) & (chip_io_addr <= 16'h01F7)) | (chip_io_addr == 16'h03F6);
 
-wire vld = chip_io_vld;
+logic vld = chip_io_vld;
 
-wire cs_dma_n   = !(vld & hit_dma);
-wire rd_dma_n   = !(vld & !chip_io_we & hit_dma);
-wire wr_dma_n   = !(vld &  chip_io_we & hit_dma);
+logic cs_dma_n   = !(vld & hit_dma);
+logic rd_dma_n   = !(vld & !chip_io_we & hit_dma);
+logic wr_dma_n   = !(vld &  chip_io_we & hit_dma);
 
-wire cs_pic_m_n = !(vld & hit_pic_m);
-wire rd_pic_m_n = !(vld & !chip_io_we & hit_pic_m);
-wire wr_pic_m_n = !(vld &  chip_io_we & hit_pic_m);
+logic cs_pic_m_n = !(vld & hit_pic_m);
+logic rd_pic_m_n = !(vld & !chip_io_we & hit_pic_m);
+logic wr_pic_m_n = !(vld &  chip_io_we & hit_pic_m);
 
-wire cs_pic_s_n = !(vld & hit_pic_s);
-wire rd_pic_s_n = !(vld & !chip_io_we & hit_pic_s);
-wire wr_pic_s_n = !(vld &  chip_io_we & hit_pic_s);
+logic cs_pic_s_n = !(vld & hit_pic_s);
+logic rd_pic_s_n = !(vld & !chip_io_we & hit_pic_s);
+logic wr_pic_s_n = !(vld &  chip_io_we & hit_pic_s);
 
-wire cs_pit_n   = !(vld & hit_pit);
-wire rd_pit_n   = !(vld & !chip_io_we & hit_pit);
-wire wr_pit_n   = !(vld &  chip_io_we & hit_pit);
+logic cs_pit_n   = !(vld & hit_pit);
+logic rd_pit_n   = !(vld & !chip_io_we & hit_pit);
+logic wr_pit_n   = !(vld &  chip_io_we & hit_pit);
 
-wire cs_ps2_n   = !(vld & hit_ps2);
-wire rd_ps2_n   = !(vld & !chip_io_we & hit_ps2);
-wire wr_ps2_n   = !(vld &  chip_io_we & hit_ps2);
+logic cs_ps2_n   = !(vld & hit_ps2);
+logic rd_ps2_n   = !(vld & !chip_io_we & hit_ps2);
+logic wr_ps2_n   = !(vld &  chip_io_we & hit_ps2);
 
-wire cs_rtc_n   = !(vld & hit_rtc);
-wire rd_rtc_n   = !(vld & !chip_io_we & hit_rtc);
-wire wr_rtc_n   = !(vld &  chip_io_we & hit_rtc);
+logic cs_rtc_n   = !(vld & hit_rtc);
+logic rd_rtc_n   = !(vld & !chip_io_we & hit_rtc);
+logic wr_rtc_n   = !(vld &  chip_io_we & hit_rtc);
 
-wire cs_com_n   = !(vld & hit_com);
-wire rd_com_n   = !(vld & !chip_io_we & hit_com);
-wire wr_com_n   = !(vld &  chip_io_we & hit_com);
+logic cs_com_n   = !(vld & hit_com);
+logic rd_com_n   = !(vld & !chip_io_we & hit_com);
+logic wr_com_n   = !(vld &  chip_io_we & hit_com);
 
-wire cs_lpt_n   = !(vld & hit_lpt);
-wire rd_lpt_n   = !(vld & !chip_io_we & hit_lpt);
-wire wr_lpt_n   = !(vld &  chip_io_we & hit_lpt);
+logic cs_lpt_n   = !(vld & hit_lpt);
+logic rd_lpt_n   = !(vld & !chip_io_we & hit_lpt);
+logic wr_lpt_n   = !(vld &  chip_io_we & hit_lpt);
 
-wire cs_ide_n   = !(vld & hit_ide);
-wire rd_ide_n   = !(vld & !chip_io_we & hit_ide);
-wire wr_ide_n   = !(vld &  chip_io_we & hit_ide);
+logic cs_ide_n   = !(vld & hit_ide);
+logic rd_ide_n   = !(vld & !chip_io_we & hit_ide);
+logic wr_ide_n   = !(vld &  chip_io_we & hit_ide);
 
 logic       pit_out0;
 logic       intr_m, intr_s;
@@ -359,7 +358,7 @@ logic [ 7: 0] ir_m;
 logic       rtc_irq;
 logic       ps2_kbd_irq;
 logic       ps2_aux_irq;
-wire [ 7: 0] pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
+logic [ 7: 0] pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
 
 assign ir_m[0]    = pit_out0;
 assign ir_m[1]    = ps2_kbd_irq;

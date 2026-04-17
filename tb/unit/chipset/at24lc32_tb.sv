@@ -16,8 +16,8 @@ module at24lc32_tb;
     logic scl_drv;
     logic sda_drv;
     logic dut_sda_oe;
-    wire  scl = scl_drv;
-    wire  sda = sda_drv & (dut_sda_oe ? 1'b0 : 1'b1); // open-drain: slave only pulls low
+    logic  scl = scl_drv;
+    logic  sda = sda_drv & (dut_sda_oe ? 1'b0 : 1'b1); // open-drain: slave only pulls low
 
     localparam logic [ 6: 0] DEV_ADDR = 7'b1010_000; // A_PINS=000
 

@@ -5,7 +5,6 @@ repo: https://github.com/openx86/openx86
 description: This module implements vga_font_rom_tb.
 */
 // project: openx86
-// module: vga_font_rom_tb
 // description: test vga_font_rom module
 
 `timescale 1ns/1ns

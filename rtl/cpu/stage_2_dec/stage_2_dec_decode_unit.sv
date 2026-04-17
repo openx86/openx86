@@ -908,7 +908,6 @@ logic        sib_o_displacement_size_4;
 logic        sib_o_effecitve_address_undefined;
 assign sib_i_sib = i_instruction[offset_sib];
 assign sib_i_mod = mod_rm_i_mod;
-// always_comb begin
 //     unique case (offset_sib)
 //         4'h2: sib_i_sib <= i_instruction[2];
 //         4'h3: sib_i_sib <= i_instruction[3];
@@ -917,9 +916,7 @@ assign sib_i_mod = mod_rm_i_mod;
 //         4'h6: sib_i_sib <= i_instruction[6];
 //         4'h7: sib_i_sib <= i_instruction[7];
 //         4'h8: sib_i_sib <= i_instruction[8];
-//         default: sib_i_sib <= 8'bzzzz_zzzz;
 //     endcase
-// end
 stage_2_dec_decode_sib deocde_decode_sib (
     .i_sib ( sib_i_sib ),
     .i_mod ( sib_i_mod ),
@@ -958,7 +955,6 @@ logic [31: 0] disp_imm_o_displacement;
 logic [31: 0] disp_imm_o_immediate;
 logic [ 3:0] disp_imm_o_consume_bytes;
 logic        disp_imm_o_error;
-// assign disp_imm_i_instruction = i_instruction[offset_disp_imm:+7];
 assign disp_imm_i_instruction = '{
     i_instruction[offset_disp_imm + 0],
     i_instruction[offset_disp_imm + 1],

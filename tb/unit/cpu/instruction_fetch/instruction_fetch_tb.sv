@@ -7,7 +7,6 @@ description: This module implements instruction_fetch_tb.
 // project: w80386dx
 // author: Chang Wei<changwei1006@gmail.com>
 // repo: https://github.com/openx86/w80386dx
-// module: fetch_tb
 // create at: 2021-12-17 01:23:49
 // description: test fetch module
 
@@ -94,12 +93,8 @@ initial begin
     #2;
     reset = 0;
 
-    // bus_read_ready = 1;
-    // bus_read_data = 32'h0000_0001;
-    // bus_read_data = 32'h0001_1011;
 
     for(i=0;i<4;i=i+1) begin
-        // program_counter = 32'h0000_0000;
         program_counter = i;
         program_counter_valid = 1;
         $display("%t: test fetch instruction: program_counter=%h", $time, program_counter);
@@ -118,7 +113,6 @@ initial begin
         #32;
     end
 
-    // #8;
 
     #64;
 

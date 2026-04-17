@@ -46,8 +46,8 @@ module chip_i8042_ps2 #(
     input  logic        reset_n
 );
 
-    wire wr = !i_cs_n && !i_wr_n;
-    wire rd = !i_cs_n && !i_rd_n;
+    logic wr = !i_cs_n && !i_wr_n;
+    logic rd = !i_cs_n && !i_rd_n;
 
     localparam int KBD_D = 16;
     localparam int AUX_D = 16;
@@ -58,8 +58,8 @@ module chip_i8042_ps2 #(
     logic [ 3: 0] aux_wptr, aux_rptr, aux_count;
     logic       use_aux_out;
 
-    wire kbd_obf = (kbd_count != 4'h0);
-    wire aux_obf = (aux_count != 4'h0);
+    logic kbd_obf = (kbd_count != 4'h0);
+    logic aux_obf = (aux_count != 4'h0);
 
     logic kbd_if_en;
     logic aux_if_en;
@@ -93,15 +93,15 @@ module chip_i8042_ps2 #(
     logic [ 7: 0]  aux_tx_hold;
     logic        rd_data_port_d;
 
-    wire obf_stat = use_aux_out ? aux_obf : kbd_obf;
-    wire ibf_stat = kbd_tx_pending | aux_tx_pending;
-    wire [ 7: 0] kbd_head = kbd_fifo[kbd_rptr];
-    wire [ 7: 0] aux_head = aux_fifo[aux_rptr];
+    logic obf_stat = use_aux_out ? aux_obf : kbd_obf;
+    logic ibf_stat = kbd_tx_pending | aux_tx_pending;
+    logic [ 7: 0] kbd_head = kbd_fifo[kbd_rptr];
+    logic [ 7: 0] aux_head = aux_fifo[aux_rptr];
 
     assign o_kbd_irq = kbd_if_en && kbd_irq_en && kbd_obf;
     assign o_aux_irq = aux_if_en && aux_irq_en && aux_obf;
 
-    wire [ 7: 0] status_rd = {
+    logic [ 7: 0] status_rd = {
         1'b0,
         aux_obf,
         1'b0,

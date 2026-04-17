@@ -7,7 +7,6 @@ description: This module implements decode_tb.
 // project: w80386dx
 // author: Chang Wei<changwei1006@gmail.com>
 // repo: https://github.com/openx86/w80386dx
-// module: decode_tb
 // create at: 2021-12-23 01:23:14
 // description: test decode module
 
@@ -18,12 +17,11 @@ module decode_tb (
 );
 
 logic  [ 7: 0] instruction [ 0: 15];
-// logic        clock, reset_n;
 
 // interface_opcode opcode_interface_instance ();
 
-wire default_operand_size = `default_operation_size_32;
-wire [ 1: 0] dbg_modrm_mod;
+logic default_operand_size = `default_operation_size_32;
+logic [ 1: 0] dbg_modrm_mod;
 
 stage_2_dec_decode_unit decode_instance_in_testbench (
     .i_default_operand_size ( default_operand_size ),
@@ -31,7 +29,6 @@ stage_2_dec_decode_unit decode_instance_in_testbench (
     .o_dbg_modrm_mod ( dbg_modrm_mod )
 );
 
-// always #1 clock = ~clock;
 
 initial begin
     instruction[ 0: 15] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};

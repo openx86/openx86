@@ -134,9 +134,9 @@ module sdram_controller #(
     logic [22: 0] halfword_addr; // 16-bit addressed (byte_off >> 1)
     assign halfword_addr = i_addr_off[23:  1];
 
-    wire [12: 0] row  = halfword_addr[22: 10];
-    wire [ 1: 0]  bank = halfword_addr[ 9:  8];
-    wire [ 8: 0]  col  = {1'b0, halfword_addr[ 7: 0]}; // burst start col
+    logic [12: 0] row  = halfword_addr[22: 10];
+    logic [ 1: 0]  bank = halfword_addr[ 9:  8];
+    logic [ 8: 0]  col  = {1'b0, halfword_addr[ 7: 0]}; // burst start col
 
     // ------------------------------------------------------------------------
     // Mode register value: BL=2, burst sequential, CAS=CAS, write burst=programmed

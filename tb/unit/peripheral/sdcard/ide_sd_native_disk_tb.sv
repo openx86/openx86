@@ -17,10 +17,10 @@ module ide_sd_native_disk_tb;
     logic [15: 0] io_addr;
     logic [ 7: 0]  io_wdata, io_rdata;
 
-    wire ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
-    wire ide_cs_n = !(io_valid && ide_hit);
-    wire ide_wr_n = !(io_valid && io_we && ide_hit);
-    wire ide_rd_n = !(io_valid && !io_we && ide_hit);
+    logic ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
+    logic ide_cs_n = !(io_valid && ide_hit);
+    logic ide_wr_n = !(io_valid && io_we && ide_hit);
+    logic ide_rd_n = !(io_valid && !io_we && ide_hit);
 
     logic [31: 0] ide_raddr;
     logic        ide_sector_req;
@@ -34,9 +34,9 @@ module ide_sd_native_disk_tb;
     logic [ 8: 0]  sd_payload_addr;
     logic [ 7: 0]  sd_payload_data;
 
-    wire         sd_clk;
-    wire         sd_cmd;
-    wire [ 3: 0]   sd_dat;
+    logic         sd_clk;
+    logic         sd_cmd;
+    logic [ 3: 0]   sd_dat;
 
     logic        host_cmd_oe;
     logic        host_cmd_o;

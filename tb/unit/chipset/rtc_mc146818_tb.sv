@@ -22,10 +22,10 @@ module rtc_mc146818_tb;
     logic [ 7: 0]  io_rdata;
     logic        rtc_irq;
 
-    wire rtc_hit = (io_addr == 16'h0070) | (io_addr == 16'h0071);
-    wire cs_n    = !(io_valid && rtc_hit);
-    wire wr_n    = !(io_valid && io_we && rtc_hit);
-    wire rd_n    = !(io_valid && !io_we && rtc_hit);
+    logic rtc_hit = (io_addr == 16'h0070) | (io_addr == 16'h0071);
+    logic cs_n    = !(io_valid && rtc_hit);
+    logic wr_n    = !(io_valid && io_we && rtc_hit);
+    logic rd_n    = !(io_valid && !io_we && rtc_hit);
 
     always #1 clock = ~clock;
 

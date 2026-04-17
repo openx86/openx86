@@ -20,13 +20,13 @@ module i8237_dma_tb;
     logic [ 7: 0]  wdata;
     logic [ 7: 0]  rdata;
 
-    wire hit_lo   = (addr <= 16'h000F);
-    wire hit_page = (addr >= 16'h0080) && (addr <= 16'h008F);
-    wire hit_hi   = (addr >= 16'h00C0) && (addr <= 16'h00DF);
-    wire hit      = hit_lo | hit_page | hit_hi;
-    wire cs_n     = !(valid && hit);
-    wire wr_n     = !(valid && we && hit);
-    wire rd_n     = !(valid && !we && hit);
+    logic hit_lo   = (addr <= 16'h000F);
+    logic hit_page = (addr >= 16'h0080) && (addr <= 16'h008F);
+    logic hit_hi   = (addr >= 16'h00C0) && (addr <= 16'h00DF);
+    logic hit      = hit_lo | hit_page | hit_hi;
+    logic cs_n     = !(valid && hit);
+    logic wr_n     = !(valid && we && hit);
+    logic rd_n     = !(valid && !we && hit);
 
     chip_8237_dma dut (
         .clock    ( clock ),

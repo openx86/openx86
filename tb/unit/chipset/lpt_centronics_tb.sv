@@ -17,10 +17,10 @@ module lpt_centronics_tb;
     logic [15: 0] io_addr;
     logic [ 7: 0]  io_wdata, io_rdata;
 
-    wire lpt_hit = (io_addr >= 16'h0378) && (io_addr <= 16'h037F);
-    wire cs_n    = !(io_valid && lpt_hit);
-    wire wr_n    = !(io_valid && io_we && lpt_hit);
-    wire rd_n    = !(io_valid && !io_we && lpt_hit);
+    logic lpt_hit = (io_addr >= 16'h0378) && (io_addr <= 16'h037F);
+    logic cs_n    = !(io_valid && lpt_hit);
+    logic wr_n    = !(io_valid && io_we && lpt_hit);
+    logic rd_n    = !(io_valid && !io_we && lpt_hit);
 
     chip_centronics_lpt dut (
         .clock    ( clock ),

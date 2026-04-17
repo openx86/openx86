@@ -224,7 +224,7 @@ module w686_core (
     assign IDTR_write_enable   = 1'b0;
 
     // CPL = CS.RPL
-    wire [ 1: 0] current_privilege_level = segment_selector[`sreg_index_CS][ 1: 0];
+    logic [ 1: 0] current_privilege_level = segment_selector[`sreg_index_CS][ 1: 0];
 
     // --- Core-side memory request channels (BIU is instantiated in w686_cpu) ---
     logic        mmu_bus_vaild;
@@ -267,8 +267,8 @@ module w686_core (
     logic        instruction_ready;
     logic        if_segment_fault;
 
-    wire         exec_stall;
-    wire         ip_valid_to_fetch = ~exec_stall;
+    logic         exec_stall;
+    logic         ip_valid_to_fetch = ~exec_stall;
 
     stage_1_isc u_stage_1_isc (
         .o_code_vaild ( code_vaild ),
@@ -302,7 +302,7 @@ module w686_core (
     );
 
     // --- 80486：非 486 指令 → #UD（非法操作码）---
-    wire post486_illegal =
+    logic post486_illegal =
         o_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size |
         o_opcode_x86_RDMSR_read_from_model_specific_reg |
         o_opcode_x86_WRMSR_write_to_model_specific_register |
@@ -366,36 +366,36 @@ module w686_core (
     assign br_rel32 = o_immediate;
     assign br_rel8  = o_immediate[ 7: 0];
 
-    wire modrm_is_reg = ( o_dbg_modrm_mod == 2'b11 );
-    wire [ 2: 0] modrm_reg_field = instruction[1][ 5:  3];
-    wire [ 2: 0] modrm_rm_field  = instruction[1][ 2: 0];
-    wire modrm2_is_reg = ( instruction[2][ 7:  6] == 2'b11 );
-    wire [ 2: 0] modrm2_reg_field = instruction[2][ 5:  3];
-    wire [ 2: 0] modrm2_rm_field  = instruction[2][ 2: 0];
+    logic modrm_is_reg = ( o_dbg_modrm_mod == 2'b11 );
+    logic [ 2: 0] modrm_reg_field = instruction[1][ 5:  3];
+    logic [ 2: 0] modrm_rm_field  = instruction[1][ 2: 0];
+    logic modrm2_is_reg = ( instruction[2][ 7:  6] == 2'b11 );
+    logic [ 2: 0] modrm2_reg_field = instruction[2][ 5:  3];
+    logic [ 2: 0] modrm2_rm_field  = instruction[2][ 2: 0];
 
-    wire [31: 0] agu_base_w =
+    logic [31: 0] agu_base_w =
         o_base_reg_is_present ? GPR_read_32[o_base_reg_index] : 32'd0;
-    wire [31: 0] agu_index_w =
+    logic [31: 0] agu_index_w =
         o_index_reg_is_present ? GPR_read_32[o_index_reg_index] : 32'd0;
 
-    wire [31: 0] dseg_base_linear = {
+    logic [31: 0] dseg_base_linear = {
         descriptor_cache[o_segment_reg_index][31: 24],
         descriptor_cache[o_segment_reg_index][ 7: 0],
         descriptor_cache[o_segment_reg_index][63: 48]
     };
-    wire [31: 0] sseg_base_linear = {
+    logic [31: 0] sseg_base_linear = {
         descriptor_cache[`sreg_index_SS][31: 24],
         descriptor_cache[`sreg_index_SS][ 7: 0],
         descriptor_cache[`sreg_index_SS][63: 48]
     };
-    wire [31: 0] cseg_base_linear = {
+    logic [31: 0] cseg_base_linear = {
         descriptor_cache[`sreg_index_CS][31: 24],
         descriptor_cache[`sreg_index_CS][ 7: 0],
         descriptor_cache[`sreg_index_CS][63: 48]
     };
 
     logic [31: 0] eu_agu_ea;
-    wire [31: 0] lsu_linear_address = dseg_base_linear + eu_agu_ea;
+    logic [31: 0] lsu_linear_address = dseg_base_linear + eu_agu_ea;
 
     logic [ 2:0] eu_md_op;
     logic [31: 0] eu_md_lo;
@@ -1062,15 +1062,15 @@ module w686_core (
         endcase
     end
 
-    wire mov_ld_mem_e  = o_opcode_x86_MOV_reg_mem_to_reg & ~modrm_is_reg;
-    wire mov_st_mem_e  = o_opcode_x86_MOV_reg_to_reg_mem & ~modrm_is_reg;
-    wire mov_ld_acc_mem_e = o_opcode_x86_MOV_mem_to_acc;
-    wire mov_st_acc_mem_e = o_opcode_x86_MOV_acc_to_mem;
-    wire [31: 0] mov_moffs_linear = dseg_base_linear + o_displacement;
-    wire        lsu_is_store_w = mov_st_mem_e | mov_st_acc_mem_e;
-    wire [31: 0] lsu_addr_req_w = (mov_ld_acc_mem_e | mov_st_acc_mem_e) ? mov_moffs_linear : lsu_linear_address;
-    wire [31: 0] lsu_wdata_req_w = mov_st_acc_mem_e ? GPR_read_32[0] : GPR_read_32[modrm_reg_field];
-    wire am_lsu_start_w =
+    logic mov_ld_mem_e  = o_opcode_x86_MOV_reg_mem_to_reg & ~modrm_is_reg;
+    logic mov_st_mem_e  = o_opcode_x86_MOV_reg_to_reg_mem & ~modrm_is_reg;
+    logic mov_ld_acc_mem_e = o_opcode_x86_MOV_mem_to_acc;
+    logic mov_st_acc_mem_e = o_opcode_x86_MOV_acc_to_mem;
+    logic [31: 0] mov_moffs_linear = dseg_base_linear + o_displacement;
+    logic        lsu_is_store_w = mov_st_mem_e | mov_st_acc_mem_e;
+    logic [31: 0] lsu_addr_req_w = (mov_ld_acc_mem_e | mov_st_acc_mem_e) ? mov_moffs_linear : lsu_linear_address;
+    logic [31: 0] lsu_wdata_req_w = mov_st_acc_mem_e ? GPR_read_32[0] : GPR_read_32[modrm_reg_field];
+    logic am_lsu_start_w =
         insn_fire & ~cpuid_busy & ~in_exception & ~o_error & ~post486_illegal & ~if_segment_fault &
         ( mov_ld_mem_e | mov_st_mem_e | mov_ld_acc_mem_e | mov_st_acc_mem_e );
 
@@ -1238,7 +1238,7 @@ module w686_core (
         else
             lsu_done_d1 <= am_lsu_done;
     end
-    wire lsu_done_rise = am_lsu_done & ~lsu_done_d1;
+    logic lsu_done_rise = am_lsu_done & ~lsu_done_d1;
 
     always_ff @(posedge clock or negedge reset_n) begin
         if (!reset_n)
@@ -1272,12 +1272,12 @@ module w686_core (
     logic [ 7: 0] exception_vector;
     logic       in_exception;
 
-    wire [ 2: 0] cx_rm_idx  = instruction[2][ 2: 0];
-    wire [ 2: 0] cx_r_idx   = instruction[2][ 5:  3];
-    wire [ 2: 0] bswap_rd_n = instruction[1][ 2: 0];
-    wire [ 2: 0] short_reg_idx = instruction[0][ 2: 0];
-    wire [31: 0] eip_next_linear = EIP + { 28'h0, o_consume_bytes };
-    wire [31: 0] rel8_disp32 = { { 24{ o_immediate[7] } }, o_immediate[ 7: 0] };
+    logic [ 2: 0] cx_rm_idx  = instruction[2][ 2: 0];
+    logic [ 2: 0] cx_r_idx   = instruction[2][ 5:  3];
+    logic [ 2: 0] bswap_rd_n = instruction[1][ 2: 0];
+    logic [ 2: 0] short_reg_idx = instruction[0][ 2: 0];
+    logic [31: 0] eip_next_linear = EIP + { 28'h0, o_consume_bytes };
+    logic [31: 0] rel8_disp32 = { { 24{ o_immediate[7] } }, o_immediate[ 7: 0] };
 
     logic [31: 0] xadd_a;
     logic [31: 0] sh_tmp;

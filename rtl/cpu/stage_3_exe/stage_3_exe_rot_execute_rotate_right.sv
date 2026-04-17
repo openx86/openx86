@@ -14,7 +14,6 @@ description: This module implements stage_3_exe_rot_execute_rotate_right.
 // ============================================================================
 
 module stage_3_exe_rot_execute_rotate_right #(
-    // parameter
     BIT_WIDTH = 32
 ) (
     // ports
@@ -24,7 +23,7 @@ module stage_3_exe_rot_execute_rotate_right #(
 );
 
     localparam int ShW = (BIT_WIDTH <= 1) ? 1 : $clog2(BIT_WIDTH);
-    wire [ShW-1:0] sh = count[ShW-1:0];
+    logic [ShW-1:0] sh = count[ShW-1:0];
 
     assign result = (operand >> sh) | (operand << (BIT_WIDTH - sh));
 

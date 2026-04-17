@@ -24,15 +24,20 @@ description: This module implements chip_at24lc32_eeprom.
 // ============================================================================
 
 module chip_at24lc32_eeprom #(
-    parameter logic [ 2: 0] A_PINS = 3'b000,
-    parameter int         NUM_BYTES = 4096,
+    parameter logic [2:0] A_PINS     = 3'b000,
+    parameter int         NUM_BYTES  = 4096,
     parameter int         PAGE_BYTES = 32
 ) (
+    // ------------------------------------------------------------------------
+    // I2C bus pins
+    // ------------------------------------------------------------------------
     input  logic i_scl,
     input  logic i_sda,
+    output logic o_sda_oe, // 1 = drive low (0), 0 = release (Z)
 
-    output logic o_sda_oe,   // 1 = drive low (0), 0 = release (Z)
-,
+    // ------------------------------------------------------------------------
+    // Simulation clock / reset
+    // ------------------------------------------------------------------------
     input  logic clock,
     input  logic reset_n
 );
@@ -54,11 +59,11 @@ module chip_at24lc32_eeprom #(
         end
     end
 
-    wire scl_rise = (scl_q == 1'b0) && (i_scl == 1'b1);
-    wire scl_fall = (scl_q == 1'b1) && (i_scl == 1'b0);
+    logic scl_rise = (scl_q == 1'b0) && (i_scl == 1'b1);
+    logic scl_fall = (scl_q == 1'b1) && (i_scl == 1'b0);
 
-    wire start_cond = (sda_q == 1'b1) && (i_sda == 1'b0) && (i_scl == 1'b1);
-    wire stop_cond  = (sda_q == 1'b0) && (i_sda == 1'b1) && (i_scl == 1'b1);
+    logic start_cond = (sda_q == 1'b1) && (i_sda == 1'b0) && (i_scl == 1'b1);
+    logic stop_cond  = (sda_q == 1'b0) && (i_sda == 1'b1) && (i_scl == 1'b1);
 
     typedef enum logic [ 3: 0] {
         ST_IDLE,

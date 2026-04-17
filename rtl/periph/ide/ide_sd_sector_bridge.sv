@@ -38,9 +38,9 @@ module ide_sd_sector_bridge (
             req_d <= i_ide_sector_req;
     end
 
-    wire req_on = i_ide_sector_req && !req_d;
+    logic req_on = i_ide_sector_req && !req_d;
 
-    wire start_pulse = pending_start && !sd_run && !i_sd_busy;
+    logic start_pulse = pending_start && !sd_run && !i_sd_busy;
 
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n)

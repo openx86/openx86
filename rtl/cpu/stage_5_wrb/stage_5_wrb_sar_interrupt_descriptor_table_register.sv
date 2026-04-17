@@ -56,6 +56,5 @@ always_ff @(posedge clock or negedge reset_n) begin
 end
 
 // IDT cache
-// reg [63: 0] IDT_cache [8192];=
 
 endmodule

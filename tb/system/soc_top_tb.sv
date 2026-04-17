@@ -17,9 +17,9 @@ module soc_top_tb;
     logic [ 3: 0]  o_vga_r;
     logic [ 3: 0]  o_vga_g;
     logic [ 3: 0]  o_vga_b;
-    wire  [15: 0] sdram_dq;
-    wire         io_sdio_cmd;
-    wire  [ 3: 0]  io_sdio_dat;
+    logic  [15: 0] sdram_dq;
+    logic         io_sdio_cmd;
+    logic  [ 3: 0]  io_sdio_dat;
     int          c;
 
     openx86_soc_top #(

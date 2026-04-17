@@ -34,8 +34,8 @@ module chip_8254_pit (
     assign o_out1 = out1_r;
     assign o_out2 = out2_r;
 
-    wire wr = !i_cs_n && !i_wr_n;
-    wire rd = !i_cs_n && !i_rd_n;
+    logic wr = !i_cs_n && !i_wr_n;
+    logic rd = !i_cs_n && !i_rd_n;
 
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin

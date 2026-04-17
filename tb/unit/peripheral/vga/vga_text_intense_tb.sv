@@ -5,7 +5,6 @@ repo: https://github.com/openx86/openx86
 description: This module implements vga_text_intense_tb.
 */
 // project: openx86
-// module: vga_text_intense_tb
 // description: test vga_text_intense module
 
 `timescale 1ns/1ns

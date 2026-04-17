@@ -36,18 +36,18 @@ module chip_mc146818_rtc #(
     localparam logic [CW-1:0] SUB_LAST = CW'(CLK_HZ - 1);
     localparam logic [CW-1:0] UIP_START = (CLK_HZ > UIP_CYC) ? CW'(CLK_HZ - UIP_CYC) : CW'(0);
 
-    wire wr = !i_cs_n && !i_wr_n;
-    wire rd = !i_cs_n && !i_rd_n;
+    logic wr = !i_cs_n && !i_wr_n;
+    logic rd = !i_cs_n && !i_rd_n;
 
     logic [ 7: 0] index_reg;
     logic [ 7: 0] cmos_ram [ 0: 127];
 
-    wire dm_bin   = cmos_ram[11][2];
-    wire mode_24h = cmos_ram[11][1];
-    wire set_stop = cmos_ram[11][7];
-    wire pie_en   = cmos_ram[11][6];
-    wire aie_en   = cmos_ram[11][5];
-    wire uie_en   = cmos_ram[11][4];
+    logic dm_bin   = cmos_ram[11][2];
+    logic mode_24h = cmos_ram[11][1];
+    logic set_stop = cmos_ram[11][7];
+    logic pie_en   = cmos_ram[11][6];
+    logic aie_en   = cmos_ram[11][5];
+    logic uie_en   = cmos_ram[11][4];
 
     logic [ 5: 0] sec_bin, min_bin;
     logic [ 4: 0] hour_bin;
@@ -65,9 +65,9 @@ module chip_mc146818_rtc #(
     logic [23: 0] pie_reload_q;
     logic        alarm_match_d;
 
-    wire read_c_pulse = rd && i_a0 && (index_reg[ 6: 0] == 7'h0C);
+    logic read_c_pulse = rd && i_a0 && (index_reg[ 6: 0] == 7'h0C);
     logic read_c_d1;
-    wire rstn_i = (reset_n === 1'b0) ? 1'b0 : 1'b1;
+    logic rstn_i = (reset_n === 1'b0) ? 1'b0 : 1'b1;
 
     // Power-up defaults mirror reset defaults for deterministic startup behavior.
     initial begin
@@ -274,15 +274,15 @@ module chip_mc146818_rtc #(
         alarm_field_ok = alarm_byte[7] || (alarm_byte == time_byte);
     endfunction
 
-    wire [ 7: 0] enc_sec  = enc_sec_min(sec_bin, dm_bin);
-    wire [ 7: 0] enc_min  = enc_sec_min(min_bin, dm_bin);
-    wire [ 7: 0] enc_hourv = enc_hour(hour_bin, dm_bin, mode_24h);
-    wire [ 7: 0] enc_dom  = dm_bin ? {3'b0, dom_bin} : u8_to_bcd({3'b0, dom_bin});
-    wire [ 7: 0] enc_mon  = dm_bin ? {4'b0, month_bin} : u8_to_bcd({4'b0, month_bin});
-    wire [ 7: 0] enc_year = dm_bin ? year_bin : u8_to_bcd(year_bin);
-    wire [ 7: 0] enc_dow  = {5'b0, dow_bin};
+    logic [ 7: 0] enc_sec  = enc_sec_min(sec_bin, dm_bin);
+    logic [ 7: 0] enc_min  = enc_sec_min(min_bin, dm_bin);
+    logic [ 7: 0] enc_hourv = enc_hour(hour_bin, dm_bin, mode_24h);
+    logic [ 7: 0] enc_dom  = dm_bin ? {3'b0, dom_bin} : u8_to_bcd({3'b0, dom_bin});
+    logic [ 7: 0] enc_mon  = dm_bin ? {4'b0, month_bin} : u8_to_bcd({4'b0, month_bin});
+    logic [ 7: 0] enc_year = dm_bin ? year_bin : u8_to_bcd(year_bin);
+    logic [ 7: 0] enc_dow  = {5'b0, dow_bin};
 
-    wire alarm_now = alarm_field_ok(cmos_ram[1], enc_sec)
+    logic alarm_now = alarm_field_ok(cmos_ram[1], enc_sec)
         && alarm_field_ok(cmos_ram[3], enc_min)
         && alarm_field_ok(cmos_ram[5], enc_hourv);
 

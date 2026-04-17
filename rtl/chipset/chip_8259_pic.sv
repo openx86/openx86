@@ -45,8 +45,8 @@ module chip_8259_pic (
     logic [ 7: 0]           irr;
     logic [ 7: 0]           isr;
 
-    wire wr = !i_cs_n && !i_wr_n;
-    wire rd = !i_cs_n && !i_rd_n;
+    logic wr = !i_cs_n && !i_wr_n;
+    logic rd = !i_cs_n && !i_rd_n;
 
     assign o_intr = (state == ST_READY) && (|(i_ir & ~imr));
 

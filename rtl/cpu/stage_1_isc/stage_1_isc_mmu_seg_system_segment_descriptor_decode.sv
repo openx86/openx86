@@ -45,12 +45,12 @@ module stage_1_isc_mmu_seg_system_segment_descriptor_decode (
     input  logic [63: 0] i_descriptor
 );
 
-wire [15: 0] o_base_15__0 = i_descriptor[63: 48];
-wire [ 7:0] o_base_23_16 = i_descriptor[ 7: 0];
-wire [ 7:0] o_base_31_24 = i_descriptor[31: 24];
+logic [15: 0] o_base_15__0 = i_descriptor[63: 48];
+logic [ 7:0] o_base_23_16 = i_descriptor[ 7: 0];
+logic [ 7:0] o_base_31_24 = i_descriptor[31: 24];
 
-wire [ 7:0] o_limit_15__0 = i_descriptor[47: 32];
-wire [ 7:0] o_limit_19_16 = i_descriptor[19: 16];
+logic [ 7:0] o_limit_15__0 = i_descriptor[47: 32];
+logic [ 7:0] o_limit_19_16 = i_descriptor[19: 16];
 
 assign o_base                = { o_base_31_24, o_base_23_16, o_base_15__0 };
 assign o_limit               = { o_limit_19_16, o_limit_15__0 };

@@ -18,13 +18,13 @@ module ide_ata_pio_tb;
     logic [ 7: 0]  io_wdata;
     logic [ 7: 0]  io_rdata;
 
-    wire ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
-    wire cs_n    = !(io_valid && ide_hit);
-    wire wr_n    = !(io_valid && io_we && ide_hit);
-    wire rd_n    = !(io_valid && !io_we && ide_hit);
+    logic ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
+    logic cs_n    = !(io_valid && ide_hit);
+    logic wr_n    = !(io_valid && io_we && ide_hit);
+    logic rd_n    = !(io_valid && !io_we && ide_hit);
 
-    wire [31: 0] disk_ra;
-    wire disk_sector_req;
+    logic [31: 0] disk_ra;
+    logic disk_sector_req;
     chip_ata_ide dut (
         .clock             ( clock ),
         .reset_n             ( reset_n ),

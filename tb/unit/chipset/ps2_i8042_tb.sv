@@ -20,10 +20,10 @@ module ps2_i8042_tb;
     logic        kbd_push;
     logic [ 7: 0]  kbd_data;
 
-    wire ps2_hit = (io_addr == 16'h0060) | (io_addr == 16'h0064);
-    wire cs_n    = !(io_valid && ps2_hit);
-    wire wr_n    = !(io_valid && io_we && ps2_hit);
-    wire rd_n    = !(io_valid && !io_we && ps2_hit);
+    logic ps2_hit = (io_addr == 16'h0060) | (io_addr == 16'h0064);
+    logic cs_n    = !(io_valid && ps2_hit);
+    logic wr_n    = !(io_valid && io_we && ps2_hit);
+    logic rd_n    = !(io_valid && !io_we && ps2_hit);
 
     chip_i8042_ps2 #(
         .USE_REAL_PS2 ( 1'b0 )

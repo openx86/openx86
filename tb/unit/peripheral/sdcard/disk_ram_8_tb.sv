@@ -18,10 +18,10 @@ module disk_ram_8_tb;
     logic [15: 0] io_addr;
     logic [ 7: 0]  io_wdata, io_rdata;
 
-    wire ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
-    wire ide_cs_n = !(io_valid && ide_hit);
-    wire ide_wr_n = !(io_valid && io_we && ide_hit);
-    wire ide_rd_n = !(io_valid && !io_we && ide_hit);
+    logic ide_hit = ((io_addr >= 16'h01F0) && (io_addr <= 16'h01F7)) | (io_addr == 16'h03F6);
+    logic ide_cs_n = !(io_valid && ide_hit);
+    logic ide_wr_n = !(io_valid && io_we && ide_hit);
+    logic ide_rd_n = !(io_valid && !io_we && ide_hit);
 
     logic [31: 0] ide_raddr;
     logic [ 7: 0]  disk_a, disk_b;
@@ -45,7 +45,7 @@ module disk_ram_8_tb;
         u_disk.mem[1] = 8'h5A;
     end
 
-    wire ide_sector_req;
+    logic ide_sector_req;
     chip_ata_ide #(
         .SECTOR_BYTES(512),
         .SECTOR_COUNT(16),

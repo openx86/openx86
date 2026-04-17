@@ -36,11 +36,11 @@ module sdram_x16_stub #(
 
     logic [12: 0] active_row[ 0:  3];
 
-    wire cmd_act = !cs_n && !ras_n && cas_n && we_n;
-    wire cmd_rd  = !cs_n && ras_n && !cas_n && we_n;
-    wire cmd_wr  = !cs_n && ras_n && !cas_n && !we_n;
+    logic cmd_act = !cs_n && !ras_n && cas_n && we_n;
+    logic cmd_rd  = !cs_n && ras_n && !cas_n && we_n;
+    logic cmd_wr  = !cs_n && ras_n && !cas_n && !we_n;
 
-    wire [AW-1:0] lin_cmd = {active_row[ba], ba, a[ 7: 0]};
+    logic [AW-1:0] lin_cmd = {active_row[ba], ba, a[ 7: 0]};
 
     logic [AW-1:0] w_lin;
     int unsigned   w_phase;

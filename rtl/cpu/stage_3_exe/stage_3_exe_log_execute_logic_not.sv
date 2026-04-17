@@ -11,7 +11,6 @@ description: This module implements stage_3_exe_log_execute_logic_not.
 // ============================================================================
 
 module stage_3_exe_log_execute_logic_not #(
-    // parameter
     BIT_WIDTH = 32
 ) (
     // ports

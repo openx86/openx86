@@ -11,59 +11,59 @@ description: This module implements openx86_soc_top.
 module openx86_soc_top #(
     parameter bit USE_SDIO_DISK = 1'b0
 ) (
+
+    // ------------------------------------------------------------------------
+    // VGA (RGB444 + sync)
+    // ------------------------------------------------------------------------
+    output logic       o_vga_hsync,
+    output logic       o_vga_vsync,
+    output logic [3:0] o_vga_r,
+    output logic [3:0] o_vga_g,
+    output logic [3:0] o_vga_b,
+
+    // ------------------------------------------------------------------------
+    // PS/2 ports (open-drain). Each line is (out, oe, in).
+    // ------------------------------------------------------------------------
+    output logic       o_ps2_kbd_clk_out,
+    output logic       o_ps2_kbd_clk_oe,
+    input  logic       i_ps2_kbd_clk_in,
+    output logic       o_ps2_kbd_dat_out,
+    output logic       o_ps2_kbd_dat_oe,
+    input  logic       i_ps2_kbd_dat_in,
+    output logic       o_ps2_aux_clk_out,
+    output logic       o_ps2_aux_clk_oe,
+    input  logic       i_ps2_aux_clk_in,
+    output logic       o_ps2_aux_dat_out,
+    output logic       o_ps2_aux_dat_oe,
+    input  logic       i_ps2_aux_dat_in,
+
+    // ------------------------------------------------------------------------
+    // SDIO / SD 4-bit（IDE 盘体经片内主机；PHY 在片内）
+    // ------------------------------------------------------------------------
+    output logic       o_sdio_clk,
+    inout  logic         io_sdio_cmd,
+    inout  logic [3:0]   io_sdio_dat,
+
+    // ------------------------------------------------------------------------
+    // SDRAM physical interface (16-bit device)
+    // ------------------------------------------------------------------------
+    output logic        o_sdram_clk,
+    output logic        o_sdram_cke,
+    output logic        o_sdram_cs_n,
+    output logic        o_sdram_ras_n,
+    output logic        o_sdram_cas_n,
+    output logic        o_sdram_we_n,
+    output logic [1:0]  o_sdram_ba,
+    output logic [12:0] o_sdram_a,
+    output logic [1:0]  o_sdram_dqm,
+    inout  logic [15:0] io_sdram_dq,
+
     // ------------------------------------------------------------------------
     // Board-level clock / reset_n
     // ------------------------------------------------------------------------
     // i_clk_50m: external 50MHz oscillator
     // reset_n: active-low reset input (board push-button / POR)
     input  logic        i_clk_50m,
-    output logic        o_vga_hsync,
-
-    // ------------------------------------------------------------------------
-    // VGA (RGB444 + sync)
-    // ------------------------------------------------------------------------
-    output logic        o_vga_vsync,
-    output logic [ 3: 0]  o_vga_r,
-    output logic [ 3: 0]  o_vga_g,
-    output logic [ 3: 0]  o_vga_b,
-    output logic        o_ps2_kbd_clk_out,
-
-    // ------------------------------------------------------------------------
-    // PS/2 ports (open-drain). Each line is (out, oe, in).
-    // oe=1 and out=0 means drive-low; oe=0 means Hi-Z (pulled-up externally).
-    // ------------------------------------------------------------------------
-    output logic        o_ps2_kbd_clk_oe,
-    input  logic        i_ps2_kbd_clk_in,
-    output logic        o_ps2_kbd_dat_out,
-    output logic        o_ps2_kbd_dat_oe,
-    input  logic        i_ps2_kbd_dat_in,
-    output logic        o_ps2_aux_clk_out,
-    output logic        o_ps2_aux_clk_oe,
-    input  logic        i_ps2_aux_clk_in,
-    output logic        o_ps2_aux_dat_out,
-    output logic        o_ps2_aux_dat_oe,
-    input  logic        i_ps2_aux_dat_in,
-    output logic        o_sdio_clk,
-
-    // ------------------------------------------------------------------------
-    // SDIO / SD 4-bit（IDE 盘体经片内主机；PHY 在片内）
-    // ------------------------------------------------------------------------
-    inout  wire         io_sdio_cmd,
-    inout  wire [ 3: 0]   io_sdio_dat,
-    output logic        o_sdram_clk,
-
-    // ------------------------------------------------------------------------
-    // SDRAM physical interface (16-bit device)
-    // ------------------------------------------------------------------------
-    output logic        o_sdram_cke,
-    output logic        o_sdram_cs_n,
-    output logic        o_sdram_ras_n,
-    output logic        o_sdram_cas_n,
-    output logic        o_sdram_we_n,
-    output logic [ 1: 0]  o_sdram_ba,
-    output logic [12: 0] o_sdram_a,
-    output logic [ 1: 0]  o_sdram_dqm,
-    inout  wire [15: 0]  io_sdram_dq,
     input  logic        reset_n
 );
 

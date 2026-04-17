@@ -19,10 +19,10 @@ module i8254_pit_tb;
     logic [ 7: 0]  rdata;
     logic        out0, out1, out2;
 
-    wire hit  = (addr >= 16'h0040) && (addr <= 16'h0043);
-    wire cs_n = !(valid && hit);
-    wire wr_n = !(valid && we && hit);
-    wire rd_n = !(valid && !we && hit);
+    logic hit  = (addr >= 16'h0040) && (addr <= 16'h0043);
+    logic cs_n = !(valid && hit);
+    logic wr_n = !(valid && we && hit);
+    logic rd_n = !(valid && !we && hit);
 
     chip_8254_pit dut (
         .clock    ( clock ),

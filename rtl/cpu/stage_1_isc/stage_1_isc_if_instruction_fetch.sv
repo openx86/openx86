@@ -7,7 +7,6 @@ description: This module implements stage_1_isc_if_instruction_fetch.
 // project: w80386dx
 // author: Chang Wei<changwei1006@gmail.com>
 // repo: https://github.com/openx86/w80386dx
-// module: fetch_tb
 // create at: 2021-12-28 15:31:24
 // description: instruction fetch module
 
@@ -171,18 +170,14 @@ always_ff @(posedge clock or negedge reset_n) begin
                         //     i_code_data_read[ 7: 0]
                         // };
                         o_instruction_ready <= 0;
-                        // state <= STATE_WAIT_FOR_CODE_DATA_READY;
                     end else begin
                         o_instruction_ready <= 1;
-                        // state <= STATE_WAIT_FOR_IP_VALID;
                     end
                 end else begin
                     o_instruction_ready <= 0;
-                    // state <= STATE_WAIT_FOR_CODE_DATA_READY;
                 end
             end
             default: begin
-                // state <= STATE_WAIT_FOR_IP_VALID;
             end
         endcase
     end

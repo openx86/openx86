@@ -11,12 +11,19 @@ description: This module implements chip_8237_dma.
 // ============================================================================
 
 module chip_8237_dma (
+    // ------------------------------------------------------------------------
+    // Host-side control/data interface
+    // ------------------------------------------------------------------------
     input  logic        i_cs_n,
     input  logic        i_rd_n,
     input  logic        i_wr_n,
-    input  logic [15: 0] i_addr,
-    input  logic [ 7: 0]  i_d,
-    output logic [ 7: 0]  o_d,
+    input  logic [15:0] i_addr,
+    input  logic [7:0]  i_d,
+    output logic [7:0]  o_d,
+
+    // ------------------------------------------------------------------------
+    // Clock / reset
+    // ------------------------------------------------------------------------
     input  logic        clock,
     input  logic        reset_n
 );
@@ -25,12 +32,12 @@ module chip_8237_dma (
     logic [ 7: 0] page_reg [ 0:  7];
     logic [ 7: 0] dma16_stub [ 0: 31];
 
-    wire hit_lo   = (i_addr <= 16'h000F);
-    wire hit_page = (i_addr >= 16'h0080) && (i_addr <= 16'h008F);
-    wire hit_hi   = (i_addr >= 16'h00C0) && (i_addr <= 16'h00DF);
+    logic hit_lo   = (i_addr <= 16'h000F);
+    logic hit_page = (i_addr >= 16'h0080) && (i_addr <= 16'h008F);
+    logic hit_hi   = (i_addr >= 16'h00C0) && (i_addr <= 16'h00DF);
 
-    wire wr = !i_cs_n && !i_wr_n;
-    wire rd = !i_cs_n && !i_rd_n;
+    logic wr = !i_cs_n && !i_wr_n;
+    logic rd = !i_cs_n && !i_rd_n;
 
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin

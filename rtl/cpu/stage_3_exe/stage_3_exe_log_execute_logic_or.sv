@@ -11,7 +11,6 @@ description: This module implements stage_3_exe_log_execute_logic_or.
 // ============================================================================
 
 module stage_3_exe_log_execute_logic_or #(
-    // parameter
     BIT_WIDTH = 32
 ) (
     // ports

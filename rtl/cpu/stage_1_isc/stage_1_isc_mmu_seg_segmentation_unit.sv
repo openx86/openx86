@@ -16,28 +16,31 @@ description: stage_1_isc_mmu_seg_segmentation_unit
 module stage_1_isc_mmu_seg_segmentation_unit #(
     read_from_fetch = 0
 ) (
-    input  logic        i_protected_mode, // from CR0.PE (CR[0][0])
-,
-    input  logic [15: 0] i_segment_selector [ 0:  5], // from segment register file
-,
-    input  logic [63: 0] i_segment_descriptor [ 0:  5], // cached descriptors from segment register file
-,
-    input  logic [ 2:0] i_segment_index, // from stage_4_mem_bus_interface_unit module
-,
-    input  logic [ 1:0] i_current_privilege_level, // from flags register file
-,
-    input  logic [31: 0] i_effective_address, // from stage_4_mem_bus_interface_unit module
-,
-    input  logic        i_write_enable, // from stage_4_mem_bus_interface_unit module
-,
-    output logic [31: 0] o_linear_address, // to paging unit
-,
-    output logic        o_segment_privilege_error, // to execute
-,
-    input  logic        clock, reset_n
+    // ------------------------------------------------------------------------
+    // Segmentation context inputs
+    // ------------------------------------------------------------------------
+    input  logic        i_protected_mode,                              // from CR0.PE (CR[0][0])
+    input  logic [15:0] i_segment_selector [0:5],                      // from segment register file
+    input  logic [63:0] i_segment_descriptor [0:5],                    // cached descriptors from segment register file
+    input  logic [2:0]  i_segment_index,                               // from stage_4_mem_bus_interface_unit module
+    input  logic [1:0]  i_current_privilege_level,                     // from flags register file
+    input  logic [31:0] i_effective_address,                           // from stage_4_mem_bus_interface_unit module
+    input  logic        i_write_enable,                                // from stage_4_mem_bus_interface_unit module
+
+    // ------------------------------------------------------------------------
+    // Segmentation outputs
+    // ------------------------------------------------------------------------
+    output logic [31:0] o_linear_address,                              // to paging unit
+    output logic        o_segment_privilege_error,                     // to execute
+
+    // ------------------------------------------------------------------------
+    // Clock / reset
+    // ------------------------------------------------------------------------
+    input  logic        clock,
+    input  logic        reset_n
 );
 
-wire  [63: 0] segment_descriptor = i_segment_descriptor[i_segment_index];
+logic  [63: 0] segment_descriptor = i_segment_descriptor[i_segment_index];
 
 logic [31: 0] base;
 logic [19: 0] limit;
@@ -72,27 +75,27 @@ stage_1_isc_mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .i_descriptor                          ( segment_descriptor )
 );
 
-wire is_index_CS = (i_segment_index == 3'b001); // CS
+logic is_index_CS = (i_segment_index == 3'b001); // CS
 
-wire is_code_segment = segment_type & date_or_code_executable;
-wire is_data_segment = segment_type & ~date_or_code_executable;
+logic is_code_segment = segment_type & date_or_code_executable;
+logic is_data_segment = segment_type & ~date_or_code_executable;
 
-wire is_read  = ~i_write_enable;
-wire is_write = i_write_enable;
+logic is_read  = ~i_write_enable;
+logic is_write = i_write_enable;
 
-wire is_granularity_byte = date_or_code_granularity;
-wire is_granularity_page = ~date_or_code_granularity;
+logic is_granularity_byte = date_or_code_granularity;
+logic is_granularity_page = ~date_or_code_granularity;
 
 // need to confirm the logic is greater equal than(=>) or greater than(>)
-wire exception_limit = (is_granularity_byte & i_effective_address >= limit) | (is_granularity_page & i_effective_address >= (limit << 4));
+logic exception_limit = (is_granularity_byte & i_effective_address >= limit) | (is_granularity_page & i_effective_address >= (limit << 4));
 
 // check CPL > RPL when execute loading to segment register instruction
 // check CPL > DPL immediately
-wire exception_privilege_level = i_current_privilege_level >= date_or_code_privilege_level;
+logic exception_privilege_level = i_current_privilege_level >= date_or_code_privilege_level;
 
-wire exception_read = is_read & ~read_from_fetch & ~code_readable;
+logic exception_read = is_read & ~read_from_fetch & ~code_readable;
 
-wire exception_write = (is_write & is_index_CS) | (is_write & is_data_segment & ~data_writeable);
+logic exception_write = (is_write & is_index_CS) | (is_write & is_data_segment & ~data_writeable);
 
 assign o_segment_privilege_error =
 exception_limit |

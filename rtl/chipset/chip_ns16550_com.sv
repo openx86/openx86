@@ -24,7 +24,7 @@ module chip_ns16550_com (
     input  logic        clock
 );
 
-    wire [ 2: 0] off = i_a;
+    logic [ 2: 0] off = i_a;
 
     logic [ 7: 0] rbr;
     logic       rbr_valid;
@@ -35,10 +35,10 @@ module chip_ns16550_com (
     logic [ 7: 0] scr;
     logic [ 7: 0] dll, dlm;
 
-    wire dlab = lcr[7];
+    logic dlab = lcr[7];
 
-    wire wr = !i_cs_n && !i_wr_n;
-    wire rd = !i_cs_n && !i_rd_n;
+    logic wr = !i_cs_n && !i_wr_n;
+    logic rd = !i_cs_n && !i_rd_n;
 
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
@@ -87,7 +87,7 @@ module chip_ns16550_com (
         end
     end
 
-    wire [ 7: 0] lsr = { 1'b0, 1'b0, 1'b1, 1'b1, 4'b0000, rbr_valid };
+    logic [ 7: 0] lsr = { 1'b0, 1'b0, 1'b1, 1'b1, 4'b0000, rbr_valid };
 
     always_comb begin
         o_d = 8'hFF;

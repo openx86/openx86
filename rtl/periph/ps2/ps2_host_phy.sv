@@ -70,7 +70,7 @@ module ps2_host_phy #(
             clk_prev <= clk_s2;
     end
 
-    wire ps2_clk_falling = clk_prev & ~clk_s2;
+    logic ps2_clk_falling = clk_prev & ~clk_s2;
 
     // --- 主状态机 -----------------------------------------------------------
     typedef enum logic [ 3: 0] {

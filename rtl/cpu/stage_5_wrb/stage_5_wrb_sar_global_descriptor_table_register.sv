@@ -70,7 +70,6 @@ always_ff @(posedge clock or negedge reset_n) begin
 end
 
 // GDT cache
-// reg [63: 0] GDT_cache [8192];
 // write GDT cache to SRAM on board like DE2-xx serials board ...
 // for example, DE-35 has a 512-KB SRAM and model id is IS61LV25616
 // A0-A17, D0-D15
