@@ -12,7 +12,7 @@
 | `ide_sd_sector_bridge.sv` | IDE 扇区请求与 SD 主机之间的握手与缓冲。 |
 | `disk_ram_8_tb.sv` | `disk_ram_8` + `chip_ata_ide`（`USE_INTERNAL_DISK_MEM=0`）集成测试。 |
 
-CPU 侧 **仅通过 IDE**（`0x1F0–0x1F7` / `0x3F6`）访问硬盘：`rtl/bus_controller.sv` 的 `bus_devices` 内例化 `disk_ram_8`，`chip_ata_ide` 使用 **外部盘** 读口 A。SD 主机与卡模型可在 SoC 顶层或仿真里再接到 **同一 `disk_ram_8` 的写口与读口 B**（例如块编程、脱机灌盘）。
+CPU 侧 **仅通过 IDE**（`0x1F0–0x1F7` / `0x3F6`）访问硬盘：`rtl/bus_controller.sv` 的 `bus_controller` 内例化 `disk_ram_8`，`chip_ata_ide` 使用 **外部盘** 读口 A。SD 主机与卡模型可在 SoC 顶层或仿真里再接到 **同一 `disk_ram_8` 的写口与读口 B**（例如块编程、脱机灌盘）。
 
 ## 与旧版区别
 

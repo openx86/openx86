@@ -5,7 +5,7 @@
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// bus_devices
+// bus_controller
 // ----------------------------------------------------------------------------
 // Pure address decode + device integration. This module contains no CPU-side
 // sequencing beyond combinational ready/data selection.
@@ -13,7 +13,7 @@
 // It is wrapped by `bus_controller` to keep a stable top-level bus port
 // interface while allowing the device-side to evolve.
 // ----------------------------------------------------------------------------
-module bus_devices #(
+module bus_controller #(
     parameter bit  USE_REAL_PS2 = 1'b0,
     parameter int PS2_CLK_HZ   = 50_000_000,
     parameter bit  USE_SDIO_DISK = 1'b0
@@ -73,7 +73,7 @@ module bus_devices #(
     output logic        o_ps2_aux_dat_oe,
     input  logic        i_ps2_aux_dat_in,
 
-    // SDIO / SD 4-bit（IDE 盘体由 bus_devices 内 SD 主机驱动；USE_SDIO_DISK=0 时引脚空闲）
+    // SDIO / SD 4-bit（IDE 盘体由 bus_controller 内 SD 主机驱动；USE_SDIO_DISK=0 时引脚空闲）
     output logic        o_sdio_clk,
     output logic        o_sdio_cmd_o,
     output logic        o_sdio_cmd_oe,
@@ -85,7 +85,7 @@ module bus_devices #(
     // PIC 主片中断输出（接 CPU INTR）
     output logic        o_pic_intr,
 
-    // Chipset（IBM PC/AT I/O：各 chip_* 模块由 bus_devices 直连例化；未命中时读回 0xFF）
+    // Chipset（IBM PC/AT I/O：各 chip_* 模块由 bus_controller 直连例化；未命中时读回 0xFF）
 
     // 公共信号
     input  logic        i_clock,
@@ -206,7 +206,7 @@ assign is_chipset_io = is_other_io_access && (
 );
 
 // -------------------------------------------------------------------------
-// IBM PC/AT：各 chip_* 在 bus_devices 内直连例化
+// IBM PC/AT：各 chip_* 在 bus_controller 内直连例化
 // -------------------------------------------------------------------------
 localparam int CHIP_DISK_IMAGE_BYTES = 512 * 2048;
 localparam int CHIP_DISK_SECTOR_CNT  = CHIP_DISK_IMAGE_BYTES / 512;
@@ -642,7 +642,7 @@ endmodule
 // bus_controller
 // ----------------------------------------------------------------------------
 // Stable CPU-facing bus wrapper. Right now it is a thin wrapper around
-// bus_devices, but it is intentionally separated so that future work (e.g.
+// bus_controller, but it is intentionally separated so that future work (e.g.
 // registered responses, wait-state insertion, arbitration) does not bloat the
 // decode/device file.
 // ----------------------------------------------------------------------------
@@ -710,7 +710,7 @@ module bus_controller #(
     input  logic        i_clock,
     input  logic        i_reset
 );
-    bus_devices #(
+    bus_controller #(
         .USE_REAL_PS2 ( USE_REAL_PS2 ),
         .PS2_CLK_HZ   ( PS2_CLK_HZ ),
         .USE_SDIO_DISK ( USE_SDIO_DISK )
