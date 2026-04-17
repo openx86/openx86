@@ -12,24 +12,25 @@ description: This module implements stage_3_exe_w686_core_execute_i486.
 module stage_3_exe_w686_core_execute_i486 (
     input  logic        insn_fire,
     input  logic        op_cpuid,
-    input  logic [31:  0] gpr_eax,
-    input  logic [31:  0] gpr_ecx,
+    input  logic [31: 0] gpr_eax,
+    input  logic [31: 0] gpr_ecx,
     output logic        cpuid_busy,
     output logic        gpr_wr_en,
-    output logic [ 2:  0]  gpr_wr_idx,
-    output logic [31:  0] gpr_wr_data,
+    output logic [ 2: 0]  gpr_wr_idx,
+    output logic [31: 0] gpr_wr_data,
     output logic        cpuid_done_pulse,
     input  logic        op_invd,
     input  logic        op_wbinvd,
     input  logic        op_invlpg,
-    input  logic [31:  0] invlpg_ea,
+    input  logic [31: 0] invlpg_ea,
     output logic        cache_flush_pulse,
     output logic        invlpg_pulse,
-    output logic [31:  0] invlpg_linear_addr,
+    output logic [31: 0] invlpg_linear_addr,
     input  logic        clk,
-    input  logic        rst);
+    input  logic        rst
+);
 
-    typedef enum logic [ 2:  0] {
+    typedef enum logic [ 2: 0] {
         CS_IDLE,
         CS_W1,
         CS_W2,
@@ -41,11 +42,11 @@ module stage_3_exe_w686_core_execute_i486 (
 
     assign cpuid_busy = (cpuid_st != CS_IDLE);
 
-    localparam logic [31:  0] V_EBX = 32'h756e6547;
-    localparam logic [31:  0] V_EDX = 32'h49656e69;
-    localparam logic [31:  0] V_ECX = 32'h6c65746e;
+    localparam logic [31: 0] V_EBX = 32'h756e6547;
+    localparam logic [31: 0] V_EDX = 32'h49656e69;
+    localparam logic [31: 0] V_ECX = 32'h6c65746e;
 
-    function automatic logic [31:  0] cpuid_leaf1_edx();
+    function automatic logic [31: 0] cpuid_leaf1_edx();
         return {
             `cpuid_feature_pbe,
             `cpuid_feature_ia64,

@@ -7,9 +7,9 @@ description: This module implements eu_bit_btr_tb.
 `timescale 1ns/1ns
 
 module eu_bit_btr_tb;
-    logic [31:  0] a;
-    logic [31:  0] b;
-    logic [31:  0] y;
+    logic [31: 0] a;
+    logic [31: 0] b;
+    logic [31: 0] y;
     logic        cf;
 
     stage_3_exe_bit_btr u_dut (

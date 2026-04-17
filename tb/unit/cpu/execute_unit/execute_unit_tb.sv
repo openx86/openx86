@@ -15,10 +15,10 @@ module execute_unit_tb;
     logic clk;
     logic rst;
 
-    logic [31:  0] eff;
-    logic [31:  0] br_tgt;
+    logic [31: 0] eff;
+    logic [31: 0] br_tgt;
     logic        br_taken;
-    logic [31:  0] md_lo, md_hi;
+    logic [31: 0] md_lo, md_hi;
     logic        md_div0;
 
     initial begin

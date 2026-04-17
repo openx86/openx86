@@ -53,11 +53,12 @@ module stage_1_isc_mmu_pg_paging_unit (
     output logic        o_bus_vaild,
     input  logic        i_bus_ready,
     output logic        o_bus_write_enable,
-    output logic [31:  0] o_bus_address,
-    input  logic [31:  0] i_bus_data_read,
-    output logic [31:  0] o_bus_data_write,
+    output logic [31: 0] o_bus_address,
+    input  logic [31: 0] i_bus_data_read,
+    output logic [31: 0] o_bus_data_write,
     // common
-    input  logic         clock, reset_n);
+    input  logic         clock, reset_n
+);
 
 wire  [ 9: 0] page_directory_index = i_linear_address[31: 22];
 wire  [ 9: 0] page_table_index     = i_linear_address[21: 12];
@@ -69,7 +70,7 @@ wire  [31: 0] page_table_address_offset = page_table_base + (page_table_index <<
 logic [31: 0] page_frame_address_offset;
 assign o_physical_address = page_frame_address_offset + page_frame_offset;
 
-enum logic [ 1:  0] {
+enum logic [ 1: 0] {
     STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY = 2'h1,
     STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID = 2'h2,
     STATE_WAIT_FOR_VAILD = 2'h0

@@ -17,9 +17,9 @@ module rtc_mc146818_tb;
     logic        reset_n;
     logic        io_valid;
     logic        io_we;
-    logic [15:  0] io_addr;
-    logic [ 7:  0]  io_wdata;
-    logic [ 7:  0]  io_rdata;
+    logic [15: 0] io_addr;
+    logic [ 7: 0]  io_wdata;
+    logic [ 7: 0]  io_rdata;
     logic        rtc_irq;
 
     wire rtc_hit = (io_addr == 16'h0070) | (io_addr == 16'h0071);
@@ -43,7 +43,7 @@ module rtc_mc146818_tb;
         .o_rtc_irq  ( rtc_irq )
     );
 
-    task automatic io_write(input logic [15:  0] a, input logic [ 7:  0] d);
+    task automatic io_write(input logic [15: 0] a, input logic [ 7: 0] d);
         io_valid = 1;
         io_we    = 1;
         io_addr  = a;
@@ -53,7 +53,7 @@ module rtc_mc146818_tb;
         @(posedge clock);
     endtask
 
-    task automatic io_read(input logic [15:  0] a, output logic [ 7:  0] d);
+    task automatic io_read(input logic [15: 0] a, output logic [ 7: 0] d);
         io_valid = 1;
         io_we    = 0;
         io_addr  = a;
@@ -63,16 +63,16 @@ module rtc_mc146818_tb;
         @(posedge clock);
     endtask
 
-    task automatic set_index(input logic [ 6:  0] idx);
+    task automatic set_index(input logic [ 6: 0] idx);
         io_write(16'h0070, {1'b0, idx});
     endtask
 
-    task automatic read_data(output logic [ 7:  0] d);
+    task automatic read_data(output logic [ 7: 0] d);
         io_read(16'h0071, d);
     endtask
 
     initial begin
-        logic [ 7:  0] v;
+        logic [ 7: 0] v;
         reset_n  = 0;
         io_valid = 0;
         io_we    = 0;

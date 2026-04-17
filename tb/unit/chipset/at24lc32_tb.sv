@@ -19,7 +19,7 @@ module at24lc32_tb;
     wire  scl = scl_drv;
     wire  sda = sda_drv & (dut_sda_oe ? 1'b0 : 1'b1); // open-drain: slave only pulls low
 
-    localparam logic [ 6:  0] DEV_ADDR = 7'b1010_000; // A_PINS=000
+    localparam logic [ 6: 0] DEV_ADDR = 7'b1010_000; // A_PINS=000
 
     byte w1[];
     byte r1[];
@@ -107,7 +107,7 @@ module at24lc32_tb;
         return sda;
     endfunction
 
-    task automatic i2c_write_byte(input logic [ 7:  0] v, output logic ack);
+    task automatic i2c_write_byte(input logic [ 7: 0] v, output logic ack);
         for (int i = 7; i >= 0; i--) begin
             i2c_write_bit(v[i]);
         end
@@ -118,7 +118,7 @@ module at24lc32_tb;
         scl_drv = 1'b0; i2c_delay();
     endtask
 
-    task automatic i2c_read_byte(input logic master_ack, output logic [ 7:  0] v);
+    task automatic i2c_read_byte(input logic master_ack, output logic [ 7: 0] v);
         // release SDA for slave to drive
         sda_drv = 1'b1;
         for (int i = 7; i >= 0; i--) begin
@@ -136,26 +136,26 @@ module at24lc32_tb;
     // ----------------------------------------------------------------------------
     // High-level transactions
     // ----------------------------------------------------------------------------
-    task automatic eeprom_set_addr(input logic [15:  0] wa);
+    task automatic eeprom_set_addr(input logic [15: 0] wa);
         logic ok;
         i2c_start();
         i2c_write_byte({DEV_ADDR, 1'b0}, ok);
         if (!ok) begin $display("no ACK on control(write)"); $finish(1); end
         i2c_write_byte(wa[15:  8], ok);
         if (!ok) begin $display("no ACK on addr high"); $finish(1); end
-        i2c_write_byte(wa[ 7:  0], ok);
+        i2c_write_byte(wa[ 7: 0], ok);
         if (!ok) begin $display("no ACK on addr low"); $finish(1); end
         i2c_stop();
     endtask
 
-    task automatic eeprom_write_seq(input logic [15:  0] wa, ref byte data[], input int n);
+    task automatic eeprom_write_seq(input logic [15: 0] wa, ref byte data[], input int n);
         logic ok;
         i2c_start();
         i2c_write_byte({DEV_ADDR, 1'b0}, ok);
         if (!ok) begin $display("no ACK on control(write)"); $finish(1); end
         i2c_write_byte(wa[15:  8], ok);
         if (!ok) begin $display("no ACK on addr high"); $finish(1); end
-        i2c_write_byte(wa[ 7:  0], ok);
+        i2c_write_byte(wa[ 7: 0], ok);
         if (!ok) begin $display("no ACK on addr low"); $finish(1); end
         for (int i = 0; i < n; i++) begin
             i2c_write_byte(data[i], ok);
@@ -164,7 +164,7 @@ module at24lc32_tb;
         i2c_stop();
     endtask
 
-    task automatic eeprom_read_seq(input logic [15:  0] wa, ref byte data[], input int n);
+    task automatic eeprom_read_seq(input logic [15: 0] wa, ref byte data[], input int n);
         logic ok;
         byte b;
         // dummy write sets address pointer
@@ -173,7 +173,7 @@ module at24lc32_tb;
         if (!ok) begin $display("no ACK on control(write)"); $finish(1); end
         i2c_write_byte(wa[15:  8], ok);
         if (!ok) begin $display("no ACK on addr high"); $finish(1); end
-        i2c_write_byte(wa[ 7:  0], ok);
+        i2c_write_byte(wa[ 7: 0], ok);
         if (!ok) begin $display("no ACK on addr low"); $finish(1); end
         // repeated start then read
         i2c_start();

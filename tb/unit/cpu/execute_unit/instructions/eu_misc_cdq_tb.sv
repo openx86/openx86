@@ -7,8 +7,8 @@ description: This module implements eu_misc_cdq_tb.
 `timescale 1ns/1ns
 
 module eu_misc_cdq_tb;
-    logic [31:  0] a;
-    logic [31:  0] y;
+    logic [31: 0] a;
+    logic [31: 0] y;
 
     stage_3_exe_misc_cdq u_dut (
         .a ( a ),

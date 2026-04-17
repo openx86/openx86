@@ -7,9 +7,9 @@ description: This module implements eu_misc_setcc_tb.
 `timescale 1ns/1ns
 
 module eu_misc_setcc_tb;
-    logic [31:  0] flags;
+    logic [31: 0] flags;
     logic [ 3:0] tttn;
-    logic [31:  0] y;
+    logic [31: 0] y;
 
     stage_3_exe_misc_setcc u_dut (
         .flags ( flags ),
@@ -17,7 +17,7 @@ module eu_misc_setcc_tb;
         .y ( y )
     );
 
-    task automatic check_bit(input logic expected, input [127:  0] name);
+    task automatic check_bit(input logic expected, input [127: 0] name);
         begin
             #1;
             if (y[0] !== expected) begin

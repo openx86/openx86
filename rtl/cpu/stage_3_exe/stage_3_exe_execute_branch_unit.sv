@@ -16,15 +16,16 @@ module stage_3_exe_execute_branch_unit (
     input  logic        i_ZF,
     input  logic        i_SF,
     input  logic        i_OF,
-    input  logic [31:  0] i_eip,
-    input  logic [31:  0] i_rel32,
-    input  logic signed [ 7:  0] i_rel8,
+    input  logic [31: 0] i_eip,
+    input  logic [31: 0] i_rel32,
+    input  logic signed [ 7: 0] i_rel8,
     input  logic        i_use_rel8,
     output logic        o_taken,
-    output logic [31:  0] o_target_eip);
+    output logic [31: 0] o_target_eip
+);
 
-    logic signed [31:  0] offset_s;
-    logic [31:  0]        offset_u;
+    logic signed [31: 0] offset_s;
+    logic [31: 0]        offset_u;
 
     always_comb begin
         if (i_use_rel8)

@@ -8,7 +8,7 @@ description: This module implements sdram_x16_stub.
 // 16-bit SDRAM 阵列仿真模型（与 sdram_controller 配套）
 // - 写：根据 ACT 锁存行，在 WR AP 后随 host_dq_oe 两拍写入 {mem[lin], mem[lin+1]}
 // - 读：在 RD AP 后经 CAS 延迟在 model_dq 上驱动两拍 16-bit 数据
-// linear_halfword = {row[12:  0], bank[ 1:  0], col[ 7:  0]}
+// linear_halfword = {row[12: 0], bank[ 1: 0], col[ 7: 0]}
 // ============================================================================
 
 `timescale 1ns/1ps
@@ -22,30 +22,30 @@ module sdram_x16_stub #(
     input  logic        ras_n,
     input  logic        cas_n,
     input  logic        we_n,
-    input  logic [ 1:  0]  ba,
-    input  logic [12:  0] a,
-    input  logic [15:  0] host_dq_out,
+    input  logic [ 1: 0]  ba,
+    input  logic [12: 0] a,
+    input  logic [15: 0] host_dq_out,
     input  logic        host_dq_oe,
-    output logic [15:  0] model_dq,
+    output logic [15: 0] model_dq,
     output logic        model_dq_oe
 );
 
     localparam int AW = MEM_HALFWORDS_LG2;
     (* ram_style = "block" *)
-    logic [15:  0] mem[0:(1<<AW)-1];
+    logic [15: 0] mem[0:(1<<AW)-1];
 
-    logic [12:  0] active_row[ 0:  3];
+    logic [12: 0] active_row[ 0:  3];
 
     wire cmd_act = !cs_n && !ras_n && cas_n && we_n;
     wire cmd_rd  = !cs_n && ras_n && !cas_n && we_n;
     wire cmd_wr  = !cs_n && ras_n && !cas_n && !we_n;
 
-    wire [AW-1:0] lin_cmd = {active_row[ba], ba, a[ 7:  0]};
+    wire [AW-1:0] lin_cmd = {active_row[ba], ba, a[ 7: 0]};
 
     logic [AW-1:0] w_lin;
     int unsigned   w_phase;
 
-    typedef enum logic [ 2:  0] {
+    typedef enum logic [ 2: 0] {
         RD_IDLE,
         RD_WAIT,
         RD_D0,
@@ -73,7 +73,7 @@ module sdram_x16_stub #(
         model_dq    <= 16'h0;
 
         if (cmd_act) begin
-            active_row[ba] <= a[12:  0];
+            active_row[ba] <= a[12: 0];
         end
 
         // 写路径（阻塞赋值保证与 cmd_wr 同拍时序）

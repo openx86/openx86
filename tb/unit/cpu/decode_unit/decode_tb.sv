@@ -14,15 +14,16 @@ description: This module implements decode_tb.
 `timescale 1ns/1ns
 `include "openx86_defs.h.sv"
 module decode_tb (
-    // ports);
+    // ports
+);
 
-logic  [ 7:  0] instruction [ 0: 15];
+logic  [ 7: 0] instruction [ 0: 15];
 // logic        clock, reset_n;
 
 // interface_opcode opcode_interface_instance ();
 
 wire default_operand_size = `default_operation_size_32;
-wire [ 1:  0] dbg_modrm_mod;
+wire [ 1: 0] dbg_modrm_mod;
 
 stage_2_dec_decode_unit decode_instance_in_testbench (
     .i_default_operand_size ( default_operand_size ),

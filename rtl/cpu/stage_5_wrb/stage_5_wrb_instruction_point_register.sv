@@ -28,12 +28,13 @@ addressing.
 module stage_5_wrb_instruction_point_register (
     // ports
     input  logic        write_enable,
-    input  logic [31:  0] write_data,
-    output logic [15:  0] IP,
-    output logic [31:  0] EIP,
-    input  logic        clock, reset_n);
+    input  logic [31: 0] write_data,
+    output logic [15: 0] IP,
+    output logic [31: 0] EIP,
+    input  logic        clock, reset_n
+);
 
-reg   [31:  0] instruction_point;
+reg   [31: 0] instruction_point;
 
 always_ff @(posedge clock or negedge reset_n) begin
     if (~reset_n) begin
@@ -45,7 +46,7 @@ always_ff @(posedge clock or negedge reset_n) begin
     end
 end
 
-assign IP   = instruction_point[15:  0];
-assign EIP  = instruction_point[31:  0];
+assign IP   = instruction_point[15: 0];
+assign EIP  = instruction_point[31: 0];
 
 endmodule

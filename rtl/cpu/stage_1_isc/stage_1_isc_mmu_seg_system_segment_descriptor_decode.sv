@@ -36,15 +36,16 @@ segment
 
 module stage_1_isc_mmu_seg_system_segment_descriptor_decode (
     // ports
-    output logic [31:  0] o_base,
-    output logic [19:  0] o_limit,
+    output logic [31: 0] o_base,
+    output logic [19: 0] o_limit,
     output logic        o_granularity,
     output logic        o_present,
     output logic        o_privilege_level,
     output logic [ 3:0] o_system_segment_type,
-    input  logic [63:  0] i_descriptor);
+    input  logic [63: 0] i_descriptor
+);
 
-wire [15:  0] o_base_15__0 = i_descriptor[63: 48];
+wire [15: 0] o_base_15__0 = i_descriptor[63: 48];
 wire [ 7:0] o_base_23_16 = i_descriptor[ 7: 0];
 wire [ 7:0] o_base_31_24 = i_descriptor[31: 24];
 

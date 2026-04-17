@@ -13,12 +13,13 @@ module sd_4bit_phy (
     input  logic       i_host_cmd_out,
     input  logic       i_host_cmd_oe,
     output logic       o_host_cmd_in,
-    input  logic [ 3:  0] i_host_dat_out,
+    input  logic [ 3: 0] i_host_dat_out,
     input  logic       i_host_dat_oe,
-    output logic [ 3:  0] o_host_dat_in,
+    output logic [ 3: 0] o_host_dat_in,
     output logic       o_sd_clk_pin,
     inout  wire        io_sd_cmd,
-    inout  wire [ 3:  0]  io_sd_dat);
+    inout  wire [ 3: 0]  io_sd_dat
+);
 
     assign o_sd_clk_pin = i_sd_clk;
 

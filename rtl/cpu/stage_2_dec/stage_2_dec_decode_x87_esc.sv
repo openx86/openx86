@@ -16,23 +16,24 @@ module stage_2_dec_decode_x87_esc (
     output logic [ 2:0] o_reg,
     output logic [ 2:0] o_rm,
     output logic [ 2:0] o_esc_group,
-    output logic [31:  0] o_opmask,
+    output logic [31: 0] o_opmask,
     output logic        o_modrm_required,
-    output logic        o_memory_operand);
+    output logic        o_memory_operand
+);
 
     import stage_2_dec_decode_x87_pkg::*;
 
-    logic [ 7:  0] esc;
-    logic [ 7:  0] mr;
+    logic [ 7: 0] esc;
+    logic [ 7: 0] mr;
 
     assign esc = i_b0;
     assign mr  = i_b1;
     assign o_mod = mr[ 7:  6];
     assign o_reg = mr[ 5:  3];
-    assign o_rm  = mr[ 2:  0];
+    assign o_rm  = mr[ 2: 0];
 
     assign o_is_esc = (esc[ 7:  3] == 5'b11011);
-    assign o_esc_group = esc[ 2:  0];
+    assign o_esc_group = esc[ 2: 0];
     assign o_modrm_required = o_is_esc;
     assign o_memory_operand = o_is_esc && (o_mod != 2'b11);
 

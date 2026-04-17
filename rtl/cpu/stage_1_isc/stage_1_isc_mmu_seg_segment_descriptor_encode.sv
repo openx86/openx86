@@ -36,8 +36,8 @@ segment
 
 module stage_1_isc_mmu_seg_segment_descriptor_encode (
     // ports
-    input  logic [31:  0] base,
-    input  logic [19:  0] limit,
+    input  logic [31: 0] base,
+    input  logic [19: 0] limit,
     input  logic        present,
     input  logic [ 1:0] privilege_level,
     input  logic        available_field,
@@ -48,11 +48,12 @@ module stage_1_isc_mmu_seg_segment_descriptor_encode (
     input  logic        data_expansion_direction_code_conforming,
     input  logic        data_writeable_code_readable,
     input  logic        date_or_code_accessed,
-    output logic [63:  0] descriptor);
+    output logic [63: 0] descriptor
+);
 
 assign descriptor = {
-    base[15:  0],
-    limit[15:  0],
+    base[15: 0],
+    limit[15: 0],
     base[31: 24],
     date_or_code_granularity,
     date_or_code_default_operation_size,

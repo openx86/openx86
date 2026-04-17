@@ -5,11 +5,12 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_misc_loop_ctrl.
 */
 module stage_3_exe_misc_loop_ctrl (
-    input  logic [31:  0] ecx,
+    input  logic [31: 0] ecx,
     input  logic        zf,
     input  logic [ 1:0] mode,
-    output logic [31:  0] ecx_next,
-    output logic        taken);
+    output logic [31: 0] ecx_next,
+    output logic        taken
+);
     always_comb begin
         unique case (mode)
             2'b00: begin

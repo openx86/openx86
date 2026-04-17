@@ -24,15 +24,17 @@ description: This module implements vga_port.
 
 module vga_port (
     // VRAM 读接口
-    output logic [ 7:  0]              vram_rd_addr,   // VRAM读地址（给双口RAM端口B）,
-    input  logic [ 7:  0]              vram_rd_data,   // VRAM读数据（从双口RAM端口B）,
+    output logic [ 7: 0]              vram_rd_addr,   // VRAM读地址（给双口RAM端口B）
+,
+    input  logic [ 7: 0]              vram_rd_data,   // VRAM读数据（从双口RAM端口B）
+,
     
     // VGA 物理信号输出
     output logic                    vga_hsync,
     output logic                    vga_vsync,
-    output logic [ 3:  0]              vga_r,
-    output logic [ 3:  0]              vga_g,
-    output logic [ 3:  0]              vga_b,
+    output logic [ 3: 0]              vga_r,
+    output logic [ 3: 0]              vga_g,
+    output logic [ 3: 0]              vga_b,
     
     // 时序输出（供其他模块使用）
     output logic [$clog2(800)-1:0] h_count,
@@ -41,7 +43,8 @@ module vga_port (
     
     // 时钟和复位（放在末尾）
     input  logic                    reset_n,
-    input  logic                    clock);
+    input  logic                    clock
+);
 
     // ------------------------------------------------------------------------
     // 常量与参数（基于 IBM VGA 640x480@60Hz 标准时序）
@@ -147,7 +150,7 @@ module vga_port (
     // 这里假设 VRAM 中每个字节为 8bit 直接颜色：RRRGGGBB
     //   - R: [ 7:  5]
     //   - G: [ 4:  2]
-    //   - B: [ 1:  0]
+    //   - B: [ 1: 0]
     // 对应扩展到 4bit VGA R/G/B 输出。
 
     always_ff @(posedge clock or negedge reset_n) begin
@@ -159,7 +162,7 @@ module vga_port (
             if (video_active) begin
                 vga_r <= {vram_rd_data[ 7:  5], 1'b0};
                 vga_g <= {vram_rd_data[ 4:  2], 1'b0};
-                vga_b <= {vram_rd_data[ 1:  0], vram_rd_data[ 1:  0]};
+                vga_b <= {vram_rd_data[ 1: 0], vram_rd_data[ 1: 0]};
             end else begin
                 vga_r <= 4'h0;
                 vga_g <= 4'h0;

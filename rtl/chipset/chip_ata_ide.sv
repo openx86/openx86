@@ -6,7 +6,7 @@ description: This module implements chip_ata_ide.
 */
 // ============================================================================
 // IDE ATA 主通道 PIO — 简化寄存器 + 扇区读
-// 主机接口：nCS/nRD/nWR + i_addr[15:  0]（0x1F0–0x1F7、0x3F6；译码由上层完成）
+// 主机接口：nCS/nRD/nWR + i_addr[15: 0]（0x1F0–0x1F7、0x3F6；译码由上层完成）
 // USE_INTERNAL_DISK_MEM=1：内部 RAM（默认，兼容 chip_ata_ide_tb）
 // USE_INTERNAL_DISK_MEM=0：外部盘映像 o_disk_raddr / i_disk_rdata（与 SD 共享）
 // ============================================================================
@@ -20,18 +20,18 @@ module chip_ata_ide #(
     input  logic        i_cs_n,
     input  logic        i_rd_n,
     input  logic        i_wr_n,
-    input  logic [15:  0] i_addr,
-    input  logic [ 7:  0]  i_d,
-    output logic [ 7:  0]  o_d,
-    output logic [31:  0] o_disk_raddr,
-    input  logic [ 7:  0]  i_disk_rdata,
+    input  logic [15: 0] i_addr,
+    input  logic [ 7: 0]  i_d,
+    output logic [ 7: 0]  o_d,
+    output logic [31: 0] o_disk_raddr,
+    input  logic [ 7: 0]  i_disk_rdata,
     input  logic        i_disk_sector_ready,
     output logic        o_disk_sector_req,
     input  logic        clock,
     input  logic        reset_n
 );
 
-    typedef enum logic [ 2:  0] {
+    typedef enum logic [ 2: 0] {
         ST_IDLE,
         ST_WAIT_SECTOR,
         ST_DRQ
@@ -39,29 +39,29 @@ module chip_ata_ide #(
 
     ide_state_e state;
 
-    logic [ 7:  0]  sector_cnt;
-    logic [ 7:  0]  lba_lo, lba_mid, lba_hi;
-    logic [ 7:  0]  drv_head;
-    logic [ 7:  0]  status;
-    logic [ 7:  0]  error_r;
-    logic [ 8:  0]  buf_ptr;
-    logic [31:  0] mem_off;
+    logic [ 7: 0]  sector_cnt;
+    logic [ 7: 0]  lba_lo, lba_mid, lba_hi;
+    logic [ 7: 0]  drv_head;
+    logic [ 7: 0]  status;
+    logic [ 7: 0]  error_r;
+    logic [ 8: 0]  buf_ptr;
+    logic [31: 0] mem_off;
     logic        rd_data_d;
 
-    localparam logic [ 7:  0] ST_RDY = 8'h40;
-    localparam logic [ 7:  0] ST_DRQ_F = 8'h08;
-    localparam logic [ 7:  0] ST_BSY = 8'h80;
+    localparam logic [ 7: 0] ST_RDY = 8'h40;
+    localparam logic [ 7: 0] ST_DRQ_F = 8'h08;
+    localparam logic [ 7: 0] ST_BSY = 8'h80;
 
     wire async_on = USE_ASYNC_DISK && !USE_INTERNAL_DISK_MEM;
 
-    wire [31:  0] mem_bytes = SECTOR_BYTES * SECTOR_COUNT;
-    wire [31:  0] byte_addr  = mem_off * 32'(SECTOR_BYTES) + { 23'h0, buf_ptr };
+    wire [31: 0] mem_bytes = SECTOR_BYTES * SECTOR_COUNT;
+    wire [31: 0] byte_addr  = mem_off * 32'(SECTOR_BYTES) + { 23'h0, buf_ptr };
 
     assign o_disk_raddr = byte_addr;
 
     localparam int DM_DEPTH = USE_INTERNAL_DISK_MEM ? 4096 : 1;
-    logic [ 7:  0] disk_mem [0:DM_DEPTH-1];
-    logic [ 7:  0] disk_rdata_mux;
+    logic [ 7: 0] disk_mem [0:DM_DEPTH-1];
+    logic [ 7: 0] disk_rdata_mux;
 
     wire wr = !i_cs_n && !i_wr_n;
     wire rd = !i_cs_n && !i_rd_n;
@@ -69,7 +69,7 @@ module chip_ata_ide #(
     always_comb begin
         if (USE_INTERNAL_DISK_MEM) begin
             if (state == ST_DRQ && byte_addr < mem_bytes && byte_addr < 32'd4096)
-                disk_rdata_mux = disk_mem[byte_addr[11:  0]];
+                disk_rdata_mux = disk_mem[byte_addr[11: 0]];
             else
                 disk_rdata_mux = 8'h00;
         end else

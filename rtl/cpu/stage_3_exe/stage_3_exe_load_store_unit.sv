@@ -13,23 +13,24 @@ module stage_3_exe_load_store_unit (
 
     input  logic        i_start,
     input  logic        i_is_store,
-    input  logic [31:  0] i_addr,
-    input  logic [31:  0] i_wdata,
+    input  logic [31: 0] i_addr,
+    input  logic [31: 0] i_wdata,
 
-    output logic [31:  0] o_rdata,
+    output logic [31: 0] o_rdata,
     output logic        o_done,
     output logic        o_busy,
 
     output logic        o_mem_valid,
     output logic        o_mem_we,
-    output logic [31:  0] o_mem_addr,
-    output logic [31:  0] o_mem_wdata,
-    input  logic [31:  0] i_mem_rdata,
+    output logic [31: 0] o_mem_addr,
+    output logic [31: 0] o_mem_wdata,
+    input  logic [31: 0] i_mem_rdata,
     input  logic        i_mem_ready,
     input  logic        clk,
-    input  logic        rst);
+    input  logic        rst
+);
 
-    typedef enum logic [ 1:  0] {
+    typedef enum logic [ 1: 0] {
         S_IDLE,
         S_WAIT
     } lsu_state_e;

@@ -255,12 +255,13 @@ module stage_2_dec_decode_field (
     output logic        o_primary_opcode_byte_1,
     output logic        o_primary_opcode_byte_2,
     output logic        o_primary_opcode_byte_3,
-    output logic        o_error);
+    output logic        o_error
+);
 
 wire tttn_at_1_3_0 =
 i_opcode_x86_SETcc_byte_set_on_condition |
 0;
-assign o_tttn = tttn_at_1_3_0 ? i_instruction[1][ 3:  0] : 4'b0000;
+assign o_tttn = tttn_at_1_3_0 ? i_instruction[1][ 3: 0] : 4'b0000;
 
 wire sreg3_at_1_5_3 =
 i_opcode_x86_MOV_reg_mem_to_sreg |
@@ -329,10 +330,10 @@ reg_1_at_2_2_0 |
 0;
 always_comb begin
     unique case (1'b1)
-        reg_1_at_0_2_0 : o_gen_reg_index <= i_instruction[0][ 2:  0];
+        reg_1_at_0_2_0 : o_gen_reg_index <= i_instruction[0][ 2: 0];
         reg_1_at_1_5_3 : o_gen_reg_index <= i_instruction[1][ 5:  3];
-        reg_1_at_1_2_0 : o_gen_reg_index <= i_instruction[1][ 2:  0];
-        reg_1_at_2_2_0 : o_gen_reg_index <= i_instruction[2][ 2:  0];
+        reg_1_at_1_2_0 : o_gen_reg_index <= i_instruction[1][ 2: 0];
+        reg_1_at_2_2_0 : o_gen_reg_index <= i_instruction[2][ 2: 0];
         default        : o_gen_reg_index <= 3'b000;
     endcase
 end
@@ -586,8 +587,8 @@ i_opcode_x86_XOR_reg_to_reg_mem |
 i_opcode_x86_XOR_reg_mem_to_reg |
 i_opcode_x86_XOR_imm_to_reg_mem |
 0;
-logic [ 7:  0] mod_rm_instruction;
-assign { o_mod, o_rm } = { mod_rm_instruction[ 7:  6], mod_rm_instruction[ 2:  0] };
+logic [ 7: 0] mod_rm_instruction;
+assign { o_mod, o_rm } = { mod_rm_instruction[ 7:  6], mod_rm_instruction[ 2: 0] };
 always_comb begin
     case (1'b1)
         o_primary_opcode_byte_1: mod_rm_instruction <= i_instruction[1];

@@ -21,46 +21,46 @@ module bus_tb;
     logic        bus_busy;
     logic        bus_write_enable;
     logic        bus_io_access;
-    logic [31:  0] bus_address;
-    logic [31:  0] bus_data_read;
-    logic [31:  0] bus_data_write;
+    logic [31: 0] bus_address;
+    logic [31: 0] bus_data_read;
+    logic [31: 0] bus_data_write;
 
     // VGA 接口
     logic        vga_mem_en_w;
-    logic [19:  0] vga_mem_addr;
-    logic [ 7:  0]  vga_mem_data_w;
+    logic [19: 0] vga_mem_addr;
+    logic [ 7: 0]  vga_mem_data_w;
     logic        vga_io_en_w;
     logic        vga_io_en_r;
-    logic [15:  0] vga_io_addr;
-    logic [ 7:  0]  vga_io_data_w;
-    logic [ 7:  0]  vga_io_data_r;
+    logic [15: 0] vga_io_addr;
+    logic [ 7: 0]  vga_io_data_w;
+    logic [ 7: 0]  vga_io_data_r;
 
     // BIOS ROM 接口
-    logic [15:  0] bios_addr;
-    logic [31:  0] bios_rdata;
-    logic [16:  0] ext_bios_addr;
-    logic [31:  0] ext_bios_rdata;
+    logic [15: 0] bios_addr;
+    logic [31: 0] bios_rdata;
+    logic [16: 0] ext_bios_addr;
+    logic [31: 0] ext_bios_rdata;
 
     // SDRAM（与 soc_top 一致：接 sdram_controller）
     logic        o_sdram_en;
     logic        o_sdram_we;
-    logic [23:  0] o_sdram_addr_off;
-    logic [31:  0] o_sdram_wdata;
-    logic [31:  0] i_sdram_rdata;
+    logic [23: 0] o_sdram_addr_off;
+    logic [31: 0] o_sdram_wdata;
+    logic [31: 0] i_sdram_rdata;
     logic        i_sdram_ready;
     logic        i_sdram_busy;
 
-    logic [15:  0] sdr_dq_in;
-    logic [15:  0] stub_dq;
+    logic [15: 0] sdr_dq_in;
+    logic [15: 0] stub_dq;
     logic        stub_oe;
 
     assign sdr_dq_in = sdr_dq_oe ? sdr_dq_out : (stub_oe ? stub_dq : 16'hZZZZ);
 
     logic        sdr_cs_n, sdr_ras_n, sdr_cas_n, sdr_we_n;
-    logic [ 1:  0]  sdr_ba;
-    logic [12:  0] sdr_a;
-    logic [ 1:  0]  sdr_dqm;
-    logic [15:  0] sdr_dq_out;
+    logic [ 1: 0]  sdr_ba;
+    logic [12: 0] sdr_a;
+    logic [ 1: 0]  sdr_dqm;
+    logic [15: 0] sdr_dq_out;
     logic        sdr_dq_oe;
     logic        sdr_clk, sdr_cke;
 
@@ -168,7 +168,7 @@ module bus_tb;
     );
 
     // 简单的BIOS ROM模型
-    logic [31:  0] bios_mem [ 0: 16383];  // 64KB BIOS
+    logic [31: 0] bios_mem [ 0: 16383];  // 64KB BIOS
 
     initial begin
         // 初始化BIOS ROM（简单的测试数据）
@@ -188,7 +188,7 @@ module bus_tb;
     end
 
     // 扩展BIOS ROM模型
-    logic [31:  0] ext_bios_mem [ 0: 32767];  // 128KB扩展BIOS
+    logic [31: 0] ext_bios_mem [ 0: 32767];  // 128KB扩展BIOS
 
     initial begin
         for (int i = 0; i < 32768; i++) begin
@@ -205,8 +205,8 @@ module bus_tb;
     end
 
     // VGA I/O数据（模拟VGA寄存器）
-    logic [ 7:  0] vga_misc_reg;
-    logic [ 7:  0] vga_status_reg;
+    logic [ 7: 0] vga_misc_reg;
+    logic [ 7: 0] vga_status_reg;
 
     always_ff @(posedge clock) begin
         if (~reset_n) begin
@@ -340,7 +340,7 @@ module bus_tb;
         #10;
         wait(bus_ready);
         $display("  VGA I/O读使能: %b, 地址: 0x%04h, 读取数据: 0x%08h (低8位: 0x%02h)",
-                 vga_io_en_r, vga_io_addr, bus_data_read, bus_data_read[ 7:  0]);
+                 vga_io_en_r, vga_io_addr, bus_data_read, bus_data_read[ 7: 0]);
         #10;
         bus_valid = 0;
         #20;
@@ -389,7 +389,7 @@ module bus_tb;
         bus_address = 32'h0000_0080;
         #10;
         wait(bus_ready);
-        $display("  读取数据低 8 位: 0x%02h (期望 0x00)", bus_data_read[ 7:  0]);
+        $display("  读取数据低 8 位: 0x%02h (期望 0x00)", bus_data_read[ 7: 0]);
         #10;
         bus_valid = 0;
         #20;

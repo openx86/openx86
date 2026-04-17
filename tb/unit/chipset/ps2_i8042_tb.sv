@@ -14,11 +14,11 @@ module ps2_i8042_tb;
     logic        reset;
     logic        io_valid;
     logic        io_we;
-    logic [15:  0] io_addr;
-    logic [ 7:  0]  io_wdata;
-    logic [ 7:  0]  io_rdata;
+    logic [15: 0] io_addr;
+    logic [ 7: 0]  io_wdata;
+    logic [ 7: 0]  io_rdata;
     logic        kbd_push;
-    logic [ 7:  0]  kbd_data;
+    logic [ 7: 0]  kbd_data;
 
     wire ps2_hit = (io_addr == 16'h0060) | (io_addr == 16'h0064);
     wire cs_n    = !(io_valid && ps2_hit);

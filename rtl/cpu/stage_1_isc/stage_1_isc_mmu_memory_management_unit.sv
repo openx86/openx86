@@ -20,24 +20,33 @@ module stage_1_isc_mmu_memory_management_unit #(
     input  logic         i_vaild,
     output logic         o_ready,
     // signal
-    input  logic         i_protected_mode, // from CR0.PE (CR[0][0]),
-    input  logic [15: 0] i_segment_selector [ 0:  5], // from segment register file,
-    input  logic [63: 0] i_segment_descriptor [ 0:  5], // cached segment descriptors,
-    input  logic [ 1: 0] i_current_privilege_level, // from flags register file,
-    input  logic [ 2: 0] i_segment_index, // from stage_4_mem_bus_interface_unit module,
-    input  logic [31: 0] i_effective_address, // from stage_4_mem_bus_interface_unit module,
-    input  logic         i_write_enable, // from stage_4_mem_bus_interface_unit module,
-    input  logic         i_paging_enable, // from CR register,
-    input  logic [31: 0] i_page_directory_base, // from CR[3],
+    input  logic         i_protected_mode, // from CR0.PE (CR[0][0])
+,
+    input  logic [15: 0] i_segment_selector [ 0:  5], // from segment register file
+,
+    input  logic [63: 0] i_segment_descriptor [ 0:  5], // cached segment descriptors
+,
+    input  logic [ 1: 0] i_current_privilege_level, // from flags register file
+,
+    input  logic [ 2: 0] i_segment_index, // from stage_4_mem_bus_interface_unit module
+,
+    input  logic [31: 0] i_effective_address, // from stage_4_mem_bus_interface_unit module
+,
+    input  logic         i_write_enable, // from stage_4_mem_bus_interface_unit module
+,
+    input  logic         i_paging_enable, // from CR register
+,
+    input  logic [31: 0] i_page_directory_base, // from CR[3]
+,
     output logic [31: 0] o_physical_address,
     output logic         o_segment_fault,
     // bus for paging walks (used only when paging enabled)
     output logic        o_bus_vaild,
     input  logic        i_bus_ready,
     output logic        o_bus_write_enable,
-    output logic [31:  0] o_bus_address,
-    input  logic [31:  0] i_bus_data_read,
-    output logic [31:  0] o_bus_data_write,
+    output logic [31: 0] o_bus_address,
+    input  logic [31: 0] i_bus_data_read,
+    output logic [31: 0] o_bus_data_write,
     // common
     input  logic         clock, reset_n
 );
@@ -84,7 +93,7 @@ stage_1_isc_mmu_pg_paging_unit mmu_paging_unit (
 );
 
 
-enum logic [ 1:  0] {
+enum logic [ 1: 0] {
     STATE_WAIT_FOR_PAGING_UNIT_READY = 2'h1,
     STATE_OUTPUT_LINEAR_ADDRESS = 2'h2,
     STATE_WAIT_FOR_VAILD = 2'h0

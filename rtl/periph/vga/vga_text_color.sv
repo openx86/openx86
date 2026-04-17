@@ -10,28 +10,34 @@ description: This module implements vga_text_color.
 
 module vga_text_color (
     // VRAM 读接口（文本模式：80x25 = 2000 字符 = 4000 字节）
-    output logic [12:  0]             vram_rd_addr,   // 文本 VRAM 地址（0-3999）,
-    input  logic [ 7:  0]               vram_char_data, // 字符码（偶数地址）,
-    input  logic [ 7:  0]               vram_attr_data, // 属性字节（奇数地址）,
+    output logic [12: 0]             vram_rd_addr,   // 文本 VRAM 地址（0-3999）
+,
+    input  logic [ 7: 0]               vram_char_data, // 字符码（偶数地址）
+,
+    input  logic [ 7: 0]               vram_attr_data, // 属性字节（奇数地址）
+,
     
     // 字符生成器接口
-    output logic [ 7:  0]               font_char_code,
-    output logic [ 3:  0]               font_row_index,
-    input  logic [ 7:  0]               font_data,
+    output logic [ 7: 0]               font_char_code,
+    output logic [ 3: 0]               font_row_index,
+    input  logic [ 7: 0]               font_data,
     
     // VGA 输出
-    output logic [ 3:  0]               vga_r,
-    output logic [ 3:  0]               vga_g,
-    output logic [ 3:  0]               vga_b,
+    output logic [ 3: 0]               vga_r,
+    output logic [ 3: 0]               vga_g,
+    output logic [ 3: 0]               vga_b,
     
     // 时序输入
-    input  logic [$clog2(800)-1:0]   h_count,        // 水平计数（0-799）,
-    input  logic [$clog2(525)-1:0]   v_count,        // 垂直计数（0-524）,
+    input  logic [$clog2(800)-1:0]   h_count,        // 水平计数（0-799）
+,
+    input  logic [$clog2(525)-1:0]   v_count,        // 垂直计数（0-524）
+,
     input  logic                     video_active,
     
     // 时钟和复位
     input  logic                     reset_n,
-    input  logic                     clock);
+    input  logic                     clock
+);
 
     // 文本模式参数
     localparam int TEXT_COLS = 80;
@@ -41,27 +47,27 @@ module vga_text_color (
     localparam int PIXELS_PER_CHAR = CHAR_WIDTH * CHAR_HEIGHT; // 128 像素/字符
 
     // 当前字符位置
-    logic [ 6:  0] char_col;  // 0-79
-    logic [ 4:  0] char_row;  // 0-24
-    logic [ 3:  0] char_pixel_x;  // 0-7（字符内 X）
-    logic [ 3:  0] char_pixel_y;  // 0-15（字符内 Y）
+    logic [ 6: 0] char_col;  // 0-79
+    logic [ 4: 0] char_row;  // 0-24
+    logic [ 3: 0] char_pixel_x;  // 0-7（字符内 X）
+    logic [ 3: 0] char_pixel_y;  // 0-15（字符内 Y）
 
     // 字符和属性寄存器
-    logic [ 7:  0] char_code_reg;
-    logic [ 7:  0] attr_reg;
-    logic [ 7:  0] font_data_reg;
+    logic [ 7: 0] char_code_reg;
+    logic [ 7: 0] attr_reg;
+    logic [ 7: 0] font_data_reg;
 
     // 属性解码
     logic        blink;           // 闪烁位
-    logic [ 2:  0]  bg_color;        // 背景色（3bit）
-    logic [ 3:  0]  fg_color;        // 前景色（4bit）
+    logic [ 2: 0]  bg_color;        // 背景色（3bit）
+    logic [ 3: 0]  fg_color;        // 前景色（4bit）
     logic        pixel_on;        // 当前像素是否为字符前景
 
     // 计算字符位置
     assign char_col = h_count[ 9:  3];  // 每 8 像素一个字符
     assign char_row = v_count[ 8:  4];  // 每 16 像素一行字符
-    assign char_pixel_x = h_count[ 2:  0];
-    assign char_pixel_y = v_count[ 3:  0];
+    assign char_pixel_x = h_count[ 2: 0];
+    assign char_pixel_y = v_count[ 3: 0];
 
     // VRAM 地址计算：地址 = (char_row * 80 + char_col) * 2
     // 字符码地址（偶数）
@@ -70,18 +76,18 @@ module vga_text_color (
     // 属性解码
     assign blink = attr_reg[7];
     assign bg_color = attr_reg[ 6:  4];
-    assign fg_color = attr_reg[ 3:  0];
+    assign fg_color = attr_reg[ 3: 0];
 
     // 字符生成器接口
     assign font_char_code = char_code_reg;
     assign font_row_index = char_pixel_y;
 
     // 像素判断：从字体数据中提取当前像素
-    assign pixel_on = font_data_reg[7 - char_pixel_x[ 2:  0]];  // 从高位到低位
+    assign pixel_on = font_data_reg[7 - char_pixel_x[ 2: 0]];  // 从高位到低位
 
     // 字符码和属性寄存器（需要流水线处理）
-    logic [ 7:  0] char_code_next;
-    logic [ 7:  0] attr_next;
+    logic [ 7: 0] char_code_next;
+    logic [ 7: 0] attr_next;
     
     // 第一级：读取字符码和属性
     always_ff @(posedge clock or negedge reset_n) begin

@@ -23,9 +23,9 @@ module openx86_soc_top #(
     // VGA (RGB444 + sync)
     // ------------------------------------------------------------------------
     output logic        o_vga_vsync,
-    output logic [ 3:  0]  o_vga_r,
-    output logic [ 3:  0]  o_vga_g,
-    output logic [ 3:  0]  o_vga_b,
+    output logic [ 3: 0]  o_vga_r,
+    output logic [ 3: 0]  o_vga_g,
+    output logic [ 3: 0]  o_vga_b,
     output logic        o_ps2_kbd_clk_out,
 
     // ------------------------------------------------------------------------
@@ -49,7 +49,7 @@ module openx86_soc_top #(
     // SDIO / SD 4-bit（IDE 盘体经片内主机；PHY 在片内）
     // ------------------------------------------------------------------------
     inout  wire         io_sdio_cmd,
-    inout  wire [ 3:  0]   io_sdio_dat,
+    inout  wire [ 3: 0]   io_sdio_dat,
     output logic        o_sdram_clk,
 
     // ------------------------------------------------------------------------
@@ -60,10 +60,10 @@ module openx86_soc_top #(
     output logic        o_sdram_ras_n,
     output logic        o_sdram_cas_n,
     output logic        o_sdram_we_n,
-    output logic [ 1:  0]  o_sdram_ba,
-    output logic [12:  0] o_sdram_a,
-    output logic [ 1:  0]  o_sdram_dqm,
-    inout  wire [15:  0]  io_sdram_dq,
+    output logic [ 1: 0]  o_sdram_ba,
+    output logic [12: 0] o_sdram_a,
+    output logic [ 1: 0]  o_sdram_dqm,
+    inout  wire [15: 0]  io_sdram_dq,
     input  logic        reset_n
 );
 
@@ -78,40 +78,40 @@ module openx86_soc_top #(
     logic        bus_busy;
     logic        bus_we;
     logic        bus_io;
-    logic [31:  0] bus_addr;
-    logic [31:  0] bus_rdata;
-    logic [31:  0] bus_wdata;
+    logic [31: 0] bus_addr;
+    logic [31: 0] bus_rdata;
+    logic [31: 0] bus_wdata;
 
     logic        vga_mem_en_w;
-    logic [19:  0] vga_mem_addr;
-    logic [ 7:  0]  vga_mem_data_w;
+    logic [19: 0] vga_mem_addr;
+    logic [ 7: 0]  vga_mem_data_w;
     logic        vga_io_en_w;
     logic        vga_io_en_r;
-    logic [15:  0] vga_io_addr;
-    logic [ 7:  0]  vga_io_data_w;
-    logic [ 7:  0]  vga_io_data_r;
+    logic [15: 0] vga_io_addr;
+    logic [ 7: 0]  vga_io_data_w;
+    logic [ 7: 0]  vga_io_data_r;
 
-    logic [15:  0] bios_addr;
-    logic [31:  0] bios_rdata;
-    logic [16:  0] ext_bios_addr;
-    logic [31:  0] ext_bios_rdata;
+    logic [15: 0] bios_addr;
+    logic [31: 0] bios_rdata;
+    logic [16: 0] ext_bios_addr;
+    logic [31: 0] ext_bios_rdata;
 
     logic        o_sdram_en;
     logic        o_sdram_we;
-    logic [23:  0] o_sdram_addr_off;
-    logic [31:  0] o_sdram_wdata;
-    logic [31:  0] i_sdram_rdata;
+    logic [23: 0] o_sdram_addr_off;
+    logic [31: 0] o_sdram_wdata;
+    logic [31: 0] i_sdram_rdata;
     logic        i_sdram_ready;
     logic        i_sdram_busy;
 
     logic        sdr_phy_cs_n, sdr_phy_ras_n, sdr_phy_cas_n, sdr_phy_we_n;
-    logic [ 1:  0]  sdr_phy_ba;
-    logic [12:  0] sdr_phy_a;
-    logic [ 1:  0]  sdr_phy_dqm;
-    logic [15:  0] sdr_phy_dq_out;
+    logic [ 1: 0]  sdr_phy_ba;
+    logic [12: 0] sdr_phy_a;
+    logic [ 1: 0]  sdr_phy_dqm;
+    logic [15: 0] sdr_phy_dq_out;
     logic        sdr_phy_dq_oe;
     logic        sdr_phy_clk, sdr_phy_cke;
-    logic [15:  0] sdr_phy_dq_in;
+    logic [15: 0] sdr_phy_dq_in;
 
     logic        pic_intr;
 
@@ -119,9 +119,9 @@ module openx86_soc_top #(
     logic        b_sd_cmd_o;
     logic        b_sd_cmd_oe;
     logic        b_nat_cmd_i;
-    logic [ 3:  0]  b_sd_dat_o;
+    logic [ 3: 0]  b_sd_dat_o;
     logic        b_sd_dat_oe;
-    logic [ 3:  0]  b_nat_dat_i;
+    logic [ 3: 0]  b_nat_dat_i;
 
     w686_cpu u_cpu (
         .bus_vaild        ( bus_valid ),

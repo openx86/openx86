@@ -7,10 +7,10 @@ description: This module implements eu_rot_rcr_tb.
 `timescale 1ns/1ns
 
 module eu_rot_rcr_tb;
-    logic [31:  0] a;
-    logic [31:  0] c;
+    logic [31: 0] a;
+    logic [31: 0] c;
     logic        cf_in;
-    logic [31:  0] y;
+    logic [31: 0] y;
     logic        cf_out;
 
     stage_3_exe_rot_rcr u_dut (

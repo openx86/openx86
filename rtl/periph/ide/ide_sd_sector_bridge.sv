@@ -9,22 +9,23 @@ description: This module implements ide_sd_sector_bridge.
 // ============================================================================
 
 module ide_sd_sector_bridge (
-    input  logic [31:  0] i_ide_disk_raddr,
-    output logic [ 7:  0]  o_ide_disk_rdata,
+    input  logic [31: 0] i_ide_disk_raddr,
+    output logic [ 7: 0]  o_ide_disk_rdata,
     input  logic        i_ide_sector_req,
     output logic        o_ide_sector_ready,
     output logic        o_sd_start,
-    output logic [31:  0] o_sd_lba,
+    output logic [31: 0] o_sd_lba,
     input  logic        i_sd_busy,
     input  logic        i_sd_done,
     input  logic        i_sd_err,
     input  logic        i_sd_payload_we,
-    input  logic [ 8:  0]  i_sd_payload_addr,
-    input  logic [ 7:  0]  i_sd_payload_data,
+    input  logic [ 8: 0]  i_sd_payload_addr,
+    input  logic [ 7: 0]  i_sd_payload_data,
     input  logic        reset_n,
-    input  logic        clock);
+    input  logic        clock
+);
 
-    logic [ 7:  0] sector_ram[ 0: 511];
+    logic [ 7: 0] sector_ram[ 0: 511];
     logic       sd_run;
     logic       req_d;
     logic       ready_latched;
@@ -95,8 +96,8 @@ module ide_sd_sector_bridge (
     end
 
     always_comb begin
-        if (i_ide_disk_raddr[ 8:  0] <= 9'd511)
-            o_ide_disk_rdata = sector_ram[i_ide_disk_raddr[ 8:  0]];
+        if (i_ide_disk_raddr[ 8: 0] <= 9'd511)
+            o_ide_disk_rdata = sector_ram[i_ide_disk_raddr[ 8: 0]];
         else
             o_ide_disk_rdata = 8'h00;
     end

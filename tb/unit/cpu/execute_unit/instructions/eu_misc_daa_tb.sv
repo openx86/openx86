@@ -7,10 +7,10 @@ description: This module implements eu_misc_daa_tb.
 `timescale 1ns/1ns
 
 module eu_misc_daa_tb;
-    logic [31:  0] a;
+    logic [31: 0] a;
     logic        af_in;
     logic        cf_in;
-    logic [31:  0] y;
+    logic [31: 0] y;
     logic        af_out;
     logic        cf_out;
 

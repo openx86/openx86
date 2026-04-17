@@ -13,24 +13,25 @@ description: This module implements w686_core.
 module w686_core (
     output logic        o_mmu_vaild,
     input  logic        i_mmu_ready,
-    output logic [31:  0] o_mmu_address,
-    input  logic [31:  0] i_mmu_data_read,
+    output logic [31: 0] o_mmu_address,
+    input  logic [31: 0] i_mmu_data_read,
 
     output logic        o_code_vaild,
     input  logic        i_code_ready,
-    output logic [31:  0] o_code_address,
-    input  logic [31:  0] i_code_data_read,
+    output logic [31: 0] o_code_address,
+    input  logic [31: 0] i_code_data_read,
 
     output logic        o_data_vaild,
     input  logic        i_data_ready,
     output logic        o_data_write_enable,
     output logic        o_data_io_access,
-    output logic [31:  0] o_data_address,
-    input  logic [31:  0] i_data_data_read,
-    output logic [31:  0] o_data_data_write,
+    output logic [31: 0] o_data_address,
+    input  logic [31: 0] i_data_data_read,
+    output logic [31: 0] o_data_data_write,
 
     input  logic        reset_n,
-    input  logic        clock);
+    input  logic        clock
+);
 
     import stage_3_exe_execute_unit_pkg::*;
     import stage_2_dec_decode_x87_pkg::*;
@@ -38,13 +39,13 @@ module w686_core (
     // --- GPR / 段 / 标志 / EIP / 控制寄存器（与原实现一致）---
     logic        write_enable;
     logic [ 2:0] write_index;
-    logic [31:  0] write_data;
+    logic [31: 0] write_data;
     logic        wb_write_enable;
     logic [ 2:0] wb_write_index;
-    logic [31:  0] wb_write_data;
-    logic [31:  0] GPR_read__8 [ 0:  7];
-    logic [31:  0] GPR_read_16 [ 0:  7];
-    logic [31:  0] GPR_read_32 [ 0:  7];
+    logic [31: 0] wb_write_data;
+    logic [31: 0] GPR_read__8 [ 0:  7];
+    logic [31: 0] GPR_read_16 [ 0:  7];
+    logic [31: 0] GPR_read_32 [ 0:  7];
 
     stage_5_wrb_general_propose_register general_propose_register (
         .write_enable ( wb_write_enable ),
@@ -59,14 +60,14 @@ module w686_core (
 
     logic        SREG_write_enable;
     logic [ 2:0] SREG_write_index;
-    logic [15:  0] SREG_write_selector;
-    logic [63:  0] SREG_write_descriptor;
+    logic [15: 0] SREG_write_selector;
+    logic [63: 0] SREG_write_descriptor;
     logic        wb_SREG_write_enable;
     logic [ 2:0] wb_SREG_write_index;
-    logic [15:  0] wb_SREG_write_selector;
-    logic [63:  0] wb_SREG_write_descriptor;
-    logic [15:  0] segment_selector [ 0:  5];
-    logic [63:  0] descriptor_cache [ 0:  5];
+    logic [15: 0] wb_SREG_write_selector;
+    logic [63: 0] wb_SREG_write_descriptor;
+    logic [15: 0] segment_selector [ 0:  5];
+    logic [63: 0] descriptor_cache [ 0:  5];
 
     stage_5_wrb_segment_register core_segment_register (
         .write_enable ( wb_SREG_write_enable ),
@@ -80,14 +81,14 @@ module w686_core (
     );
 
     logic         FLAGS_write_enable;
-    logic [31:  0]  FLAGS_write_data;
+    logic [31: 0]  FLAGS_write_data;
     logic         wb_FLAGS_write_enable;
-    logic [31:  0]  wb_FLAGS_write_data;
+    logic [31: 0]  wb_FLAGS_write_data;
     logic         CF, PF, AF, ZF, SF, TF, IF, DF, OF;
     logic [ 1:0]  IOPL;
     logic         NT, RF, VM;
-    logic [31:  0]  EFLAGS;
-    logic [15:  0]  FLAGS;
+    logic [31: 0]  EFLAGS;
+    logic [15: 0]  FLAGS;
 
     stage_5_wrb_flags_register core_flags_register (
         .write_enable ( wb_FLAGS_write_enable ),
@@ -112,11 +113,11 @@ module w686_core (
     );
 
     logic        IP_write_enable;
-    logic [31:  0] IP_write_data;
+    logic [31: 0] IP_write_data;
     logic        wb_IP_write_enable;
-    logic [31:  0] wb_IP_write_data;
-    logic [15:  0] IP;
-    logic [31:  0] EIP;
+    logic [31: 0] wb_IP_write_data;
+    logic [15: 0] IP;
+    logic [31: 0] EIP;
 
     stage_5_wrb_instruction_point_register core_instruction_point_register (
         .write_enable ( wb_IP_write_enable ),
@@ -188,10 +189,10 @@ module w686_core (
     );
 
     logic        GDTR_write_enable;
-    logic [15:  0] GDTR_write_data_limit;
-    logic [31:  0] GDTR_write_data_base;
-    logic [15:  0] GDTR_limit;
-    logic [31:  0] GDTR_base;
+    logic [15: 0] GDTR_write_data_limit;
+    logic [31: 0] GDTR_write_data_base;
+    logic [15: 0] GDTR_limit;
+    logic [31: 0] GDTR_base;
 
     stage_5_wrb_sar_global_descriptor_table_register core_global_descriptor_table_register (
         .GDTR_write_enable ( GDTR_write_enable ),
@@ -204,10 +205,10 @@ module w686_core (
     );
 
     logic        IDTR_write_enable;
-    logic [15:  0] IDTR_write_data_limit;
-    logic [31:  0] IDTR_write_data_base;
-    logic [15:  0] IDTR_limit;
-    logic [31:  0] IDTR_base;
+    logic [15: 0] IDTR_write_data_limit;
+    logic [31: 0] IDTR_write_data_base;
+    logic [15: 0] IDTR_limit;
+    logic [31: 0] IDTR_base;
 
     stage_5_wrb_sar_interrupt_descriptor_table_register core_interrupt_descriptor_table_register (
         .IDTR_write_enable ( IDTR_write_enable ),
@@ -223,25 +224,25 @@ module w686_core (
     assign IDTR_write_enable   = 1'b0;
 
     // CPL = CS.RPL
-    wire [ 1:  0] current_privilege_level = segment_selector[`sreg_index_CS][ 1:  0];
+    wire [ 1: 0] current_privilege_level = segment_selector[`sreg_index_CS][ 1: 0];
 
     // --- Core-side memory request channels (BIU is instantiated in w686_cpu) ---
     logic        mmu_bus_vaild;
     logic        mmu_bus_ready;
-    logic [31:  0] mmu_bus_addr;
-    logic [31:  0] mmu_bus_rdata;
+    logic [31: 0] mmu_bus_addr;
+    logic [31: 0] mmu_bus_rdata;
 
     logic        code_vaild;
     logic        code_ready;
-    logic [31:  0] code_address;
-    logic [31:  0] code_data_read;
+    logic [31: 0] code_address;
+    logic [31: 0] code_data_read;
 
     logic        data_vaild;
     logic        data_ready;
     logic        data_write_enable;
-    logic [31:  0] data_address;
-    logic [31:  0] data_data_read;
-    logic [31:  0] data_data_write;
+    logic [31: 0] data_address;
+    logic [31: 0] data_data_read;
+    logic [31: 0] data_data_write;
 
     assign o_mmu_vaild    = mmu_bus_vaild;
     assign mmu_bus_ready  = i_mmu_ready;
@@ -319,16 +320,16 @@ module w686_core (
     logic        stage5_valid;
     logic        cpuid_busy;
     logic        cpuid_gpr_wr;
-    logic [ 2:  0]  cpuid_gpr_idx;
-    logic [31:  0] cpuid_gpr_wdata;
+    logic [ 2: 0]  cpuid_gpr_idx;
+    logic [31: 0] cpuid_gpr_wdata;
     logic        cpuid_done_pulse;
     logic        cache_flush_pulse;
     logic        invlpg_pulse;
-    logic [31:  0] invlpg_linear_addr;
+    logic [31: 0] invlpg_linear_addr;
 
     logic        xadd_wait_reg_wr;
-    logic [ 2:  0]  xadd_saved_reg;
-    logic [31:  0] xadd_saved_val;
+    logic [ 2: 0]  xadd_saved_reg;
+    logic [31: 0] xadd_saved_val;
 
     stage_2_dec u_stage_2_dec (
         .i_instruction_ready ( instruction_ready ),
@@ -360,57 +361,57 @@ module w686_core (
     );
 
     // --- EU/AM：EU 负责计算，AM 负责访存握手 ---
-    logic [31:  0] br_rel32;
-    logic signed [ 7:  0] br_rel8;
+    logic [31: 0] br_rel32;
+    logic signed [ 7: 0] br_rel8;
     assign br_rel32 = o_immediate;
-    assign br_rel8  = o_immediate[ 7:  0];
+    assign br_rel8  = o_immediate[ 7: 0];
 
     wire modrm_is_reg = ( o_dbg_modrm_mod == 2'b11 );
-    wire [ 2:  0] modrm_reg_field = instruction[1][ 5:  3];
-    wire [ 2:  0] modrm_rm_field  = instruction[1][ 2:  0];
+    wire [ 2: 0] modrm_reg_field = instruction[1][ 5:  3];
+    wire [ 2: 0] modrm_rm_field  = instruction[1][ 2: 0];
     wire modrm2_is_reg = ( instruction[2][ 7:  6] == 2'b11 );
-    wire [ 2:  0] modrm2_reg_field = instruction[2][ 5:  3];
-    wire [ 2:  0] modrm2_rm_field  = instruction[2][ 2:  0];
+    wire [ 2: 0] modrm2_reg_field = instruction[2][ 5:  3];
+    wire [ 2: 0] modrm2_rm_field  = instruction[2][ 2: 0];
 
-    wire [31:  0] agu_base_w =
+    wire [31: 0] agu_base_w =
         o_base_reg_is_present ? GPR_read_32[o_base_reg_index] : 32'd0;
-    wire [31:  0] agu_index_w =
+    wire [31: 0] agu_index_w =
         o_index_reg_is_present ? GPR_read_32[o_index_reg_index] : 32'd0;
 
-    wire [31:  0] dseg_base_linear = {
+    wire [31: 0] dseg_base_linear = {
         descriptor_cache[o_segment_reg_index][31: 24],
-        descriptor_cache[o_segment_reg_index][ 7:  0],
+        descriptor_cache[o_segment_reg_index][ 7: 0],
         descriptor_cache[o_segment_reg_index][63: 48]
     };
-    wire [31:  0] sseg_base_linear = {
+    wire [31: 0] sseg_base_linear = {
         descriptor_cache[`sreg_index_SS][31: 24],
-        descriptor_cache[`sreg_index_SS][ 7:  0],
+        descriptor_cache[`sreg_index_SS][ 7: 0],
         descriptor_cache[`sreg_index_SS][63: 48]
     };
-    wire [31:  0] cseg_base_linear = {
+    wire [31: 0] cseg_base_linear = {
         descriptor_cache[`sreg_index_CS][31: 24],
-        descriptor_cache[`sreg_index_CS][ 7:  0],
+        descriptor_cache[`sreg_index_CS][ 7: 0],
         descriptor_cache[`sreg_index_CS][63: 48]
     };
 
-    logic [31:  0] eu_agu_ea;
-    wire [31:  0] lsu_linear_address = dseg_base_linear + eu_agu_ea;
+    logic [31: 0] eu_agu_ea;
+    wire [31: 0] lsu_linear_address = dseg_base_linear + eu_agu_ea;
 
     logic [ 2:0] eu_md_op;
-    logic [31:  0] eu_md_lo;
-    logic [31:  0] eu_md_hi;
-    logic [31:  0] eu_md_src;
-    logic [31:  0] eu_md_out_lo;
-    logic [31:  0] eu_md_out_hi;
+    logic [31: 0] eu_md_lo;
+    logic [31: 0] eu_md_hi;
+    logic [31: 0] eu_md_src;
+    logic [31: 0] eu_md_out_lo;
+    logic [31: 0] eu_md_out_hi;
     logic        eu_md_div0;
     int_op_e     eu_int_op_sel;
     logic        eu_int_valid;
-    logic [31:  0] eu_int_a;
-    logic [31:  0] eu_int_b;
+    logic [31: 0] eu_int_a;
+    logic [31: 0] eu_int_b;
     logic        eu_int_cf;
     logic        eu_int_af;
-    logic [31:  0] eu_int_count;
-    logic [31:  0] eu_int_result;
+    logic [31: 0] eu_int_count;
+    logic [31: 0] eu_int_result;
     logic        eu_int_cf_out;
     logic        eu_int_af_out;
     logic        eu_int_zf_out;
@@ -649,9 +650,9 @@ module w686_core (
             if (o_opcode_x86_RCL_reg_mem_by_1)
                 eu_int_count = 32'd1;
             else if (o_opcode_x86_RCL_reg_mem_by_CL)
-                eu_int_count = { 27'd0, GPR_read_32[1][ 4:  0] };
+                eu_int_count = { 27'd0, GPR_read_32[1][ 4: 0] };
             else
-                eu_int_count = { 27'd0, o_immediate[ 4:  0] };
+                eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_RCR_reg_mem_by_1 || o_opcode_x86_RCR_reg_mem_by_CL || o_opcode_x86_RCR_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_RCR;
@@ -659,9 +660,9 @@ module w686_core (
             if (o_opcode_x86_RCR_reg_mem_by_1)
                 eu_int_count = 32'd1;
             else if (o_opcode_x86_RCR_reg_mem_by_CL)
-                eu_int_count = { 27'd0, GPR_read_32[1][ 4:  0] };
+                eu_int_count = { 27'd0, GPR_read_32[1][ 4: 0] };
             else
-                eu_int_count = { 27'd0, o_immediate[ 4:  0] };
+                eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_ROL_reg_mem_by_1 || o_opcode_x86_ROL_reg_mem_by_CL || o_opcode_x86_ROL_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_ROL;
@@ -669,9 +670,9 @@ module w686_core (
             if (o_opcode_x86_ROL_reg_mem_by_1)
                 eu_int_count = 32'd1;
             else if (o_opcode_x86_ROL_reg_mem_by_CL)
-                eu_int_count = { 27'd0, GPR_read_32[1][ 4:  0] };
+                eu_int_count = { 27'd0, GPR_read_32[1][ 4: 0] };
             else
-                eu_int_count = { 27'd0, o_immediate[ 4:  0] };
+                eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_ROR_reg_mem_by_1 || o_opcode_x86_ROR_reg_mem_by_CL || o_opcode_x86_ROR_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_ROR;
@@ -679,9 +680,9 @@ module w686_core (
             if (o_opcode_x86_ROR_reg_mem_by_1)
                 eu_int_count = 32'd1;
             else if (o_opcode_x86_ROR_reg_mem_by_CL)
-                eu_int_count = { 27'd0, GPR_read_32[1][ 4:  0] };
+                eu_int_count = { 27'd0, GPR_read_32[1][ 4: 0] };
             else
-                eu_int_count = { 27'd0, o_immediate[ 4:  0] };
+                eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SHL_reg_mem_by_1 || o_opcode_x86_SHL_reg_mem_by_CL || o_opcode_x86_SHL_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_SHL;
@@ -689,9 +690,9 @@ module w686_core (
             if (o_opcode_x86_SHL_reg_mem_by_1)
                 eu_int_count = 32'd1;
             else if (o_opcode_x86_SHL_reg_mem_by_CL)
-                eu_int_count = { 27'd0, GPR_read_32[1][ 4:  0] };
+                eu_int_count = { 27'd0, GPR_read_32[1][ 4: 0] };
             else
-                eu_int_count = { 27'd0, o_immediate[ 4:  0] };
+                eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SHR_reg_mem_by_1 || o_opcode_x86_SHR_reg_mem_by_CL || o_opcode_x86_SHR_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_SHR;
@@ -699,9 +700,9 @@ module w686_core (
             if (o_opcode_x86_SHR_reg_mem_by_1)
                 eu_int_count = 32'd1;
             else if (o_opcode_x86_SHR_reg_mem_by_CL)
-                eu_int_count = { 27'd0, GPR_read_32[1][ 4:  0] };
+                eu_int_count = { 27'd0, GPR_read_32[1][ 4: 0] };
             else
-                eu_int_count = { 27'd0, o_immediate[ 4:  0] };
+                eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SAR_reg_mem_by_1 || o_opcode_x86_SAR_reg_mem_by_CL || o_opcode_x86_SAR_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_SAR;
@@ -709,27 +710,27 @@ module w686_core (
             if (o_opcode_x86_SAR_reg_mem_by_1)
                 eu_int_count = 32'd1;
             else if (o_opcode_x86_SAR_reg_mem_by_CL)
-                eu_int_count = { 27'd0, GPR_read_32[1][ 4:  0] };
+                eu_int_count = { 27'd0, GPR_read_32[1][ 4: 0] };
             else
-                eu_int_count = { 27'd0, o_immediate[ 4:  0] };
+                eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SHLD_reg_mem_by_imm || o_opcode_x86_SHLD_reg_mem_by_CL) && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_SHLD;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = GPR_read_32[modrm2_reg_field];
             if (o_opcode_x86_SHLD_reg_mem_by_CL)
-                eu_int_count = { 27'd0, GPR_read_32[1][ 4:  0] };
+                eu_int_count = { 27'd0, GPR_read_32[1][ 4: 0] };
             else
-                eu_int_count = { 27'd0, o_immediate[ 4:  0] };
+                eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SHRD_reg_mem_by_imm || o_opcode_x86_SHRD_reg_mem_by_CL) && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_SHRD;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = GPR_read_32[modrm2_reg_field];
             if (o_opcode_x86_SHRD_reg_mem_by_CL)
-                eu_int_count = { 27'd0, GPR_read_32[1][ 4:  0] };
+                eu_int_count = { 27'd0, GPR_read_32[1][ 4: 0] };
             else
-                eu_int_count = { 27'd0, o_immediate[ 4:  0] };
+                eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if (o_opcode_x86_BSF_bit_scan_forward && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_BSF;
@@ -1051,7 +1052,7 @@ module w686_core (
         end
     end
 
-    logic [63:  0] eu_x87_push_data;
+    logic [63: 0] eu_x87_push_data;
     always_comb begin
         eu_x87_push_data = 64'd0;
         unique case (eu_x87_op_sel)
@@ -1065,10 +1066,10 @@ module w686_core (
     wire mov_st_mem_e  = o_opcode_x86_MOV_reg_to_reg_mem & ~modrm_is_reg;
     wire mov_ld_acc_mem_e = o_opcode_x86_MOV_mem_to_acc;
     wire mov_st_acc_mem_e = o_opcode_x86_MOV_acc_to_mem;
-    wire [31:  0] mov_moffs_linear = dseg_base_linear + o_displacement;
+    wire [31: 0] mov_moffs_linear = dseg_base_linear + o_displacement;
     wire        lsu_is_store_w = mov_st_mem_e | mov_st_acc_mem_e;
-    wire [31:  0] lsu_addr_req_w = (mov_ld_acc_mem_e | mov_st_acc_mem_e) ? mov_moffs_linear : lsu_linear_address;
-    wire [31:  0] lsu_wdata_req_w = mov_st_acc_mem_e ? GPR_read_32[0] : GPR_read_32[modrm_reg_field];
+    wire [31: 0] lsu_addr_req_w = (mov_ld_acc_mem_e | mov_st_acc_mem_e) ? mov_moffs_linear : lsu_linear_address;
+    wire [31: 0] lsu_wdata_req_w = mov_st_acc_mem_e ? GPR_read_32[0] : GPR_read_32[modrm_reg_field];
     wire am_lsu_start_w =
         insn_fire & ~cpuid_busy & ~in_exception & ~o_error & ~post486_illegal & ~if_segment_fault &
         ( mov_ld_mem_e | mov_st_mem_e | mov_ld_acc_mem_e | mov_st_acc_mem_e );
@@ -1077,28 +1078,28 @@ module w686_core (
     logic        am_lsu_busy;
     logic        am_lsu_mem_valid;
     logic        am_lsu_mem_we;
-    logic [31:  0] am_lsu_mem_addr;
-    logic [31:  0] am_lsu_mem_wdata;
-    logic [31:  0] am_lsu_rdata;
+    logic [31: 0] am_lsu_mem_addr;
+    logic [31: 0] am_lsu_mem_wdata;
+    logic [31: 0] am_lsu_rdata;
     logic        br_taken;
-    logic [31:  0] br_tgt;
+    logic [31: 0] br_tgt;
 
     logic        lsu_done_d1;
     logic        muldiv_pair_wait;
-    logic [31:  0] muldiv_hi_latch;
+    logic [31: 0] muldiv_hi_latch;
     logic        lsu_last_was_store_r;
     logic [ 2:0] lsu_ld_dst_reg;
 
-    logic [63:  0] eu_x87_st0;
-    logic [63:  0] eu_x87_st1;
+    logic [63: 0] eu_x87_st0;
+    logic [63: 0] eu_x87_st1;
     logic        eu_x87_zf;
     logic        eu_x87_pf;
     logic        eu_x87_cf;
 
     logic        wb_mem_valid;
     logic        wb_mem_write_enable;
-    logic [31:  0] wb_mem_address;
-    logic [31:  0] wb_mem_write_data;
+    logic [31: 0] wb_mem_address;
+    logic [31: 0] wb_mem_write_data;
 
     stage_5_wrb u_stage_5_wrb (
         .i_stage4_valid ( stage4_valid ),
@@ -1268,34 +1269,34 @@ module w686_core (
     );
 
     // --- 异常 / 写回 ---
-    logic [ 7:  0] exception_vector;
+    logic [ 7: 0] exception_vector;
     logic       in_exception;
 
-    wire [ 2:  0] cx_rm_idx  = instruction[2][ 2:  0];
-    wire [ 2:  0] cx_r_idx   = instruction[2][ 5:  3];
-    wire [ 2:  0] bswap_rd_n = instruction[1][ 2:  0];
-    wire [ 2:  0] short_reg_idx = instruction[0][ 2:  0];
-    wire [31:  0] eip_next_linear = EIP + { 28'h0, o_consume_bytes };
-    wire [31:  0] rel8_disp32 = { { 24{ o_immediate[7] } }, o_immediate[ 7:  0] };
+    wire [ 2: 0] cx_rm_idx  = instruction[2][ 2: 0];
+    wire [ 2: 0] cx_r_idx   = instruction[2][ 5:  3];
+    wire [ 2: 0] bswap_rd_n = instruction[1][ 2: 0];
+    wire [ 2: 0] short_reg_idx = instruction[0][ 2: 0];
+    wire [31: 0] eip_next_linear = EIP + { 28'h0, o_consume_bytes };
+    wire [31: 0] rel8_disp32 = { { 24{ o_immediate[7] } }, o_immediate[ 7: 0] };
 
-    logic [31:  0] xadd_a;
-    logic [31:  0] sh_tmp;
+    logic [31: 0] xadd_a;
+    logic [31: 0] sh_tmp;
     logic [ 4:0] sh_cnt;
     logic        sh_cf;
     logic        sh_of;
-    logic [31:  0] shadow_ret_stack [ 0: 15];
+    logic [31: 0] shadow_ret_stack [ 0: 15];
     logic [ 3:0] shadow_ret_sp;
 
-    function automatic logic parity_even8(input logic [ 7:  0] v);
+    function automatic logic parity_even8(input logic [ 7: 0] v);
         parity_even8 = ~^v;
     endfunction
 
-    function automatic logic msb32(input logic [31:  0] v);
+    function automatic logic msb32(input logic [31: 0] v);
         msb32 = v[31];
     endfunction
 
-    function automatic logic [31:  0] write_status_flags(
-        input logic [31:  0] old_flags,
+    function automatic logic [31: 0] write_status_flags(
+        input logic [31: 0] old_flags,
         input logic        cf,
         input logic        pf,
         input logic        af,
@@ -1303,7 +1304,7 @@ module w686_core (
         input logic        sf,
         input logic        of
     );
-        logic [31:  0] f;
+        logic [31: 0] f;
         begin
             f = old_flags;
             f[0]  = cf;
@@ -1316,9 +1317,9 @@ module w686_core (
         end
     endfunction
 
-    function automatic logic [31:  0] flags_from_eu_result(
-        input logic [31:  0] old_flags,
-        input logic [31:  0] result,
+    function automatic logic [31: 0] flags_from_eu_result(
+        input logic [31: 0] old_flags,
+        input logic [31: 0] result,
         input logic        cf,
         input logic        af,
         input logic        of
@@ -1326,7 +1327,7 @@ module w686_core (
         flags_from_eu_result = write_status_flags(
             old_flags,
             cf,
-            parity_even8(result[ 7:  0]),
+            parity_even8(result[ 7: 0]),
             af,
             (result == 32'd0),
             result[31],
@@ -1334,9 +1335,9 @@ module w686_core (
         );
     endfunction
 
-    function automatic logic [31:  0] flags_from_eu_result8(
-        input logic [31:  0] old_flags,
-        input logic [31:  0] result,
+    function automatic logic [31: 0] flags_from_eu_result8(
+        input logic [31: 0] old_flags,
+        input logic [31: 0] result,
         input logic        cf,
         input logic        af,
         input logic        of
@@ -1344,19 +1345,19 @@ module w686_core (
         flags_from_eu_result8 = write_status_flags(
             old_flags,
             cf,
-            parity_even8(result[ 7:  0]),
+            parity_even8(result[ 7: 0]),
             af,
-            (result[ 7:  0] == 8'd0),
+            (result[ 7: 0] == 8'd0),
             result[7],
             of
         );
     endfunction
 
-    function automatic logic [31:  0] flags_with_cf(
-        input logic [31:  0] old_flags,
+    function automatic logic [31: 0] flags_with_cf(
+        input logic [31: 0] old_flags,
         input logic        cf
     );
-        logic [31:  0] f;
+        logic [31: 0] f;
         begin
             f = old_flags;
             f[0] = cf;
@@ -1364,11 +1365,11 @@ module w686_core (
         end
     endfunction
 
-    function automatic logic [31:  0] flags_with_zf(
-        input logic [31:  0] old_flags,
+    function automatic logic [31: 0] flags_with_zf(
+        input logic [31: 0] old_flags,
         input logic        zf
     );
-        logic [31:  0] f;
+        logic [31: 0] f;
         begin
             f = old_flags;
             f[6] = zf;
@@ -1376,12 +1377,12 @@ module w686_core (
         end
     endfunction
 
-    function automatic logic [31:  0] flags_with_cf_af(
-        input logic [31:  0] old_flags,
+    function automatic logic [31: 0] flags_with_cf_af(
+        input logic [31: 0] old_flags,
         input logic        cf,
         input logic        af
     );
-        logic [31:  0] f;
+        logic [31: 0] f;
         begin
             f = old_flags;
             f[0] = cf;
@@ -1390,12 +1391,12 @@ module w686_core (
         end
     endfunction
 
-    function automatic logic [31:  0] flags_with_cf_of(
-        input logic [31:  0] old_flags,
+    function automatic logic [31: 0] flags_with_cf_of(
+        input logic [31: 0] old_flags,
         input logic        cf,
         input logic        of
     );
-        logic [31:  0] f;
+        logic [31: 0] f;
         begin
             f = old_flags;
             f[0] = cf;
@@ -1404,13 +1405,13 @@ module w686_core (
         end
     endfunction
 
-    function automatic logic [31:  0] flags_with_cf_pf_zf(
-        input logic [31:  0] old_flags,
+    function automatic logic [31: 0] flags_with_cf_pf_zf(
+        input logic [31: 0] old_flags,
         input logic        cf,
         input logic        pf,
         input logic        zf
     );
-        logic [31:  0] f;
+        logic [31: 0] f;
         begin
             f = old_flags;
             f[0] = cf;
@@ -1420,11 +1421,11 @@ module w686_core (
         end
     endfunction
 
-    function automatic logic [31:  0] flags_preserve_cf(
-        input logic [31:  0] old_flags,
-        input logic [31:  0] new_flags
+    function automatic logic [31: 0] flags_preserve_cf(
+        input logic [31: 0] old_flags,
+        input logic [31: 0] new_flags
     );
-        logic [31:  0] f;
+        logic [31: 0] f;
         begin
             f = new_flags;
             f[0] = old_flags[0];
@@ -1432,29 +1433,29 @@ module w686_core (
         end
     endfunction
 
-    function automatic logic [31:  0] stack_push_esp(
-        input logic [31:  0] esp,
-        input logic [31:  0] bytes
+    function automatic logic [31: 0] stack_push_esp(
+        input logic [31: 0] esp,
+        input logic [31: 0] bytes
     );
         stack_push_esp = esp - bytes;
     endfunction
 
-    function automatic logic [31:  0] stack_pop_esp(
-        input logic [31:  0] esp,
-        input logic [31:  0] bytes
+    function automatic logic [31: 0] stack_pop_esp(
+        input logic [31: 0] esp,
+        input logic [31: 0] bytes
     );
         stack_pop_esp = esp + bytes;
     endfunction
 
     function automatic logic shadow_ret_has_entry(
-        input logic [ 3:  0] sp
+        input logic [ 3: 0] sp
     );
         shadow_ret_has_entry = (sp != 4'd0);
     endfunction
 
-    function automatic logic [31:  0] shadow_ret_top_or(
-        input logic [ 3:  0]  sp,
-        input logic [31:  0] fallback
+    function automatic logic [31: 0] shadow_ret_top_or(
+        input logic [ 3: 0]  sp,
+        input logic [31: 0] fallback
     );
         if (sp != 4'd0)
             shadow_ret_top_or = shadow_ret_stack[sp - 4'd1];
@@ -1462,12 +1463,12 @@ module w686_core (
             shadow_ret_top_or = fallback;
     endfunction
 
-    function automatic logic [15:  0] shadow_ret_top16_or(
-        input logic [ 3:  0]  sp,
-        input logic [15:  0] fallback
+    function automatic logic [15: 0] shadow_ret_top16_or(
+        input logic [ 3: 0]  sp,
+        input logic [15: 0] fallback
     );
         if (sp != 4'd0)
-            shadow_ret_top16_or = shadow_ret_stack[sp - 4'd1][15:  0];
+            shadow_ret_top16_or = shadow_ret_stack[sp - 4'd1][15: 0];
         else
             shadow_ret_top16_or = fallback;
     endfunction
@@ -1660,7 +1661,7 @@ module w686_core (
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_JMP_to_same_segment_short) begin
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= EIP + 32'd2 + { { 24{ o_immediate[7] } }, o_immediate[ 7:  0] };
+                    IP_write_data <= EIP + 32'd2 + { { 24{ o_immediate[7] } }, o_immediate[ 7: 0] };
                 end else if (o_opcode_x86_JMP_to_same_segment_direct) begin
                     IP_write_enable <= 1'b1;
                     IP_write_data <= br_tgt;
@@ -1752,7 +1753,7 @@ module w686_core (
                     exception_vector <= 8'd3;
                     in_exception <= 1'b1;
                 end else if (o_opcode_x86_INT_interrupt_type_n) begin
-                    exception_vector <= o_immediate[ 7:  0];
+                    exception_vector <= o_immediate[ 7: 0];
                     in_exception <= 1'b1;
                 end else if (o_opcode_x86_INT_interrupt_type_4) begin
                     if (OF) begin
@@ -1885,7 +1886,7 @@ module w686_core (
                 end else if (o_opcode_x86_XLAT_table_look_up_translation) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd0;
-                    write_data <= { GPR_read_32[0][31:  8], GPR_read_32[0][ 7:  0] };
+                    write_data <= { GPR_read_32[0][31:  8], GPR_read_32[0][ 7: 0] };
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_x87_is_esc && (eu_x87_op_sel != X87_NOP)) begin
@@ -2001,7 +2002,7 @@ module w686_core (
                 end else if (o_opcode_x86_MOV_reg_mem_to_sreg && modrm_is_reg) begin
                     SREG_write_enable <= 1'b1;
                     SREG_write_index <= o_seg_reg_index;
-                    SREG_write_selector <= GPR_read_32[modrm_rm_field][15:  0];
+                    SREG_write_selector <= GPR_read_32[modrm_rm_field][15: 0];
                     SREG_write_descriptor <= descriptor_cache[o_seg_reg_index];
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
@@ -2113,7 +2114,7 @@ module w686_core (
                             SREG_write_index <= `sreg_index_SS;
                             SREG_write_descriptor <= descriptor_cache[`sreg_index_SS];
                         end
-                        SREG_write_selector <= GPR_read_32[modrm_rm_field][15:  0];
+                        SREG_write_selector <= GPR_read_32[modrm_rm_field][15: 0];
                     end
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
@@ -2638,9 +2639,9 @@ module w686_core (
                         o_opcode_x86_RCR_reg_mem_by_CL | o_opcode_x86_SHL_reg_mem_by_CL | o_opcode_x86_SHR_reg_mem_by_CL |
                         o_opcode_x86_SAR_reg_mem_by_CL
                     )
-                        sh_cnt = GPR_read_32[1][ 4:  0];
+                        sh_cnt = GPR_read_32[1][ 4: 0];
                     else
-                        sh_cnt = o_immediate[ 4:  0];
+                        sh_cnt = o_immediate[ 4: 0];
 
                     sh_tmp = eu_int_result;
 
@@ -2691,9 +2692,9 @@ module w686_core (
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if ((o_opcode_x86_SHLD_reg_mem_by_imm | o_opcode_x86_SHLD_reg_mem_by_CL) && modrm2_is_reg) begin
                     if (o_opcode_x86_SHLD_reg_mem_by_CL)
-                        sh_cnt = GPR_read_32[1][ 4:  0];
+                        sh_cnt = GPR_read_32[1][ 4: 0];
                     else
-                        sh_cnt = o_immediate[ 4:  0];
+                        sh_cnt = o_immediate[ 4: 0];
 
                     if (sh_cnt != 5'd0) begin
                         sh_cf = eu_int_cf_out;
@@ -2711,9 +2712,9 @@ module w686_core (
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if ((o_opcode_x86_SHRD_reg_mem_by_imm | o_opcode_x86_SHRD_reg_mem_by_CL) && modrm2_is_reg) begin
                     if (o_opcode_x86_SHRD_reg_mem_by_CL)
-                        sh_cnt = GPR_read_32[1][ 4:  0];
+                        sh_cnt = GPR_read_32[1][ 4: 0];
                     else
-                        sh_cnt = o_immediate[ 4:  0];
+                        sh_cnt = o_immediate[ 4: 0];
 
                     if (sh_cnt != 5'd0) begin
                         sh_cf = eu_int_cf_out;

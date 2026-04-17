@@ -14,10 +14,10 @@ module com_ns16550_tb;
     logic        clock = 0;
     logic        reset;
     logic        io_valid, io_we;
-    logic [15:  0] io_addr;
-    logic [ 7:  0]  io_wdata, io_rdata;
+    logic [15: 0] io_addr;
+    logic [ 7: 0]  io_wdata, io_rdata;
     logic        rx_push;
-    logic [ 7:  0]  rx_data;
+    logic [ 7: 0]  rx_data;
 
     wire com_hit = (io_addr >= 16'h03F8) && (io_addr <= 16'h03FF);
     wire cs_n    = !(io_valid && com_hit);
@@ -30,7 +30,7 @@ module com_ns16550_tb;
         .i_cs_n     ( cs_n ),
         .i_rd_n     ( rd_n ),
         .i_wr_n     ( wr_n ),
-        .i_a        ( io_addr[ 2:  0] ),
+        .i_a        ( io_addr[ 2: 0] ),
         .i_d        ( io_wdata ),
         .o_d        ( io_rdata ),
         .i_rx_push  ( rx_push ),
@@ -39,7 +39,7 @@ module com_ns16550_tb;
 
     always #5 clock = ~clock;
 
-    task automatic wr(input logic [15:  0] a, input logic [ 7:  0] d);
+    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 1;
@@ -49,7 +49,7 @@ module com_ns16550_tb;
         io_valid = 0;
     endtask
 
-    task automatic rd(input logic [15:  0] a, output logic [ 7:  0] d);
+    task automatic rd(input logic [15: 0] a, output logic [ 7: 0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 0;
@@ -59,7 +59,7 @@ module com_ns16550_tb;
         io_valid = 0;
     endtask
 
-    logic [ 7:  0] rb;
+    logic [ 7: 0] rb;
     initial begin
         rx_push = 0;
         rx_data = 0;

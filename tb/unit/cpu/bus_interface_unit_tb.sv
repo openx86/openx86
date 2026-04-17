@@ -16,26 +16,26 @@ always #(clock_period/2) clock = ~clock;
 
 logic        i_mmu_vaild;
 logic        o_mmu_ready;
-logic [31:  0] i_mmu_address;
-logic [31:  0] o_mmu_data_read;
+logic [31: 0] i_mmu_address;
+logic [31: 0] o_mmu_data_read;
 logic        i_code_vaild;
 logic        o_code_ready;
-logic [31:  0] i_code_address;
-logic [31:  0] o_code_data_read;
+logic [31: 0] i_code_address;
+logic [31: 0] o_code_data_read;
 logic        i_data_vaild;
 logic        o_data_ready;
 logic        i_data_write_enable;
 logic        i_data_io_access;
-logic [31:  0] i_data_address;
-logic [31:  0] o_data_data_read;
-logic [31:  0] i_data_data_write;
+logic [31: 0] i_data_address;
+logic [31: 0] o_data_data_read;
+logic [31: 0] i_data_data_write;
 logic        o_bus_vaild;
 logic        i_bus_ready;
 logic        i_bus_busy;
 logic        o_bus_write_enable;
-logic [31:  0] o_bus_address;
-logic [31:  0] i_bus_data_read;
-logic [31:  0] o_bus_data_write;
+logic [31: 0] o_bus_address;
+logic [31: 0] i_bus_data_read;
+logic [31: 0] o_bus_data_write;
 
 initial begin
     clock = 1;

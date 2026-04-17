@@ -24,13 +24,13 @@ module ps2_host_phy #(
     output logic        o_ps2_dat_out,
     output logic        o_ps2_dat_oe,
     input  logic        i_tx_req,
-    input  logic [ 7:  0]  i_tx_byte,
+    input  logic [ 7: 0]  i_tx_byte,
     // 主机 → 设备（单周期 i_tx_req 脉冲即可，o_tx_busy 期间勿重复请求）
     output logic        o_tx_busy,
     output logic        o_tx_done,
     output logic        o_tx_err,
     output logic        o_rx_strobe,
-    output logic [ 7:  0]  o_rx_byte,
+    output logic [ 7: 0]  o_rx_byte,
     // 设备 → 主机
     output logic        o_rx_err,
     input  logic        clock,
@@ -73,7 +73,7 @@ module ps2_host_phy #(
     wire ps2_clk_falling = clk_prev & ~clk_s2;
 
     // --- 主状态机 -----------------------------------------------------------
-    typedef enum logic [ 3:  0] {
+    typedef enum logic [ 3: 0] {
         S_IDLE,
         S_TX_INHIBIT_CLK,
         S_TX_ASSERT_REQ,
@@ -84,11 +84,11 @@ module ps2_host_phy #(
     } state_t;
 
     state_t state;
-    logic [15:  0] cnt_inhibit;
-    logic [ 3:  0]  bit_index;
-    logic [10:  0] shift_tx;
-    logic [10:  0] shift_rx;
-    logic [31:  0] cnt_ack_timeout;
+    logic [15: 0] cnt_inhibit;
+    logic [ 3: 0]  bit_index;
+    logic [10: 0] shift_tx;
+    logic [10: 0] shift_rx;
+    logic [31: 0] cnt_ack_timeout;
 
     assign o_tx_busy = (state != S_IDLE);
 
@@ -124,7 +124,7 @@ module ps2_host_phy #(
                     o_ps2_dat_out <= 1'b1;
                     cnt_inhibit     <= '0;
                     bit_index       <= '0;
-                    cnt_ack_timeout <= CYCLES_ACK_TIMEOUT_MS2[31:  0];
+                    cnt_ack_timeout <= CYCLES_ACK_TIMEOUT_MS2[31: 0];
                     shift_rx        <= '0;
 
                     if (i_tx_req) begin
@@ -142,7 +142,7 @@ module ps2_host_phy #(
                     o_ps2_clk_out <= 1'b0;
                     o_ps2_dat_oe  <= 1'b0;
                     o_ps2_dat_out <= 1'b1;
-                    if (cnt_inhibit < CYCLES_INHIBIT_150US[15:  0])
+                    if (cnt_inhibit < CYCLES_INHIBIT_150US[15: 0])
                         cnt_inhibit <= cnt_inhibit + 16'd1;
                     else
                         state <= S_TX_ASSERT_REQ;
@@ -169,7 +169,7 @@ module ps2_host_phy #(
                         else begin
                             o_ps2_dat_oe <= 1'b0;
                             state        <= S_TX_WAIT_ACK;
-                            cnt_ack_timeout <= CYCLES_ACK_TIMEOUT_MS2[31:  0];
+                            cnt_ack_timeout <= CYCLES_ACK_TIMEOUT_MS2[31: 0];
                         end
                     end
                 end

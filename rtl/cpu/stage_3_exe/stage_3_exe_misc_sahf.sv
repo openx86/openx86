@@ -5,9 +5,10 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_misc_sahf.
 */
 module stage_3_exe_misc_sahf (
-    input  logic [31:  0] flags_in,
-    input  logic [31:  0] eax_in,
-    output logic [31:  0] flags_out);
+    input  logic [31: 0] flags_in,
+    input  logic [31: 0] eax_in,
+    output logic [31: 0] flags_out
+);
     always_comb begin
         flags_out = {
             flags_in[31:  8],

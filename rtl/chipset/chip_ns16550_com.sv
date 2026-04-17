@@ -6,7 +6,7 @@ description: This module implements chip_ns16550_com.
 */
 // ============================================================================
 // NS16550 兼容 UART — COM1
-// 主机接口：nCS/nRD/nWR + A[ 2:  0]（相对基址 0x3F8 的寄存器偏移）
+// 主机接口：nCS/nRD/nWR + A[ 2: 0]（相对基址 0x3F8 的寄存器偏移）
 // 简化：无 FIFO 深度、无 divisor 时序；THR 写、RBR 读；MCR.4 为内部回环时 THR→RBR
 // 可选 i_rx_push / i_rx_data 用于仿真注入接收字节
 // ============================================================================
@@ -15,24 +15,25 @@ module chip_ns16550_com (
     input  logic        i_cs_n,
     input  logic        i_rd_n,
     input  logic        i_wr_n,
-    input  logic [ 2:  0]  i_a,
-    input  logic [ 7:  0]  i_d,
-    output logic [ 7:  0]  o_d,
+    input  logic [ 2: 0]  i_a,
+    input  logic [ 7: 0]  i_d,
+    output logic [ 7: 0]  o_d,
     input  logic        i_rx_push,
-    input  logic [ 7:  0]  i_rx_data,
+    input  logic [ 7: 0]  i_rx_data,
     input  logic        reset_n,
-    input  logic        clock);
+    input  logic        clock
+);
 
-    wire [ 2:  0] off = i_a;
+    wire [ 2: 0] off = i_a;
 
-    logic [ 7:  0] rbr;
+    logic [ 7: 0] rbr;
     logic       rbr_valid;
-    logic [ 7:  0] ier;
-    logic [ 7:  0] fcr;
-    logic [ 7:  0] lcr;
-    logic [ 7:  0] mcr;
-    logic [ 7:  0] scr;
-    logic [ 7:  0] dll, dlm;
+    logic [ 7: 0] ier;
+    logic [ 7: 0] fcr;
+    logic [ 7: 0] lcr;
+    logic [ 7: 0] mcr;
+    logic [ 7: 0] scr;
+    logic [ 7: 0] dll, dlm;
 
     wire dlab = lcr[7];
 
@@ -86,7 +87,7 @@ module chip_ns16550_com (
         end
     end
 
-    wire [ 7:  0] lsr = { 1'b0, 1'b0, 1'b1, 1'b1, 4'b0000, rbr_valid };
+    wire [ 7: 0] lsr = { 1'b0, 1'b0, 1'b1, 1'b1, 4'b0000, rbr_valid };
 
     always_comb begin
         o_d = 8'hFF;

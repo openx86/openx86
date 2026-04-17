@@ -11,14 +11,15 @@ description: This module implements stage_3_exe_address_generation_unit.
 // ============================================================================
 
 module stage_3_exe_address_generation_unit (
-    input  logic [31:  0] i_base,
-    input  logic [31:  0] i_index,
+    input  logic [31: 0] i_base,
+    input  logic [31: 0] i_index,
     input  logic [ 1:0] i_scale,
-    input  logic [31:  0] i_disp,
-    output logic [31:  0] o_effective_address);
+    input  logic [31: 0] i_disp,
+    output logic [31: 0] o_effective_address
+);
 
-    logic [63:  0] scaled;
-    logic [63:  0] sum;
+    logic [63: 0] scaled;
+    logic [63: 0] sum;
 
     always_comb begin
         unique case (i_scale)
@@ -30,6 +31,6 @@ module stage_3_exe_address_generation_unit (
     end
 
     assign sum = {32'h0, i_base} + scaled + {{32{i_disp[31]}}, i_disp};
-    assign o_effective_address = sum[31:  0];
+    assign o_effective_address = sum[31: 0];
 
 endmodule

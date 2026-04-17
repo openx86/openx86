@@ -29,39 +29,40 @@ module bus_controller_devices #(
     output logic        o_bus_ready,
     output logic        o_bus_busy,
     input  logic        i_bus_write_enable,
-    input  logic        i_bus_io_access,  // 1=I/O访问, 0=内存访问 (类似x86的M/IO#信号),
-    input  logic [31:  0] i_bus_address,
-    output logic [31:  0] o_bus_data_read,
-    input  logic [31:  0] i_bus_data_write,
+    input  logic        i_bus_io_access,  // 1=I/O访问, 0=内存访问 (类似x86的M/IO#信号)
+,
+    input  logic [31: 0] i_bus_address,
+    output logic [31: 0] o_bus_data_read,
+    input  logic [31: 0] i_bus_data_write,
 
     // VGA 内存访问接口（VRAM窗口 0xA0000-0xBFFFF）
     // 注意：VGA VRAM 通常是只写的（从CPU角度），VGA控制器自己读取显示
     output logic        o_vga_mem_en_w,
-    output logic [19:  0] o_vga_mem_addr,
-    output logic [ 7:  0]  o_vga_mem_data_w,
+    output logic [19: 0] o_vga_mem_addr,
+    output logic [ 7: 0]  o_vga_mem_data_w,
 
     // VGA I/O 端口接口（0x03C0-0x03DF）
     output logic        o_vga_io_en_w,
     output logic        o_vga_io_en_r,
-    output logic [15:  0] o_vga_io_addr,
-    output logic [ 7:  0]  o_vga_io_data_w,
-    input  logic [ 7:  0]  i_vga_io_data_r,
+    output logic [15: 0] o_vga_io_addr,
+    output logic [ 7: 0]  o_vga_io_data_w,
+    input  logic [ 7: 0]  i_vga_io_data_r,
 
     // BIOS ROM 接口（系统 BIOS 64KB）
     // 使用简单的ROM接口：addr, rdata
-    output logic [15:  0] o_bios_addr,
-    input  logic [31:  0] i_bios_rdata,
+    output logic [15: 0] o_bios_addr,
+    input  logic [31: 0] i_bios_rdata,
 
     // 扩展 BIOS ROM 接口（128KB）
-    output logic [16:  0] o_ext_bios_addr,
-    input  logic [31:  0] i_ext_bios_rdata,
+    output logic [16: 0] o_ext_bios_addr,
+    input  logic [31: 0] i_ext_bios_rdata,
 
     // SDRAM：640KB 常规内存 + 16MB 窗口（0x0100_0000）共用 sdram_controller
     output logic        o_sdram_en,
     output logic        o_sdram_we,
-    output logic [23:  0] o_sdram_addr_off,
-    output logic [31:  0] o_sdram_wdata,
-    input  logic [31:  0] i_sdram_rdata,
+    output logic [23: 0] o_sdram_addr_off,
+    output logic [31: 0] o_sdram_wdata,
+    input  logic [31: 0] i_sdram_rdata,
     input  logic        i_sdram_ready,
     input  logic        i_sdram_busy,
 
@@ -84,9 +85,9 @@ module bus_controller_devices #(
     output logic        o_sdio_cmd_o,
     output logic        o_sdio_cmd_oe,
     input  logic        i_sdio_cmd_i,
-    output logic [ 3:  0]  o_sdio_dat_o,
+    output logic [ 3: 0]  o_sdio_dat_o,
     output logic        o_sdio_dat_oe,
-    input  logic [ 3:  0]  i_sdio_dat_i,
+    input  logic [ 3: 0]  i_sdio_dat_i,
 
     // PIC 主片中断输出（接 CPU INTR）
     output logic        o_pic_intr,
@@ -103,28 +104,28 @@ module bus_controller_devices #(
 // ============================================================================
 
 // 内存地址范围定义（32位地址空间）
-localparam logic [31:  0] MEM_BASE_RAM        = 32'h0000_0000;  // 常规内存起始
-localparam logic [31:  0] MEM_END_RAM         = 32'h0009_FFFF;  // 常规内存结束 (640KB)
-localparam logic [31:  0] MEM_BASE_VRAM       = 32'h000A_0000;  // VGA VRAM 起始
-localparam logic [31:  0] MEM_END_VRAM        = 32'h000B_FFFF;  // VGA VRAM 结束 (128KB)
-localparam logic [31:  0] MEM_BASE_EXT_BIOS   = 32'h000C_0000;  // 扩展 BIOS 起始
-localparam logic [31:  0] MEM_END_EXT_BIOS    = 32'h000D_FFFF;  // 扩展 BIOS 结束 (128KB)
-localparam logic [31:  0] MEM_BASE_RESERVED   = 32'h000E_0000;  // 保留区域起始
-localparam logic [31:  0] MEM_END_RESERVED    = 32'h000E_FFFF;  // 保留区域结束 (64KB)
-localparam logic [31:  0] MEM_BASE_SYS_BIOS   = 32'h000F_0000;  // 系统 BIOS 起始
-localparam logic [31:  0] MEM_END_SYS_BIOS    = 32'h000F_FFFF;  // 系统 BIOS 结束 (64KB)
-localparam logic [31:  0] MEM_BASE_SDRAM      = 32'h0100_0000;  // SDRAM 窗口起始（16MB）
-localparam logic [31:  0] MEM_END_SDRAM       = 32'h01FF_FFFF;  // SDRAM 窗口结束
+localparam logic [31: 0] MEM_BASE_RAM        = 32'h0000_0000;  // 常规内存起始
+localparam logic [31: 0] MEM_END_RAM         = 32'h0009_FFFF;  // 常规内存结束 (640KB)
+localparam logic [31: 0] MEM_BASE_VRAM       = 32'h000A_0000;  // VGA VRAM 起始
+localparam logic [31: 0] MEM_END_VRAM        = 32'h000B_FFFF;  // VGA VRAM 结束 (128KB)
+localparam logic [31: 0] MEM_BASE_EXT_BIOS   = 32'h000C_0000;  // 扩展 BIOS 起始
+localparam logic [31: 0] MEM_END_EXT_BIOS    = 32'h000D_FFFF;  // 扩展 BIOS 结束 (128KB)
+localparam logic [31: 0] MEM_BASE_RESERVED   = 32'h000E_0000;  // 保留区域起始
+localparam logic [31: 0] MEM_END_RESERVED    = 32'h000E_FFFF;  // 保留区域结束 (64KB)
+localparam logic [31: 0] MEM_BASE_SYS_BIOS   = 32'h000F_0000;  // 系统 BIOS 起始
+localparam logic [31: 0] MEM_END_SYS_BIOS    = 32'h000F_FFFF;  // 系统 BIOS 结束 (64KB)
+localparam logic [31: 0] MEM_BASE_SDRAM      = 32'h0100_0000;  // SDRAM 窗口起始（16MB）
+localparam logic [31: 0] MEM_END_SDRAM       = 32'h01FF_FFFF;  // SDRAM 窗口结束
 
 // I/O 端口地址范围定义（16位地址空间）
-localparam logic [15:  0] IO_BASE_MOTHERBOARD = 16'h0000;  // 主板 I/O 起始
-localparam logic [15:  0] IO_END_MOTHERBOARD  = 16'h00FF;  // 主板 I/O 结束
-localparam logic [15:  0] IO_BASE_EXTENDED    = 16'h0100;  // 扩展 I/O 起始
-localparam logic [15:  0] IO_END_EXTENDED     = 16'h03FF;  // 扩展 I/O 结束
-localparam logic [15:  0] IO_BASE_VGA         = 16'h03C0;  // VGA I/O 起始
-localparam logic [15:  0] IO_END_VGA          = 16'h03DF;  // VGA I/O 结束
-localparam logic [15:  0] IO_BASE_COM1        = 16'h03F8;  // COM1 串口起始
-localparam logic [15:  0] IO_END_COM1         = 16'h03FF;  // COM1 串口结束
+localparam logic [15: 0] IO_BASE_MOTHERBOARD = 16'h0000;  // 主板 I/O 起始
+localparam logic [15: 0] IO_END_MOTHERBOARD  = 16'h00FF;  // 主板 I/O 结束
+localparam logic [15: 0] IO_BASE_EXTENDED    = 16'h0100;  // 扩展 I/O 起始
+localparam logic [15: 0] IO_END_EXTENDED     = 16'h03FF;  // 扩展 I/O 结束
+localparam logic [15: 0] IO_BASE_VGA         = 16'h03C0;  // VGA I/O 起始
+localparam logic [15: 0] IO_END_VGA          = 16'h03DF;  // VGA I/O 结束
+localparam logic [15: 0] IO_BASE_COM1        = 16'h03F8;  // COM1 串口起始
+localparam logic [15: 0] IO_END_COM1         = 16'h03FF;  // COM1 串口结束
 
 // 地址解码信号
 logic is_memory_access;
@@ -137,14 +138,14 @@ logic is_sdram_access;
 logic is_vga_io_access;
 logic is_other_io_access;
 logic is_chipset_io;
-logic [ 7:  0] chipset_io_rdata;
+logic [ 7: 0] chipset_io_rdata;
 logic       chipset_io_hit;
 
 // 数据选择信号
-logic [31:  0] vram_data_selected;
-logic [31:  0] bios_data_selected;
-logic [31:  0] ext_bios_data_selected;
-logic [31:  0] io_data_selected;
+logic [31: 0] vram_data_selected;
+logic [31: 0] bios_data_selected;
+logic [31: 0] ext_bios_data_selected;
+logic [31: 0] io_data_selected;
 
 // 就绪信号
 logic vram_ready_internal;
@@ -189,26 +190,26 @@ assign is_sdram_access    = is_memory_access &&
 
 // I/O 地址解码
 assign is_vga_io_access   = is_io_access &&
-                             (i_bus_address[15:  0] >= IO_BASE_VGA) &&
-                             (i_bus_address[15:  0] <= IO_END_VGA);
+                             (i_bus_address[15: 0] >= IO_BASE_VGA) &&
+                             (i_bus_address[15: 0] <= IO_END_VGA);
 
 assign is_other_io_access = is_io_access && !is_vga_io_access;
 
 // Chipset 端口并集（与各 chip_* 模块地址一致）
 assign is_chipset_io = is_other_io_access && (
-    ((i_bus_address[15:  0] >= 16'h0000) && (i_bus_address[15:  0] <= 16'h000F)) ||
-    ((i_bus_address[15:  0] >= 16'h0080) && (i_bus_address[15:  0] <= 16'h008F)) ||
-    ((i_bus_address[15:  0] >= 16'h00C0) && (i_bus_address[15:  0] <= 16'h00DF)) ||
-    ((i_bus_address[15:  0] >= 16'h0020) && (i_bus_address[15:  0] <= 16'h0021)) ||
-    ((i_bus_address[15:  0] >= 16'h00A0) && (i_bus_address[15:  0] <= 16'h00A1)) ||
-    ((i_bus_address[15:  0] >= 16'h0040) && (i_bus_address[15:  0] <= 16'h0043)) ||
-    (i_bus_address[15:  0] == 16'h0060) ||
-    (i_bus_address[15:  0] == 16'h0064) ||
-    ((i_bus_address[15:  0] >= 16'h0070) && (i_bus_address[15:  0] <= 16'h0071)) ||
-    ((i_bus_address[15:  0] >= 16'h01F0) && (i_bus_address[15:  0] <= 16'h01F7)) ||
-    (i_bus_address[15:  0] == 16'h03F6) ||
-    ((i_bus_address[15:  0] >= 16'h0378) && (i_bus_address[15:  0] <= 16'h037F)) ||
-    ((i_bus_address[15:  0] >= 16'h03F8) && (i_bus_address[15:  0] <= 16'h03FF))
+    ((i_bus_address[15: 0] >= 16'h0000) && (i_bus_address[15: 0] <= 16'h000F)) ||
+    ((i_bus_address[15: 0] >= 16'h0080) && (i_bus_address[15: 0] <= 16'h008F)) ||
+    ((i_bus_address[15: 0] >= 16'h00C0) && (i_bus_address[15: 0] <= 16'h00DF)) ||
+    ((i_bus_address[15: 0] >= 16'h0020) && (i_bus_address[15: 0] <= 16'h0021)) ||
+    ((i_bus_address[15: 0] >= 16'h00A0) && (i_bus_address[15: 0] <= 16'h00A1)) ||
+    ((i_bus_address[15: 0] >= 16'h0040) && (i_bus_address[15: 0] <= 16'h0043)) ||
+    (i_bus_address[15: 0] == 16'h0060) ||
+    (i_bus_address[15: 0] == 16'h0064) ||
+    ((i_bus_address[15: 0] >= 16'h0070) && (i_bus_address[15: 0] <= 16'h0071)) ||
+    ((i_bus_address[15: 0] >= 16'h01F0) && (i_bus_address[15: 0] <= 16'h01F7)) ||
+    (i_bus_address[15: 0] == 16'h03F6) ||
+    ((i_bus_address[15: 0] >= 16'h0378) && (i_bus_address[15: 0] <= 16'h037F)) ||
+    ((i_bus_address[15: 0] >= 16'h03F8) && (i_bus_address[15: 0] <= 16'h03FF))
 );
 
 // -------------------------------------------------------------------------
@@ -217,14 +218,14 @@ assign is_chipset_io = is_other_io_access && (
 localparam int CHIP_DISK_IMAGE_BYTES = 512 * 2048;
 localparam int CHIP_DISK_SECTOR_CNT  = CHIP_DISK_IMAGE_BYTES / 512;
 
-wire [15:  0] chip_io_addr = i_bus_address[15:  0];
+wire [15: 0] chip_io_addr = i_bus_address[15: 0];
 wire        chip_io_vld  = is_chipset_io && i_bus_valid;
 wire        chip_io_we   = i_bus_write_enable;
 
-logic [31:  0] chip_ide_disk_raddr;
-logic [ 7:  0]  chip_ide_disk_rdata_ram;
-logic [ 7:  0]  chip_disk_rdata_b_unused;
-logic [ 7:  0]  chip_ide_disk_rdata_eff;
+logic [31: 0] chip_ide_disk_raddr;
+logic [ 7: 0]  chip_ide_disk_rdata_ram;
+logic [ 7: 0]  chip_disk_rdata_b_unused;
+logic [ 7: 0]  chip_ide_disk_rdata_eff;
 logic        chip_ide_sector_ready_eff;
 logic        chip_ide_sector_req_w;
 
@@ -252,13 +253,13 @@ generate
         assign o_sdio_dat_oe   = 1'b0;
     end else begin : g_sdio_host
         logic        sd_start;
-        logic [31:  0] sd_lba;
+        logic [31: 0] sd_lba;
         logic        sd_busy;
         logic        sd_done;
         logic        sd_err;
         logic        sd_payload_we;
-        logic [ 8:  0]  sd_payload_addr;
-        logic [ 7:  0]  sd_payload_data;
+        logic [ 8: 0]  sd_payload_addr;
+        logic [ 7: 0]  sd_payload_data;
 
         ide_sd_sector_bridge u_ide_sd_br (
             .clock             ( clock ),
@@ -299,7 +300,7 @@ generate
     end
 endgenerate
 
-logic [ 7:  0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
+logic [ 7: 0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
 
 wire hit_dma   = (chip_io_addr <= 16'h000F)
                | ((chip_io_addr >= 16'h0080) & (chip_io_addr <= 16'h008F))
@@ -354,11 +355,11 @@ wire wr_ide_n   = !(vld &  chip_io_we & hit_ide);
 logic       pit_out0;
 logic       intr_m, intr_s;
 
-logic [ 7:  0] ir_m;
+logic [ 7: 0] ir_m;
 logic       rtc_irq;
 logic       ps2_kbd_irq;
 logic       ps2_aux_irq;
-wire [ 7:  0] pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
+wire [ 7: 0] pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
 
 assign ir_m[0]    = pit_out0;
 assign ir_m[1]    = ps2_kbd_irq;
@@ -374,7 +375,7 @@ chip_8237_dma u_chip_dma (
     .i_rd_n     ( rd_dma_n ),
     .i_wr_n     ( wr_dma_n ),
     .i_addr     ( chip_io_addr ),
-    .i_d        ( i_bus_data_write[ 7:  0] ),
+    .i_d        ( i_bus_data_write[ 7: 0] ),
     .o_d        ( r_dma )
 );
 
@@ -385,7 +386,7 @@ chip_8259_pic u_chip_pic_m (
     .i_rd_n     ( rd_pic_m_n ),
     .i_wr_n     ( wr_pic_m_n ),
     .i_a0       ( chip_io_addr[0] ),
-    .i_d        ( i_bus_data_write[ 7:  0] ),
+    .i_d        ( i_bus_data_write[ 7: 0] ),
     .o_d        ( r_pic_m ),
     .i_ir       ( ir_m ),
     .o_intr     ( intr_m )
@@ -398,7 +399,7 @@ chip_8259_pic u_chip_pic_s (
     .i_rd_n     ( rd_pic_s_n ),
     .i_wr_n     ( wr_pic_s_n ),
     .i_a0       ( chip_io_addr[0] ),
-    .i_d        ( i_bus_data_write[ 7:  0] ),
+    .i_d        ( i_bus_data_write[ 7: 0] ),
     .o_d        ( r_pic_s ),
     .i_ir       ( pic_slave_ir_merged ),
     .o_intr     ( intr_s )
@@ -411,8 +412,8 @@ chip_8254_pit u_chip_pit (
     .i_cs_n     ( cs_pit_n ),
     .i_rd_n     ( rd_pit_n ),
     .i_wr_n     ( wr_pit_n ),
-    .i_a        ( chip_io_addr[ 1:  0] ),
-    .i_d        ( i_bus_data_write[ 7:  0] ),
+    .i_a        ( chip_io_addr[ 1: 0] ),
+    .i_d        ( i_bus_data_write[ 7: 0] ),
     .o_d        ( r_pit ),
     .o_out0     ( pit_out0 ),
     .o_out1     ( pit_out1_unused ),
@@ -429,7 +430,7 @@ chip_i8042_ps2 #(
     .i_rd_n            ( rd_ps2_n ),
     .i_wr_n            ( wr_ps2_n ),
     .i_a0              ( chip_io_addr[2] ),
-    .i_d               ( i_bus_data_write[ 7:  0] ),
+    .i_d               ( i_bus_data_write[ 7: 0] ),
     .o_d               ( r_ps2 ),
     .i_kbd_push        ( 1'b0 ),
     .i_kbd_data        ( 8'h0 ),
@@ -458,7 +459,7 @@ chip_mc146818_rtc u_chip_rtc (
     .i_rd_n     ( rd_rtc_n ),
     .i_wr_n     ( wr_rtc_n ),
     .i_a0       ( chip_io_addr[0] ),
-    .i_d        ( i_bus_data_write[ 7:  0] ),
+    .i_d        ( i_bus_data_write[ 7: 0] ),
     .o_d        ( r_rtc ),
     .o_rtc_irq  ( rtc_irq )
 );
@@ -469,8 +470,8 @@ chip_ns16550_com u_chip_com1 (
     .i_cs_n     ( cs_com_n ),
     .i_rd_n     ( rd_com_n ),
     .i_wr_n     ( wr_com_n ),
-    .i_a        ( chip_io_addr[ 2:  0] ),
-    .i_d        ( i_bus_data_write[ 7:  0] ),
+    .i_a        ( chip_io_addr[ 2: 0] ),
+    .i_d        ( i_bus_data_write[ 7: 0] ),
     .o_d        ( r_com ),
     .i_rx_push  ( 1'b0 ),
     .i_rx_data  ( 8'h0 )
@@ -482,8 +483,8 @@ chip_centronics_lpt u_chip_lpt1 (
     .i_cs_n     ( cs_lpt_n ),
     .i_rd_n     ( rd_lpt_n ),
     .i_wr_n     ( wr_lpt_n ),
-    .i_a        ( chip_io_addr[ 2:  0] ),
-    .i_d        ( i_bus_data_write[ 7:  0] ),
+    .i_a        ( chip_io_addr[ 2: 0] ),
+    .i_d        ( i_bus_data_write[ 7: 0] ),
     .o_d        ( r_lpt )
 );
 
@@ -499,7 +500,7 @@ chip_ata_ide #(
     .i_rd_n              ( rd_ide_n ),
     .i_wr_n              ( wr_ide_n ),
     .i_addr              ( chip_io_addr ),
-    .i_d                 ( i_bus_data_write[ 7:  0] ),
+    .i_d                 ( i_bus_data_write[ 7: 0] ),
     .o_d                 ( r_ide ),
     .o_disk_raddr        ( chip_ide_disk_raddr ),
     .i_disk_rdata        ( chip_ide_disk_rdata_eff ),
@@ -541,7 +542,7 @@ assign o_pic_intr = intr_m;
 // ============================================================================
 
 // VRAM 地址：减去基地址，使用低 20 位（128KB = 2^17，但为了对齐使用 20 位）
-assign o_vga_mem_addr = i_bus_address[19:  0] - MEM_BASE_VRAM[19:  0];
+assign o_vga_mem_addr = i_bus_address[19: 0] - MEM_BASE_VRAM[19: 0];
 
 // ============================================================================
 // 外设使能信号生成
@@ -549,24 +550,24 @@ assign o_vga_mem_addr = i_bus_address[19:  0] - MEM_BASE_VRAM[19:  0];
 
 // VRAM 访问控制（VGA 只支持字节写）
 assign o_vga_mem_en_w = is_vram_access && i_bus_valid && i_bus_write_enable;
-assign o_vga_mem_data_w = i_bus_data_write[ 7:  0];  // 只使用低 8 位
+assign o_vga_mem_data_w = i_bus_data_write[ 7: 0];  // 只使用低 8 位
 
 // BIOS ROM 访问控制（只读）
-assign o_bios_addr = i_bus_address[15:  0] - MEM_BASE_SYS_BIOS[15:  0];
-assign o_ext_bios_addr = i_bus_address[16:  0] - MEM_BASE_EXT_BIOS[16:  0];
+assign o_bios_addr = i_bus_address[15: 0] - MEM_BASE_SYS_BIOS[15: 0];
+assign o_ext_bios_addr = i_bus_address[16: 0] - MEM_BASE_EXT_BIOS[16: 0];
 
 // SDRAM（32 位字访问；常规 RAM 与高位窗口映射到同一物理地址空间，见 soc_top）
 assign o_sdram_en       = (is_ram_access || is_sdram_access) && i_bus_valid;
 assign o_sdram_we       = i_bus_write_enable;
-assign o_sdram_addr_off = is_ram_access ? i_bus_address[23:  0]
-                                        : (i_bus_address[23:  0] - MEM_BASE_SDRAM[23:  0]);
+assign o_sdram_addr_off = is_ram_access ? i_bus_address[23: 0]
+                                        : (i_bus_address[23: 0] - MEM_BASE_SDRAM[23: 0]);
 assign o_sdram_wdata    = i_bus_data_write;
 
 // VGA I/O 端口访问控制
 assign o_vga_io_en_w = is_vga_io_access && i_bus_valid && i_bus_write_enable;
 assign o_vga_io_en_r = is_vga_io_access && i_bus_valid && !i_bus_write_enable;
-assign o_vga_io_addr = i_bus_address[15:  0];
-assign o_vga_io_data_w = i_bus_data_write[ 7:  0];  // I/O 端口通常是 8 位或 16 位
+assign o_vga_io_addr = i_bus_address[15: 0];
+assign o_vga_io_data_w = i_bus_data_write[ 7: 0];  // I/O 端口通常是 8 位或 16 位
 
 // ============================================================================
 // 数据读取路径选择
@@ -582,7 +583,7 @@ assign bios_data_selected = is_sys_bios_access ? i_bios_rdata : 32'h0;
 assign ext_bios_data_selected = is_ext_bios_access ? i_ext_bios_rdata : 32'h0;
 
 // I/O 数据（8 位扩展到 32 位）
-logic [ 7:  0] io_byte_data;
+logic [ 7: 0] io_byte_data;
 assign io_byte_data = is_vga_io_access ? i_vga_io_data_r :
                       (chipset_io_hit ? chipset_io_rdata : 8'hFF);
 assign io_data_selected = is_io_access ? {24'h0, io_byte_data} : 32'h0;
@@ -662,31 +663,31 @@ module bus_controller #(
     output logic        o_bus_busy,
     input  logic        i_bus_write_enable,
     input  logic        i_bus_io_access,
-    input  logic [31:  0] i_bus_address,
-    output logic [31:  0] o_bus_data_read,
-    input  logic [31:  0] i_bus_data_write,
+    input  logic [31: 0] i_bus_address,
+    output logic [31: 0] o_bus_data_read,
+    input  logic [31: 0] i_bus_data_write,
 
     output logic        o_vga_mem_en_w,
-    output logic [19:  0] o_vga_mem_addr,
-    output logic [ 7:  0]  o_vga_mem_data_w,
+    output logic [19: 0] o_vga_mem_addr,
+    output logic [ 7: 0]  o_vga_mem_data_w,
 
     output logic        o_vga_io_en_w,
     output logic        o_vga_io_en_r,
-    output logic [15:  0] o_vga_io_addr,
-    output logic [ 7:  0]  o_vga_io_data_w,
-    input  logic [ 7:  0]  i_vga_io_data_r,
+    output logic [15: 0] o_vga_io_addr,
+    output logic [ 7: 0]  o_vga_io_data_w,
+    input  logic [ 7: 0]  i_vga_io_data_r,
 
-    output logic [15:  0] o_bios_addr,
-    input  logic [31:  0] i_bios_rdata,
+    output logic [15: 0] o_bios_addr,
+    input  logic [31: 0] i_bios_rdata,
 
-    output logic [16:  0] o_ext_bios_addr,
-    input  logic [31:  0] i_ext_bios_rdata,
+    output logic [16: 0] o_ext_bios_addr,
+    input  logic [31: 0] i_ext_bios_rdata,
 
     output logic        o_sdram_en,
     output logic        o_sdram_we,
-    output logic [23:  0] o_sdram_addr_off,
-    output logic [31:  0] o_sdram_wdata,
-    input  logic [31:  0] i_sdram_rdata,
+    output logic [23: 0] o_sdram_addr_off,
+    output logic [31: 0] o_sdram_wdata,
+    input  logic [31: 0] i_sdram_rdata,
     input  logic        i_sdram_ready,
     input  logic        i_sdram_busy,
 
@@ -707,9 +708,9 @@ module bus_controller #(
     output logic        o_sdio_cmd_o,
     output logic        o_sdio_cmd_oe,
     input  logic        i_sdio_cmd_i,
-    output logic [ 3:  0]  o_sdio_dat_o,
+    output logic [ 3: 0]  o_sdio_dat_o,
     output logic        o_sdio_dat_oe,
-    input  logic [ 3:  0]  i_sdio_dat_i,
+    input  logic [ 3: 0]  i_sdio_dat_i,
 
     output logic        o_pic_intr,
 

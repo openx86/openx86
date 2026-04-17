@@ -14,9 +14,9 @@ module decode_x87_tb;
 
     import stage_2_dec_decode_x87_pkg::*;
 
-    logic [ 7:  0] b0, b1;
+    logic [ 7: 0] b0, b1;
     logic esc;
-    logic [31:  0] mask;
+    logic [31: 0] mask;
 
     stage_2_dec_decode_x87_esc dut (
         .i_b0             ( b0 ),

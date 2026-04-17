@@ -16,20 +16,20 @@ module stage_1_isc_if_instruction_fetch (
     // signal from stage_4_mem_bus_interface_unit
     output logic        o_code_vaild,
     input  logic        i_code_ready,
-    output logic [31:  0] o_code_address,
-    input  logic [31:  0] i_code_data_read,
+    output logic [31: 0] o_code_address,
+    input  logic [31: 0] i_code_data_read,
     // MMU page-table walk (higher BIU priority than code/data)
     output logic        o_mmu_bus_vaild,
     input  logic        i_mmu_bus_ready,
-    output logic [31:  0] o_mmu_bus_addr,
-    input  logic [31:  0] i_mmu_bus_rdata,
+    output logic [31: 0] o_mmu_bus_addr,
+    input  logic [31: 0] i_mmu_bus_rdata,
     // signal from outside
     input  logic        i_protected_mode,
-    input  logic [15:  0] i_segment_selector [ 0:  5],
-    input  logic [63:  0] i_segment_descriptor [ 0:  5],
+    input  logic [15: 0] i_segment_selector [ 0:  5],
+    input  logic [63: 0] i_segment_descriptor [ 0:  5],
     input  logic [ 1:0] i_current_privilege_level,
     input  logic        i_paging_enable,
-    input  logic [31:  0] i_page_directory_base,
+    input  logic [31: 0] i_page_directory_base,
     // signal from execute unit
     input  logic        i_IP_vaild,
     // instruction fetch
@@ -37,14 +37,15 @@ module stage_1_isc_if_instruction_fetch (
     output logic        o_instruction_ready,
     output logic        o_segment_fault,
     // instruction pointer register file
-    input  logic [31:  0] EIP,
+    input  logic [31: 0] EIP,
     // common
-    input  logic        clock, reset_n);
+    input  logic        clock, reset_n
+);
 
 logic        i_vaild;
 logic        o_ready;
 logic        if_mmu_bus_we;
-logic [31:  0] if_mmu_bus_wdata;
+logic [31: 0] if_mmu_bus_wdata;
 logic        if_seg_fault;
 
 // 请求段转换：在 IP 有效时根据当前 EIP 计算物理取指地址

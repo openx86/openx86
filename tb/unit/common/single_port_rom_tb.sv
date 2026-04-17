@@ -27,7 +27,7 @@ module single_port_rom_tb;
     // 初始化测试数据
     initial begin
         for (int i = 0; i < DEPTH; i++) begin
-            test_data[i] = i[ 7:  0];  // 使用地址的低8位作为数据
+            test_data[i] = i[ 7: 0];  // 使用地址的低8位作为数据
         end
         // 设置一些特殊值用于测试
         test_data[0] = 8'hAA;

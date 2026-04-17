@@ -14,9 +14,9 @@ module i8254_pit_tb;
     logic        reset;
     logic        valid;
     logic        we;
-    logic [15:  0] addr;
-    logic [ 7:  0]  wdata;
-    logic [ 7:  0]  rdata;
+    logic [15: 0] addr;
+    logic [ 7: 0]  wdata;
+    logic [ 7: 0]  rdata;
     logic        out0, out1, out2;
 
     wire hit  = (addr >= 16'h0040) && (addr <= 16'h0043);
@@ -30,7 +30,7 @@ module i8254_pit_tb;
         .i_cs_n     ( cs_n ),
         .i_rd_n     ( rd_n ),
         .i_wr_n     ( wr_n ),
-        .i_a        ( addr[ 1:  0] ),
+        .i_a        ( addr[ 1: 0] ),
         .i_d        ( wdata ),
         .o_d        ( rdata ),
         .o_out0     ( out0 ),
@@ -40,7 +40,7 @@ module i8254_pit_tb;
 
     always #5 clock = ~clock;
 
-    task automatic wr(input logic [15:  0] a, input logic [ 7:  0] d);
+    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
         @(posedge clock);
         valid = 1;
         we    = 1;
@@ -50,7 +50,7 @@ module i8254_pit_tb;
         valid = 0;
     endtask
 
-    task automatic rd(input logic [15:  0] a, output logic [ 7:  0] d);
+    task automatic rd(input logic [15: 0] a, output logic [ 7: 0] d);
         @(posedge clock);
         valid = 1;
         we    = 0;
@@ -60,7 +60,7 @@ module i8254_pit_tb;
         valid = 0;
     endtask
 
-    logic [ 7:  0] rb;
+    logic [ 7: 0] rb;
     initial begin
         reset = 1;
         valid = 0;

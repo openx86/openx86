@@ -16,9 +16,9 @@ module i8237_dma_tb;
     logic        reset;
     logic        valid;
     logic        we;
-    logic [15:  0] addr;
-    logic [ 7:  0]  wdata;
-    logic [ 7:  0]  rdata;
+    logic [15: 0] addr;
+    logic [ 7: 0]  wdata;
+    logic [ 7: 0]  rdata;
 
     wire hit_lo   = (addr <= 16'h000F);
     wire hit_page = (addr >= 16'h0080) && (addr <= 16'h008F);

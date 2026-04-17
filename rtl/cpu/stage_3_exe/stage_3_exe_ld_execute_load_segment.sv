@@ -21,22 +21,23 @@ description: This module implements stage_3_exe_ld_execute_load_segment.
 
 module stage_3_exe_ld_execute_load_segment (
     input  logic        protected_mode_enable,
-    input  logic [15:  0] index_segment_register,
-    input  logic [15:  0] index_general_register,
+    input  logic [15: 0] index_segment_register,
+    input  logic [15: 0] index_general_register,
     input  logic [ 7:0] greg__8,
-    input  logic [15:  0] greg_16,
-    input  logic [31:  0] greg_32,
-    output logic [15:  0] write_enable,
-    output logic [15:  0] write_index,
-    output logic [15:  0] write_selector,
-    output logic [63:  0] write_descriptor,
+    input  logic [15: 0] greg_16,
+    input  logic [31: 0] greg_32,
+    output logic [15: 0] write_enable,
+    output logic [15: 0] write_index,
+    output logic [15: 0] write_selector,
+    output logic [63: 0] write_descriptor,
     input  logic        valid,
-    output logic        ready);
+    output logic        ready
+);
 
 wire is_code_segment_index = index_segment_register == `sreg_index_CS;
 
-logic [31:  0] encode_base;
-logic [19:  0] encode_limit;
+logic [31: 0] encode_base;
+logic [19: 0] encode_limit;
 logic        encode_present;
 logic [ 1:0] encode_privilege_level;
 logic        encode_available_field;
@@ -48,10 +49,10 @@ logic        encode_data_expansion_direction_code_conforming;
 logic        encode_data_writeable_code_readable;
 logic        encode_date_or_code_accessed;
 
-wire [63:  0] encode_descriptor;
+wire [63: 0] encode_descriptor;
 
-wire [31:  0] decode_base;
-wire [19:  0] decode_limit;
+wire [31: 0] decode_base;
+wire [19: 0] decode_limit;
 wire        decode_present;
 wire [ 1:0] decode_privilege_level;
 wire        decode_available_field;

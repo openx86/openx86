@@ -7,23 +7,23 @@ description: This module implements eu_misc_exchange_status_tb.
 `timescale 1ns/1ns
 
 module eu_misc_exchange_status_tb;
-    logic [31:  0] eax_in;
-    logic [31:  0] flags_in;
-    logic [31:  0] eax_out;
-    logic [31:  0] flags_out;
+    logic [31: 0] eax_in;
+    logic [31: 0] flags_in;
+    logic [31: 0] eax_out;
+    logic [31: 0] flags_out;
 
-    logic [31:  0] xchg_a;
-    logic [31:  0] xchg_b;
-    logic [31:  0] xchg_y;
+    logic [31: 0] xchg_a;
+    logic [31: 0] xchg_b;
+    logic [31: 0] xchg_y;
 
-    logic [31:  0] xadd_a;
-    logic [31:  0] xadd_b;
-    logic [31:  0] xadd_y;
+    logic [31: 0] xadd_a;
+    logic [31: 0] xadd_b;
+    logic [31: 0] xadd_y;
 
-    logic [31:  0] cmpxchg_acc;
-    logic [31:  0] cmpxchg_dst;
-    logic [31:  0] cmpxchg_src;
-    logic [31:  0] cmpxchg_y;
+    logic [31: 0] cmpxchg_acc;
+    logic [31: 0] cmpxchg_dst;
+    logic [31: 0] cmpxchg_src;
+    logic [31: 0] cmpxchg_y;
     logic        cmpxchg_zf;
 
     stage_3_exe_misc_lahf u_lahf (

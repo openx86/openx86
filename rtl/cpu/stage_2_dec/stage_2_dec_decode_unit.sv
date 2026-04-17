@@ -247,20 +247,21 @@ module stage_2_dec_decode_unit (
     output logic        o_gen_reg_is_present_from_mod_rm,
     output logic [ 2:0] o_gen_reg_index_from_mod_rm,
     output logic [ 2:0] o_gen_reg_bit_width_from_mod_rm,
-    output logic [31:  0] o_displacement,
-    output logic [31:  0] o_immediate,
+    output logic [31: 0] o_displacement,
+    output logic [31: 0] o_immediate,
     output logic [ 3:0] o_consume_bytes,
     output logic        o_error,
     output logic        o_x87_is_esc,
     output logic [ 2:0] o_x87_esc_group,
-    output logic [31:  0] o_x87_opmask,
+    output logic [31: 0] o_x87_opmask,
     output logic        o_x87_memory_operand,
     output logic        o_x87_modrm_required,
     output logic [ 1:0] o_x87_mod,
     output logic [ 2:0] o_x87_reg,
     output logic [ 2:0] o_x87_rm,
     output logic [ 1:0] o_dbg_modrm_mod,
-    output logic [ 1:0] o_sib_scale_factor);
+    output logic [ 1:0] o_sib_scale_factor
+);
 
 logic [ 7:0] prefix_instruction [ 0:  3];
 logic        prefix_o_group_1_lock_bus;
@@ -328,7 +329,7 @@ always_comb begin
 end
 
 logic        x87_esc_int;
-logic [31:  0] x87_opmask_int;
+logic [31: 0] x87_opmask_int;
 logic [ 2:0] x87_grp_int;
 logic        x87_mem_int;
 logic        x87_modrm_req_int;
@@ -953,8 +954,8 @@ logic        disp_imm_i_immediate_size_1;
 logic        disp_imm_i_immediate_size_2;
 logic        disp_imm_i_immediate_size_4;
 logic        disp_imm_i_immediate_size_f;
-logic [31:  0] disp_imm_o_displacement;
-logic [31:  0] disp_imm_o_immediate;
+logic [31: 0] disp_imm_o_displacement;
+logic [31: 0] disp_imm_o_immediate;
 logic [ 3:0] disp_imm_o_consume_bytes;
 logic        disp_imm_o_error;
 // assign disp_imm_i_instruction = i_instruction[offset_disp_imm:+7];
