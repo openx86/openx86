@@ -1360,4 +1360,14 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga/vga_graph
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga/vga_port.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga/vga_text_color.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/periph/vga/vga_text_intense.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_control_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_debug_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_flags_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_gdtr_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_general_purpose_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_idtr_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_instruction_pointer_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_segment_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_test_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/w686_register_files.sv
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
