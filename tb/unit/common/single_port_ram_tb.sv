@@ -18,9 +18,9 @@ module single_port_ram_tb;
     logic                    clock;
     logic                    reset;
     logic                    we;
-    logic [ADDR_WIDTH-1:0]   addr;
-    logic [DATA_WIDTH-1:0]   wdata;
-    logic [DATA_WIDTH-1:0]   rdata;
+    logic [ADDR_WIDTH-1: 0]  addr;
+    logic [DATA_WIDTH-1: 0]  wdata;
+    logic [DATA_WIDTH-1: 0]  rdata;
 
     single_port_ram #(
         .DATA_WIDTH ( DATA_WIDTH ),

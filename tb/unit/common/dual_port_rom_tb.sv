@@ -15,19 +15,19 @@ module dual_port_rom_tb;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
-    logic                    clock;
-    logic                    reset;
+    logic                   clock;
+    logic                   reset;
     
     // 端口A
-    logic [ADDR_WIDTH-1:0]   addra;
-    logic [DATA_WIDTH-1:0]   rdataa;
+    logic [ADDR_WIDTH-1: 0] addra;
+    logic [DATA_WIDTH-1: 0] rdataa;
     
     // 端口B
-    logic [ADDR_WIDTH-1:0]   addrb;
-    logic [DATA_WIDTH-1:0]   rdatab;
+    logic [ADDR_WIDTH-1: 0] addrb;
+    logic [DATA_WIDTH-1: 0] rdatab;
 
     // 创建测试用的初始化数据数组
-    logic [DATA_WIDTH-1:0] test_data [0:DEPTH-1];
+    logic [DATA_WIDTH-1: 0] test_data [0:DEPTH-1];
 
     // 初始化测试数据
     initial begin

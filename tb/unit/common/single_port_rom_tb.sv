@@ -17,11 +17,11 @@ module single_port_rom_tb;
 
     logic                    clock;
     logic                    reset;
-    logic [ADDR_WIDTH-1:0]   addr;
-    logic [DATA_WIDTH-1:0]   rdata;
+    logic [ADDR_WIDTH-1: 0]  addr;
+    logic [DATA_WIDTH-1: 0]  rdata;
 
     // 创建测试用的初始化数据数组
-    logic [DATA_WIDTH-1:0] test_data [0:DEPTH-1];
+    logic [DATA_WIDTH-1: 0] test_data [0:DEPTH-1];
 
     // 初始化测试数据
     initial begin

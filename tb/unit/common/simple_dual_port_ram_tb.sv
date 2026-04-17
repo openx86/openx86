@@ -20,13 +20,13 @@ module simple_dual_port_ram_tb;
     
     // 写端口
     logic                    we;
-    logic [ADDR_WIDTH-1:0]   waddr;
-    logic [DATA_WIDTH-1:0]   wdata;
+    logic [ADDR_WIDTH-1: 0]  waddr;
+    logic [DATA_WIDTH-1: 0]  wdata;
     
     // 读端口
     logic                    re;
-    logic [ADDR_WIDTH-1:0]   raddr;
-    logic [DATA_WIDTH-1:0]   rdata;
+    logic [ADDR_WIDTH-1: 0]  raddr;
+    logic [DATA_WIDTH-1: 0]  rdata;
 
     simple_dual_port_ram #(
         .DATA_WIDTH ( DATA_WIDTH ),

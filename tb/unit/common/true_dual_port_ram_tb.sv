@@ -20,15 +20,15 @@ module true_dual_port_ram_tb;
     
     // 端口A
     logic                    wea;
-    logic [ADDR_WIDTH-1:0]   addra;
-    logic [DATA_WIDTH-1:0]   wdataa;
-    logic [DATA_WIDTH-1:0]   rdataa;
+    logic [ADDR_WIDTH-1: 0]  addra;
+    logic [DATA_WIDTH-1: 0]  wdataa;
+    logic [DATA_WIDTH-1: 0]  rdataa;
     
     // 端口B
     logic                    web;
-    logic [ADDR_WIDTH-1:0]   addrb;
-    logic [DATA_WIDTH-1:0]   wdatab;
-    logic [DATA_WIDTH-1:0]   rdatab;
+    logic [ADDR_WIDTH-1: 0]  addrb;
+    logic [DATA_WIDTH-1: 0]  wdatab;
+    logic [DATA_WIDTH-1: 0]  rdatab;
 
     true_dual_port_ram #(
         .DATA_WIDTH ( DATA_WIDTH ),
