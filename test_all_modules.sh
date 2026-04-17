@@ -129,17 +129,17 @@ get_dependencies() {
     if grep -q "vga_text_intense" "$module_file"; then
         deps="$deps $RTL_DIR/periph/vga_text_intense.sv"
     fi
-    if grep -q "chip_ata_ide" "$module_file"; then
-        deps="$deps $RTL_DIR/chipset/chip_ata_ide.sv"
+    if grep -q "ide_controller" "$module_file"; then
+        deps="$deps $RTL_DIR/device/ide_controller.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard_controller.sv"
+        deps="$deps $RTL_DIR/peripheral/sd_native_host_4bit.sv"
     fi
     if grep -q "sd_mmc_card_model_native" "$module_file"; then
         deps="$deps $TB_DIR/unit/peripheral/sdcard/sd_mmc_card_model_native.sv"
     fi
-    if grep -q "ide_sd_sector_bridge" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/ide_sd_sector_bridge.sv"
-    fi
     if grep -q "sd_native_host_4bit" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/sd_native_host_4bit.sv"
+        deps="$deps $RTL_DIR/peripheral/sd_native_host_4bit.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard_controller.sv"
     fi
     if grep -q "chip_pc_bios_eeprom" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/chip_pc_bios_eeprom.sv"
@@ -157,11 +157,10 @@ get_dependencies() {
         deps="$deps $RTL_DIR/chipset/chip_i8042_ps2.sv"
         deps="$deps $RTL_DIR/chipset/chip_ns16550_com.sv"
         deps="$deps $RTL_DIR/chipset/chip_centronics_lpt.sv"
-        deps="$deps $RTL_DIR/chipset/chip_ata_ide.sv"
-        deps="$deps $RTL_DIR/periph/sd_disk_ram_8.sv"
-        deps="$deps $RTL_DIR/periph/ide_sd_sector_bridge.sv"
-        deps="$deps $RTL_DIR/periph/sd_native_host_4bit.sv"
-        deps="$deps $RTL_DIR/periph/sd_4bit_phy.sv"
+        deps="$deps $RTL_DIR/device/ide_controller.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard_controller.sv"
+        deps="$deps $RTL_DIR/peripheral/sd_native_host_4bit.sv"
+        deps="$deps $RTL_DIR/peripheral/sd_4bit_phy.sv"
         deps="$deps $RTL_DIR/bus_controller.sv"
     fi
     if grep -q "sdram_controller" "$module_file"; then

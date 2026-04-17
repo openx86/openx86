@@ -18,9 +18,9 @@ module sd_mmc_card_model_native (
     input  logic [ 3: 0] i_host_dat_oe,
     input  logic [ 3: 0] i_host_dat_o,
     output logic         o_card_dat_oe,
-    output logic [ 3: 0] o_card_dat_o
+    output logic [ 3: 0] o_card_dat_o,
+    input  logic         reset_n
 );
-    input  logic       reset_n
 
     logic [47: 0] cmd_sr;
     logic [ 6: 0]  cmd_bc;

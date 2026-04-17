@@ -261,7 +261,7 @@ module openx86_soc_top #(
         .vga_g        ( o_vga_g          ),
         .vga_b        ( o_vga_b          ),
         .clock        ( clock            ),
-        .reset_n      ( reset            )
+        .reset_n      ( reset_n          )
     );
 
     // 系统 BIOS 0xF0000–0xFFFFF + 扩展 ROM 0xC0000–0xDFFFF → 后端 EEPROM（镜像：128KB 扩展 + 64KB 系统）

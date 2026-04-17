@@ -2,18 +2,16 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements disk_ram_8_tb.
+description: ide_controller + BRAM disk — read LBA0 first byte (A5).
 */
 // ============================================================================
-// sd_disk_ram_8 + chip_ata_ide（外部盘）读 LBA0
-// 文件名匹配 test_all_modules.sh 自动加入 sd_disk_ram_8.sv
-// ============================================================================
+
 `timescale 1ns/1ps
 
 module disk_ram_8_tb;
 
     logic        clock = 0;
-    logic        reset;
+    logic        reset_n;
     logic        io_valid, io_we;
     logic [15: 0] io_addr;
     logic [ 7: 0] io_wdata, io_rdata;
@@ -23,50 +21,31 @@ module disk_ram_8_tb;
     logic ide_wr_n = !(io_valid && io_we && ide_hit);
     logic ide_rd_n = !(io_valid && !io_we && ide_hit);
 
-    logic [31: 0] ide_raddr;
-    logic [ 7: 0]  disk_a, disk_b;
-
     always #5 clock = ~clock;
 
-    sd_disk_ram_8 #(.BYTE_DEPTH(512 * 16)) u_disk (
-        .clock   ( clock ),
-        .reset_n   ( reset_n ),
-        .i_we      ( 1'b0 ),
-        .i_waddr   ( 32'h0 ),
-        .i_wdata   ( 8'h0 ),
-        .i_raddr_a ( ide_raddr ),
-        .i_raddr_b ( 32'h0 ),
-        .o_rdata_a ( disk_a ),
-        .o_rdata_b ( disk_b )
-    );
-
-    initial begin
-        u_disk.mem[0] = 8'hA5;
-        u_disk.mem[1] = 8'h5A;
-    end
-
-    logic ide_sector_req;
-    chip_ata_ide #(
-        .SECTOR_BYTES(512),
-        .SECTOR_COUNT(16),
-        .USE_INTERNAL_DISK_MEM(1'b0),
-        .USE_ASYNC_DISK(1'b0)
+    ide_controller #(
+        .P_SECTOR_BYTES  ( 512 ),
+        .P_SECTOR_COUNT  ( 16 ),
+        .P_USE_SDIO_DISK ( 1'b0 )
     ) u_ide (
-        .clock             ( clock ),
-        .reset_n             ( reset_n ),
-        .i_cs_n              ( ide_cs_n ),
-        .i_rd_n              ( ide_rd_n ),
-        .i_wr_n              ( ide_wr_n ),
-        .i_addr              ( io_addr ),
-        .i_d                 ( io_wdata ),
-        .o_d                 ( io_rdata ),
-        .o_disk_raddr        ( ide_raddr ),
-        .i_disk_rdata        ( disk_a ),
-        .i_disk_sector_ready ( 1'b0 ),
-        .o_disk_sector_req   ( ide_sector_req )
+        .i_cs_n         ( ide_cs_n ),
+        .i_rd_n         ( ide_rd_n ),
+        .i_wr_n         ( ide_wr_n ),
+        .i_addr         ( io_addr ),
+        .i_wdata        ( io_wdata ),
+        .o_rdata        ( io_rdata ),
+        .o_sdio_clk     ( ),
+        .o_sdio_cmd_out ( ),
+        .o_sdio_cmd_oe  ( ),
+        .i_sdio_cmd_in  ( 1'b1 ),
+        .o_sdio_dat_out ( ),
+        .o_sdio_dat_oe  ( ),
+        .i_sdio_dat_in  ( 4'hF ),
+        .clock          ( clock ),
+        .reset_n        ( reset_n )
     );
 
-    task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
+    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
         @(posedge clock);
         io_valid = 1;
         io_we    = 1;
@@ -88,10 +67,10 @@ module disk_ram_8_tb;
 
     logic [ 7: 0] rb;
     initial begin
-        reset = 1;
+        reset_n  = 0;
         io_valid = 0;
         repeat (4) @(posedge clock);
-        reset = 0;
+        reset_n = 1;
         repeat (2) @(posedge clock);
 
         wr(16'h01F2, 8'h01);
@@ -105,7 +84,7 @@ module disk_ram_8_tb;
         if (rb !== 8'hA5)
             $display("FAIL disk_ram+ide expect A5 got %h", rb);
         else
-            $display("PASS sd_sd_disk_ram_8_tb");
+            $display("PASS disk_ram_8_tb");
         $finish;
     end
 

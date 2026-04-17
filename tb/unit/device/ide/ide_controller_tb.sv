@@ -2,13 +2,13 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: Legacy shim — forwards to ide_controller PIO path (BRAM disk).
+description: Testbench for ide_controller (BRAM disk, PIO read sector).
 */
 // ============================================================================
 
 `timescale 1ns/1ps
 
-module ide_ata_pio_tb;
+module ide_controller_tb;
 
     logic        clock = 0;
     logic        reset_n;
@@ -84,9 +84,9 @@ module ide_ata_pio_tb;
         repeat (2) @(posedge clock);
         rd(16'h01F0, rb);
         if (rb !== 8'hA5)
-            $display("FAIL ide first byte %h", rb);
+            $display("FAIL ide_controller first byte %h", rb);
         else
-            $display("PASS ide pio read");
+            $display("PASS ide_controller_tb");
 
         $finish;
     end

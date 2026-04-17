@@ -79,7 +79,7 @@ module bus_controller #(
     output logic         o_ps2_aux_dat_oe,
     input  logic         i_ps2_aux_dat_in,
 
-    // SDIO / SD 4-bit（IDE 盘体由 bus_controller 内 SD 主机驱动；USE_SDIO_DISK=0 时引脚空闲）
+    // SDIO / SD 4-bit（由 ide_controller → sdcard_controller 驱动；USE_SDIO_DISK=0 时为空闲电平）
     output logic         o_sdio_clk,
     output logic         o_sdio_cmd_o,
     output logic         o_sdio_cmd_oe,
@@ -220,84 +220,6 @@ localparam int CHIP_DISK_SECTOR_CNT  = CHIP_DISK_IMAGE_BYTES / 512;
 logic [15: 0] chip_io_addr = i_bus_address[15: 0];
 logic        chip_io_vld  = is_chipset_io && i_bus_valid;
 logic        chip_io_we   = i_bus_write_enable;
-
-logic [31: 0] chip_ide_disk_raddr;
-logic [ 7: 0]  chip_ide_disk_rdata_ram;
-logic [ 7: 0]  chip_disk_rdata_b_unused;
-logic [ 7: 0]  chip_ide_disk_rdata_eff;
-logic        chip_ide_sector_ready_eff;
-logic        chip_ide_sector_req_w;
-
-generate
-    if (!USE_SDIO_DISK) begin : g_disk_ram
-        sd_disk_ram_8 #(
-            .BYTE_DEPTH ( CHIP_DISK_IMAGE_BYTES )
-        ) u_disk_image (
-            .clock   ( clock ),
-            .reset_n   ( reset_n ),
-            .i_we      ( 1'b0 ),
-            .i_waddr   ( 32'h0 ),
-            .i_wdata   ( 8'h0 ),
-            .i_raddr_a ( chip_ide_disk_raddr ),
-            .i_raddr_b ( 32'h0 ),
-            .o_rdata_a ( chip_ide_disk_rdata_ram ),
-            .o_rdata_b ( chip_disk_rdata_b_unused )
-        );
-        assign chip_ide_disk_rdata_eff   = chip_ide_disk_rdata_ram;
-        assign chip_ide_sector_ready_eff = 1'b0;
-        assign o_sdio_clk      = 1'b0;
-        assign o_sdio_cmd_o    = 1'b1;
-        assign o_sdio_cmd_oe   = 1'b0;
-        assign o_sdio_dat_o    = 4'hF;
-        assign o_sdio_dat_oe   = 1'b0;
-    end else begin : g_sdio_host
-        logic        sd_start;
-        logic [31: 0] sd_lba;
-        logic        sd_busy;
-        logic        sd_done;
-        logic        sd_err;
-        logic        sd_payload_we;
-        logic [ 8: 0]  sd_payload_addr;
-        logic [ 7: 0]  sd_payload_data;
-
-        ide_sd_sector_bridge u_ide_sd_br (
-            .clock             ( clock ),
-            .reset_n             ( reset_n ),
-            .i_ide_disk_raddr    ( chip_ide_disk_raddr ),
-            .o_ide_disk_rdata    ( chip_ide_disk_rdata_eff ),
-            .i_ide_sector_req    ( chip_ide_sector_req_w ),
-            .o_ide_sector_ready  ( chip_ide_sector_ready_eff ),
-            .o_sd_start          ( sd_start ),
-            .o_sd_lba            ( sd_lba ),
-            .i_sd_busy           ( sd_busy ),
-            .i_sd_done           ( sd_done ),
-            .i_sd_err            ( sd_err ),
-            .i_sd_payload_we     ( sd_payload_we ),
-            .i_sd_payload_addr   ( sd_payload_addr ),
-            .i_sd_payload_data   ( sd_payload_data )
-        );
-
-        sd_native_host_4bit u_sdio_host (
-            .clock        ( clock ),
-            .reset_n        ( reset_n ),
-            .o_sd_clk       ( o_sdio_clk ),
-            .o_sd_phy_cmd_out  ( o_sdio_cmd_o ),
-            .o_sd_phy_cmd_oe   ( o_sdio_cmd_oe ),
-            .i_sd_phy_cmd_in   ( i_sdio_cmd_i ),
-            .o_sd_phy_dat_out  ( o_sdio_dat_o ),
-            .o_sd_phy_dat_oe   ( o_sdio_dat_oe ),
-            .i_sd_phy_dat_in   ( i_sdio_dat_i ),
-            .i_start        ( sd_start ),
-            .i_lba          ( sd_lba ),
-            .o_busy         ( sd_busy ),
-            .o_done         ( sd_done ),
-            .o_err          ( sd_err ),
-            .o_payload_we   ( sd_payload_we ),
-            .o_payload_addr ( sd_payload_addr ),
-            .o_payload_data ( sd_payload_data )
-        );
-    end
-endgenerate
 
 logic [ 7: 0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
 
@@ -487,24 +409,26 @@ chip_centronics_lpt u_chip_lpt1 (
     .o_d        ( r_lpt )
 );
 
-chip_ata_ide #(
-    .SECTOR_BYTES          ( 512 ),
-    .SECTOR_COUNT          ( CHIP_DISK_SECTOR_CNT ),
-    .USE_INTERNAL_DISK_MEM ( 1'b0 ),
-    .USE_ASYNC_DISK        ( USE_SDIO_DISK )
-) u_chip_ide (
-    .clock             ( clock ),
-    .reset_n             ( reset_n ),
-    .i_cs_n              ( cs_ide_n ),
-    .i_rd_n              ( rd_ide_n ),
-    .i_wr_n              ( wr_ide_n ),
-    .i_addr              ( chip_io_addr ),
-    .i_d                 ( i_bus_data_write[ 7: 0] ),
-    .o_d                 ( r_ide ),
-    .o_disk_raddr        ( chip_ide_disk_raddr ),
-    .i_disk_rdata        ( chip_ide_disk_rdata_eff ),
-    .i_disk_sector_ready ( chip_ide_sector_ready_eff ),
-    .o_disk_sector_req   ( chip_ide_sector_req_w )
+ide_controller #(
+    .P_SECTOR_BYTES   ( 512 ),
+    .P_SECTOR_COUNT   ( CHIP_DISK_SECTOR_CNT ),
+    .P_USE_SDIO_DISK  ( USE_SDIO_DISK )
+) u_ide (
+    .i_cs_n         ( cs_ide_n ),
+    .i_rd_n         ( rd_ide_n ),
+    .i_wr_n         ( wr_ide_n ),
+    .i_addr         ( chip_io_addr ),
+    .i_wdata        ( i_bus_data_write[ 7: 0] ),
+    .o_rdata        ( r_ide ),
+    .o_sdio_clk     ( o_sdio_clk ),
+    .o_sdio_cmd_out ( o_sdio_cmd_o ),
+    .o_sdio_cmd_oe  ( o_sdio_cmd_oe ),
+    .i_sdio_cmd_in  ( i_sdio_cmd_i ),
+    .o_sdio_dat_out ( o_sdio_dat_o ),
+    .o_sdio_dat_oe  ( o_sdio_dat_oe ),
+    .i_sdio_dat_in  ( i_sdio_dat_i ),
+    .clock          ( clock ),
+    .reset_n        ( reset_n )
 );
 
 always_comb begin
