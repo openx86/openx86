@@ -6,7 +6,7 @@ module eu_misc_imul_imm_tb;
     logic [31:0] y;
     logic        overflow;
 
-    eu_misc_imul_imm u_dut (
+    stage_3_exe_eu_misc_imul_imm u_dut (
         .a ( a ),
         .b ( b ),
         .y ( y ),
@@ -16,7 +16,7 @@ module eu_misc_imul_imm_tb;
     task automatic check(input logic cond, input [127:0] name);
         begin
             if (!cond) begin
-                $display("FAIL eu_misc_imul_imm %s", name);
+                $display("FAIL stage_3_exe_eu_misc_imul_imm %s", name);
                 $finish(1);
             end
         end

@@ -6,13 +6,13 @@
 
 module decode_x87_tb;
 
-    import decode_x87_pkg::*;
+    import stage_2_dec_decode_x87_pkg::*;
 
     logic [7:0] b0, b1;
     logic esc;
     logic [31:0] mask;
 
-    du_decode_x87_esc dut (
+    stage_2_dec_du_decode_x87_esc dut (
         .i_b0             ( b0 ),
         .i_b1             ( b1 ),
         .o_is_esc         ( esc ),

@@ -38,17 +38,70 @@ module w686_cpu (
     input  logic        reset
 );
 
+logic        mmu_vaild;
+logic        mmu_ready;
+logic [31:0] mmu_address;
+logic [31:0] mmu_data_read;
+
+logic        code_vaild;
+logic        code_ready;
+logic [31:0] code_address;
+logic [31:0] code_data_read;
+
+logic        data_vaild;
+logic        data_ready;
+logic        data_write_enable;
+logic        data_io_access;
+logic [31:0] data_address;
+logic [31:0] data_data_read;
+logic [31:0] data_data_write;
+
 w686_core core_0 (
+    .o_mmu_vaild        ( mmu_vaild ),
+    .i_mmu_ready        ( mmu_ready ),
+    .o_mmu_address      ( mmu_address ),
+    .i_mmu_data_read    ( mmu_data_read ),
+    .o_code_vaild       ( code_vaild ),
+    .i_code_ready       ( code_ready ),
+    .o_code_address     ( code_address ),
+    .i_code_data_read   ( code_data_read ),
+    .o_data_vaild       ( data_vaild ),
+    .i_data_ready       ( data_ready ),
+    .o_data_write_enable( data_write_enable ),
+    .o_data_io_access   ( data_io_access ),
+    .o_data_address     ( data_address ),
+    .i_data_data_read   ( data_data_read ),
+    .o_data_data_write  ( data_data_write ),
+    .clock              ( clock ),
+    .reset              ( reset )
+);
+
+stage_4_mem_bus_interface_unit biu_0 (
+    .i_mmu_vaild        ( mmu_vaild ),
+    .o_mmu_ready        ( mmu_ready ),
+    .i_mmu_address      ( mmu_address ),
+    .o_mmu_data_read    ( mmu_data_read ),
+    .i_code_vaild       ( code_vaild ),
+    .o_code_ready       ( code_ready ),
+    .i_code_address     ( code_address ),
+    .o_code_data_read   ( code_data_read ),
+    .i_data_vaild       ( data_vaild ),
+    .o_data_ready       ( data_ready ),
+    .i_data_write_enable( data_write_enable ),
+    .i_data_io_access   ( data_io_access ),
+    .i_data_address     ( data_address ),
+    .o_data_data_read   ( data_data_read ),
+    .i_data_data_write  ( data_data_write ),
     .o_bus_vaild        ( bus_vaild ),
-    .i_bus_ready        ( bus_ready ),
+    .i_bus_ready        ( bus_ready & ~bus_busy ),
     .i_bus_busy         ( bus_busy ),
     .o_bus_write_enable ( bus_write_enable ),
     .o_bus_io_access    ( bus_io_access ),
     .o_bus_address      ( bus_address ),
     .i_bus_data_read    ( bus_read_data ),
     .o_bus_data_write   ( bus_write_data ),
-    .clock              ( clock ),
-    .reset              ( reset )
+    .i_clock            ( clock ),
+    .i_reset            ( reset )
 );
 
 // TODO: shared cache

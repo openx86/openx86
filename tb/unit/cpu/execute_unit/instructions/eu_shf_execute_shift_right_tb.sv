@@ -3,7 +3,7 @@
 module eu_shf_execute_shift_right_tb;
     logic [31:0] op, cnt, is_signed, y;
 
-    eu_shf_execute_shift_right u_dut (
+    stage_3_exe_eu_shf_execute_shift_right u_dut (
         .operand(op),
         .count(cnt),
         .is_signed(is_signed),

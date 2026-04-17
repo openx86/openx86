@@ -37,7 +37,7 @@ module bus_chipset_integration_tb;
     logic [16:0] ext_bios_addr;
     logic [31:0] ext_bios_rdata;
 
-    bus u_bus (
+    bus_controller u_bus_controller (
         .i_bus_valid        ( bus_valid ),
         .o_bus_ready        ( bus_ready ),
         .o_bus_busy         ( bus_busy ),

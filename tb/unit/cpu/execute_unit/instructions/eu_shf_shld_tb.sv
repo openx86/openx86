@@ -6,7 +6,7 @@ module eu_shf_shld_tb;
     logic [31:0] c;
     logic [31:0] y;
 
-    eu_shf_shld u_dut (
+    stage_3_exe_eu_shf_shld u_dut (
         .a ( a ),
         .b ( b ),
         .count ( c ),
@@ -19,14 +19,14 @@ module eu_shf_shld_tb;
         c = 32'd4;
         #1;
         if (y !== 32'h2345_6789) begin
-            $display("FAIL eu_shf_shld");
+            $display("FAIL stage_3_exe_eu_shf_shld");
             $finish(1);
         end
 
         c = 32'd0;
         #1;
         if (y !== a) begin
-            $display("FAIL eu_shf_shld count0");
+            $display("FAIL stage_3_exe_eu_shf_shld count0");
             $finish(1);
         end
 

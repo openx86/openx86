@@ -4,7 +4,7 @@ module eu_ari_execute_arithmetic_sbb_tb;
     logic [31:0] a, b, y;
     logic        cf;
 
-    eu_ari_execute_arithmetic_sbb u_dut (
+    stage_3_exe_eu_ari_execute_arithmetic_sbb u_dut (
         .operand_1(a),
         .operand_2(b),
         .carry_flag(cf),

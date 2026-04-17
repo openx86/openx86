@@ -3,7 +3,7 @@
 module eu_log_execute_logic_not_tb;
     logic [31:0] a, y;
 
-    eu_log_execute_logic_not u_dut (
+    stage_3_exe_eu_log_execute_logic_not u_dut (
         .operand_1(a),
         .result(y)
     );

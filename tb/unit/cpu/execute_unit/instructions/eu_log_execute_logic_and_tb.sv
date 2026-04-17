@@ -3,7 +3,7 @@
 module eu_log_execute_logic_and_tb;
     logic [31:0] a, b, y;
 
-    eu_log_execute_logic_and u_dut (
+    stage_3_exe_eu_log_execute_logic_and u_dut (
         .operand_1(a),
         .operand_2(b),
         .result(y)

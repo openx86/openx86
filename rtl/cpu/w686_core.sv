@@ -1,24 +1,34 @@
 // ============================================================================
-// w686_core — 80486 级取指/译码/执行闭环（BIU 含 MMU 仲裁），CPL/CPUID/保护模式入口
+// w686_core — 80486 级取指/译码/执行闭环（core-side pipeline）
 // ============================================================================
 `include "openx86_defs.h.sv"
 `include "w686_decode_outputs_decl.svh"
 
 module w686_core (
-    output logic        o_bus_vaild,
-    input  logic        i_bus_ready,
-    input  logic        i_bus_busy,
-    output logic        o_bus_write_enable,
-    output logic        o_bus_io_access,
-    output logic [31:0] o_bus_address,
-    input  logic [31:0] i_bus_data_read,
-    output logic [31:0] o_bus_data_write,
+    output logic        o_mmu_vaild,
+    input  logic        i_mmu_ready,
+    output logic [31:0] o_mmu_address,
+    input  logic [31:0] i_mmu_data_read,
+
+    output logic        o_code_vaild,
+    input  logic        i_code_ready,
+    output logic [31:0] o_code_address,
+    input  logic [31:0] i_code_data_read,
+
+    output logic        o_data_vaild,
+    input  logic        i_data_ready,
+    output logic        o_data_write_enable,
+    output logic        o_data_io_access,
+    output logic [31:0] o_data_address,
+    input  logic [31:0] i_data_data_read,
+    output logic [31:0] o_data_data_write,
+
     input  logic        clock,
     input  logic        reset
 );
 
-    import execute_unit_pkg::*;
-    import decode_x87_pkg::*;
+    import stage_3_exe_execute_unit_pkg::*;
+    import stage_2_dec_decode_x87_pkg::*;
 
     // --- GPR / 段 / 标志 / EIP / 控制寄存器（与原实现一致）---
     logic        write_enable;
@@ -31,7 +41,7 @@ module w686_core (
     logic [31:0] GPR_read_16 [0:7];
     logic [31:0] GPR_read_32 [0:7];
 
-    rf_general_propose_register general_propose_register (
+    stage_5_wrb_rf_general_propose_register general_propose_register (
         .write_enable ( wb_write_enable ),
         .write_index ( wb_write_index ),
         .write_data ( wb_write_data ),
@@ -53,7 +63,7 @@ module w686_core (
     logic [15:0] segment_selector [0:5];
     logic [63:0] descriptor_cache [0:5];
 
-    rf_segment_register core_segment_register (
+    stage_5_wrb_rf_segment_register core_segment_register (
         .write_enable ( wb_SREG_write_enable ),
         .write_index ( wb_SREG_write_index ),
         .write_selector ( wb_SREG_write_selector ),
@@ -74,7 +84,7 @@ module w686_core (
     logic [31:0]  EFLAGS;
     logic [15:0]  FLAGS;
 
-    rf_flags_register core_flags_register (
+    stage_5_wrb_rf_flags_register core_flags_register (
         .write_enable ( wb_FLAGS_write_enable ),
         .write_data ( wb_FLAGS_write_data ),
         .CF ( CF ),
@@ -103,7 +113,7 @@ module w686_core (
     logic [15:0] IP;
     logic [31:0] EIP;
 
-    rf_instruction_point_register core_instruction_point_register (
+    stage_5_wrb_rf_instruction_point_register core_instruction_point_register (
         .write_enable ( wb_IP_write_enable ),
         .write_data ( wb_IP_write_data ),
         .IP ( IP ),
@@ -122,7 +132,7 @@ module w686_core (
     logic         PE, MP, EM, TS, R, PG;
     logic [19: 0] page_directory_base;
 
-    rf_control_register core_control_register (
+    stage_5_wrb_rf_control_register core_control_register (
         .write_enable ( wb_CR_write_enable ),
         .write_index ( wb_CR_write_index ),
         .write_data ( wb_CR_write_data ),
@@ -146,7 +156,7 @@ module w686_core (
     logic [31: 0] wb_DR_write_data;
     logic [31: 0] DR [0:7];
 
-    rf_debug_register core_debug_register (
+    stage_5_wrb_rf_debug_register core_debug_register (
         .write_enable ( wb_DR_write_enable ),
         .write_index ( wb_DR_write_index ),
         .write_data ( wb_DR_write_data ),
@@ -163,7 +173,7 @@ module w686_core (
     logic [31: 0] wb_TR_write_data;
     logic [31: 0] TR [0:7];
 
-    rf_test_register core_test_register (
+    stage_5_wrb_rf_test_register core_test_register (
         .write_enable ( wb_TR_write_enable ),
         .write_index ( wb_TR_write_index ),
         .write_data ( wb_TR_write_data ),
@@ -178,7 +188,7 @@ module w686_core (
     logic [15:0] GDTR_limit;
     logic [31:0] GDTR_base;
 
-    rf_sar_global_descriptor_table_register core_global_descriptor_table_register (
+    stage_5_wrb_rf_sar_global_descriptor_table_register core_global_descriptor_table_register (
         .GDTR_write_enable ( GDTR_write_enable ),
         .GDTR_write_data_limit ( GDTR_write_data_limit ),
         .GDTR_write_data_base ( GDTR_write_data_base ),
@@ -194,7 +204,7 @@ module w686_core (
     logic [15:0] IDTR_limit;
     logic [31:0] IDTR_base;
 
-    rf_sar_interrupt_descriptor_table_register core_interrupt_descriptor_table_register (
+    stage_5_wrb_rf_sar_interrupt_descriptor_table_register core_interrupt_descriptor_table_register (
         .IDTR_write_enable ( IDTR_write_enable ),
         .IDTR_write_data_limit ( IDTR_write_data_limit ),
         .IDTR_write_data_base ( IDTR_write_data_base ),
@@ -210,7 +220,7 @@ module w686_core (
     // CPL = CS.RPL
     wire [1:0] current_privilege_level = segment_selector[`sreg_index_CS][1:0];
 
-    // --- BIU（MMU > code > data）---
+    // --- Core-side memory request channels (BIU is instantiated in w686_cpu) ---
     logic        mmu_bus_vaild;
     logic        mmu_bus_ready;
     logic [31:0] mmu_bus_addr;
@@ -227,35 +237,24 @@ module w686_core (
     logic [31:0] data_address;
     logic [31:0] data_data_read;
     logic [31:0] data_data_write;
-    wire         data_io_access = 1'b0;
 
-    bus_interface_unit core_bus_interface_unit (
-        .i_mmu_vaild ( mmu_bus_vaild ),
-        .o_mmu_ready ( mmu_bus_ready ),
-        .i_mmu_address ( mmu_bus_addr ),
-        .o_mmu_data_read ( mmu_bus_rdata ),
-        .i_code_vaild ( code_vaild ),
-        .o_code_ready ( code_ready ),
-        .i_code_address ( code_address ),
-        .o_code_data_read ( code_data_read ),
-        .i_data_vaild ( data_vaild ),
-        .o_data_ready ( data_ready ),
-        .i_data_write_enable ( data_write_enable ),
-        .i_data_io_access ( data_io_access ),
-        .i_data_address ( data_address ),
-        .o_data_data_read ( data_data_read ),
-        .i_data_data_write ( data_data_write ),
-        .o_bus_vaild ( o_bus_vaild ),
-        .i_bus_ready ( i_bus_ready & ~i_bus_busy ),
-        .i_bus_busy ( i_bus_busy ),
-        .o_bus_write_enable ( o_bus_write_enable ),
-        .o_bus_io_access ( o_bus_io_access ),
-        .o_bus_address ( o_bus_address ),
-        .i_bus_data_read ( i_bus_data_read ),
-        .o_bus_data_write ( o_bus_data_write ),
-        .i_clock ( clock ),
-        .i_reset ( reset )
-    );
+    assign o_mmu_vaild    = mmu_bus_vaild;
+    assign mmu_bus_ready  = i_mmu_ready;
+    assign o_mmu_address  = mmu_bus_addr;
+    assign mmu_bus_rdata  = i_mmu_data_read;
+
+    assign o_code_vaild   = code_vaild;
+    assign code_ready     = i_code_ready;
+    assign o_code_address = code_address;
+    assign code_data_read = i_code_data_read;
+
+    assign o_data_vaild        = data_vaild;
+    assign data_ready          = i_data_ready;
+    assign o_data_write_enable = data_write_enable;
+    assign o_data_io_access    = 1'b0;
+    assign o_data_address      = data_address;
+    assign data_data_read      = i_data_data_read;
+    assign o_data_data_write   = data_data_write;
 
     // --- 取指 ---
     logic [ 7:0] instruction [0:15];
@@ -265,7 +264,7 @@ module w686_core (
     wire         exec_stall;
     wire         ip_valid_to_fetch = ~exec_stall;
 
-    if_instruction_fetch core_instruction_fetch (
+    stage_1_isc u_stage_1_isc (
         .o_code_vaild ( code_vaild ),
         .i_code_ready ( code_ready ),
         .o_code_address ( code_address ),
@@ -290,7 +289,7 @@ module w686_core (
     );
 
     // --- 译码（.* 连接 w686_decode_outputs_decl 中声明的同名线网）---
-    du_decode_unit core_decode (
+    stage_2_dec_du_decode_unit core_decode (
         .i_instruction ( instruction[0:15] ),
         .i_default_operand_size ( 1'b1 ),
         .*
@@ -309,7 +308,10 @@ module w686_core (
 
     // --- 执行辅助（CPUID 多周期）---
     logic        insn_fire;
-    logic        ir_d1;
+    logic        stage2_valid;
+    logic        stage3_valid;
+    logic        stage4_valid;
+    logic        stage5_valid;
     logic        cpuid_busy;
     logic        cpuid_gpr_wr;
     logic [2:0]  cpuid_gpr_idx;
@@ -323,17 +325,15 @@ module w686_core (
     logic [2:0]  xadd_saved_reg;
     logic [31:0] xadd_saved_val;
 
-    always_ff @(posedge clock or posedge reset) begin
-        if (reset) begin
-            ir_d1 <= 1'b0;
-        end else begin
-            ir_d1 <= instruction_ready;
-        end
-    end
+    stage_2_dec u_stage_2_dec (
+        .i_instruction_ready ( instruction_ready ),
+        .o_stage_valid ( stage2_valid ),
+        .o_insn_fire ( insn_fire ),
+        .i_clock ( clock ),
+        .i_reset ( reset )
+    );
 
-    assign insn_fire = instruction_ready & ~ir_d1;
-
-    w686_core_execute_i486 u_exec486 (
+    stage_3_exe_w686_core_execute_i486 u_exec486 (
         .clk ( clock ),
         .rst ( reset ),
         .insn_fire ( insn_fire ),
@@ -576,6 +576,41 @@ module w686_core (
         end else if (o_opcode_x86_XOR_imm_to_acc) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_XOR;
+            eu_int_a      = GPR_read_32[0];
+            eu_int_b      = o_immediate;
+        end else if (o_opcode_x86_CMP_mem_with_reg && modrm_is_reg) begin
+            eu_int_valid  = 1'b1;
+            eu_int_op_sel = INT_SUB;
+            eu_int_a      = GPR_read_32[modrm_rm_field];
+            eu_int_b      = GPR_read_32[modrm_reg_field];
+        end else if (o_opcode_x86_CMP_reg_with_mem && modrm_is_reg) begin
+            eu_int_valid  = 1'b1;
+            eu_int_op_sel = INT_SUB;
+            eu_int_a      = GPR_read_32[modrm_reg_field];
+            eu_int_b      = GPR_read_32[modrm_rm_field];
+        end else if (o_opcode_x86_CMP_imm_with_reg_mem && modrm_is_reg) begin
+            eu_int_valid  = 1'b1;
+            eu_int_op_sel = INT_SUB;
+            eu_int_a      = GPR_read_32[modrm_rm_field];
+            eu_int_b      = o_immediate;
+        end else if (o_opcode_x86_CMP_imm_with_acc) begin
+            eu_int_valid  = 1'b1;
+            eu_int_op_sel = INT_SUB;
+            eu_int_a      = GPR_read_32[0];
+            eu_int_b      = o_immediate;
+        end else if (o_opcode_x86_TEST_reg_mem_and_reg && modrm_is_reg) begin
+            eu_int_valid  = 1'b1;
+            eu_int_op_sel = INT_AND;
+            eu_int_a      = GPR_read_32[modrm_rm_field];
+            eu_int_b      = GPR_read_32[modrm_reg_field];
+        end else if (o_opcode_x86_TEST_imm_and_reg_mem && modrm_is_reg) begin
+            eu_int_valid  = 1'b1;
+            eu_int_op_sel = INT_AND;
+            eu_int_a      = GPR_read_32[modrm_rm_field];
+            eu_int_b      = o_immediate;
+        end else if (o_opcode_x86_TEST_imm_and_acc) begin
+            eu_int_valid  = 1'b1;
+            eu_int_op_sel = INT_AND;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_NOT_one_s_complement_negation && modrm_is_reg) begin
@@ -921,7 +956,7 @@ module w686_core (
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_SETCC;
             eu_int_a      = EFLAGS;
-            eu_int_count  = { 28'd0, o_tttn }; 
+            eu_int_count  = { 28'd0, o_tttn };
         end else if (o_opcode_x86_ARPL_adjust_RPL_field_of_selector && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_ARPL;
@@ -1060,7 +1095,9 @@ module w686_core (
     logic [31:0] wb_mem_address;
     logic [31:0] wb_mem_write_data;
 
-    wb_write_back_unit u_wb (
+    stage_5_wrb u_stage_5_wrb (
+        .i_stage4_valid ( stage4_valid ),
+        .o_stage_valid ( stage5_valid ),
         .i_gpr_write_enable ( write_enable ),
         .i_gpr_write_index ( write_index ),
         .i_gpr_write_data ( write_data ),
@@ -1116,7 +1153,7 @@ module w686_core (
     assign data_address      = wb_mem_address;
     assign data_data_write   = wb_mem_write_data;
 
-    eu_execute_unit u_eu (
+    stage_3_exe_eu_execute_unit u_eu (
         .clk ( clock ),
         .rst ( reset ),
         .i_agu_base ( agu_base_w ),
@@ -1169,7 +1206,9 @@ module w686_core (
         .o_x87_cf ( eu_x87_cf )
     );
 
-    am_access_memory u_am (
+    stage_4_mem u_stage_4_mem (
+        .i_stage3_valid ( stage3_valid ),
+        .o_stage_valid ( stage4_valid ),
         .clk ( clock ),
         .rst ( reset ),
         .i_start ( am_lsu_start_w ),
@@ -1213,7 +1252,15 @@ module w686_core (
         end
     end
 
-    assign exec_stall = cpuid_busy | xadd_wait_reg_wr | am_lsu_busy | muldiv_pair_wait;
+    stage_3_exe u_stage_3_exe (
+        .i_stage2_valid ( stage2_valid ),
+        .i_cpuid_busy ( cpuid_busy ),
+        .i_xadd_wait_reg_wr ( xadd_wait_reg_wr ),
+        .i_am_lsu_busy ( am_lsu_busy ),
+        .i_muldiv_pair_wait ( muldiv_pair_wait ),
+        .o_exec_stall ( exec_stall ),
+        .o_stage_valid ( stage3_valid )
+    );
 
     // --- 异常 / 写回 ---
     logic [7:0] exception_vector;
@@ -1223,6 +1270,8 @@ module w686_core (
     wire [2:0] cx_r_idx   = instruction[2][5:3];
     wire [2:0] bswap_rd_n = instruction[1][2:0];
     wire [2:0] short_reg_idx = instruction[0][2:0];
+    wire [31:0] eip_next_linear = EIP + { 28'h0, o_consume_bytes };
+    wire [31:0] rel8_disp32 = { { 24{ o_immediate[7] } }, o_immediate[7:0] };
 
     logic [31:0] xadd_a;
     logic [31:0] sh_tmp;
@@ -1258,73 +1307,160 @@ module w686_core (
         end
     endfunction
 
-    function automatic logic [31:0] flags_for_logic32(
+    function automatic logic [31:0] flags_from_eu_result(
         input logic [31:0] old_flags,
-        input logic [31:0] result
+        input logic [31:0] result,
+        input logic        cf,
+        input logic        af,
+        input logic        of
     );
-        flags_for_logic32 = write_status_flags(
+        flags_from_eu_result = write_status_flags(
             old_flags,
-            1'b0,
+            cf,
             parity_even8(result[7:0]),
-            1'b0,
+            af,
             (result == 32'd0),
             result[31],
-            1'b0
+            of
         );
     endfunction
 
-    function automatic logic [31:0] flags_for_add32(
+    function automatic logic [31:0] flags_from_eu_result8(
         input logic [31:0] old_flags,
-        input logic [31:0] a,
-        input logic [31:0] b,
-        input logic        carry_in
+        input logic [31:0] result,
+        input logic        cf,
+        input logic        af,
+        input logic        of
     );
-        logic [32:0] sum;
-        logic [31:0] r;
-        logic        of;
-        logic        af;
+        flags_from_eu_result8 = write_status_flags(
+            old_flags,
+            cf,
+            parity_even8(result[7:0]),
+            af,
+            (result[7:0] == 8'd0),
+            result[7],
+            of
+        );
+    endfunction
+
+    function automatic logic [31:0] flags_with_cf(
+        input logic [31:0] old_flags,
+        input logic        cf
+    );
+        logic [31:0] f;
         begin
-            sum = { 1'b0, a } + { 1'b0, b } + { 32'd0, carry_in };
-            r   = sum[31:0];
-            of  = (~(a[31] ^ b[31])) & (a[31] ^ r[31]);
-            af  = a[4] ^ b[4] ^ r[4];
-            flags_for_add32 = write_status_flags(
-                old_flags,
-                sum[32],
-                parity_even8(r[7:0]),
-                af,
-                (r == 32'd0),
-                r[31],
-                of
-            );
+            f = old_flags;
+            f[0] = cf;
+            flags_with_cf = f;
         end
     endfunction
 
-    function automatic logic [31:0] flags_for_sub32(
+    function automatic logic [31:0] flags_with_zf(
         input logic [31:0] old_flags,
-        input logic [31:0] a,
-        input logic [31:0] b,
-        input logic        borrow_in
+        input logic        zf
     );
-        logic [32:0] diff;
-        logic [31:0] r;
-        logic        of;
-        logic        af;
+        logic [31:0] f;
         begin
-            diff = { 1'b0, a } - { 1'b0, b } - { 32'd0, borrow_in };
-            r    = diff[31:0];
-            of   = (a[31] ^ b[31]) & (a[31] ^ r[31]);
-            af   = a[4] ^ b[4] ^ r[4];
-            flags_for_sub32 = write_status_flags(
-                old_flags,
-                diff[32],
-                parity_even8(r[7:0]),
-                af,
-                (r == 32'd0),
-                r[31],
-                of
-            );
+            f = old_flags;
+            f[6] = zf;
+            flags_with_zf = f;
         end
+    endfunction
+
+    function automatic logic [31:0] flags_with_cf_af(
+        input logic [31:0] old_flags,
+        input logic        cf,
+        input logic        af
+    );
+        logic [31:0] f;
+        begin
+            f = old_flags;
+            f[0] = cf;
+            f[4] = af;
+            flags_with_cf_af = f;
+        end
+    endfunction
+
+    function automatic logic [31:0] flags_with_cf_of(
+        input logic [31:0] old_flags,
+        input logic        cf,
+        input logic        of
+    );
+        logic [31:0] f;
+        begin
+            f = old_flags;
+            f[0] = cf;
+            f[11] = of;
+            flags_with_cf_of = f;
+        end
+    endfunction
+
+    function automatic logic [31:0] flags_with_cf_pf_zf(
+        input logic [31:0] old_flags,
+        input logic        cf,
+        input logic        pf,
+        input logic        zf
+    );
+        logic [31:0] f;
+        begin
+            f = old_flags;
+            f[0] = cf;
+            f[2] = pf;
+            f[6] = zf;
+            flags_with_cf_pf_zf = f;
+        end
+    endfunction
+
+    function automatic logic [31:0] flags_preserve_cf(
+        input logic [31:0] old_flags,
+        input logic [31:0] new_flags
+    );
+        logic [31:0] f;
+        begin
+            f = new_flags;
+            f[0] = old_flags[0];
+            flags_preserve_cf = f;
+        end
+    endfunction
+
+    function automatic logic [31:0] stack_push_esp(
+        input logic [31:0] esp,
+        input logic [31:0] bytes
+    );
+        stack_push_esp = esp - bytes;
+    endfunction
+
+    function automatic logic [31:0] stack_pop_esp(
+        input logic [31:0] esp,
+        input logic [31:0] bytes
+    );
+        stack_pop_esp = esp + bytes;
+    endfunction
+
+    function automatic logic shadow_ret_has_entry(
+        input logic [3:0] sp
+    );
+        shadow_ret_has_entry = (sp != 4'd0);
+    endfunction
+
+    function automatic logic [31:0] shadow_ret_top_or(
+        input logic [3:0]  sp,
+        input logic [31:0] fallback
+    );
+        if (sp != 4'd0)
+            shadow_ret_top_or = shadow_ret_stack[sp - 4'd1];
+        else
+            shadow_ret_top_or = fallback;
+    endfunction
+
+    function automatic logic [15:0] shadow_ret_top16_or(
+        input logic [3:0]  sp,
+        input logic [15:0] fallback
+    );
+        if (sp != 4'd0)
+            shadow_ret_top16_or = shadow_ret_stack[sp - 4'd1][15:0];
+        else
+            shadow_ret_top16_or = fallback;
     endfunction
 
     always_ff @(posedge clock or posedge reset) begin
@@ -1422,7 +1558,7 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:5], eu_int_af_out, EFLAGS[3:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf_af(EFLAGS, eu_int_cf_out, eu_int_af_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_AAS_ASCII_adjust_after_sub) begin
@@ -1430,7 +1566,7 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:5], eu_int_af_out, EFLAGS[3:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf_af(EFLAGS, eu_int_cf_out, eu_int_af_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_AAD_ASCII_AX_before_div) begin
@@ -1438,15 +1574,7 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= write_status_flags(
-                        EFLAGS,
-                        EFLAGS[0],
-                        parity_even8(eu_int_result[7:0]),
-                        EFLAGS[4],
-                        (eu_int_result[7:0] == 8'd0),
-                        eu_int_result[7],
-                        EFLAGS[11]
-                    );
+                    FLAGS_write_data <= flags_from_eu_result8(EFLAGS, eu_int_result, EFLAGS[0], EFLAGS[4], EFLAGS[11]);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_AAM_ASCII_AX_after_mul) begin
@@ -1454,15 +1582,7 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= write_status_flags(
-                        EFLAGS,
-                        EFLAGS[0],
-                        parity_even8(eu_int_result[7:0]),
-                        EFLAGS[4],
-                        (eu_int_result[7:0] == 8'd0),
-                        eu_int_result[7],
-                        EFLAGS[11]
-                    );
+                    FLAGS_write_data <= flags_from_eu_result8(EFLAGS, eu_int_result, EFLAGS[0], EFLAGS[4], EFLAGS[11]);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_DAA_decimal_adjust_AL_after_add) begin
@@ -1470,15 +1590,7 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= write_status_flags(
-                        EFLAGS,
-                        eu_int_cf_out,
-                        parity_even8(eu_int_result[7:0]),
-                        eu_int_af_out,
-                        (eu_int_result[7:0] == 8'd0),
-                        eu_int_result[7],
-                        EFLAGS[11]
-                    );
+                    FLAGS_write_data <= flags_from_eu_result8(EFLAGS, eu_int_result, eu_int_cf_out, eu_int_af_out, EFLAGS[11]);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_DAS_decimal_adjust_AL_after_sub) begin
@@ -1486,15 +1598,7 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= write_status_flags(
-                        EFLAGS,
-                        eu_int_cf_out,
-                        parity_even8(eu_int_result[7:0]),
-                        eu_int_af_out,
-                        (eu_int_result[7:0] == 8'd0),
-                        eu_int_result[7],
-                        EFLAGS[11]
-                    );
+                    FLAGS_write_data <= flags_from_eu_result8(EFLAGS, eu_int_result, eu_int_cf_out, eu_int_af_out, EFLAGS[11]);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (
@@ -1561,35 +1665,35 @@ module w686_core (
                     IP_write_enable <= 1'b1;
                     IP_write_data <= GPR_read_32[modrm_rm_field];
                 end else if (o_opcode_x86_CALL_in_same_segment_direct) begin
-                    shadow_ret_stack[shadow_ret_sp] <= EIP + { 28'h0, o_consume_bytes };
+                    shadow_ret_stack[shadow_ret_sp] <= eip_next_linear;
                     shadow_ret_sp <= shadow_ret_sp + 4'd1;
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] - 32'd4;
+                    write_data <= stack_push_esp(GPR_read_32[4], 32'd4);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= br_tgt;
                 end else if (o_opcode_x86_CALL_in_same_segment_indirect && modrm_is_reg) begin
-                    shadow_ret_stack[shadow_ret_sp] <= EIP + { 28'h0, o_consume_bytes };
+                    shadow_ret_stack[shadow_ret_sp] <= eip_next_linear;
                     shadow_ret_sp <= shadow_ret_sp + 4'd1;
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] - 32'd4;
+                    write_data <= stack_push_esp(GPR_read_32[4], 32'd4);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= GPR_read_32[modrm_rm_field];
                 end else if (o_opcode_x86_CALL_in_other_segment_direct) begin
-                    shadow_ret_stack[shadow_ret_sp] <= EIP + { 28'h0, o_consume_bytes };
+                    shadow_ret_stack[shadow_ret_sp] <= eip_next_linear;
                     shadow_ret_sp <= shadow_ret_sp + 4'd1;
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] - 32'd4;
+                    write_data <= stack_push_esp(GPR_read_32[4], 32'd4);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= o_immediate;
                 end else if (o_opcode_x86_CALL_in_other_segment_indirect && modrm_is_reg) begin
-                    shadow_ret_stack[shadow_ret_sp] <= EIP + { 28'h0, o_consume_bytes };
+                    shadow_ret_stack[shadow_ret_sp] <= eip_next_linear;
                     shadow_ret_sp <= shadow_ret_sp + 4'd1;
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] - 32'd4;
+                    write_data <= stack_push_esp(GPR_read_32[4], 32'd4);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= GPR_read_32[modrm_rm_field];
                 end else if (o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp && br_taken) begin
@@ -1597,49 +1701,43 @@ module w686_core (
                     IP_write_data <= br_tgt;
                 end else if (o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp && !br_taken) begin
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                    IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_Jcc_jump_if_cond_is_met_full_disp && br_taken) begin
                     IP_write_enable <= 1'b1;
                     IP_write_data <= br_tgt;
                 end else if (o_opcode_x86_Jcc_jump_if_cond_is_met_full_disp && !br_taken) begin
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                    IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_JCXZ_jump_on_CX_zero) begin
                     IP_write_enable <= 1'b1;
                     if (eu_int_zf_out)
-                        IP_write_data <= EIP + { 28'h0, o_consume_bytes } + { { 24{ o_immediate[7] } }, o_immediate[7:0] };
+                        IP_write_data <= eip_next_linear + rel8_disp32;
                     else
-                        IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                        IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_LOOP_count || o_opcode_x86_LOOPZ_count_while_zero || o_opcode_x86_LOOPNZ_count_while_not_zero) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd1;
                     write_data <= eu_int_result;
                     IP_write_enable <= 1'b1;
                     if (eu_int_zf_out)
-                        IP_write_data <= EIP + { 28'h0, o_consume_bytes } + { { 24{ o_immediate[7] } }, o_immediate[7:0] };
+                        IP_write_data <= eip_next_linear + rel8_disp32;
                     else
-                        IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                        IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument || o_opcode_x86_RET_return_from_procedure_to_other_segment_no_argument) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] + 32'd4;
+                    write_data <= stack_pop_esp(GPR_read_32[4], 32'd4);
                     IP_write_enable <= 1'b1;
-                    if (shadow_ret_sp != 4'd0)
-                        IP_write_data <= shadow_ret_stack[shadow_ret_sp - 4'd1];
-                    else
-                        IP_write_data <= EIP + { 28'h0, o_consume_bytes };
-                    if (shadow_ret_sp != 4'd0)
+                    IP_write_data <= shadow_ret_top_or(shadow_ret_sp, eip_next_linear);
+                    if (shadow_ret_has_entry(shadow_ret_sp))
                         shadow_ret_sp <= shadow_ret_sp - 4'd1;
                 end else if (o_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP || o_opcode_x86_RET_return_from_procedure_to_other_segment_adding_imm_to_SP) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] + 32'd4 + o_immediate;
+                    write_data <= stack_pop_esp(GPR_read_32[4], 32'd4 + o_immediate);
                     IP_write_enable <= 1'b1;
-                    if (shadow_ret_sp != 4'd0)
-                        IP_write_data <= shadow_ret_stack[shadow_ret_sp - 4'd1];
-                    else
-                        IP_write_data <= EIP + { 28'h0, o_consume_bytes };
-                    if (shadow_ret_sp != 4'd0)
+                    IP_write_data <= shadow_ret_top_or(shadow_ret_sp, eip_next_linear);
+                    if (shadow_ret_has_entry(shadow_ret_sp))
                         shadow_ret_sp <= shadow_ret_sp - 4'd1;
                 end else if (o_opcode_x86_INT_interrupt_type_3) begin
                     exception_vector <= 8'd3;
@@ -1653,7 +1751,7 @@ module w686_core (
                         in_exception <= 1'b1;
                     end else begin
                         IP_write_enable <= 1'b1;
-                        IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                        IP_write_data <= eip_next_linear;
                     end
                 end else if (o_opcode_x86_IRET_interrupt_return) begin
                     if (PE) begin
@@ -1664,64 +1762,64 @@ module w686_core (
                         in_exception <= 1'b0;
                     end else begin
                         IP_write_enable <= 1'b1;
-                        IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                        IP_write_data <= eip_next_linear;
                     end
                 end else if (o_opcode_x86_LEAVE_high_level_procedure_exit) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
                     write_data <= GPR_read_32[5];
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                    IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_PUSH_reg || o_opcode_x86_PUSH_imm || o_opcode_x86_PUSH_sreg_2 || o_opcode_x86_PUSH_sreg_3 || o_opcode_x86_PUSH_reg_mem || o_opcode_x86_PUSHF_push_flags_onto_stack) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] - 32'd4;
+                    write_data <= stack_push_esp(GPR_read_32[4], 32'd4);
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                    IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_PUSH_all_general_registers) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] - 32'd32;
+                    write_data <= stack_push_esp(GPR_read_32[4], 32'd32);
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                    IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_POP_reg) begin
                     write_enable <= 1'b1;
                     write_index <= short_reg_idx;
-                    write_data <= (shadow_ret_sp != 4'd0) ? shadow_ret_stack[shadow_ret_sp - 4'd1] : 32'd0;
+                    write_data <= shadow_ret_top_or(shadow_ret_sp, 32'd0);
                     xadd_saved_reg <= 3'd4;
-                    xadd_saved_val <= GPR_read_32[4] + 32'd4;
+                    xadd_saved_val <= stack_pop_esp(GPR_read_32[4], 32'd4);
                     xadd_wait_reg_wr <= 1'b1;
                 end else if (o_opcode_x86_POP_reg_mem && modrm_is_reg) begin
                     write_enable <= 1'b1;
                     write_index <= modrm_rm_field;
-                    write_data <= (shadow_ret_sp != 4'd0) ? shadow_ret_stack[shadow_ret_sp - 4'd1] : 32'd0;
+                    write_data <= shadow_ret_top_or(shadow_ret_sp, 32'd0);
                     xadd_saved_reg <= 3'd4;
-                    xadd_saved_val <= GPR_read_32[4] + 32'd4;
+                    xadd_saved_val <= stack_pop_esp(GPR_read_32[4], 32'd4);
                     xadd_wait_reg_wr <= 1'b1;
                 end else if (o_opcode_x86_POP_sreg_2 || o_opcode_x86_POP_sreg_3) begin
                     SREG_write_enable <= 1'b1;
                     SREG_write_index <= o_seg_reg_index;
-                    SREG_write_selector <= (shadow_ret_sp != 4'd0) ? shadow_ret_stack[shadow_ret_sp - 4'd1][15:0] : segment_selector[o_seg_reg_index];
+                    SREG_write_selector <= shadow_ret_top16_or(shadow_ret_sp, segment_selector[o_seg_reg_index]);
                     SREG_write_descriptor <= descriptor_cache[o_seg_reg_index];
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] + 32'd4;
+                    write_data <= stack_pop_esp(GPR_read_32[4], 32'd4);
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                    IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_POPF_pop_stack_into_FLAGS_or_EFLAGS) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= (shadow_ret_sp != 4'd0) ? shadow_ret_stack[shadow_ret_sp - 4'd1] : EFLAGS;
+                    FLAGS_write_data <= shadow_ret_top_or(shadow_ret_sp, EFLAGS);
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] + 32'd4;
+                    write_data <= stack_pop_esp(GPR_read_32[4], 32'd4);
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                    IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_POPA_pop_all_general_registers) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
-                    write_data <= GPR_read_32[4] + 32'd32;
+                    write_data <= stack_pop_esp(GPR_read_32[4], 32'd32);
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                    IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_IN_port_fixed || o_opcode_x86_IN_port_variable) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd0;
@@ -1784,15 +1882,7 @@ module w686_core (
                 end else if (o_x87_is_esc && (eu_x87_op_sel != X87_NOP)) begin
                     if ((eu_x87_op_sel == X87_FCOMIP) || (eu_x87_op_sel == X87_FUCOMIP)) begin
                         FLAGS_write_enable <= 1'b1;
-                        FLAGS_write_data <= write_status_flags(
-                            EFLAGS,
-                            eu_x87_cf,
-                            eu_x87_pf,
-                            1'b0,
-                            eu_x87_zf,
-                            1'b0,
-                            1'b0
-                        );
+                        FLAGS_write_data <= flags_with_cf_pf_zf(EFLAGS, eu_x87_cf, eu_x87_pf, eu_x87_zf);
                     end
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
@@ -1830,12 +1920,7 @@ module w686_core (
                     write_index <= modrm_reg_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= {
-                        EFLAGS[31:12],
-                        eu_int_cf_out,
-                        EFLAGS[10:1],
-                        eu_int_cf_out
-                    };
+                    FLAGS_write_data <= flags_with_cf_of(EFLAGS, eu_int_cf_out, eu_int_cf_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_MOV_imm_to_reg) begin
@@ -1937,7 +2022,7 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:7], eu_int_zf_out, EFLAGS[5:0] };
+                    FLAGS_write_data <= flags_with_zf(EFLAGS, eu_int_zf_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BOUND_check_array_against_bounds) begin
@@ -1954,7 +2039,7 @@ module w686_core (
                     write_index <= cx_r_idx;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:7], eu_int_zf_out, EFLAGS[5:0] };
+                    FLAGS_write_data <= flags_with_zf(EFLAGS, eu_int_zf_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_LSL_load_segment_limit && modrm2_is_reg) begin
@@ -1962,12 +2047,12 @@ module w686_core (
                     write_index <= cx_r_idx;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:7], eu_int_zf_out, EFLAGS[5:0] };
+                    FLAGS_write_data <= flags_with_zf(EFLAGS, eu_int_zf_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_VERR_verify_a_segment_for_reading || o_opcode_x86_VERW_verify_a_segment_for_writing) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:7], eu_int_zf_out, EFLAGS[5:0] };
+                    FLAGS_write_data <= flags_with_zf(EFLAGS, eu_int_zf_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_LLDT_load_local_desciptor_table_reg || o_opcode_x86_LTR_load_task_register) begin
@@ -2040,7 +2125,14 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_add32(EFLAGS, GPR_read_32[modrm_rm_field], GPR_read_32[modrm_reg_field], 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (~(GPR_read_32[modrm_rm_field][31] ^ GPR_read_32[modrm_reg_field][31])) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_ADD_reg_mem_to_reg && modrm_is_reg) begin
@@ -2048,7 +2140,14 @@ module w686_core (
                     write_index <= modrm_reg_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_add32(EFLAGS, GPR_read_32[modrm_reg_field], GPR_read_32[modrm_rm_field], 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (~(GPR_read_32[modrm_reg_field][31] ^ GPR_read_32[modrm_rm_field][31])) &
+                        (GPR_read_32[modrm_reg_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_ADD_imm_to_reg_mem && modrm_is_reg) begin
@@ -2056,7 +2155,14 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_add32(EFLAGS, GPR_read_32[modrm_rm_field], o_immediate, 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (~(GPR_read_32[modrm_rm_field][31] ^ o_immediate[31])) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_ADD_imm_to_acc) begin
@@ -2064,7 +2170,14 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_add32(EFLAGS, GPR_read_32[0], o_immediate, 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (~(GPR_read_32[0][31] ^ o_immediate[31])) &
+                        (GPR_read_32[0][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_ADC_reg_to_reg_mem && modrm_is_reg) begin
@@ -2072,7 +2185,14 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_add32(EFLAGS, GPR_read_32[modrm_rm_field], GPR_read_32[modrm_reg_field], CF);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (~(GPR_read_32[modrm_rm_field][31] ^ GPR_read_32[modrm_reg_field][31])) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_ADC_reg_mem_to_reg && modrm_is_reg) begin
@@ -2080,7 +2200,14 @@ module w686_core (
                     write_index <= modrm_reg_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_add32(EFLAGS, GPR_read_32[modrm_reg_field], GPR_read_32[modrm_rm_field], CF);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (~(GPR_read_32[modrm_reg_field][31] ^ GPR_read_32[modrm_rm_field][31])) &
+                        (GPR_read_32[modrm_reg_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_ADC_imm_to_reg_mem && modrm_is_reg) begin
@@ -2088,7 +2215,14 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_add32(EFLAGS, GPR_read_32[modrm_rm_field], o_immediate, CF);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (~(GPR_read_32[modrm_rm_field][31] ^ o_immediate[31])) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_ADC_imm_to_acc) begin
@@ -2096,7 +2230,14 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_add32(EFLAGS, GPR_read_32[0], o_immediate, CF);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (~(GPR_read_32[0][31] ^ o_immediate[31])) &
+                        (GPR_read_32[0][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_SUB_reg_to_reg_mem && modrm_is_reg) begin
@@ -2104,7 +2245,14 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[modrm_rm_field], GPR_read_32[modrm_reg_field], 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[modrm_rm_field][31] ^ GPR_read_32[modrm_reg_field][31]) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_SUB_reg_mem_to_reg && modrm_is_reg) begin
@@ -2112,7 +2260,14 @@ module w686_core (
                     write_index <= modrm_reg_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[modrm_reg_field], GPR_read_32[modrm_rm_field], 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[modrm_reg_field][31] ^ GPR_read_32[modrm_rm_field][31]) &
+                        (GPR_read_32[modrm_reg_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_SUB_imm_to_reg_mem && modrm_is_reg) begin
@@ -2120,7 +2275,14 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[modrm_rm_field], o_immediate, 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[modrm_rm_field][31] ^ o_immediate[31]) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_SUB_imm_to_acc) begin
@@ -2128,7 +2290,14 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[0], o_immediate, 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[0][31] ^ o_immediate[31]) &
+                        (GPR_read_32[0][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_SBB_reg_to_reg_mem && modrm_is_reg) begin
@@ -2136,7 +2305,14 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[modrm_rm_field], GPR_read_32[modrm_reg_field], CF);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[modrm_rm_field][31] ^ GPR_read_32[modrm_reg_field][31]) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_SBB_reg_mem_to_reg && modrm_is_reg) begin
@@ -2144,7 +2320,14 @@ module w686_core (
                     write_index <= modrm_reg_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[modrm_reg_field], GPR_read_32[modrm_rm_field], CF);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[modrm_reg_field][31] ^ GPR_read_32[modrm_rm_field][31]) &
+                        (GPR_read_32[modrm_reg_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_SBB_imm_to_reg_mem && modrm_is_reg) begin
@@ -2152,7 +2335,14 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[modrm_rm_field], o_immediate, CF);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[modrm_rm_field][31] ^ o_immediate[31]) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_SBB_imm_to_acc) begin
@@ -2160,7 +2350,14 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[0], o_immediate, CF);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[0][31] ^ o_immediate[31]) &
+                        (GPR_read_32[0][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_AND_reg_to_reg_mem && modrm_is_reg) begin
@@ -2168,7 +2365,7 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_rm_field] & GPR_read_32[modrm_reg_field]);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_AND_reg_mem_to_reg && modrm_is_reg) begin
@@ -2176,7 +2373,7 @@ module w686_core (
                     write_index <= modrm_reg_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_reg_field] & GPR_read_32[modrm_rm_field]);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_AND_imm_to_reg_mem && modrm_is_reg) begin
@@ -2184,7 +2381,7 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_rm_field] & o_immediate);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_AND_imm_to_acc) begin
@@ -2192,7 +2389,7 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[0] & o_immediate);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_OR_reg_to_reg_mem && modrm_is_reg) begin
@@ -2200,7 +2397,7 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_rm_field] | GPR_read_32[modrm_reg_field]);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_OR_reg_mem_to_reg && modrm_is_reg) begin
@@ -2208,7 +2405,7 @@ module w686_core (
                     write_index <= modrm_reg_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_reg_field] | GPR_read_32[modrm_rm_field]);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_OR_imm_to_reg_mem && modrm_is_reg) begin
@@ -2216,7 +2413,7 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_rm_field] | o_immediate);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_OR_imm_to_acc) begin
@@ -2224,7 +2421,7 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[0] | o_immediate);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_XOR_reg_to_reg_mem && modrm_is_reg) begin
@@ -2232,7 +2429,7 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_rm_field] ^ GPR_read_32[modrm_reg_field]);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_XOR_reg_mem_to_reg && modrm_is_reg) begin
@@ -2240,7 +2437,7 @@ module w686_core (
                     write_index <= modrm_reg_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_reg_field] ^ GPR_read_32[modrm_rm_field]);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_XOR_imm_to_reg_mem && modrm_is_reg) begin
@@ -2248,7 +2445,7 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_rm_field] ^ o_immediate);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_XOR_imm_to_acc) begin
@@ -2256,42 +2453,70 @@ module w686_core (
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[0] ^ o_immediate);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_CMP_mem_with_reg && modrm_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[modrm_rm_field], GPR_read_32[modrm_reg_field], 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[modrm_rm_field][31] ^ GPR_read_32[modrm_reg_field][31]) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_CMP_reg_with_mem && modrm_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[modrm_reg_field], GPR_read_32[modrm_rm_field], 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[modrm_reg_field][31] ^ GPR_read_32[modrm_rm_field][31]) &
+                        (GPR_read_32[modrm_reg_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_CMP_imm_with_reg_mem && modrm_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[modrm_rm_field], o_immediate, 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[modrm_rm_field][31] ^ o_immediate[31]) &
+                        (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_CMP_imm_with_acc) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, GPR_read_32[0], o_immediate, 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        (GPR_read_32[0][31] ^ o_immediate[31]) &
+                        (GPR_read_32[0][31] ^ eu_int_result[31])
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_TEST_reg_mem_and_reg && modrm_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_rm_field] & GPR_read_32[modrm_reg_field]);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_TEST_imm_and_reg_mem && modrm_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[modrm_rm_field] & o_immediate);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_TEST_imm_and_acc) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_logic32(EFLAGS, GPR_read_32[0] & o_immediate);
+                    FLAGS_write_data <= flags_from_eu_result(EFLAGS, eu_int_result, 1'b0, 1'b0, 1'b0);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_INC_reg) begin
@@ -2299,7 +2524,16 @@ module w686_core (
                     write_index <= short_reg_idx;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { flags_for_add32(EFLAGS, GPR_read_32[short_reg_idx], 32'd1, 1'b0)[31:1], EFLAGS[0] };
+                    FLAGS_write_data <= flags_preserve_cf(
+                        EFLAGS,
+                        flags_from_eu_result(
+                            EFLAGS,
+                            eu_int_result,
+                            eu_int_cf_out,
+                            eu_int_af_out,
+                            (~GPR_read_32[short_reg_idx][31]) & (GPR_read_32[short_reg_idx][31] ^ eu_int_result[31])
+                        )
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_DEC_reg) begin
@@ -2307,7 +2541,16 @@ module w686_core (
                     write_index <= short_reg_idx;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { flags_for_sub32(EFLAGS, GPR_read_32[short_reg_idx], 32'd1, 1'b0)[31:1], EFLAGS[0] };
+                    FLAGS_write_data <= flags_preserve_cf(
+                        EFLAGS,
+                        flags_from_eu_result(
+                            EFLAGS,
+                            eu_int_result,
+                            eu_int_cf_out,
+                            eu_int_af_out,
+                            GPR_read_32[short_reg_idx][31] & (GPR_read_32[short_reg_idx][31] ^ eu_int_result[31])
+                        )
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_INC_reg_mem && modrm_is_reg) begin
@@ -2315,7 +2558,16 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { flags_for_add32(EFLAGS, GPR_read_32[modrm_rm_field], 32'd1, 1'b0)[31:1], EFLAGS[0] };
+                    FLAGS_write_data <= flags_preserve_cf(
+                        EFLAGS,
+                        flags_from_eu_result(
+                            EFLAGS,
+                            eu_int_result,
+                            eu_int_cf_out,
+                            eu_int_af_out,
+                            (~GPR_read_32[modrm_rm_field][31]) & (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                        )
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_DEC_reg_mem && modrm_is_reg) begin
@@ -2323,7 +2575,16 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { flags_for_sub32(EFLAGS, GPR_read_32[modrm_rm_field], 32'd1, 1'b0)[31:1], EFLAGS[0] };
+                    FLAGS_write_data <= flags_preserve_cf(
+                        EFLAGS,
+                        flags_from_eu_result(
+                            EFLAGS,
+                            eu_int_result,
+                            eu_int_cf_out,
+                            eu_int_af_out,
+                            GPR_read_32[modrm_rm_field][31] & (GPR_read_32[modrm_rm_field][31] ^ eu_int_result[31])
+                        )
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_NOT_one_s_complement_negation && modrm_is_reg) begin
@@ -2337,7 +2598,13 @@ module w686_core (
                     write_index <= modrm_rm_field;
                     write_data <= eu_int_result;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= flags_for_sub32(EFLAGS, 32'd0, GPR_read_32[modrm_rm_field], 1'b0);
+                    FLAGS_write_data <= flags_from_eu_result(
+                        EFLAGS,
+                        eu_int_result,
+                        eu_int_cf_out,
+                        eu_int_af_out,
+                        GPR_read_32[modrm_rm_field][31] & eu_int_result[31]
+                    );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (
@@ -2366,87 +2633,49 @@ module w686_core (
                     else
                         sh_cnt = o_immediate[4:0];
 
-                    sh_tmp = GPR_read_32[modrm_rm_field];
+                    sh_tmp = eu_int_result;
 
                     if (sh_cnt != 5'd0) begin
                         if (o_opcode_x86_ROL_reg_mem_by_1 | o_opcode_x86_ROL_reg_mem_by_CL | o_opcode_x86_ROL_reg_mem_by_imm) begin
-                            sh_tmp = (sh_tmp << sh_cnt) | (sh_tmp >> (32 - sh_cnt));
-                            sh_cf = sh_tmp[0];
+                            sh_cf = eu_int_cf_out;
                             sh_of = (sh_cnt == 5'd1) ? (sh_tmp[31] ^ sh_cf) : EFLAGS[11];
                             FLAGS_write_enable <= 1'b1;
-                            FLAGS_write_data <= { EFLAGS[31:12], sh_of, EFLAGS[10:1], sh_cf };
+                            FLAGS_write_data <= flags_with_cf_of(EFLAGS, sh_cf, sh_of);
                         end else if (o_opcode_x86_ROR_reg_mem_by_1 | o_opcode_x86_ROR_reg_mem_by_CL | o_opcode_x86_ROR_reg_mem_by_imm) begin
-                            sh_tmp = (sh_tmp >> sh_cnt) | (sh_tmp << (32 - sh_cnt));
-                            sh_cf = sh_tmp[31];
+                            sh_cf = eu_int_cf_out;
                             sh_of = (sh_cnt == 5'd1) ? (sh_tmp[31] ^ sh_tmp[30]) : EFLAGS[11];
                             FLAGS_write_enable <= 1'b1;
-                            FLAGS_write_data <= { EFLAGS[31:12], sh_of, EFLAGS[10:1], sh_cf };
+                            FLAGS_write_data <= flags_with_cf_of(EFLAGS, sh_cf, sh_of);
                         end else if (o_opcode_x86_RCL_reg_mem_by_1 | o_opcode_x86_RCL_reg_mem_by_CL | o_opcode_x86_RCL_reg_mem_by_imm) begin
-                            sh_tmp = eu_int_result;
                             sh_cf = eu_int_cf_out;
                             sh_of = (sh_cnt == 5'd1) ? (sh_tmp[31] ^ sh_cf) : EFLAGS[11];
                             FLAGS_write_enable <= 1'b1;
-                            FLAGS_write_data <= { EFLAGS[31:12], sh_of, EFLAGS[10:1], sh_cf };
+                            FLAGS_write_data <= flags_with_cf_of(EFLAGS, sh_cf, sh_of);
                         end else if (o_opcode_x86_RCR_reg_mem_by_1 | o_opcode_x86_RCR_reg_mem_by_CL | o_opcode_x86_RCR_reg_mem_by_imm) begin
-                            sh_tmp = eu_int_result;
                             sh_cf = eu_int_cf_out;
                             sh_of = (sh_cnt == 5'd1) ? (sh_tmp[31] ^ sh_tmp[30]) : EFLAGS[11];
                             FLAGS_write_enable <= 1'b1;
-                            FLAGS_write_data <= { EFLAGS[31:12], sh_of, EFLAGS[10:1], sh_cf };
+                            FLAGS_write_data <= flags_with_cf_of(EFLAGS, sh_cf, sh_of);
                         end else if (o_opcode_x86_SHL_reg_mem_by_1 | o_opcode_x86_SHL_reg_mem_by_CL | o_opcode_x86_SHL_reg_mem_by_imm) begin
-                            sh_cf = sh_tmp[32 - sh_cnt];
-                            sh_tmp = sh_tmp << sh_cnt;
+                            sh_cf = eu_int_cf_out;
                             sh_of = (sh_cnt == 5'd1) ? (sh_tmp[31] ^ sh_cf) : EFLAGS[11];
                             FLAGS_write_enable <= 1'b1;
-                            FLAGS_write_data <= write_status_flags(
-                                EFLAGS,
-                                sh_cf,
-                                parity_even8(sh_tmp[7:0]),
-                                EFLAGS[4],
-                                (sh_tmp == 32'd0),
-                                sh_tmp[31],
-                                sh_of
-                            );
+                            FLAGS_write_data <= flags_from_eu_result(EFLAGS, sh_tmp, sh_cf, EFLAGS[4], sh_of);
                         end else if (o_opcode_x86_SHR_reg_mem_by_1 | o_opcode_x86_SHR_reg_mem_by_CL | o_opcode_x86_SHR_reg_mem_by_imm) begin
-                            xadd_a = sh_tmp;
-                            sh_cf = sh_tmp[sh_cnt - 1];
-                            sh_tmp = sh_tmp >> sh_cnt;
-                            sh_of = (sh_cnt == 5'd1) ? xadd_a[31] : EFLAGS[11];
+                            sh_cf = eu_int_cf_out;
+                            sh_of = (sh_cnt == 5'd1) ? GPR_read_32[modrm_rm_field][31] : EFLAGS[11];
                             FLAGS_write_enable <= 1'b1;
-                            FLAGS_write_data <= write_status_flags(
-                                EFLAGS,
-                                sh_cf,
-                                parity_even8(sh_tmp[7:0]),
-                                EFLAGS[4],
-                                (sh_tmp == 32'd0),
-                                sh_tmp[31],
-                                sh_of
-                            );
+                            FLAGS_write_data <= flags_from_eu_result(EFLAGS, sh_tmp, sh_cf, EFLAGS[4], sh_of);
                         end else begin
-                            sh_cf = sh_tmp[sh_cnt - 1];
-                            sh_tmp = $signed(sh_tmp) >>> sh_cnt;
+                            sh_cf = eu_int_cf_out;
                             sh_of = (sh_cnt == 5'd1) ? 1'b0 : EFLAGS[11];
                             FLAGS_write_enable <= 1'b1;
-                            FLAGS_write_data <= write_status_flags(
-                                EFLAGS,
-                                sh_cf,
-                                parity_even8(sh_tmp[7:0]),
-                                EFLAGS[4],
-                                (sh_tmp == 32'd0),
-                                sh_tmp[31],
-                                sh_of
-                            );
+                            FLAGS_write_data <= flags_from_eu_result(EFLAGS, sh_tmp, sh_cf, EFLAGS[4], sh_of);
                         end
 
                         write_enable <= 1'b1;
                         write_index <= modrm_rm_field;
-                        if (
-                            o_opcode_x86_RCL_reg_mem_by_1 | o_opcode_x86_RCL_reg_mem_by_CL | o_opcode_x86_RCL_reg_mem_by_imm |
-                            o_opcode_x86_RCR_reg_mem_by_1 | o_opcode_x86_RCR_reg_mem_by_CL | o_opcode_x86_RCR_reg_mem_by_imm
-                        )
-                            write_data <= sh_tmp;
-                        else
-                            write_data <= eu_int_result;
+                        write_data <= eu_int_result;
                     end
 
                     IP_write_enable <= 1'b1;
@@ -2457,10 +2686,8 @@ module w686_core (
                     else
                         sh_cnt = o_immediate[4:0];
 
-                    sh_tmp = GPR_read_32[modrm2_rm_field];
-
                     if (sh_cnt != 5'd0) begin
-                        sh_cf = sh_tmp[32 - sh_cnt];
+                        sh_cf = eu_int_cf_out;
                         sh_tmp = eu_int_result;
                         sh_of = (sh_cnt == 5'd1) ? (sh_tmp[31] ^ sh_cf) : EFLAGS[11];
 
@@ -2468,15 +2695,7 @@ module w686_core (
                         write_index <= modrm2_rm_field;
                         write_data <= eu_int_result;
                         FLAGS_write_enable <= 1'b1;
-                        FLAGS_write_data <= write_status_flags(
-                            EFLAGS,
-                            sh_cf,
-                            parity_even8(sh_tmp[7:0]),
-                            EFLAGS[4],
-                            (sh_tmp == 32'd0),
-                            sh_tmp[31],
-                            sh_of
-                        );
+                        FLAGS_write_data <= flags_from_eu_result(EFLAGS, sh_tmp, sh_cf, EFLAGS[4], sh_of);
                     end
 
                     IP_write_enable <= 1'b1;
@@ -2487,10 +2706,8 @@ module w686_core (
                     else
                         sh_cnt = o_immediate[4:0];
 
-                    sh_tmp = GPR_read_32[modrm2_rm_field];
-
                     if (sh_cnt != 5'd0) begin
-                        sh_cf = sh_tmp[sh_cnt - 1];
+                        sh_cf = eu_int_cf_out;
                         sh_tmp = eu_int_result;
                         sh_of = (sh_cnt == 5'd1) ? (GPR_read_32[modrm2_rm_field][31] ^ sh_tmp[31]) : EFLAGS[11];
 
@@ -2498,15 +2715,7 @@ module w686_core (
                         write_index <= modrm2_rm_field;
                         write_data <= eu_int_result;
                         FLAGS_write_enable <= 1'b1;
-                        FLAGS_write_data <= write_status_flags(
-                            EFLAGS,
-                            sh_cf,
-                            parity_even8(sh_tmp[7:0]),
-                            EFLAGS[4],
-                            (sh_tmp == 32'd0),
-                            sh_tmp[31],
-                            sh_of
-                        );
+                        FLAGS_write_data <= flags_from_eu_result(EFLAGS, sh_tmp, sh_cf, EFLAGS[4], sh_of);
                     end
 
                     IP_write_enable <= 1'b1;
@@ -2514,42 +2723,42 @@ module w686_core (
                 end else if (o_opcode_x86_BSF_bit_scan_forward && modrm2_is_reg) begin
                     if (eu_int_zf_out) begin
                         FLAGS_write_enable <= 1'b1;
-                        FLAGS_write_data <= { EFLAGS[31:7], 1'b1, EFLAGS[5:0] };
+                        FLAGS_write_data <= flags_with_zf(EFLAGS, 1'b1);
                     end else begin
                         write_enable <= 1'b1;
                         write_index <= cx_r_idx;
                         write_data <= eu_int_result;
                         FLAGS_write_enable <= 1'b1;
-                        FLAGS_write_data <= { EFLAGS[31:7], 1'b0, EFLAGS[5:0] };
+                        FLAGS_write_data <= flags_with_zf(EFLAGS, 1'b0);
                     end
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BSR_bit_scan_reverse && modrm2_is_reg) begin
                     if (eu_int_zf_out) begin
                         FLAGS_write_enable <= 1'b1;
-                        FLAGS_write_data <= { EFLAGS[31:7], 1'b1, EFLAGS[5:0] };
+                        FLAGS_write_data <= flags_with_zf(EFLAGS, 1'b1);
                     end else begin
                         write_enable <= 1'b1;
                         write_index <= cx_r_idx;
                         write_data <= eu_int_result;
                         FLAGS_write_enable <= 1'b1;
-                        FLAGS_write_data <= { EFLAGS[31:7], 1'b0, EFLAGS[5:0] };
+                        FLAGS_write_data <= flags_with_zf(EFLAGS, 1'b0);
                     end
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BT_reg_mem_with_reg && modrm2_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf(EFLAGS, eu_int_cf_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BT_reg_mem_with_imm && modrm2_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf(EFLAGS, eu_int_cf_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BTC_reg_mem_with_reg && modrm2_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf(EFLAGS, eu_int_cf_out);
                     write_enable <= 1'b1;
                     write_index <= modrm2_rm_field;
                     write_data <= eu_int_result;
@@ -2557,7 +2766,7 @@ module w686_core (
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BTC_reg_mem_with_imm && modrm2_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf(EFLAGS, eu_int_cf_out);
                     write_enable <= 1'b1;
                     write_index <= modrm2_rm_field;
                     write_data <= eu_int_result;
@@ -2565,7 +2774,7 @@ module w686_core (
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BTR_reg_mem_with_reg && modrm2_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf(EFLAGS, eu_int_cf_out);
                     write_enable <= 1'b1;
                     write_index <= modrm2_rm_field;
                     write_data <= eu_int_result;
@@ -2573,7 +2782,7 @@ module w686_core (
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BTR_reg_mem_with_imm && modrm2_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf(EFLAGS, eu_int_cf_out);
                     write_enable <= 1'b1;
                     write_index <= modrm2_rm_field;
                     write_data <= eu_int_result;
@@ -2581,7 +2790,7 @@ module w686_core (
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BTS_reg_mem_with_reg && modrm2_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf(EFLAGS, eu_int_cf_out);
                     write_enable <= 1'b1;
                     write_index <= modrm2_rm_field;
                     write_data <= eu_int_result;
@@ -2589,7 +2798,7 @@ module w686_core (
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BTS_reg_mem_with_imm && modrm2_is_reg) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:1], eu_int_cf_out };
+                    FLAGS_write_data <= flags_with_cf(EFLAGS, eu_int_cf_out);
                     write_enable <= 1'b1;
                     write_index <= modrm2_rm_field;
                     write_data <= eu_int_result;
@@ -2623,7 +2832,7 @@ module w686_core (
                     else
                         write_index <= 3'd0;
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= { EFLAGS[31:7], eu_int_zf_out, EFLAGS[5:0] };
+                    FLAGS_write_data <= flags_with_zf(EFLAGS, eu_int_zf_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_XADD_exchange_and_add && modrm2_is_reg) begin

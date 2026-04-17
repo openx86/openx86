@@ -5,7 +5,7 @@ module eu_misc_movzx_tb;
     logic [ 1:0] width;
     logic [31:0] y;
 
-    eu_misc_movzx u_dut (
+    stage_3_exe_eu_misc_movzx u_dut (
         .a ( a ),
         .width ( width ),
         .y ( y )
@@ -16,7 +16,7 @@ module eu_misc_movzx_tb;
         width = 2'b01;
         #1;
         if (y !== 32'h0000_00FF) begin
-            $display("FAIL eu_misc_movzx byte");
+            $display("FAIL stage_3_exe_eu_misc_movzx byte");
             $finish(1);
         end
 
@@ -24,7 +24,7 @@ module eu_misc_movzx_tb;
         width = 2'b10;
         #1;
         if (y !== 32'h0000_FF01) begin
-            $display("FAIL eu_misc_movzx word");
+            $display("FAIL stage_3_exe_eu_misc_movzx word");
             $finish(1);
         end
 
@@ -32,7 +32,7 @@ module eu_misc_movzx_tb;
         width = 2'b11;
         #1;
         if (y !== 32'h89AB_CDEF) begin
-            $display("FAIL eu_misc_movzx dword");
+            $display("FAIL stage_3_exe_eu_misc_movzx dword");
             $finish(1);
         end
 

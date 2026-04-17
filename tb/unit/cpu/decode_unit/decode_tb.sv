@@ -19,7 +19,7 @@ logic  [7:0] instruction [0:15];
 wire default_operand_size = `default_operation_size_32;
 wire [1:0] dbg_modrm_mod;
 
-du_decode_unit decode_instance_in_testbench (
+stage_2_dec_du_decode_unit decode_instance_in_testbench (
     .i_default_operand_size ( default_operand_size ),
     .i_instruction ( instruction ),
     .o_dbg_modrm_mod ( dbg_modrm_mod )

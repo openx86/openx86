@@ -59,7 +59,7 @@ module bus_tb;
     logic        sdr_clk, sdr_cke;
 
     // 实例化总线控制器
-    bus u_bus (
+    bus_controller u_bus_controller (
         .i_bus_valid        (bus_valid),
         .o_bus_ready        (bus_ready),
         .o_bus_busy         (bus_busy),
@@ -68,11 +68,11 @@ module bus_tb;
         .i_bus_address      (bus_address),
         .o_bus_data_read    (bus_data_read),
         .i_bus_data_write   (bus_data_write),
-        
+
         .o_vga_mem_en_w     (vga_mem_en_w),
         .o_vga_mem_addr     (vga_mem_addr),
         .o_vga_mem_data_w   (vga_mem_data_w),
-        
+
         .o_vga_io_en_w      (vga_io_en_w),
         .o_vga_io_en_r      (vga_io_en_r),
         .o_vga_io_addr      (vga_io_addr),
@@ -81,7 +81,7 @@ module bus_tb;
 
         .o_bios_addr        (bios_addr),
         .i_bios_rdata       (bios_rdata),
-        
+
         .o_ext_bios_addr    (ext_bios_addr),
         .i_ext_bios_rdata   (ext_bios_rdata),
 
@@ -163,7 +163,7 @@ module bus_tb;
 
     // 简单的BIOS ROM模型
     logic [31:0] bios_mem [0:16383];  // 64KB BIOS
-    
+
     initial begin
         // 初始化BIOS ROM（简单的测试数据）
         for (int i = 0; i < 16384; i++) begin
@@ -172,7 +172,7 @@ module bus_tb;
         // 在地址0处放置一个跳转指令（示例）
         bios_mem[0] = 32'hEA00_00F0;  // JMP F000:0000 (示例)
     end
-    
+
     always_ff @(posedge clock) begin
         if (reset) begin
             bios_rdata <= 32'h0;
@@ -183,13 +183,13 @@ module bus_tb;
 
     // 扩展BIOS ROM模型
     logic [31:0] ext_bios_mem [0:32767];  // 128KB扩展BIOS
-    
+
     initial begin
         for (int i = 0; i < 32768; i++) begin
             ext_bios_mem[i] = 32'h0000_0000;
         end
     end
-    
+
     always_ff @(posedge clock) begin
         if (reset) begin
             ext_bios_rdata <= 32'h0;
@@ -201,7 +201,7 @@ module bus_tb;
     // VGA I/O数据（模拟VGA寄存器）
     logic [7:0] vga_misc_reg;
     logic [7:0] vga_status_reg;
-    
+
     always_ff @(posedge clock) begin
         if (reset) begin
             vga_misc_reg <= 8'h01;
@@ -216,7 +216,7 @@ module bus_tb;
             vga_status_reg <= {3'b000, 1'b0, 1'b0, 3'b000};  // 简化版本
         end
     end
-    
+
     always_comb begin
         if (vga_io_en_r) begin
             if (vga_io_addr == 16'h03C2) begin
@@ -242,7 +242,7 @@ module bus_tb;
         $display("========================================");
         $display("Bus Controller Testbench");
         $display("========================================");
-        
+
         // 复位
         reset = 1;
         bus_valid = 0;
@@ -250,7 +250,7 @@ module bus_tb;
         bus_io_access = 0;
         bus_address = 32'h0;
         bus_data_write = 32'h0;
-        
+
         #20;
         reset = 0;
         // SDRAM 上电初始化（200us + 命令序列）
@@ -291,7 +291,7 @@ module bus_tb;
         bus_data_write = 32'h0000_00AA;
         #10;
         wait(bus_ready);
-        $display("  VRAM写使能: %b, 地址: 0x%05h, 数据: 0x%02h", 
+        $display("  VRAM写使能: %b, 地址: 0x%05h, 数据: 0x%02h",
                  vga_mem_en_w, vga_mem_addr, vga_mem_data_w);
         #10;
         bus_valid = 0;
@@ -319,7 +319,7 @@ module bus_tb;
         bus_data_write = 32'h0000_0055;
         #10;
         wait(bus_ready);
-        $display("  VGA I/O写使能: %b, 地址: 0x%04h, 数据: 0x%02h", 
+        $display("  VGA I/O写使能: %b, 地址: 0x%04h, 数据: 0x%02h",
                  vga_io_en_w, vga_io_addr, vga_io_data_w);
         #10;
         bus_valid = 0;
@@ -333,7 +333,7 @@ module bus_tb;
         bus_address = 32'h0000_03DA;
         #10;
         wait(bus_ready);
-        $display("  VGA I/O读使能: %b, 地址: 0x%04h, 读取数据: 0x%08h (低8位: 0x%02h)", 
+        $display("  VGA I/O读使能: %b, 地址: 0x%04h, 读取数据: 0x%08h (低8位: 0x%02h)",
                  vga_io_en_r, vga_io_addr, bus_data_read, bus_data_read[7:0]);
         #10;
         bus_valid = 0;
@@ -398,7 +398,7 @@ module bus_tb;
     // 监控信号
     initial begin
         $monitor("时间: %0t | valid=%b ready=%b io=%b addr=0x%08h data_w=0x%08h data_r=0x%08h",
-                 $time, bus_valid, bus_ready, bus_io_access, 
+                 $time, bus_valid, bus_ready, bus_io_access,
                  bus_address, bus_data_write, bus_data_read);
     end
 

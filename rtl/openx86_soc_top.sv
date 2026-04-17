@@ -1,5 +1,5 @@
 // ============================================================================
-// Minimal SoC: w686_cpu 仅接 bus；SDRAM/ROM/VGA/chipset 均由 bus 译码后驱动
+// Minimal SoC: w686_cpu 仅接 bus_controller；SDRAM/ROM/VGA/chipset 均由总线控制器译码后驱动
 // ============================================================================
 
 module openx86_soc_top #(
@@ -145,9 +145,9 @@ module openx86_soc_top #(
     assign o_sdram_a     = sdr_phy_a;
     assign o_sdram_dqm   = sdr_phy_dqm;
 
-    bus #(
+    bus_controller #(
         .USE_SDIO_DISK ( USE_SDIO_DISK )
-    ) u_bus (
+    ) u_bus_controller (
         .i_bus_valid        ( bus_valid ),
         .o_bus_ready        ( bus_ready ),
         .o_bus_busy         ( bus_busy ),
@@ -245,7 +245,7 @@ module openx86_soc_top #(
         .i_sdram_dq_in  ( sdr_phy_dq_in )
     );
 
-    // VGA Graphics Adapter: bus VRAM writes + VGA I/O decode (see rtl/bus.sv)
+    // VGA Graphics Adapter: bus VRAM writes + VGA I/O decode (see rtl/bus_controller.sv)
     vga_graphics_adapter u_vga (
         .io_en_w      ( vga_io_en_w      ),
         .io_en_r      ( vga_io_en_r      ),

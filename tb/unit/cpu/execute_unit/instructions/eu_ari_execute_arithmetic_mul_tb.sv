@@ -3,7 +3,7 @@
 module eu_ari_execute_arithmetic_mul_tb;
     logic [31:0] a, b, y;
 
-    eu_ari_execute_arithmetic_mul u_dut (
+    stage_3_exe_eu_ari_execute_arithmetic_mul u_dut (
         .operand_1(a),
         .operand_2(b),
         .result(y)

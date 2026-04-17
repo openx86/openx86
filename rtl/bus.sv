@@ -27,25 +27,25 @@ module bus_devices #(
     input  logic [31:0] i_bus_address,
     output logic [31:0] o_bus_data_read,
     input  logic [31:0] i_bus_data_write,
-    
+
     // VGA 内存访问接口（VRAM窗口 0xA0000-0xBFFFF）
     // 注意：VGA VRAM 通常是只写的（从CPU角度），VGA控制器自己读取显示
     output logic        o_vga_mem_en_w,
     output logic [19:0] o_vga_mem_addr,
     output logic [7:0]  o_vga_mem_data_w,
-    
+
     // VGA I/O 端口接口（0x03C0-0x03DF）
     output logic        o_vga_io_en_w,
     output logic        o_vga_io_en_r,
     output logic [15:0] o_vga_io_addr,
     output logic [7:0]  o_vga_io_data_w,
     input  logic [7:0]  i_vga_io_data_r,
-    
+
     // BIOS ROM 接口（系统 BIOS 64KB）
     // 使用简单的ROM接口：addr, rdata
     output logic [15:0] o_bios_addr,
     input  logic [31:0] i_bios_rdata,
-    
+
     // 扩展 BIOS ROM 接口（128KB）
     output logic [16:0] o_ext_bios_addr,
     input  logic [31:0] i_ext_bios_rdata,
@@ -84,7 +84,7 @@ module bus_devices #(
 
     // PIC 主片中断输出（接 CPU INTR）
     output logic        o_pic_intr,
-    
+
     // Chipset（IBM PC/AT I/O：各 chip_* 模块由 bus_devices 直连例化；未命中时读回 0xFF）
 
     // 公共信号
@@ -161,20 +161,20 @@ assign is_memory_access = !i_bus_io_access;
 assign is_io_access     = i_bus_io_access;
 
 // 内存地址解码
-assign is_ram_access      = is_memory_access && 
-                             (i_bus_address >= MEM_BASE_RAM) && 
+assign is_ram_access      = is_memory_access &&
+                             (i_bus_address >= MEM_BASE_RAM) &&
                              (i_bus_address <= MEM_END_RAM);
-                             
-assign is_vram_access     = is_memory_access && 
-                             (i_bus_address >= MEM_BASE_VRAM) && 
+
+assign is_vram_access     = is_memory_access &&
+                             (i_bus_address >= MEM_BASE_VRAM) &&
                              (i_bus_address <= MEM_END_VRAM);
-                             
-assign is_ext_bios_access = is_memory_access && 
-                             (i_bus_address >= MEM_BASE_EXT_BIOS) && 
+
+assign is_ext_bios_access = is_memory_access &&
+                             (i_bus_address >= MEM_BASE_EXT_BIOS) &&
                              (i_bus_address <= MEM_END_EXT_BIOS);
-                             
-assign is_sys_bios_access = is_memory_access && 
-                             (i_bus_address >= MEM_BASE_SYS_BIOS) && 
+
+assign is_sys_bios_access = is_memory_access &&
+                             (i_bus_address >= MEM_BASE_SYS_BIOS) &&
                              (i_bus_address <= MEM_END_SYS_BIOS);
 
 assign is_sdram_access    = is_memory_access &&
@@ -182,10 +182,10 @@ assign is_sdram_access    = is_memory_access &&
                              (i_bus_address <= MEM_END_SDRAM);
 
 // I/O 地址解码
-assign is_vga_io_access   = is_io_access && 
-                             (i_bus_address[15:0] >= IO_BASE_VGA) && 
+assign is_vga_io_access   = is_io_access &&
+                             (i_bus_address[15:0] >= IO_BASE_VGA) &&
                              (i_bus_address[15:0] <= IO_END_VGA);
-                             
+
 assign is_other_io_access = is_io_access && !is_vga_io_access;
 
 // Chipset 端口并集（与各 chip_* 模块地址一致）
@@ -715,123 +715,6 @@ module bus_controller #(
         .PS2_CLK_HZ   ( PS2_CLK_HZ ),
         .USE_SDIO_DISK ( USE_SDIO_DISK )
     ) u_devices (
-        .i_bus_valid        ( i_bus_valid ),
-        .o_bus_ready        ( o_bus_ready ),
-        .o_bus_busy         ( o_bus_busy ),
-        .i_bus_write_enable ( i_bus_write_enable ),
-        .i_bus_io_access    ( i_bus_io_access ),
-        .i_bus_address      ( i_bus_address ),
-        .o_bus_data_read    ( o_bus_data_read ),
-        .i_bus_data_write   ( i_bus_data_write ),
-        .o_vga_mem_en_w     ( o_vga_mem_en_w ),
-        .o_vga_mem_addr     ( o_vga_mem_addr ),
-        .o_vga_mem_data_w   ( o_vga_mem_data_w ),
-        .o_vga_io_en_w      ( o_vga_io_en_w ),
-        .o_vga_io_en_r      ( o_vga_io_en_r ),
-        .o_vga_io_addr      ( o_vga_io_addr ),
-        .o_vga_io_data_w    ( o_vga_io_data_w ),
-        .i_vga_io_data_r    ( i_vga_io_data_r ),
-        .o_bios_addr        ( o_bios_addr ),
-        .i_bios_rdata       ( i_bios_rdata ),
-        .o_ext_bios_addr    ( o_ext_bios_addr ),
-        .i_ext_bios_rdata   ( i_ext_bios_rdata ),
-        .o_sdram_en         ( o_sdram_en ),
-        .o_sdram_we         ( o_sdram_we ),
-        .o_sdram_addr_off   ( o_sdram_addr_off ),
-        .o_sdram_wdata      ( o_sdram_wdata ),
-        .i_sdram_rdata      ( i_sdram_rdata ),
-        .i_sdram_ready      ( i_sdram_ready ),
-        .i_sdram_busy       ( i_sdram_busy ),
-        .o_ps2_kbd_clk_out  ( o_ps2_kbd_clk_out ),
-        .o_ps2_kbd_clk_oe   ( o_ps2_kbd_clk_oe ),
-        .i_ps2_kbd_clk_in   ( i_ps2_kbd_clk_in ),
-        .o_ps2_kbd_dat_out  ( o_ps2_kbd_dat_out ),
-        .o_ps2_kbd_dat_oe   ( o_ps2_kbd_dat_oe ),
-        .i_ps2_kbd_dat_in   ( i_ps2_kbd_dat_in ),
-        .o_ps2_aux_clk_out  ( o_ps2_aux_clk_out ),
-        .o_ps2_aux_clk_oe   ( o_ps2_aux_clk_oe ),
-        .i_ps2_aux_clk_in   ( i_ps2_aux_clk_in ),
-        .o_ps2_aux_dat_out  ( o_ps2_aux_dat_out ),
-        .o_ps2_aux_dat_oe   ( o_ps2_aux_dat_oe ),
-        .i_ps2_aux_dat_in   ( i_ps2_aux_dat_in ),
-        .o_sdio_clk    ( o_sdio_clk ),
-        .o_sdio_cmd_o  ( o_sdio_cmd_o ),
-        .o_sdio_cmd_oe ( o_sdio_cmd_oe ),
-        .i_sdio_cmd_i  ( i_sdio_cmd_i ),
-        .o_sdio_dat_o  ( o_sdio_dat_o ),
-        .o_sdio_dat_oe ( o_sdio_dat_oe ),
-        .i_sdio_dat_i  ( i_sdio_dat_i ),
-        .o_pic_intr         ( o_pic_intr ),
-        .i_clock            ( i_clock ),
-        .i_reset            ( i_reset )
-    );
-endmodule
-
-// ----------------------------------------------------------------------------
-// Legacy alias: keep `bus` module name stable for existing code.
-// ----------------------------------------------------------------------------
-module bus #(
-    parameter bit  USE_REAL_PS2 = 1'b0,
-    parameter int PS2_CLK_HZ   = 50_000_000,
-    parameter bit  USE_SDIO_DISK = 1'b0
-) (
-    input  logic        i_bus_valid,
-    output logic        o_bus_ready,
-    output logic        o_bus_busy,
-    input  logic        i_bus_write_enable,
-    input  logic        i_bus_io_access,
-    input  logic [31:0] i_bus_address,
-    output logic [31:0] o_bus_data_read,
-    input  logic [31:0] i_bus_data_write,
-    output logic        o_vga_mem_en_w,
-    output logic [19:0] o_vga_mem_addr,
-    output logic [7:0]  o_vga_mem_data_w,
-    output logic        o_vga_io_en_w,
-    output logic        o_vga_io_en_r,
-    output logic [15:0] o_vga_io_addr,
-    output logic [7:0]  o_vga_io_data_w,
-    input  logic [7:0]  i_vga_io_data_r,
-    output logic [15:0] o_bios_addr,
-    input  logic [31:0] i_bios_rdata,
-    output logic [16:0] o_ext_bios_addr,
-    input  logic [31:0] i_ext_bios_rdata,
-    output logic        o_sdram_en,
-    output logic        o_sdram_we,
-    output logic [23:0] o_sdram_addr_off,
-    output logic [31:0] o_sdram_wdata,
-    input  logic [31:0] i_sdram_rdata,
-    input  logic        i_sdram_ready,
-    input  logic        i_sdram_busy,
-    output logic        o_ps2_kbd_clk_out,
-    output logic        o_ps2_kbd_clk_oe,
-    input  logic        i_ps2_kbd_clk_in,
-    output logic        o_ps2_kbd_dat_out,
-    output logic        o_ps2_kbd_dat_oe,
-    input  logic        i_ps2_kbd_dat_in,
-    output logic        o_ps2_aux_clk_out,
-    output logic        o_ps2_aux_clk_oe,
-    input  logic        i_ps2_aux_clk_in,
-    output logic        o_ps2_aux_dat_out,
-    output logic        o_ps2_aux_dat_oe,
-    input  logic        i_ps2_aux_dat_in,
-
-    output logic        o_sdio_clk,
-    output logic        o_sdio_cmd_o,
-    output logic        o_sdio_cmd_oe,
-    input  logic        i_sdio_cmd_i,
-    output logic [3:0]  o_sdio_dat_o,
-    output logic        o_sdio_dat_oe,
-    input  logic [3:0]  i_sdio_dat_i,
-
-    output logic        o_pic_intr,
-    input  logic        i_clock,
-    input  logic        i_reset
-);
-    bus_controller #(
-        .USE_REAL_PS2 ( USE_REAL_PS2 ),
-        .PS2_CLK_HZ   ( PS2_CLK_HZ ),
-        .USE_SDIO_DISK ( USE_SDIO_DISK )
-    ) u_bus_controller (
         .i_bus_valid        ( i_bus_valid ),
         .o_bus_ready        ( o_bus_ready ),
         .o_bus_busy         ( o_bus_busy ),

@@ -147,7 +147,7 @@ get_dependencies() {
     if grep -q "chip_i8042_ps2" "$module_file"; then
         deps="$deps $RTL_DIR/periph/ps2_host_phy.sv"
     fi
-    if grep -q "bus u_" "$module_file"; then
+    if grep -qE "(bus_controller|bus)[[:space:]]+u_" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/chip_pkg.sv"
         deps="$deps $RTL_DIR/chipset/chip_8254_pit.sv"
         deps="$deps $RTL_DIR/chipset/chip_8259_pic.sv"
@@ -162,7 +162,7 @@ get_dependencies() {
         deps="$deps $RTL_DIR/periph/ide_sd_sector_bridge.sv"
         deps="$deps $RTL_DIR/periph/sd_native_host_4bit.sv"
         deps="$deps $RTL_DIR/periph/sd_4bit_phy.sv"
-        deps="$deps $RTL_DIR/bus.sv"
+        deps="$deps $RTL_DIR/bus_controller.sv"
     fi
     if grep -q "sdram_controller" "$module_file"; then
         deps="$deps $RTL_DIR/memory/sdram_controller.sv"
@@ -177,71 +177,71 @@ get_dependencies() {
         deps="$deps $RTL_DIR/common/simple_dual_port_ram.sv"
     fi
     if grep -q "execute_unit_tb" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/eu_execute_unit_pkg.sv"
-        deps="$deps $RTL_DIR/cpu/eu_address_generation_unit.sv"
-        deps="$deps $RTL_DIR/cpu/eu_execute_branch_unit.sv"
-        deps="$deps $RTL_DIR/cpu/eu_execute_muldiv_unit.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_execute_unit_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_address_generation_unit.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_execute_branch_unit.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_execute_muldiv_unit.sv"
     fi
-    if grep -q "du_decode_x87_esc" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode_x87_pkg.sv"
-        deps="$deps $RTL_DIR/cpu/du_decode_x87_esc.sv"
+    if grep -q "stage_2_dec_du_decode_x87_esc" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_decode_x87_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_x87_esc.sv"
     fi
     if [ "$(basename "$module_file")" = "decode_tb.sv" ]; then
-        deps="$deps $RTL_DIR/cpu/du_decode_x87_pkg.sv"
-        deps="$deps $RTL_DIR/cpu/du_decode_x87_esc.sv"
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_decode_x87_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_x87_esc.sv"
     fi
-    if grep -q "eu_execute_unit" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/eu_execute_unit_pkg.sv"
-        deps="$deps $RTL_DIR/cpu/eu_address_generation_unit.sv"
-        deps="$deps $RTL_DIR/cpu/eu_load_store_unit.sv"
-        deps="$deps $RTL_DIR/cpu/am_access_memory.sv"
-        deps="$deps $RTL_DIR/cpu/eu_execute_branch_unit.sv"
-        deps="$deps $RTL_DIR/cpu/eu_execute_muldiv_unit.sv"
-        deps="$deps $RTL_DIR/cpu/eu_execute_x87_fpu.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_flag_status.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_lahf.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_sahf.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_xchg.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_xadd.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_cmpxchg.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_setcc.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_arpl.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_lar.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_lsl.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_verr.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_stridx_step.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_imul_imm.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_clts.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_lmsw.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_smsw.sv"
-        deps="$deps $RTL_DIR/cpu/eu_misc_loop_ctrl.sv"
+    if grep -q "stage_3_exe_eu_execute_unit" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_execute_unit_pkg.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_address_generation_unit.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_load_store_unit.sv"
+        deps="$deps $RTL_DIR/cpu/stage_4_mem/stage_4_mem_am_access_memory.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_execute_branch_unit.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_execute_muldiv_unit.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_execute_x87_fpu.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_flag_status.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_lahf.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_sahf.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_xchg.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_xadd.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_cmpxchg.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_setcc.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_arpl.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_lar.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_lsl.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_verr.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_stridx_step.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_imul_imm.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_clts.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_lmsw.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_smsw.sv"
+        deps="$deps $RTL_DIR/cpu/stage_3_exe/stage_3_exe_eu_misc_loop_ctrl.sv"
     fi
 
     # 添加 decode 相关模块的依赖（rtl/cpu，模块名与文件名一致）
-    if grep -q "du_decode_opcode_x86" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode_opcode_x86.sv"
+    if grep -q "stage_2_dec_du_decode_opcode_x86" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_opcode_x86.sv"
     fi
-    if grep -q "du_decode_mod_rm" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode_mod_rm.sv"
+    if grep -q "stage_2_dec_du_decode_mod_rm" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_mod_rm.sv"
     fi
-    if grep -q "du_decode_sib" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode_sib.sv"
+    if grep -q "stage_2_dec_du_decode_sib" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_sib.sv"
     fi
-    if grep -q "du_decode_disp_imm" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode_disp_imm.sv"
+    if grep -q "stage_2_dec_du_decode_disp_imm" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_disp_imm.sv"
     fi
-    if grep -q "du_decode_prefix" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode_prefix.sv"
+    if grep -q "stage_2_dec_du_decode_prefix" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_prefix.sv"
     fi
-    if grep -q "du_decode_prefix_all" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode_prefix_all.sv"
+    if grep -q "stage_2_dec_du_decode_prefix_all" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_prefix_all.sv"
     fi
-    if grep -q "du_decode_field" "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode_field.sv"
+    if grep -q "stage_2_dec_du_decode_field" "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_field.sv"
     fi
-    # 译码顶层实例化：du_decode_unit <instance_name> (避免与 du_decode_* 子模块名混淆)
-    if grep -qE '^[[:space:]]*du_decode_unit[[:space:]]' "$module_file"; then
-        deps="$deps $RTL_DIR/cpu/du_decode_unit.sv"
+    # 译码顶层实例化：stage_2_dec_du_decode_unit <instance_name> (避免与 du_decode_* 子模块名混淆)
+    if grep -qE '^[[:space:]]*stage_2_dec_du_decode_unit[[:space:]]' "$module_file"; then
+        deps="$deps $RTL_DIR/cpu/stage_2_dec/stage_2_dec_du_decode_unit.sv"
     fi
 
     echo "$deps"
