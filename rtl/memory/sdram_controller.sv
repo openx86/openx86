@@ -35,7 +35,7 @@ module sdram_controller #(
     input  logic        clk,
     input  logic        rst,
 
-    // Host (SoC 中仅由 bus_devices 的 o_sdram_* 驱动；CPU 经 bus_controller 访问)
+    // Host (SoC 中仅由 bus_controller 的 o_sdram_* 驱动；CPU 经 bus_controller 访问)
     input  logic        i_en,
     input  logic        i_we,
     input  logic [23:0] i_addr_off,
