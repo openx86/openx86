@@ -14,19 +14,11 @@ module chip_8237_dma (
     // ------------------------------------------------------------------------
     // Host-side control/data interface
     // ------------------------------------------------------------------------
-    input  logic        i_cs_n,
-    input  logic        i_rd_n,
-    input  logic        i_wr_n,
-    input  logic [15: 0] i_addr,
-    input  logic [ 7: 0]  i_d,
-    output logic [ 7: 0]  o_d,
-
+    input logic          i_cs_n,    input logic          i_rd_n,    input logic          i_wr_n,    input logic [15: 0]  i_addr,    input logic [ 7: 0]  i_d,    output logic [ 7: 0] o_d,
     // ------------------------------------------------------------------------
     // Clock / reset
     // ------------------------------------------------------------------------
-    input  logic        clock,
-    input  logic        reset_n
-);
+    input logic          clock,    input logic          reset_n);
 
     logic [ 7: 0] regfile [ 0: 15];
     logic [ 7: 0] page_reg [ 0:  7];

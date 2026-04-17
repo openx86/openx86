@@ -44,13 +44,7 @@ segment, if it is 0 then the segment is a system segment.
 */
 
 module stage_5_wrb_sar_global_descriptor_table_register (
-    input  logic        GDTR_write_enable,
-    input  logic [15: 0] GDTR_write_data_limit,
-    input  logic [31: 0] GDTR_write_data_base,
-    output logic [15: 0] GDTR_limit,
-    output logic [31: 0] GDTR_base,
-    input  logic        clock, reset_n
-);
+    input logic          GDTR_write_enable,    input logic [15: 0]  GDTR_write_data_limit,    input logic [31: 0]  GDTR_write_data_base,    output logic [15: 0] GDTR_limit,    output logic [31: 0] GDTR_base,    input logic          clock, reset_n);
 
 // GDTR (Global Descriptor Table Register)
 

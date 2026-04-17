@@ -9,21 +9,7 @@ description: This module implements ide_sd_sector_bridge.
 // ============================================================================
 
 module ide_sd_sector_bridge (
-    input  logic [31: 0] i_ide_disk_raddr,
-    output logic [ 7: 0]  o_ide_disk_rdata,
-    input  logic        i_ide_sector_req,
-    output logic        o_ide_sector_ready,
-    output logic        o_sd_start,
-    output logic [31: 0] o_sd_lba,
-    input  logic        i_sd_busy,
-    input  logic        i_sd_done,
-    input  logic        i_sd_err,
-    input  logic        i_sd_payload_we,
-    input  logic [ 8: 0]  i_sd_payload_addr,
-    input  logic [ 7: 0]  i_sd_payload_data,
-    input  logic        reset_n,
-    input  logic        clock
-);
+    input logic [31: 0]  i_ide_disk_raddr,    output logic [ 7: 0] o_ide_disk_rdata,    input logic          i_ide_sector_req,    output logic         o_ide_sector_ready,    output logic         o_sd_start,    output logic [31: 0] o_sd_lba,    input logic          i_sd_busy,    input logic          i_sd_done,    input logic          i_sd_err,    input logic          i_sd_payload_we,    input logic [ 8: 0]  i_sd_payload_addr,    input logic [ 7: 0]  i_sd_payload_data,    input logic          reset_n,    input logic          clock);
 
     logic [ 7: 0] sector_ram[ 0: 511];
     logic       sd_run;

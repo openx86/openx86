@@ -10,18 +10,7 @@ description: This module implements stage_3_exe_execute_x87_fpu.
 // ============================================================================
 
 module stage_3_exe_execute_x87_fpu (
-    input  logic        i_valid,
-    input  logic [ 4:0] i_op,
-    input  logic [63: 0] i_push_data,
-    input  logic [ 2:0] i_st_src,
-    output logic [63: 0] o_st0,
-    output logic [63: 0] o_st1,
-    output logic        o_zf,
-    output logic        o_pf,
-    output logic        o_cf,
-    input  logic        clk,
-    input  logic        rst
-);
+    input logic          i_valid,    input logic [ 4:0]   i_op,    input logic [63: 0]  i_push_data,    input logic [ 2:0]   i_st_src,    output logic [63: 0] o_st0,    output logic [63: 0] o_st1,    output logic         o_zf,    output logic         o_pf,    output logic         o_cf,    input logic          clk,    input logic          rst);
 
     import stage_3_exe_execute_unit_pkg::*;
 

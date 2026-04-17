@@ -17,10 +17,7 @@ module stage_3_exe_rot_execute_rotate_right #(
     BIT_WIDTH = 32
 ) (
     // ports
-    input  logic [BIT_WIDTH-1:0] operand,
-    input  logic [BIT_WIDTH-1:0] count,
-    output logic [BIT_WIDTH-1:0] result
-);
+    input logic [BIT_WIDTH-1:0]  operand,    input logic [BIT_WIDTH-1:0]  count,    output logic [BIT_WIDTH-1:0] result);
 
     localparam int ShW = (BIT_WIDTH <= 1) ? 1 : $clog2(BIT_WIDTH);
     logic [ShW-1:0] sh = count[ShW-1:0];

@@ -50,19 +50,7 @@ page table entries are not flushed.
 
 module stage_5_wrb_control_register (
     // ports
-    input  logic         write_enable,
-    input  logic [ 2: 0] write_index,
-    input  logic [31: 0] write_data,
-    output logic [31: 0] CR [ 0:  7],
-    output logic         PE,
-    output logic         MP,
-    output logic         EM,
-    output logic         TS,
-    output logic         R,
-    output logic         PG,
-    output logic [19: 0] page_directory_base,
-    input  logic         clock, reset_n);
-
+    input logic          write_enable,    input logic [ 2: 0]  write_index,    input logic [31: 0]  write_data,    output logic [31: 0] CR [ 0:  7],    output logic         PE,    output logic         MP,    output logic         EM,    output logic         TS,    output logic         R,    output logic         PG,    output logic [19: 0] page_directory_base,    input logic          clock, reset_n);
 always_ff @(posedge clock or negedge reset_n) begin : ff_control_register
     if (~reset_n) begin
         CR[0] <= 32'b0;

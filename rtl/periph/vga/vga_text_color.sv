@@ -10,30 +10,16 @@ description: This module implements vga_text_color.
 
 module vga_text_color (
     // VRAM 读接口（文本模式：80x25 = 2000 字符 = 4000 字节）
-    output logic [12: 0]           vram_rd_addr,   // 文本 VRAM 地址（0-3999）
-    input  logic [ 7: 0]            vram_char_data, // 字符码（偶数地址）
-    input  logic [ 7: 0]            vram_attr_data, // 属性字节（奇数地址）
-
+    output logic [12: 0]          vram_rd_addr,   // 文本 VRAM 地址（0-3999）    input logic [ 7: 0]           vram_char_data, // 字符码（偶数地址）    input logic [ 7: 0]           vram_attr_data, // 属性字节（奇数地址）
     
     // 字符生成器接口
-    output logic [ 7: 0]            font_char_code,
-    output logic [ 3: 0]            font_row_index,
-    input  logic [ 7: 0]            font_data,
-    
+    output logic [ 7: 0]          font_char_code,    output logic [ 3: 0]          font_row_index,    input logic [ 7: 0]           font_data,    
     // VGA 输出
-    output logic [ 3: 0]            vga_r,
-    output logic [ 3: 0]            vga_g,
-    output logic [ 3: 0]            vga_b,
-    
+    output logic [ 3: 0]          vga_r,    output logic [ 3: 0]          vga_g,    output logic [ 3: 0]          vga_b,    
     // 时序输入
-    input  logic [$clog2(800)-1:0] h_count,      // 水平计数（0-799）
-    input  logic [$clog2(525)-1:0] v_count,      // 垂直计数（0-524）
-    input  logic                 video_active,
-    
+    input logic [$clog2(800)-1:0] h_count,      // 水平计数（0-799）    input logic [$clog2(525)-1:0] v_count,      // 垂直计数（0-524）    input logic                   video_active,    
     // 时钟和复位
-    input  logic                 reset_n,
-    input  logic                 clock
-);
+    input logic                   reset_n,    input logic                   clock);
 
     // 文本模式参数
     localparam int TEXT_COLS = 80;

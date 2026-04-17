@@ -38,32 +38,11 @@ module sdram_controller #(
     // Refresh period cycles (typical: 7.8us -> 390 cycles @ 50MHz)
     parameter int REFRESH_CYCLES = 390
 ) (
-    input  logic        clk,
-    input  logic        rst,
-
+    input logic          clk,    input logic          rst,
     // Host (SoC 中仅由 bus_controller 的 o_sdram_* 驱动；CPU 经 bus_controller 访问)
-    input  logic        i_en,
-    input  logic        i_we,
-    input  logic [23: 0] i_addr_off,
-    input  logic [31: 0] i_wdata,
-    output logic [31: 0] o_rdata,
-    output logic        o_ready,
-    output logic        o_busy,
-
+    input logic          i_en,    input logic          i_we,    input logic [23: 0]  i_addr_off,    input logic [31: 0]  i_wdata,    output logic [31: 0] o_rdata,    output logic         o_ready,    output logic         o_busy,
     // SDRAM PHY
-    output logic        o_sdram_clk,
-    output logic        o_sdram_cke,
-    output logic        o_sdram_cs_n,
-    output logic        o_sdram_ras_n,
-    output logic        o_sdram_cas_n,
-    output logic        o_sdram_we_n,
-    output logic [ 1: 0]  o_sdram_ba,
-    output logic [12: 0] o_sdram_a,
-    output logic [ 1: 0]  o_sdram_dqm,
-    output logic [15: 0] o_sdram_dq_out,
-    output logic        o_sdram_dq_oe,
-    input  logic [15: 0] i_sdram_dq_in
-);
+    output logic         o_sdram_clk,    output logic         o_sdram_cke,    output logic         o_sdram_cs_n,    output logic         o_sdram_ras_n,    output logic         o_sdram_cas_n,    output logic         o_sdram_we_n,    output logic [ 1: 0] o_sdram_ba,    output logic [12: 0] o_sdram_a,    output logic [ 1: 0] o_sdram_dqm,    output logic [15: 0] o_sdram_dq_out,    output logic         o_sdram_dq_oe,    input logic [15: 0]  i_sdram_dq_in);
 
     // SDRAM clock is the same as system clock for bring-up
     assign o_sdram_clk = clk;

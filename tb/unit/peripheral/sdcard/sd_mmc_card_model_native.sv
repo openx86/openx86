@@ -9,17 +9,7 @@ description: This module implements sd_mmc_card_model_native.
 // ============================================================================
 
 module sd_mmc_card_model_native (
-    input  logic       i_sd_clk,
-    input  logic       i_host_cmd_oe,
-    input  logic       i_host_cmd_o,
-    input  logic       i_sd_cmd_bus,
-    output logic       o_card_cmd_oe,
-    output logic       o_card_cmd_o,
-    input  logic [ 3: 0] i_host_dat_oe,
-    input  logic [ 3: 0] i_host_dat_o,
-    output logic       o_card_dat_oe,
-    output logic [ 3: 0] o_card_dat_o
-);
+    input logic          i_sd_clk,    input logic          i_host_cmd_oe,    input logic          i_host_cmd_o,    input logic          i_sd_cmd_bus,    output logic         o_card_cmd_oe,    output logic         o_card_cmd_o,    input logic [ 3: 0]  i_host_dat_oe,    input logic [ 3: 0]  i_host_dat_o,    output logic         o_card_dat_oe,    output logic [ 3: 0] o_card_dat_o);
     input  logic       reset_n
 
     logic [47: 0] cmd_sr;

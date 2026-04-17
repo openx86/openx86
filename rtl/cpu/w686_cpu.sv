@@ -32,17 +32,7 @@ module w686_cpu (
     // output logic        memory_io_n,
     // output logic        bus_lock_n,
     // output logic        address_status_n,
-    output logic        bus_vaild,
-    input  logic        bus_ready,
-    input  logic        bus_busy,
-    output logic        bus_write_enable,
-    output logic        bus_io_access,
-    output logic [31: 0] bus_address,
-    input  logic [31: 0] bus_read_data,
-    output logic [31: 0] bus_write_data,
-    input  logic        reset_n,
-    input  logic        clock
-);
+    output logic         bus_vaild,    input logic          bus_ready,    input logic          bus_busy,    output logic         bus_write_enable,    output logic         bus_io_access,    output logic [31: 0] bus_address,    input logic [31: 0]  bus_read_data,    output logic [31: 0] bus_write_data,    input logic          reset_n,    input logic          clock);
 
 logic        mmu_vaild;
 logic        mmu_ready;

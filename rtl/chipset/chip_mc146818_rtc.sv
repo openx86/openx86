@@ -19,17 +19,8 @@ description: This module implements chip_mc146818_rtc.
 module chip_mc146818_rtc #(
     parameter int CLK_HZ = 8_000
 ) (
-    input  logic        i_cs_n,
-    input  logic        i_rd_n,
-    input  logic        i_wr_n,
-    input  logic        i_a0,
-    input  logic [ 7: 0]  i_d,
-    // 0 = 索引口 0x70，1 = 数据口 0x71
-    output logic [ 7: 0]  o_d,
-    output logic        o_rtc_irq,
-    input  logic        clock,
-    input  logic        reset_n
-);
+    input logic          i_cs_n,    input logic          i_rd_n,    input logic          i_wr_n,    input logic          i_a0,    input logic [ 7: 0]  i_d,    // 0 = 索引口 0x70，1 = 数据口 0x71
+    output logic [ 7: 0] o_d,    output logic         o_rtc_irq,    input logic          clock,    input logic          reset_n);
 
     localparam int UIP_CYC = ((CLK_HZ * 244) / 1_000_000) > 0 ? ((CLK_HZ * 244) / 1_000_000) : 1;
     localparam int CW      = $clog2(CLK_HZ + 1);

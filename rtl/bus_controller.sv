@@ -25,78 +25,29 @@ module bus_controller #(
     parameter bit  USE_SDIO_DISK = 1'b0
 ) (
     // CPU 总线接口
-    input  logic        i_bus_valid,
-    output logic        o_bus_ready,
-    output logic        o_bus_busy,
-    input  logic        i_bus_write_enable,
-    input  logic        i_bus_io_access,  // 1=I/O访问, 0=内存访问 (类似x86的M/IO#信号)
-    input  logic [31: 0] i_bus_address,
-    output logic [31: 0] o_bus_data_read,
-    input  logic [31: 0] i_bus_data_write,
-
+    input logic          i_bus_valid,    output logic         o_bus_ready,    output logic         o_bus_busy,    input logic          i_bus_write_enable,    input logic          i_bus_io_access,  // 1=I/O访问, 0=内存访问 (类似x86的M/IO#信号)    input logic [31: 0]  i_bus_address,    output logic [31: 0] o_bus_data_read,    input logic [31: 0]  i_bus_data_write,
     // VGA 内存访问接口（VRAM窗口 0xA0000-0xBFFFF）
     // 注意：VGA VRAM 通常是只写的（从CPU角度），VGA控制器自己读取显示
-    output logic        o_vga_mem_en_w,
-    output logic [19: 0] o_vga_mem_addr,
-    output logic [ 7: 0]  o_vga_mem_data_w,
-
+    output logic         o_vga_mem_en_w,    output logic [19: 0] o_vga_mem_addr,    output logic [ 7: 0] o_vga_mem_data_w,
     // VGA I/O 端口接口（0x03C0-0x03DF）
-    output logic        o_vga_io_en_w,
-    output logic        o_vga_io_en_r,
-    output logic [15: 0] o_vga_io_addr,
-    output logic [ 7: 0]  o_vga_io_data_w,
-    input  logic [ 7: 0]  i_vga_io_data_r,
-
+    output logic         o_vga_io_en_w,    output logic         o_vga_io_en_r,    output logic [15: 0] o_vga_io_addr,    output logic [ 7: 0] o_vga_io_data_w,    input logic [ 7: 0]  i_vga_io_data_r,
     // BIOS ROM 接口（系统 BIOS 64KB）
     // 使用简单的ROM接口：addr, rdata
-    output logic [15: 0] o_bios_addr,
-    input  logic [31: 0] i_bios_rdata,
-
+    output logic [15: 0] o_bios_addr,    input logic [31: 0]  i_bios_rdata,
     // 扩展 BIOS ROM 接口（128KB）
-    output logic [16: 0] o_ext_bios_addr,
-    input  logic [31: 0] i_ext_bios_rdata,
-
+    output logic [16: 0] o_ext_bios_addr,    input logic [31: 0]  i_ext_bios_rdata,
     // SDRAM：640KB 常规内存 + 16MB 窗口（0x0100_0000）共用 sdram_controller
-    output logic        o_sdram_en,
-    output logic        o_sdram_we,
-    output logic [23: 0] o_sdram_addr_off,
-    output logic [31: 0] o_sdram_wdata,
-    input  logic [31: 0] i_sdram_rdata,
-    input  logic        i_sdram_ready,
-    input  logic        i_sdram_busy,
-
+    output logic         o_sdram_en,    output logic         o_sdram_we,    output logic [23: 0] o_sdram_addr_off,    output logic [31: 0] o_sdram_wdata,    input logic [31: 0]  i_sdram_rdata,    input logic          i_sdram_ready,    input logic          i_sdram_busy,
     // PS/2 键盘与鼠标（8042）：开漏驱动 + 总线回读；未用 PHY 时可上拉输入为 1
-    output logic        o_ps2_kbd_clk_out,
-    output logic        o_ps2_kbd_clk_oe,
-    input  logic        i_ps2_kbd_clk_in,
-    output logic        o_ps2_kbd_dat_out,
-    output logic        o_ps2_kbd_dat_oe,
-    input  logic        i_ps2_kbd_dat_in,
-    output logic        o_ps2_aux_clk_out,
-    output logic        o_ps2_aux_clk_oe,
-    input  logic        i_ps2_aux_clk_in,
-    output logic        o_ps2_aux_dat_out,
-    output logic        o_ps2_aux_dat_oe,
-    input  logic        i_ps2_aux_dat_in,
-
+    output logic         o_ps2_kbd_clk_out,    output logic         o_ps2_kbd_clk_oe,    input logic          i_ps2_kbd_clk_in,    output logic         o_ps2_kbd_dat_out,    output logic         o_ps2_kbd_dat_oe,    input logic          i_ps2_kbd_dat_in,    output logic         o_ps2_aux_clk_out,    output logic         o_ps2_aux_clk_oe,    input logic          i_ps2_aux_clk_in,    output logic         o_ps2_aux_dat_out,    output logic         o_ps2_aux_dat_oe,    input logic          i_ps2_aux_dat_in,
     // SDIO / SD 4-bit（IDE 盘体由 bus_controller 内 SD 主机驱动；USE_SDIO_DISK=0 时引脚空闲）
-    output logic        o_sdio_clk,
-    output logic        o_sdio_cmd_o,
-    output logic        o_sdio_cmd_oe,
-    input  logic        i_sdio_cmd_i,
-    output logic [ 3: 0]  o_sdio_dat_o,
-    output logic        o_sdio_dat_oe,
-    input  logic [ 3: 0]  i_sdio_dat_i,
-
+    output logic         o_sdio_clk,    output logic         o_sdio_cmd_o,    output logic         o_sdio_cmd_oe,    input logic          i_sdio_cmd_i,    output logic [ 3: 0] o_sdio_dat_o,    output logic         o_sdio_dat_oe,    input logic [ 3: 0]  i_sdio_dat_i,
     // PIC 主片中断输出（接 CPU INTR）
-    output logic        o_pic_intr,
-
+    output logic         o_pic_intr,
     // Chipset（IBM PC/AT I/O：各 chip_* 模块由 bus_controller 直连例化；未命中时读回 0xFF）
 
     // 公共信号
-    input  logic        clock,
-    input  logic        reset_n
-);
+    input logic          clock,    input logic          reset_n);
 
 // ============================================================================
 // IBM PC 兼容机标准地址映射定义
@@ -657,65 +608,16 @@ module bus_controller #(
     parameter int PS2_CLK_HZ   = 50_000_000,
     parameter bit  USE_SDIO_DISK = 1'b0
 ) (
-    input  logic        i_bus_valid,
-    output logic        o_bus_ready,
-    output logic        o_bus_busy,
-    input  logic        i_bus_write_enable,
-    input  logic        i_bus_io_access,
-    input  logic [31: 0] i_bus_address,
-    output logic [31: 0] o_bus_data_read,
-    input  logic [31: 0] i_bus_data_write,
-
-    output logic        o_vga_mem_en_w,
-    output logic [19: 0] o_vga_mem_addr,
-    output logic [ 7: 0]  o_vga_mem_data_w,
-
-    output logic        o_vga_io_en_w,
-    output logic        o_vga_io_en_r,
-    output logic [15: 0] o_vga_io_addr,
-    output logic [ 7: 0]  o_vga_io_data_w,
-    input  logic [ 7: 0]  i_vga_io_data_r,
-
-    output logic [15: 0] o_bios_addr,
-    input  logic [31: 0] i_bios_rdata,
-
-    output logic [16: 0] o_ext_bios_addr,
-    input  logic [31: 0] i_ext_bios_rdata,
-
-    output logic        o_sdram_en,
-    output logic        o_sdram_we,
-    output logic [23: 0] o_sdram_addr_off,
-    output logic [31: 0] o_sdram_wdata,
-    input  logic [31: 0] i_sdram_rdata,
-    input  logic        i_sdram_ready,
-    input  logic        i_sdram_busy,
-
-    output logic        o_ps2_kbd_clk_out,
-    output logic        o_ps2_kbd_clk_oe,
-    input  logic        i_ps2_kbd_clk_in,
-    output logic        o_ps2_kbd_dat_out,
-    output logic        o_ps2_kbd_dat_oe,
-    input  logic        i_ps2_kbd_dat_in,
-    output logic        o_ps2_aux_clk_out,
-    output logic        o_ps2_aux_clk_oe,
-    input  logic        i_ps2_aux_clk_in,
-    output logic        o_ps2_aux_dat_out,
-    output logic        o_ps2_aux_dat_oe,
-    input  logic        i_ps2_aux_dat_in,
-
-    output logic        o_sdio_clk,
-    output logic        o_sdio_cmd_o,
-    output logic        o_sdio_cmd_oe,
-    input  logic        i_sdio_cmd_i,
-    output logic [ 3: 0]  o_sdio_dat_o,
-    output logic        o_sdio_dat_oe,
-    input  logic [ 3: 0]  i_sdio_dat_i,
-
-    output logic        o_pic_intr,
-
-    input  logic        clock,
-    input  logic        reset_n
-);
+    input logic          i_bus_valid,    output logic         o_bus_ready,    output logic         o_bus_busy,    input logic          i_bus_write_enable,    input logic          i_bus_io_access,    input logic [31: 0]  i_bus_address,    output logic [31: 0] o_bus_data_read,    input logic [31: 0]  i_bus_data_write,
+    output logic         o_vga_mem_en_w,    output logic [19: 0] o_vga_mem_addr,    output logic [ 7: 0] o_vga_mem_data_w,
+    output logic         o_vga_io_en_w,    output logic         o_vga_io_en_r,    output logic [15: 0] o_vga_io_addr,    output logic [ 7: 0] o_vga_io_data_w,    input logic [ 7: 0]  i_vga_io_data_r,
+    output logic [15: 0] o_bios_addr,    input logic [31: 0]  i_bios_rdata,
+    output logic [16: 0] o_ext_bios_addr,    input logic [31: 0]  i_ext_bios_rdata,
+    output logic         o_sdram_en,    output logic         o_sdram_we,    output logic [23: 0] o_sdram_addr_off,    output logic [31: 0] o_sdram_wdata,    input logic [31: 0]  i_sdram_rdata,    input logic          i_sdram_ready,    input logic          i_sdram_busy,
+    output logic         o_ps2_kbd_clk_out,    output logic         o_ps2_kbd_clk_oe,    input logic          i_ps2_kbd_clk_in,    output logic         o_ps2_kbd_dat_out,    output logic         o_ps2_kbd_dat_oe,    input logic          i_ps2_kbd_dat_in,    output logic         o_ps2_aux_clk_out,    output logic         o_ps2_aux_clk_oe,    input logic          i_ps2_aux_clk_in,    output logic         o_ps2_aux_dat_out,    output logic         o_ps2_aux_dat_oe,    input logic          i_ps2_aux_dat_in,
+    output logic         o_sdio_clk,    output logic         o_sdio_cmd_o,    output logic         o_sdio_cmd_oe,    input logic          i_sdio_cmd_i,    output logic [ 3: 0] o_sdio_dat_o,    output logic         o_sdio_dat_oe,    input logic [ 3: 0]  i_sdio_dat_i,
+    output logic         o_pic_intr,
+    input logic          clock,    input logic          reset_n);
     bus_controller #(
         .USE_REAL_PS2 ( USE_REAL_PS2 ),
         .PS2_CLK_HZ   ( PS2_CLK_HZ ),

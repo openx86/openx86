@@ -25,7 +25,7 @@ module soc_top_tb;
     openx86_soc_top #(
         .USE_SDIO_DISK ( 1'b0 )
     ) dut (
-        .i_clk_50m   ( clock ),
+        .clock   ( clock ),
         .reset_n   ( reset_n ),
         .o_vga_hsync ( o_vga_hsync ),
         .o_vga_vsync ( o_vga_vsync ),

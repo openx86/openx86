@@ -17,34 +17,8 @@ module chip_i8042_ps2 #(
     parameter bit  USE_REAL_PS2 = 1'b0,
     parameter int CLK_HZ       = 50_000_000
 ) (
-    input  logic        i_cs_n,
-    input  logic        i_rd_n,
-    input  logic        i_wr_n,
-    input  logic        i_a0,
-    input  logic [ 7: 0]  i_d,
-    // 0 = 数据口 0x60，1 = 状态/命令 0x64
-    output logic [ 7: 0]  o_d,
-    input  logic        i_kbd_push,
-    input  logic [ 7: 0]  i_kbd_data,
-    input  logic        i_aux_push,
-    input  logic [ 7: 0]  i_aux_data,
-    output logic        o_kbd_irq,
-    output logic        o_aux_irq,
-    output logic        o_ps2_kbd_clk_out,
-    output logic        o_ps2_kbd_clk_oe,
-    input  logic        i_ps2_kbd_clk_in,
-    output logic        o_ps2_kbd_dat_out,
-    output logic        o_ps2_kbd_dat_oe,
-    input  logic        i_ps2_kbd_dat_in,
-    output logic        o_ps2_aux_clk_out,
-    output logic        o_ps2_aux_clk_oe,
-    input  logic        i_ps2_aux_clk_in,
-    output logic        o_ps2_aux_dat_out,
-    output logic        o_ps2_aux_dat_oe,
-    input  logic        i_ps2_aux_dat_in,
-    input  logic        clock,
-    input  logic        reset_n
-);
+    input logic          i_cs_n,    input logic          i_rd_n,    input logic          i_wr_n,    input logic          i_a0,    input logic [ 7: 0]  i_d,    // 0 = 数据口 0x60，1 = 状态/命令 0x64
+    output logic [ 7: 0] o_d,    input logic          i_kbd_push,    input logic [ 7: 0]  i_kbd_data,    input logic          i_aux_push,    input logic [ 7: 0]  i_aux_data,    output logic         o_kbd_irq,    output logic         o_aux_irq,    output logic         o_ps2_kbd_clk_out,    output logic         o_ps2_kbd_clk_oe,    input logic          i_ps2_kbd_clk_in,    output logic         o_ps2_kbd_dat_out,    output logic         o_ps2_kbd_dat_oe,    input logic          i_ps2_kbd_dat_in,    output logic         o_ps2_aux_clk_out,    output logic         o_ps2_aux_clk_oe,    input logic          i_ps2_aux_clk_in,    output logic         o_ps2_aux_dat_out,    output logic         o_ps2_aux_dat_oe,    input logic          i_ps2_aux_dat_in,    input logic          clock,    input logic          reset_n);
 
     logic wr = !i_cs_n && !i_wr_n;
     logic rd = !i_cs_n && !i_rd_n;

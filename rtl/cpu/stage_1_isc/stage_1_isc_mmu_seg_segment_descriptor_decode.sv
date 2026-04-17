@@ -36,22 +36,7 @@ segment
 
 module stage_1_isc_mmu_seg_segment_descriptor_decode (
     // ports
-    output logic [31: 0] o_base,
-    output logic [19: 0] o_limit,
-    output logic        o_date_or_code_present,
-    output logic [ 1:0] o_date_or_code_privilege_level,
-    output logic        o_available_field,
-    output logic        o_segment_type,
-    output logic        o_date_or_code_granularity,
-    output logic        o_date_or_code_default_operation_size,
-    output logic        o_date_or_code_executable,
-    output logic        o_data_expansion_direction,
-    output logic        o_data_writeable,
-    output logic        o_code_conforming,
-    output logic        o_code_readable,
-    output logic        o_date_or_code_accessed,
-    input  logic [63: 0] i_descriptor
-);
+    output logic [31: 0] o_base,    output logic [19: 0] o_limit,    output logic         o_date_or_code_present,    output logic [ 1:0]  o_date_or_code_privilege_level,    output logic         o_available_field,    output logic         o_segment_type,    output logic         o_date_or_code_granularity,    output logic         o_date_or_code_default_operation_size,    output logic         o_date_or_code_executable,    output logic         o_data_expansion_direction,    output logic         o_data_writeable,    output logic         o_code_conforming,    output logic         o_code_readable,    output logic         o_date_or_code_accessed,    input logic [63: 0]  i_descriptor);
 
 typedef enum logic [ 3: 0] {
     SYS_SEG_TYPE_INVALID_80286 = 4'h0,

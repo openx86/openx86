@@ -10,25 +10,7 @@ description: This module implements stage_3_exe_w686_core_execute_i486.
 `include "openx86_defs.h.sv"
 
 module stage_3_exe_w686_core_execute_i486 (
-    input  logic        insn_fire,
-    input  logic        op_cpuid,
-    input  logic [31: 0] gpr_eax,
-    input  logic [31: 0] gpr_ecx,
-    output logic        cpuid_busy,
-    output logic        gpr_wr_en,
-    output logic [ 2: 0]  gpr_wr_idx,
-    output logic [31: 0] gpr_wr_data,
-    output logic        cpuid_done_pulse,
-    input  logic        op_invd,
-    input  logic        op_wbinvd,
-    input  logic        op_invlpg,
-    input  logic [31: 0] invlpg_ea,
-    output logic        cache_flush_pulse,
-    output logic        invlpg_pulse,
-    output logic [31: 0] invlpg_linear_addr,
-    input  logic        clk,
-    input  logic        rst
-);
+    input logic          insn_fire,    input logic          op_cpuid,    input logic [31: 0]  gpr_eax,    input logic [31: 0]  gpr_ecx,    output logic         cpuid_busy,    output logic         gpr_wr_en,    output logic [ 2: 0] gpr_wr_idx,    output logic [31: 0] gpr_wr_data,    output logic         cpuid_done_pulse,    input logic          op_invd,    input logic          op_wbinvd,    input logic          op_invlpg,    input logic [31: 0]  invlpg_ea,    output logic         cache_flush_pulse,    output logic         invlpg_pulse,    output logic [31: 0] invlpg_linear_addr,    input logic          clk,    input logic          rst);
 
     typedef enum logic [ 2: 0] {
         CS_IDLE,

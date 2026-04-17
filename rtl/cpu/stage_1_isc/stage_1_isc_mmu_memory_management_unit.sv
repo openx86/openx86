@@ -19,40 +19,19 @@ module stage_1_isc_mmu_memory_management_unit #(
     // ------------------------------------------------------------------------
     // Handshake
     // ------------------------------------------------------------------------
-    input  logic        i_vaild,
-    output logic        o_ready,
-
+    input logic          i_vaild,    output logic         o_ready,
     // ------------------------------------------------------------------------
     // Address translation context
     // ------------------------------------------------------------------------
-    input  logic        i_protected_mode,                              // from CR0.PE (CR[0][0])
-    input  logic [15: 0] i_segment_selector [ 0: 5],                      // from segment register file
-    input  logic [63: 0] i_segment_descriptor [ 0: 5],                    // cached segment descriptors
-    input  logic [ 1: 0]  i_current_privilege_level,                     // from flags register file
-    input  logic [ 2: 0]  i_segment_index,                               // from stage_4_mem_bus_interface_unit module
-    input  logic [31: 0] i_effective_address,                           // from stage_4_mem_bus_interface_unit module
-    input  logic        i_write_enable,                                // from stage_4_mem_bus_interface_unit module
-    input  logic        i_paging_enable,                               // from CR register
-    input  logic [31: 0] i_page_directory_base,                         // from CR[3]
-    output logic [31: 0] o_physical_address,
-    output logic        o_segment_fault,
-
+    input logic          i_protected_mode,                              // from CR0.PE (CR[0][0])    input logic [15: 0]  i_segment_selector [ 0: 5],                      // from segment register file    input logic [63: 0]  i_segment_descriptor [ 0: 5],                    // cached segment descriptors    input logic [ 1: 0]  i_current_privilege_level,                     // from flags register file    input logic [ 2: 0]  i_segment_index,                               // from stage_4_mem_bus_interface_unit module    input logic [31: 0]  i_effective_address,                           // from stage_4_mem_bus_interface_unit module    input logic          i_write_enable,                                // from stage_4_mem_bus_interface_unit module    input logic          i_paging_enable,                               // from CR register    input logic [31: 0]  i_page_directory_base,                         // from CR[3]    output logic [31: 0] o_physical_address,    output logic         o_segment_fault,
     // ------------------------------------------------------------------------
     // Bus for paging walks (used only when paging enabled)
     // ------------------------------------------------------------------------
-    output logic        o_bus_vaild,
-    input  logic        i_bus_ready,
-    output logic        o_bus_write_enable,
-    output logic [31: 0] o_bus_address,
-    input  logic [31: 0] i_bus_data_read,
-    output logic [31: 0] o_bus_data_write,
-
+    output logic         o_bus_vaild,    input logic          i_bus_ready,    output logic         o_bus_write_enable,    output logic [31: 0] o_bus_address,    input logic [31: 0]  i_bus_data_read,    output logic [31: 0] o_bus_data_write,
     // ------------------------------------------------------------------------
     // Clock / reset
     // ------------------------------------------------------------------------
-    input  logic        clock,
-    input  logic        reset_n
-);
+    input logic          clock,    input logic          reset_n);
 
 logic [31: 0] linear_address;
 logic [31: 0] physical_address;

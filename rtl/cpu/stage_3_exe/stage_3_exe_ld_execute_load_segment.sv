@@ -20,19 +20,7 @@ description: This module implements stage_3_exe_ld_execute_load_segment.
 // ============================================================================
 
 module stage_3_exe_ld_execute_load_segment (
-    input  logic        protected_mode_enable,
-    input  logic [15: 0] index_segment_register,
-    input  logic [15: 0] index_general_register,
-    input  logic [ 7:0] greg__8,
-    input  logic [15: 0] greg_16,
-    input  logic [31: 0] greg_32,
-    output logic [15: 0] write_enable,
-    output logic [15: 0] write_index,
-    output logic [15: 0] write_selector,
-    output logic [63: 0] write_descriptor,
-    input  logic        valid,
-    output logic        ready
-);
+    input logic          protected_mode_enable,    input logic [15: 0]  index_segment_register,    input logic [15: 0]  index_general_register,    input logic [ 7:0]   greg__8,    input logic [15: 0]  greg_16,    input logic [31: 0]  greg_32,    output logic [15: 0] write_enable,    output logic [15: 0] write_index,    output logic [15: 0] write_selector,    output logic [63: 0] write_descriptor,    input logic          valid,    output logic         ready);
 
 logic is_code_segment_index = index_segment_register == `sreg_index_CS;
 

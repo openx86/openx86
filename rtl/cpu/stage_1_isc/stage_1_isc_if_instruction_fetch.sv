@@ -13,33 +13,13 @@ description: This module implements stage_1_isc_if_instruction_fetch.
 `include "openx86_defs.h.sv"
 module stage_1_isc_if_instruction_fetch (
     // signal from stage_4_mem_bus_interface_unit
-    output logic        o_code_vaild,
-    input  logic        i_code_ready,
-    output logic [31: 0] o_code_address,
-    input  logic [31: 0] i_code_data_read,
-    // MMU page-table walk (higher BIU priority than code/data)
-    output logic        o_mmu_bus_vaild,
-    input  logic        i_mmu_bus_ready,
-    output logic [31: 0] o_mmu_bus_addr,
-    input  logic [31: 0] i_mmu_bus_rdata,
-    // signal from outside
-    input  logic        i_protected_mode,
-    input  logic [15: 0] i_segment_selector [ 0:  5],
-    input  logic [63: 0] i_segment_descriptor [ 0:  5],
-    input  logic [ 1:0] i_current_privilege_level,
-    input  logic        i_paging_enable,
-    input  logic [31: 0] i_page_directory_base,
-    // signal from execute unit
-    input  logic        i_IP_vaild,
-    // instruction fetch
-    output logic [ 7:0] o_instruction [ 0: 15],
-    output logic        o_instruction_ready,
-    output logic        o_segment_fault,
-    // instruction pointer register file
-    input  logic [31: 0] EIP,
-    // common
-    input  logic        clock, reset_n
-);
+    output logic         o_code_vaild,    input logic          i_code_ready,    output logic [31: 0] o_code_address,    input logic [31: 0]  i_code_data_read,    // MMU page-table walk (higher BIU priority than code/data)
+    output logic         o_mmu_bus_vaild,    input logic          i_mmu_bus_ready,    output logic [31: 0] o_mmu_bus_addr,    input logic [31: 0]  i_mmu_bus_rdata,    // signal from outside
+    input logic          i_protected_mode,    input logic [15: 0]  i_segment_selector [ 0:  5],    input logic [63: 0]  i_segment_descriptor [ 0:  5],    input logic [ 1:0]   i_current_privilege_level,    input logic          i_paging_enable,    input logic [31: 0]  i_page_directory_base,    // signal from execute unit
+    input logic          i_IP_vaild,    // instruction fetch
+    output logic [ 7:0]  o_instruction [ 0: 15],    output logic         o_instruction_ready,    output logic         o_segment_fault,    // instruction pointer register file
+    input logic [31: 0]  EIP,    // common
+    input logic          clock, reset_n);
 
 logic        i_vaild;
 logic        o_ready;

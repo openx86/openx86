@@ -11,27 +11,10 @@ description: This module implements w686_core.
 `include "w686_decode_outputs_decl.svh"
 
 module w686_core (
-    output logic        o_mmu_vaild,
-    input  logic        i_mmu_ready,
-    output logic [31: 0] o_mmu_address,
-    input  logic [31: 0] i_mmu_data_read,
-
-    output logic        o_code_vaild,
-    input  logic        i_code_ready,
-    output logic [31: 0] o_code_address,
-    input  logic [31: 0] i_code_data_read,
-
-    output logic        o_data_vaild,
-    input  logic        i_data_ready,
-    output logic        o_data_write_enable,
-    output logic        o_data_io_access,
-    output logic [31: 0] o_data_address,
-    input  logic [31: 0] i_data_data_read,
-    output logic [31: 0] o_data_data_write,
-
-    input  logic        reset_n,
-    input  logic        clock
-);
+    output logic         o_mmu_vaild,    input logic          i_mmu_ready,    output logic [31: 0] o_mmu_address,    input logic [31: 0]  i_mmu_data_read,
+    output logic         o_code_vaild,    input logic          i_code_ready,    output logic [31: 0] o_code_address,    input logic [31: 0]  i_code_data_read,
+    output logic         o_data_vaild,    input logic          i_data_ready,    output logic         o_data_write_enable,    output logic         o_data_io_access,    output logic [31: 0] o_data_address,    input logic [31: 0]  i_data_data_read,    output logic [31: 0] o_data_data_write,
+    input logic          reset_n,    input logic          clock);
 
     import stage_3_exe_execute_unit_pkg::*;
     import stage_2_dec_decode_x87_pkg::*;

@@ -10,24 +10,7 @@ description: This module implements sd_native_host_4bit.
 // ============================================================================
 
 module sd_native_host_4bit (
-    output logic        o_sd_clk,
-    output logic        o_phy_cmd_out,
-    output logic        o_phy_cmd_oe,
-    input  logic        i_phy_cmd_in,
-    output logic [ 3: 0]  o_phy_dat_out,
-    output logic        o_phy_dat_oe,
-    input  logic [ 3: 0]  i_phy_dat_in,
-    input  logic        i_start,
-    input  logic [31: 0] i_lba,
-    output logic        o_busy,
-    output logic        o_done,
-    output logic        o_err,
-    output logic        o_payload_we,
-    output logic [ 8: 0]  o_payload_addr,
-    output logic [ 7: 0]  o_payload_data,
-    input  logic        reset_n,
-    input  logic        clock
-);
+    output logic         o_sd_clk,    output logic         o_phy_cmd_out,    output logic         o_phy_cmd_oe,    input logic          i_phy_cmd_in,    output logic [ 3: 0] o_phy_dat_out,    output logic         o_phy_dat_oe,    input logic [ 3: 0]  i_phy_dat_in,    input logic          i_start,    input logic [31: 0]  i_lba,    output logic         o_busy,    output logic         o_done,    output logic         o_err,    output logic         o_payload_we,    output logic [ 8: 0] o_payload_addr,    output logic [ 7: 0] o_payload_data,    input logic          reset_n,    input logic          clock);
 
     function automatic logic [ 6: 0] crc7_40(input logic [39: 0] d);
         logic [ 6: 0] c;

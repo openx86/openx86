@@ -5,9 +5,6 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_shf_sar.
 */
 module stage_3_exe_shf_sar (
-    input  logic [31: 0] a,
-    input  logic [31: 0] count,
-    output logic [31: 0] y
-);
+    input logic [31: 0]  a,    input logic [31: 0]  count,    output logic [31: 0] y);
     stage_3_exe_shf_execute_shift_right u_impl (.operand(a), .count(count), .is_signed(32'd1), .result(y));
 endmodule

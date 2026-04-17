@@ -24,26 +24,14 @@ description: This module implements vga_port.
 
 module vga_port (
     // VRAM 读接口
-    output logic [ 7: 0]           vram_rd_addr, // VRAM读地址（给双口RAM端口B）
-    input  logic [ 7: 0]           vram_rd_data, // VRAM读数据（从双口RAM端口B）
-
+    output logic [ 7: 0]           vram_rd_addr, // VRAM读地址（给双口RAM端口B）    input logic [ 7: 0]            vram_rd_data, // VRAM读数据（从双口RAM端口B）
     
     // VGA 物理信号输出
-    output logic                 vga_hsync,
-    output logic                 vga_vsync,
-    output logic [ 3: 0]           vga_r,
-    output logic [ 3: 0]           vga_g,
-    output logic [ 3: 0]           vga_b,
-    
+    output logic                   vga_hsync,    output logic                   vga_vsync,    output logic [ 3: 0]           vga_r,    output logic [ 3: 0]           vga_g,    output logic [ 3: 0]           vga_b,    
     // 时序输出（供其他模块使用）
-    output logic [$clog2(800)-1:0] h_count,
-    output logic [$clog2(525)-1:0] v_count,
-    output logic                 video_active,
-    
+    output logic [$clog2(800)-1:0] h_count,    output logic [$clog2(525)-1:0] v_count,    output logic                   video_active,    
     // 时钟和复位（放在末尾）
-    input  logic                 reset_n,
-    input  logic                 clock
-);
+    input logic                    reset_n,    input logic                    clock);
 
     // ------------------------------------------------------------------------
     // 常量与参数（基于 IBM VGA 640x480@60Hz 标准时序）

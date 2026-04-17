@@ -15,23 +15,7 @@ description: decode prefix from instruction
 
 `include "openx86_defs.h.sv"
 module stage_2_dec_decode_prefix (
-    input  logic [ 7:0] i_instruction,
-    output logic        o_group_1_lock_bus,
-    output logic        o_group_1_repeat_not_equal,
-    output logic        o_group_1_repeat_equal,
-    output logic        o_group_1_bound,
-    output logic        o_group_2_segment_override,
-    output logic        o_group_2_hint_branch_not_taken,
-    output logic        o_group_2_hint_branch_taken,
-    output logic        o_group_3_operand_size,
-    output logic        o_group_4_address_size,
-    output logic        o_group_1_is_present,
-    output logic        o_group_2_is_present,
-    output logic        o_group_3_is_present,
-    output logic        o_group_4_is_present,
-    output logic        o_is_present,
-    output logic [ 2:0] o_segment_override_index
-);
+    input logic [ 7:0]  i_instruction,    output logic        o_group_1_lock_bus,    output logic        o_group_1_repeat_not_equal,    output logic        o_group_1_repeat_equal,    output logic        o_group_1_bound,    output logic        o_group_2_segment_override,    output logic        o_group_2_hint_branch_not_taken,    output logic        o_group_2_hint_branch_taken,    output logic        o_group_3_operand_size,    output logic        o_group_4_address_size,    output logic        o_group_1_is_present,    output logic        o_group_2_is_present,    output logic        o_group_3_is_present,    output logic        o_group_4_is_present,    output logic        o_is_present,    output logic [ 2:0] o_segment_override_index);
 
 logic   segment_override_CS = i_instruction[ 7: 0] == 8'h2E;
 logic   segment_override_DS = i_instruction[ 7: 0] == 8'h36;

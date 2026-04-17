@@ -24,23 +24,13 @@ module true_dual_port_ram #(
     parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (    
     // 端口A（通常用于CPU访问）
-    input  logic                  wea,    // 端口A写使能
-    input  logic [ADDR_WIDTH-1:0] addra,  // 端口A地址
-    input  logic [DATA_WIDTH-1:0] wdataa, // 端口A写数据
-    output logic [DATA_WIDTH-1:0] rdataa, // 端口A读数据
-
+    input logic                   wea,    // 端口A写使能    input logic [ADDR_WIDTH-1:0]  addra,  // 端口A地址    input logic [DATA_WIDTH-1:0]  wdataa, // 端口A写数据    output logic [DATA_WIDTH-1:0] rdataa, // 端口A读数据
     
     // 端口B（通常用于VGA读取）
-    input  logic                  web,    // 端口B写使能（可选，如果只需要读则固定为0）
-    input  logic [ADDR_WIDTH-1:0] addrb,  // 端口B地址
-    input  logic [DATA_WIDTH-1:0] wdatab, // 端口B写数据
-    output logic [DATA_WIDTH-1:0] rdatab, // 端口B读数据
-
+    input logic                   web,    // 端口B写使能（可选，如果只需要读则固定为0）    input logic [ADDR_WIDTH-1:0]  addrb,  // 端口B地址    input logic [DATA_WIDTH-1:0]  wdatab, // 端口B写数据    output logic [DATA_WIDTH-1:0] rdatab, // 端口B读数据
     
     // 时钟和复位
-    input  logic                  clock,
-    input  logic                  reset_n
-);
+    input logic                   clock,    input logic                   reset_n);
 
     // 存储器数组
     logic [DATA_WIDTH-1:0] mem [0:DEPTH-1];

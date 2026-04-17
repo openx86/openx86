@@ -17,18 +17,7 @@ module sdram_x16_stub #(
     parameter int CAS_LATENCY       = 2,
     parameter int MEM_HALFWORDS_LG2 = 21
 ) (
-    input  logic        clk,
-    input  logic        cs_n,
-    input  logic        ras_n,
-    input  logic        cas_n,
-    input  logic        we_n,
-    input  logic [ 1: 0]  ba,
-    input  logic [12: 0] a,
-    input  logic [15: 0] host_dq_out,
-    input  logic        host_dq_oe,
-    output logic [15: 0] model_dq,
-    output logic        model_dq_oe
-);
+    input logic          clk,    input logic          cs_n,    input logic          ras_n,    input logic          cas_n,    input logic          we_n,    input logic [ 1: 0]  ba,    input logic [12: 0]  a,    input logic [15: 0]  host_dq_out,    input logic          host_dq_oe,    output logic [15: 0] model_dq,    output logic         model_dq_oe);
 
     localparam int AW = MEM_HALFWORDS_LG2;
     (* ram_style = "block" *)

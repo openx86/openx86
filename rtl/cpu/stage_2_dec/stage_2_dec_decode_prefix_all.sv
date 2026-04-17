@@ -56,27 +56,7 @@ Kevin McGrath and Dave Christie, "The AMD x86-64 Architecture: Extending the x86
 
 `include "openx86_defs.h.sv"
 module stage_2_dec_decode_prefix_all (
-    input  logic [ 7:0] i_instruction [ 0:  3],
-    output logic        o_group_1_lock_bus,
-    output logic        o_group_1_repeat_not_equal,
-    output logic        o_group_1_repeat_equal,
-    output logic        o_group_1_bound,
-    output logic        o_group_2_segment_override,
-    output logic        o_group_2_hint_branch_not_taken,
-    output logic        o_group_2_hint_branch_taken,
-    output logic        o_group_3_operand_size,
-    output logic        o_group_4_address_size,
-    output logic        o_group_1_is_present,
-    output logic        o_group_2_is_present,
-    output logic        o_group_3_is_present,
-    output logic        o_group_4_is_present,
-    output logic [ 2:0] o_segment_override_index,
-    output logic        o_consume_bytes_prefix_1,
-    output logic        o_consume_bytes_prefix_2,
-    output logic        o_consume_bytes_prefix_3,
-    output logic        o_consume_bytes_prefix_4,
-    output logic        o_error
-);
+    input logic [ 7:0]  i_instruction [ 0:  3],    output logic        o_group_1_lock_bus,    output logic        o_group_1_repeat_not_equal,    output logic        o_group_1_repeat_equal,    output logic        o_group_1_bound,    output logic        o_group_2_segment_override,    output logic        o_group_2_hint_branch_not_taken,    output logic        o_group_2_hint_branch_taken,    output logic        o_group_3_operand_size,    output logic        o_group_4_address_size,    output logic        o_group_1_is_present,    output logic        o_group_2_is_present,    output logic        o_group_3_is_present,    output logic        o_group_4_is_present,    output logic [ 2:0] o_segment_override_index,    output logic        o_consume_bytes_prefix_1,    output logic        o_consume_bytes_prefix_2,    output logic        o_consume_bytes_prefix_3,    output logic        o_consume_bytes_prefix_4,    output logic        o_error);
 
 logic        group_1_lock_bus [ 0:  3];
 logic        group_1_repeat_not_equal [ 0:  3];

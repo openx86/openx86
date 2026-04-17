@@ -5,12 +5,7 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_rot_rcr.
 */
 module stage_3_exe_rot_rcr (
-    input  logic [31: 0] a,
-    input  logic [31: 0] count,
-    input  logic        cf_in,
-    output logic [31: 0] y,
-    output logic        cf_out
-);
+    input logic [31: 0]  a,    input logic [31: 0]  count,    input logic          cf_in,    output logic [31: 0] y,    output logic         cf_out);
     logic [31: 0] tmp;
     logic [ 4: 0]  sh;
     logic        cf;

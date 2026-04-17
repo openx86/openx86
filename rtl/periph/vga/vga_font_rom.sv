@@ -14,16 +14,11 @@ module vga_font_rom (
     // ------------------------------------------------------------------------
     // Font lookup interface
     // ------------------------------------------------------------------------
-    input  logic [ 7: 0] char_code, // 字符码（0-255）
-    input  logic [ 3: 0] row_index, // 字符行索引（0-15）
-    output logic [ 7: 0] font_data, // 字符点阵数据（8 位，每 bit 代表一个像素）
-
+    input logic [ 7: 0]  char_code, // 字符码（0-255）    input logic [ 3: 0]  row_index, // 字符行索引（0-15）    output logic [ 7: 0] font_data, // 字符点阵数据（8 位，每 bit 代表一个像素）
     // ------------------------------------------------------------------------
     // Clock / reset
     // ------------------------------------------------------------------------
-    input  logic       reset_n,
-    input  logic       clock
-);
+    input logic          reset_n,    input logic          clock);
 
     logic [11: 0] font_addr;
     assign font_addr = {char_code, row_index};

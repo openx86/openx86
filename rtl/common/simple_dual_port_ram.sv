@@ -23,19 +23,11 @@ module simple_dual_port_ram #(
     parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 写端口
-    input  logic                    we,
-    input  logic [ADDR_WIDTH-1:0]   waddr,
-    input  logic [DATA_WIDTH-1:0]   wdata,
-
+    input logic                   we,    input logic [ADDR_WIDTH-1:0]  waddr,    input logic [DATA_WIDTH-1:0]  wdata,
     // 读端口
-    input  logic                    re,
-    input  logic [ADDR_WIDTH-1:0]   raddr,
-    output logic [DATA_WIDTH-1:0]   rdata,
-
+    input logic                   re,    input logic [ADDR_WIDTH-1:0]  raddr,    output logic [DATA_WIDTH-1:0] rdata,
     // 时钟与复位（放在末尾）
-    input  logic                    clock,
-    input  logic                    reset_n
-);
+    input logic                   clock,    input logic                   reset_n);
 
     // 存储器数组
     logic [DATA_WIDTH-1:0] mem [0:DEPTH-1];

@@ -21,18 +21,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 `include "openx86_defs.h.sv"
 
 module stage_2_dec_decode_sib (
-    input  logic [ 7:0] i_sib,
-    input  logic [ 1:0] i_mod,
-    output logic [ 1:0] o_scale_factor,
-    output logic [ 2:0] o_segment_reg_index,
-    output logic        o_index_reg_is_present,
-    output logic [ 2:0] o_index_reg_index,
-    output logic        o_base_reg_is_present,
-    output logic [ 2:0] o_base_reg_index,
-    output logic        o_displacement_size_1,
-    output logic        o_displacement_size_4,
-    output logic        o_effecitve_address_undefined
-);
+    input logic [ 7:0]  i_sib,    input logic [ 1:0]  i_mod,    output logic [ 1:0] o_scale_factor,    output logic [ 2:0] o_segment_reg_index,    output logic        o_index_reg_is_present,    output logic [ 2:0] o_index_reg_index,    output logic        o_base_reg_is_present,    output logic [ 2:0] o_base_reg_index,    output logic        o_displacement_size_1,    output logic        o_displacement_size_4,    output logic        o_effecitve_address_undefined);
 
 logic [ 1: 0] sib_7_6 = i_sib[ 7:  6];
 logic [ 2: 0] sib_5_3 = i_sib[ 5:  3];

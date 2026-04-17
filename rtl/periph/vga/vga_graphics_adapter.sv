@@ -9,28 +9,13 @@ module vga_graphics_adapter (
     // bus
 
     // CPU I/O port access
-    input  logic        io_en_w,
-    input  logic        io_en_r,
-    input  logic [15: 0] io_addr,
-    input  logic [ 7: 0]  io_data_w,
-    output logic [ 7: 0]  io_data_r,
-
+    input logic          io_en_w,    input logic          io_en_r,    input logic [15: 0]  io_addr,    input logic [ 7: 0]  io_data_w,    output logic [ 7: 0] io_data_r,
     // CPU memory access (VRAM window)
-    input  logic        mem_en_w,
-    input  logic [19: 0] mem_addr,
-    input  logic [ 7: 0]  mem_data_w,
-
+    input logic          mem_en_w,    input logic [19: 0]  mem_addr,    input logic [ 7: 0]  mem_data_w,
     // VGA physical signals
-    output logic        vga_hsync,
-    output logic        vga_vsync,
-    output logic [ 3: 0]  vga_r,
-    output logic [ 3: 0]  vga_g,
-    output logic [ 3: 0]  vga_b,
-
+    output logic         vga_hsync,    output logic         vga_vsync,    output logic [ 3: 0] vga_r,    output logic [ 3: 0] vga_g,    output logic [ 3: 0] vga_b,
     // common
-    input  logic        reset_n,
-    input  logic        clock
-);
+    input logic          reset_n,    input logic          clock);
 
     // VGA VRAM 容量：307 KB = 314,368 字节
     localparam int VRAM_SIZE_BYTES = 640 * 480;  // 307,200 字节

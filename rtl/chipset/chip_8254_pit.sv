@@ -11,18 +11,7 @@ description: This module implements chip_8254_pit.
 // ============================================================================
 
 module chip_8254_pit (
-    input  logic        i_cs_n,
-    input  logic        i_rd_n,
-    input  logic        i_wr_n,
-    input  logic [ 1: 0]  i_a,
-    input  logic [ 7: 0]  i_d,
-    output logic [ 7: 0]  o_d,
-    output logic        o_out0,
-    output logic        o_out1,
-    output logic        o_out2,
-    input  logic        reset_n,
-    input  logic        clock
-);
+    input logic          i_cs_n,    input logic          i_rd_n,    input logic          i_wr_n,    input logic [ 1: 0]  i_a,    input logic [ 7: 0]  i_d,    output logic [ 7: 0] o_d,    output logic         o_out0,    output logic         o_out1,    output logic         o_out2,    input logic          reset_n,    input logic          clock);
 
     logic [15: 0] reload0, reload1, reload2;
     logic [15: 0] count0, count1, count2;
