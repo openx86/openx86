@@ -269,7 +269,10 @@ module w686_core (
     assign o_data_data_write   = data_data_write;
 
     // --- 取指 ---
-    // IF：stage_1 输出的定长指令字节窗口与就绪、段故障指示
+    // IF：stage_1 输出的定长指令字节窗口与就绪、段故障指示（经 stage_1_2 接至译码）
+    logic [ 7: 0] if_instruction [ 0: 15];
+    logic        if_instruction_ready;
+    logic        if_segment_fault_from_if;
     logic [ 7: 0] instruction [ 0: 15];
     logic        instruction_ready;
     logic        if_segment_fault;
@@ -296,10 +299,21 @@ module w686_core (
         .i_paging_enable ( PG ),
         .i_page_directory_base ( { page_directory_base, 12'b0 } ),
         .i_IP_vaild ( ip_valid_to_fetch ),
+        .o_instruction ( if_instruction[ 0: 15] ),
+        .o_instruction_ready ( if_instruction_ready ),
+        .o_segment_fault ( if_segment_fault_from_if ),
+        .EIP ( EIP ),
+        .clk ( clk ),
+        .rst_n ( rst_n )
+    );
+
+    stage_1_2_isc_dec u_stage_1_2_isc_dec (
+        .i_instruction ( if_instruction[ 0: 15] ),
+        .i_instruction_ready ( if_instruction_ready ),
+        .i_segment_fault ( if_segment_fault_from_if ),
         .o_instruction ( instruction[ 0: 15] ),
         .o_instruction_ready ( instruction_ready ),
         .o_segment_fault ( if_segment_fault ),
-        .EIP ( EIP ),
         .clk ( clk ),
         .rst_n ( rst_n )
     );
@@ -345,7 +359,7 @@ module w686_core (
     logic [ 2: 0]  xadd_saved_reg;
     logic [31: 0] xadd_saved_val;
 
-    stage_2_dec u_stage_2_dec (
+    stage_2_3_dec_exe u_stage_2_3_dec_exe (
         .i_instruction_ready ( instruction_ready ),
         .o_stage_valid ( stage2_valid ),
         .o_insn_fire ( insn_fire ),
@@ -1161,8 +1175,24 @@ module w686_core (
     logic [31: 0] wb_mem_address;
     logic [31: 0] wb_mem_write_data;
 
+    // EXE→MEM 桥（stage_3_4_exe_mem → stage_4_mem）
+    logic        s34_stage3_valid;
+    logic        s34_start;
+    logic        s34_is_store;
+    logic [31: 0] s34_addr;
+    logic [31: 0] s34_wdata;
+    logic [31: 0] s34_mem_rdata;
+    logic        s34_mem_ready;
+
+    // MEM→WRB 桥（stage_4_mem → stage_4_5_mem_wrb → stage_5_wrb）
+    logic        s45_stage4_valid;
+    logic        s45_mem_valid;
+    logic        s45_mem_write_enable;
+    logic [31: 0] s45_mem_address;
+    logic [31: 0] s45_mem_write_data;
+
     stage_5_wrb u_stage_5_wrb (
-        .i_stage4_valid ( stage4_valid ),
+        .i_stage4_valid ( s45_stage4_valid ),
         .o_stage_valid ( stage5_valid ),
         .i_gpr_write_enable ( write_enable ),
         .i_gpr_write_index ( write_index ),
@@ -1204,10 +1234,10 @@ module w686_core (
         .o_tr_write_enable ( wb_TR_write_enable ),
         .o_tr_write_index ( wb_TR_write_index ),
         .o_tr_write_data ( wb_TR_write_data ),
-        .i_mem_valid ( am_lsu_mem_valid ),
-        .i_mem_write_enable ( am_lsu_mem_we ),
-        .i_mem_address ( am_lsu_mem_addr ),
-        .i_mem_write_data ( am_lsu_mem_wdata ),
+        .i_mem_valid ( s45_mem_valid ),
+        .i_mem_write_enable ( s45_mem_write_enable ),
+        .i_mem_address ( s45_mem_address ),
+        .i_mem_write_data ( s45_mem_write_data ),
         .o_mem_valid ( wb_mem_valid ),
         .o_mem_write_enable ( wb_mem_write_enable ),
         .o_mem_address ( wb_mem_address ),
@@ -1268,15 +1298,34 @@ module w686_core (
         .o_x87_cf ( eu_x87_cf )
     );
 
-    stage_4_mem u_stage_4_mem (
+    stage_3_4_exe_mem u_stage_3_4_exe_mem (
         .i_stage3_valid ( stage3_valid ),
+        .o_stage3_valid ( s34_stage3_valid ),
+        .i_start ( am_lsu_start_w ),
+        .o_start ( s34_start ),
+        .i_is_store ( lsu_is_store_w ),
+        .o_is_store ( s34_is_store ),
+        .i_addr ( lsu_addr_req_w ),
+        .o_addr ( s34_addr ),
+        .i_wdata ( lsu_wdata_req_w ),
+        .o_wdata ( s34_wdata ),
+        .i_mem_rdata ( data_data_read ),
+        .o_mem_rdata ( s34_mem_rdata ),
+        .i_mem_ready ( data_ready ),
+        .o_mem_ready ( s34_mem_ready ),
+        .clk ( clk ),
+        .rst_n ( rst_n )
+    );
+
+    stage_4_mem u_stage_4_mem (
+        .i_stage3_valid ( s34_stage3_valid ),
         .o_stage_valid ( stage4_valid ),
         .clk ( clk ),
         .rst_n ( rst_n ),
-        .i_start ( am_lsu_start_w ),
-        .i_is_store ( lsu_is_store_w ),
-        .i_addr ( lsu_addr_req_w ),
-        .i_wdata ( lsu_wdata_req_w ),
+        .i_start ( s34_start ),
+        .i_is_store ( s34_is_store ),
+        .i_addr ( s34_addr ),
+        .i_wdata ( s34_wdata ),
         .o_rdata ( am_lsu_rdata ),
         .o_done ( am_lsu_done ),
         .o_busy ( am_lsu_busy ),
@@ -1284,8 +1333,23 @@ module w686_core (
         .o_mem_we ( am_lsu_mem_we ),
         .o_mem_addr ( am_lsu_mem_addr ),
         .o_mem_wdata ( am_lsu_mem_wdata ),
-        .i_mem_rdata ( data_data_read ),
-        .i_mem_ready ( data_ready )
+        .i_mem_rdata ( s34_mem_rdata ),
+        .i_mem_ready ( s34_mem_ready )
+    );
+
+    stage_4_5_mem_wrb u_stage_4_5_mem_wrb (
+        .i_stage4_valid ( stage4_valid ),
+        .o_stage4_valid ( s45_stage4_valid ),
+        .i_mem_valid ( am_lsu_mem_valid ),
+        .o_mem_valid ( s45_mem_valid ),
+        .i_mem_write_enable ( am_lsu_mem_we ),
+        .o_mem_write_enable ( s45_mem_write_enable ),
+        .i_mem_address ( am_lsu_mem_addr ),
+        .o_mem_address ( s45_mem_address ),
+        .i_mem_write_data ( am_lsu_mem_wdata ),
+        .o_mem_write_data ( s45_mem_write_data ),
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     // 时序：打拍 LSU done，用于检测上升沿（与写回 EIP/GPR 对齐）
