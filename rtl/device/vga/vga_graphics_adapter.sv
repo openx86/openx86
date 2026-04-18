@@ -89,7 +89,7 @@ module vga_graphics_adapter (
         .rdata ( vram_rd_data    ),
         // 时钟与复位
         .clock ( clock           ),
-        .reset_n ( reset           )
+        .reset_n ( reset_n         )
     );
 
     // ------------------------------------------------------------------------
@@ -165,7 +165,7 @@ module vga_graphics_adapter (
         .v_count      ( v_count       ),
         .video_active ( video_active  ),
         .clock        ( clock         ),
-        .reset_n        ( reset         )
+        .reset_n        ( reset_n       )
     );
     
     // 字符生成器
@@ -174,7 +174,7 @@ module vga_graphics_adapter (
         .row_index  ( font_row_index ),
         .font_data  ( font_data       ),
         .clock      ( clock           ),
-        .reset_n      ( reset           )
+        .reset_n      ( reset_n         )
     );
     
     // 文本模式模块（根据模式选择）
@@ -200,7 +200,7 @@ module vga_graphics_adapter (
         .v_count      ( v_count              ),
         .video_active ( video_active         ),
         .clock        ( clock                ),
-        .reset_n        ( reset                )
+        .reset_n        ( reset_n              )
     );
     
     // 淡色文本模式
@@ -218,7 +218,7 @@ module vga_graphics_adapter (
         .v_count      ( v_count              ),
         .video_active ( video_active         ),
         .clock        ( clock                ),
-        .reset_n        ( reset                )
+        .reset_n        ( reset_n              )
     );
     
     // 按 vga_mode 在图形与两种文本流水线输出间切换

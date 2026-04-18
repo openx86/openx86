@@ -38,7 +38,7 @@ module vga_font_rom (
         .addr   ( font_addr  ),
         .rdata  ( font_data  ),
         .clock  ( clock      ),
-        .reset_n  ( reset      )
+        .reset_n  ( reset_n    )
     );
 
 endmodule
