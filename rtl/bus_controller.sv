@@ -139,27 +139,27 @@ logic is_vga_io_access;
 logic is_other_io_access;
 logic is_chipset_io;
 
-assign is_memory_access = !i_bus_io_access;
-assign is_io_access = i_bus_io_access;
-assign is_ram_access = is_memory_access &&
-                        (i_bus_address >= MEM_BASE_RAM) &&
-                        (i_bus_address <= MEM_END_RAM);
-assign is_vram_access = is_memory_access &&
-                        (i_bus_address >= MEM_BASE_VRAM) &&
-                        (i_bus_address <= MEM_END_VRAM);
-assign is_ext_bios_access = is_memory_access &&
-                            (i_bus_address >= MEM_BASE_EXT_BIOS) &&
-                            (i_bus_address <= MEM_END_EXT_BIOS);
-assign is_sys_bios_access = is_memory_access &&
-                            (i_bus_address >= MEM_BASE_SYS_BIOS) &&
-                            (i_bus_address <= MEM_END_SYS_BIOS);
-assign is_sdram_access = is_memory_access &&
-                         (i_bus_address >= MEM_BASE_SDRAM) &&
-                         (i_bus_address <= MEM_END_SDRAM);
-assign is_vga_io_access = is_io_access &&
-                          (i_bus_address[15: 0] >= IO_BASE_VGA) &&
-                          (i_bus_address[15: 0] <= IO_END_VGA);
+// ============================================================================
+// 地址解码逻辑
+// ============================================================================
+
+// 判断是内存访问还是 I/O 访问
+// 在 x86 架构中，I/O 访问通过 IN/OUT 指令，使用专门的 I/O 地址空间
+// CPU 通过 i_bus_io_access 信号来区分：
+// - i_bus_io_access = 0: 内存访问
+// - i_bus_io_access = 1: I/O 端口访问（地址的低16位是I/O端口地址）
+
+assign is_memory_access   = !i_bus_io_access;
+assign is_ram_access      = is_memory_access && (i_bus_address >= MEM_BASE_RAM) && (i_bus_address <= MEM_END_RAM);
+assign is_vram_access     = is_memory_access && (i_bus_address >= MEM_BASE_VRAM) && (i_bus_address <= MEM_END_VRAM);
+assign is_ext_bios_access = is_memory_access && (i_bus_address >= MEM_BASE_EXT_BIOS) && (i_bus_address <= MEM_END_EXT_BIOS);
+assign is_sys_bios_access = is_memory_access && (i_bus_address >= MEM_BASE_SYS_BIOS) && (i_bus_address <= MEM_END_SYS_BIOS);
+assign is_sdram_access    = is_memory_access && (i_bus_address >= MEM_BASE_SDRAM) && (i_bus_address <= MEM_END_SDRAM);
+
+assign is_io_access       = i_bus_io_access;
+assign is_vga_io_access   = is_io_access && (i_bus_address[15: 0] >= IO_BASE_VGA) && (i_bus_address[15: 0] <= IO_END_VGA);
 assign is_other_io_access = is_io_access && !is_vga_io_access;
+
 assign is_chipset_io = is_other_io_access && (
     ((i_bus_address[15: 0] >= 16'h0000) && (i_bus_address[15: 0] <= 16'h000F)) ||
     ((i_bus_address[15: 0] >= 16'h0080) && (i_bus_address[15: 0] <= 16'h008F)) ||
@@ -202,31 +202,6 @@ assign ext_bios_ready_internal = is_ext_bios_access ? 1'b1 : 1'b0;
 assign sdram_ready_internal = (is_ram_access || is_sdram_access) ? i_sdram_ready : 1'b0;
 assign io_ready_internal = (o_vga_io_en_w || o_vga_io_en_r || is_other_io_access) ? 1'b1 : 1'b0;
 
-// ============================================================================
-// 地址解码逻辑
-// ============================================================================
-
-// 判断是内存访问还是 I/O 访问
-// 在 x86 架构中，I/O 访问通过 IN/OUT 指令，使用专门的 I/O 地址空间
-// CPU 通过 i_bus_io_access 信号来区分：
-// - i_bus_io_access = 0: 内存访问
-// - i_bus_io_access = 1: I/O 端口访问（地址的低16位是I/O端口地址）
-
-
-// 内存地址解码
-
-
-
-
-
-// I/O 地址解码
-
-
-// Chipset 端口并集（与各 chip_* 模块地址一致）
-
-// -------------------------------------------------------------------------
-// IBM PC/AT：各 chip_* 在 bus_controller 内直连例化
-// -------------------------------------------------------------------------
 localparam int CHIP_DISK_IMAGE_BYTES = 512 * 2048;
 localparam int CHIP_DISK_SECTOR_CNT  = CHIP_DISK_IMAGE_BYTES / 512;
 
@@ -340,19 +315,6 @@ logic       ps2_aux_irq;
 logic [ 7: 0] pic_slave_ir_merged;
 
 assign pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 assign ir_m[0]    = pit_out0;
 assign ir_m[1]    = ps2_kbd_irq;
