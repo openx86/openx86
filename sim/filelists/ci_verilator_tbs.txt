@@ -1,0 +1,23 @@
+# CI 上 Verilator 回归用的 TB 路径（相对仓库根，每行一个）。
+# 全量回归在本地执行: ./scripts/test_all_verilator.sh build
+tb/common/edge_detect_tb.sv
+tb/top/soc_top_tb.sv
+tb/integration/bus_tb.sv
+tb/integration/bus_chipset_integration_tb.sv
+tb/memory/sdram_controller_tb.sv
+tb/peripheral/sdcard/sdcard_controller_tb.sv
+tb/peripheral/sdcard/disk_ram_8_tb.sv
+tb/peripheral/sdcard/ide_sd_native_disk_tb.sv
+tb/peripheral/vga/vga_font_rom_tb.sv
+tb/peripheral/vga/vga_port_tb.sv
+tb/chipset/i8259_pic_tb.sv
+tb/chipset/i8254_pit_tb.sv
+tb/chipset/at24lc32_tb.sv
+tb/chipset/com_ns16550_tb.sv
+tb/device/ide/ide_controller_tb.sv
+tb/cpu/stage_1_isc/instruction_fetch_tb.sv
+tb/cpu/stage_2_dec/decode_tb.sv
+tb/cpu/stage_3_exe/execute_unit_tb.sv
+tb/cpu/stage_3_exe/instructions/eu_log_and_tb.sv
+tb/cpu/stage_3_exe/instructions/eu_ari_add_tb.sv
+tb/cpu/bus_interface_unit_tb.sv

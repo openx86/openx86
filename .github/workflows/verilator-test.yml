@@ -42,7 +42,8 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    timeout-minutes: 45
+    # Verilator 对每个 TB 单独整库编译，全量耗时可观；CI 通过 VERILATOR_TB_LIST 跑代表性子集。
+    timeout-minutes: 120
 
     steps:
       - name: Checkout code
@@ -56,7 +57,10 @@ jobs:
           chmod +x scripts/lint_rtl_verilator.sh
           ./scripts/lint_rtl_verilator.sh
 
-      - name: Run all testbenches (verilator)
+      - name: Run testbenches (verilator)
+        env:
+          VERILATOR_TB_LIST: sim/filelists/ci_verilator_tbs.txt
+          VERILATOR_RUN_TIMEOUT: "600"
         run: |
           chmod +x scripts/test_all_verilator.sh scripts/sim_tb_verilator.sh
           ./scripts/test_all_verilator.sh build || {

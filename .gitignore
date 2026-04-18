@@ -31,7 +31,10 @@
 *.out
 *.app
 
-sim
+# 本地仿真输出（Questa work 等）；共享 filelist 放在 sim/filelists/ 并纳入版本库
+sim/*
+!sim/filelists/
+!sim/filelists/**
 
 *.bak
 
