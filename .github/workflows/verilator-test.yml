@@ -26,10 +26,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Install verilator
+      - name: Install Verilator 5.046 (build from tag v5.046)
+        env:
+          VERILATOR_REF: v5.046
         run: |
           sudo apt-get update
-          sudo apt-get install -y verilator
+          sudo apt-get install -y \
+            git help2man perl python3 make autoconf g++ flex bison ccache \
+            libfl2 libfl-dev zlib1g zlib1g-dev
+          git clone --depth 1 --branch "${VERILATOR_REF}" \
+            https://github.com/verilator/verilator.git /tmp/verilator-src
+          cd /tmp/verilator-src
+          autoconf
+          ./configure --prefix=/usr/local
+          make -j"$(nproc)"
+          sudo make install
           verilator --version
 
       - name: Lint all rtl/*.sv (verilator --lint-only)
