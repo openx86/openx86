@@ -107,9 +107,7 @@ module chip_at24lc32_eeprom #(
         return (a7[ 6:  3] == DEV_TYPE) && (a7[ 2: 0] == A_PINS);
     endfunction
 
-    function automatic logic [AW-1: 0] idx(input logic [15: 0] wa);
-        return wa[AW-1:0];
-    endfunction
+    // 5.032：unpacked mem[] 在 NBA 中勿用函数返回值作下标；索引用 word_addr[AW-1:0]。
 
     // I2C 位/字节状态机：起停、ACK、读写与开漏 SDA 驱动。
     always_ff @(posedge clock) begin
@@ -157,7 +155,7 @@ module chip_at24lc32_eeprom #(
                                 state      <= ST_ACK_AL;
                             end else begin
                                 if (addr_match) begin
-                                    mem[idx(word_addr)] <= {shreg[ 7:  1], i_sda};
+                                    mem[word_addr[AW-1:0]] <= {shreg[ 7:  1], i_sda};
                                     if (((word_addr + 1) & (PAGE_BYTES-1)) == 0)
                                         word_addr <= write_base;
                                     else
@@ -175,7 +173,7 @@ module chip_at24lc32_eeprom #(
                         if (!addr_match) begin
                             state <= ST_IDLE;
                         end else if (i_sda == 1'b0) begin
-                            tx_byte   <= mem[idx(word_addr)];
+                            tx_byte   <= mem[word_addr[AW-1:0]];
                             word_addr <= word_addr + 1;
                             tx_bit    <= 3'd7;
                             state     <= ST_SEND_DATA;
@@ -195,7 +193,7 @@ module chip_at24lc32_eeprom #(
                         o_sda_oe <= addr_match ? 1'b1 : 1'b0;
                         if (addr_match) begin
                             if (rw) begin
-                                tx_byte   <= mem[idx(word_addr)];
+                                tx_byte   <= mem[word_addr[AW-1:0]];
                                 word_addr <= word_addr + 1;
                                 tx_bit    <= 3'd7;
                                 state     <= ST_SEND_DATA;
