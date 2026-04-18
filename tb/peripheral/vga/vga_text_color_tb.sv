@@ -128,88 +128,88 @@ module vga_text_color_tb;
         reset = 0;
         #100;
 
-        $display("=== VGA Text Color 测试开始 ===");
-        $display("时间: %t", $time);
+        $display("=== VGA text color test start ===");
+        $display("Time: %t", $time);
 
-        // 测试1: 检查字符位置计算
-        $display("\n测试1: 检查字符位置计算");
+        // Test 1: Check character position
+        $display("\nTest 1: Check character position");
         // 设置到第一行第一列
         h_cnt = 0;
         v_cnt = 0;
         #100;
-        $display("  位置 (0,0): char_col=%0d, char_row=%0d, vram_addr=0x%04h", 
+        $display("  Pos (0,0): char_col=%0d, char_row=%0d, vram_addr=0x%04h", 
                  h_cnt[ 9:  3], v_cnt[ 8:  4], vram_rd_addr);
         
         // 设置到第一行第二列
         h_cnt = 8;
         v_cnt = 0;
         #100;
-        $display("  位置 (1,0): char_col=%0d, char_row=%0d, vram_addr=0x%04h", 
+        $display("  Pos (1,0): char_col=%0d, char_row=%0d, vram_addr=0x%04h", 
                  h_cnt[ 9:  3], v_cnt[ 8:  4], vram_rd_addr);
 
-        // 测试2: 检查属性解码
-        $display("\n测试2: 检查属性解码");
+        // Test 2: Check attribute decode
+        $display("\nTest 2: Check attribute decode");
         h_cnt = 0;
         v_cnt = 0;
         video_active = 1;
         #200;  // 等待流水线
-        $display("  字符码: 0x%02h, 属性: 0x%02h", vram_char_data, vram_attr_data);
-        $display("  前景色: %0d, 背景色: %0d", 
+        $display("  Char code: 0x%02h, attr: 0x%02h", vram_char_data, vram_attr_data);
+        $display("  Foreground: %0d, Background: %0d", 
                  vram_attr_data[ 3: 0], vram_attr_data[ 6:  4]);
 
-        // 测试3: 检查颜色输出
-        $display("\n测试3: 检查颜色输出");
+        // Test 3: Check color output
+        $display("\nTest 3: Check color output");
         h_cnt = 0;
         v_cnt = 0;
         video_active = 1;
         #300;  // 等待流水线完成
-        $display("  像素颜色: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
+        $display("  Pixel color: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
 
-        // 测试4: 测试不同前景色
-        $display("\n测试4: 测试不同前景色");
+        // Test 4: Sweep foreground colors
+        $display("\nTest 4: Sweep foreground colors");
         for (int i = 0; i < 16; i++) begin
             h_cnt = i * 8;
             v_cnt = 0;
             #200;
-            $display("  前景色 %0d: RGB=(%1d,%1d,%1d)", i, vga_r, vga_g, vga_b);
+            $display("  Foreground %0d: RGB=(%1d,%1d,%1d)", i, vga_r, vga_g, vga_b);
         end
 
-        // 测试5: 测试不同背景色
-        $display("\n测试5: 测试不同背景色");
+        // Test 5: Sweep background colors
+        $display("\nTest 5: Sweep background colors");
         h_cnt = 0;
         v_cnt = 16;  // 第二行
         #200;
-        $display("  背景色测试: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
+        $display("  Background sweep: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
 
-        // 测试6: 测试像素开关（字符前景/背景）
-        $display("\n测试6: 测试像素开关");
+        // Test 6: Character pixel on/off（字符前景/背景）
+        $display("\nTest 6: Character pixel on/off");
         h_cnt = 0;
         v_cnt = 0;
         #300;
-        $display("  字符像素: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
+        $display("  Char pixel: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
         
-        // 测试7: 复位测试
-        $display("\n测试7: 复位测试");
+        // Test 7: Reset test
+        $display("\nTest 7: Reset test");
         reset = 1;
         #100;
-        $display("  复位时: RGB=(%1d,%1d,%1d) (期望: 0,0,0)", vga_r, vga_g, vga_b);
+        $display("  During reset: RGB=(%1d,%1d,%1d) (expected: 0,0,0)", vga_r, vga_g, vga_b);
         if (vga_r != 0 || vga_g != 0 || vga_b != 0) 
-            $error("  错误: 复位时颜色应该为0!");
+            $error("  error: RGB must be 0 during reset!");
 
         reset = 0;
         #100;
 
-        // 测试8: 测试非可见区域
-        $display("\n测试8: 测试非可见区域");
+        // Test 8: Blanking region
+        $display("\nTest 8: Blanking region");
         h_cnt = 700;  // 超出可见区域
         v_cnt = 0;
         video_active = 0;
         #100;
-        $display("  非可见区域: RGB=(%1d,%1d,%1d) (期望: 0,0,0)", vga_r, vga_g, vga_b);
+        $display("  Blanking: RGB=(%1d,%1d,%1d) (expected: 0,0,0)", vga_r, vga_g, vga_b);
         if (vga_r != 0 || vga_g != 0 || vga_b != 0) 
-            $error("  错误: 非可见区域颜色应该为0!");
+            $error("  error: RGB must be 0 in blanking!");
 
-        $display("\n=== VGA Text Color 测试完成 ===");
+        $display("\n=== VGA text color test done ===");
         #1000;
         $finish();
     end

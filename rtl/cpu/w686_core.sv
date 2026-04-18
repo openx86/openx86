@@ -1217,7 +1217,7 @@ module w686_core (
 
     stage_3_exe_execute_unit u_eu (
         .clk ( clock ),
-        .rst ( reset_n ),
+        .rst ( ~reset_n ),
         .i_agu_base ( agu_base_w ),
         .i_agu_index ( agu_index_w ),
         .i_agu_scale ( o_sib_scale_factor ),
@@ -1272,7 +1272,7 @@ module w686_core (
         .i_stage3_valid ( stage3_valid ),
         .o_stage_valid ( stage4_valid ),
         .clk ( clock ),
-        .rst ( reset_n ),
+        .rst ( ~reset_n ),
         .i_start ( am_lsu_start_w ),
         .i_is_store ( lsu_is_store_w ),
         .i_addr ( lsu_addr_req_w ),

@@ -71,68 +71,68 @@ module single_port_rom_tb;
         reset = 0;
         #10;
 
-        $display("=== 单口ROM测试开始 ===");
-        $display("时间: %t", $time);
+        $display("=== Single-port ROM test start ===");
+        $display("Time: %t", $time);
 
-        // 测试1: 读取不同地址的数据
-        $display("\n测试1: 读取不同地址的数据");
+        // Test 1: 读取不同地址的数据
+        $display("\nTest 1: read data from different addresses");
         addr = 10'h000;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xAA)", addr, rdata);
-        if (rdata != 8'hAA) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xAA)", addr, rdata);
+        if (rdata != 8'hAA) $error("  error: read data mismatch!");
 
         addr = 10'h001;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xBB)", addr, rdata);
-        if (rdata != 8'hBB) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xBB)", addr, rdata);
+        if (rdata != 8'hBB) $error("  error: read data mismatch!");
 
         addr = 10'h002;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xCC)", addr, rdata);
-        if (rdata != 8'hCC) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xCC)", addr, rdata);
+        if (rdata != 8'hCC) $error("  error: read data mismatch!");
 
-        // 测试2: 连续读取多个地址
-        $display("\n测试2: 连续读取多个地址");
+        // Test 2: sequential reads
+        $display("\nTest 2: sequential reads");
         for (int i = 0; i < 10; i++) begin
             addr = i;
             #10;
-            $display("  读取: addr=0x%03h, data=0x%02h", addr, rdata);
+            $display("  Read: addr=0x%03h, data=0x%02h", addr, rdata);
         end
 
-        // 测试3: 边界地址测试
-        $display("\n测试3: 边界地址测试");
+        // Test 3: boundary address test
+        $display("\nTest 3: boundary address test");
         addr = 10'h000;  // 最小地址
         #10;
-        $display("  读取: addr=0x%03h (最小地址), data=0x%02h (期望: 0xAA)", addr, rdata);
-        if (rdata != 8'hAA) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h (min addr), data=0x%02h (expected: 0xAA)", addr, rdata);
+        if (rdata != 8'hAA) $error("  error: read data mismatch!");
 
         addr = DEPTH - 1;  // 最大地址
         #10;
-        $display("  读取: addr=0x%03h (最大地址), data=0x%02h (期望: 0xFF)", addr, rdata);
-        if (rdata != 8'hFF) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h (max addr), data=0x%02h (expected: 0xFF)", addr, rdata);
+        if (rdata != 8'hFF) $error("  error: read data mismatch!");
 
-        // 测试4: 地址变化后数据延迟测试
-        $display("\n测试4: 地址变化后数据延迟测试");
+        // Test 4: read latency after addr change
+        $display("\nTest 4: read latency after addr change");
         addr = 10'h010;
         #5;  // 半个时钟周期
-        $display("  地址变化后半个时钟周期: addr=0x%03h, data=0x%02h (可能为旧值)", addr, rdata);
+        $display("  Half cycle after addr change: addr=0x%03h, data=0x%02h (may be stale)", addr, rdata);
         #5;  // 再等半个时钟周期，完成一个时钟周期
-        $display("  地址变化后一个时钟周期: addr=0x%03h, data=0x%02h (应该为新值)", addr, rdata);
+        $display("  One cycle after addr change: addr=0x%03h, data=0x%02h (should be new value)", addr, rdata);
 
-        // 测试5: 复位测试
-        $display("\n测试5: 复位测试");
+        // Test 5: Reset test
+        $display("\nTest 5: Reset test");
         reset = 1;
         addr = 10'h000;
         #10;
-        $display("  复位时读取: addr=0x%03h, data=0x%02h (期望: 0x00)", addr, rdata);
-        if (rdata != 8'h00) $error("  错误: 复位时读取值应该为0!");
+        $display("  Read during reset: addr=0x%03h, data=0x%02h (expected: 0x00)", addr, rdata);
+        if (rdata != 8'h00) $error("  error: read data must be 0 during reset!");
 
         reset = 0;
         #10;
-        $display("  复位释放后读取: addr=0x%03h, data=0x%02h (期望: 0xAA)", addr, rdata);
-        if (rdata != 8'hAA) $error("  错误: 复位释放后读取值不匹配!");
+        $display("  Read after reset release: addr=0x%03h, data=0x%02h (expected: 0xAA)", addr, rdata);
+        if (rdata != 8'hAA) $error("  error: read mismatch after reset!");
 
-        $display("\n=== 单口ROM测试完成 ===");
+        $display("\n=== Single-port ROM test done ===");
         #100;
         $finish;
     end

@@ -60,73 +60,73 @@ module simple_dual_port_ram_tb;
         reset = 0;
         #10;
 
-        $display("=== 简单双口RAM测试开始 ===");
-        $display("时间: %t", $time);
+        $display("=== Simple dual-port RAM test start ===");
+        $display("Time: %t", $time);
 
-        // 测试1: 基本写入和读取
-        $display("\n测试1: 基本写入和读取");
+        // Test 1: basic write then read
+        $display("\nTest 1: basic write then read");
         we    = 1;
         waddr = 10'h010;
         wdata = 8'hAA;
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", waddr, wdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", waddr, wdata);
 
         we    = 0;
         re    = 1;
         raddr = 10'h010;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xAA)", raddr, rdata);
-        if (rdata != 8'hAA) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xAA)", raddr, rdata);
+        if (rdata != 8'hAA) $error("  error: read data mismatch!");
 
-        // 测试2: 连续写入多个地址
-        $display("\n测试2: 连续写入多个地址");
+        // Test 2: sequential writes
+        $display("\nTest 2: sequential writes");
         we    = 1;
         re    = 0;
         waddr = 10'h020;
         wdata = 8'hBB;
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", waddr, wdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", waddr, wdata);
 
         waddr = 10'h021;
         wdata = 8'hCC;
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", waddr, wdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", waddr, wdata);
 
         waddr = 10'h022;
         wdata = 8'hDD;
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", waddr, wdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", waddr, wdata);
 
-        // 测试3: 连续读取多个地址
-        $display("\n测试3: 连续读取多个地址");
+        // Test 3: sequential reads
+        $display("\nTest 3: sequential reads");
         we    = 0;
         re    = 1;
         raddr = 10'h020;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xBB)", raddr, rdata);
-        if (rdata != 8'hBB) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xBB)", raddr, rdata);
+        if (rdata != 8'hBB) $error("  error: read data mismatch!");
 
         raddr = 10'h021;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xCC)", raddr, rdata);
-        if (rdata != 8'hCC) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xCC)", raddr, rdata);
+        if (rdata != 8'hCC) $error("  error: read data mismatch!");
 
         raddr = 10'h022;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xDD)", raddr, rdata);
-        if (rdata != 8'hDD) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xDD)", raddr, rdata);
+        if (rdata != 8'hDD) $error("  error: read data mismatch!");
 
-        // 测试4: 同时读写不同地址（关键测试）
-        $display("\n测试4: 同时读写不同地址");
+        // Test 4: concurrent read/write different addrs（关键测试）
+        $display("\nTest 4: concurrent read/write different addrs");
         we    = 1;
         waddr = 10'h030;
         wdata = 8'h11;
         re    = 1;
         raddr = 10'h020;  // 读取之前写入的地址
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", waddr, wdata);
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xBB)", raddr, rdata);
-        if (rdata != 8'hBB) $error("  错误: 读取值不匹配!");
+        $display("  Write: addr=0x%03h, data=0x%02h", waddr, wdata);
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xBB)", raddr, rdata);
+        if (rdata != 8'hBB) $error("  error: read data mismatch!");
 
         we    = 1;
         waddr = 10'h031;
@@ -134,94 +134,94 @@ module simple_dual_port_ram_tb;
         re    = 1;
         raddr = 10'h030;  // 读取刚才写入的地址
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", waddr, wdata);
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0x11)", raddr, rdata);
-        if (rdata != 8'h11) $error("  错误: 读取值不匹配!");
+        $display("  Write: addr=0x%03h, data=0x%02h", waddr, wdata);
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0x11)", raddr, rdata);
+        if (rdata != 8'h11) $error("  error: read data mismatch!");
 
-        // 测试5: 同时读写相同地址（写后读旧值）
-        $display("\n测试5: 同时读写相同地址");
+        // Test 5: concurrent read/write same addr（写后读旧值）
+        $display("\nTest 5: concurrent read/write same addr");
         we    = 1;
         waddr = 10'h040;
         wdata = 8'h33;
         re    = 1;
         raddr = 10'h040;  // 读取和写入同一地址
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", waddr, wdata);
-        $display("  读取: addr=0x%03h, data=0x%02h (可能为旧值或新值，取决于实现)", raddr, rdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", waddr, wdata);
+        $display("  Read: addr=0x%03h, data=0x%02h (may be old or new depending on implementation)", raddr, rdata);
 
         // 下一周期读取，应该读到新值
         we    = 0;
         re    = 1;
         raddr = 10'h040;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0x33)", raddr, rdata);
-        if (rdata != 8'h33) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0x33)", raddr, rdata);
+        if (rdata != 8'h33) $error("  error: read data mismatch!");
 
-        // 测试6: 读使能控制
-        $display("\n测试6: 读使能控制");
+        // Test 6: read-enable control
+        $display("\nTest 6: read-enable control");
         we    = 1;
         waddr = 10'h050;
         wdata = 8'h44;
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", waddr, wdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", waddr, wdata);
 
         we    = 0;
         re    = 0;  // 读使能关闭
         raddr = 10'h050;
         #10;
-        $display("  读使能关闭: addr=0x%03h, data=0x%02h (可能为0或保持)", raddr, rdata);
+        $display("  Read disabled: addr=0x%03h, data=0x%02h (may be 0 or held)", raddr, rdata);
 
         re    = 1;  // 读使能打开
         raddr = 10'h050;
         #10;
-        $display("  读使能打开: addr=0x%03h, data=0x%02h (期望: 0x44)", raddr, rdata);
-        if (rdata != 8'h44) $error("  错误: 读取值不匹配!");
+        $display("  Read enabled: addr=0x%03h, data=0x%02h (expected: 0x44)", raddr, rdata);
+        if (rdata != 8'h44) $error("  error: read data mismatch!");
 
-        // 测试7: 边界地址测试
-        $display("\n测试7: 边界地址测试");
+        // Test 7: boundary address test
+        $display("\nTest 7: boundary address test");
         we    = 1;
         waddr = 10'h000;  // 最小地址
         wdata = 8'h55;
         #10;
-        $display("  写入: addr=0x%03h (最小地址), data=0x%02h", waddr, wdata);
+        $display("  Write: addr=0x%03h (min addr), data=0x%02h", waddr, wdata);
 
         waddr = DEPTH - 1;  // 最大地址
         wdata = 8'h66;
         #10;
-        $display("  写入: addr=0x%03h (最大地址), data=0x%02h", waddr, wdata);
+        $display("  Write: addr=0x%03h (max addr), data=0x%02h", waddr, wdata);
 
         we    = 0;
         re    = 1;
         raddr = 10'h000;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0x55)", raddr, rdata);
-        if (rdata != 8'h55) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0x55)", raddr, rdata);
+        if (rdata != 8'h55) $error("  error: read data mismatch!");
 
         raddr = DEPTH - 1;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0x66)", raddr, rdata);
-        if (rdata != 8'h66) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0x66)", raddr, rdata);
+        if (rdata != 8'h66) $error("  error: read data mismatch!");
 
-        // 测试8: 写入后立即读取（不同地址，验证独立性）
-        $display("\n测试8: 写入后立即读取不同地址");
+        // Test 8: 写入后立即读取（不同地址，验证独立性）
+        $display("\nTest 8: write then read a different address");
         we    = 1;
         waddr = 10'h060;
         wdata = 8'h77;
         re    = 1;
         raddr = 10'h050;  // 读取之前写入的地址
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", waddr, wdata);
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0x44)", raddr, rdata);
-        if (rdata != 8'h44) $error("  错误: 读取值不匹配!");
+        $display("  Write: addr=0x%03h, data=0x%02h", waddr, wdata);
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0x44)", raddr, rdata);
+        if (rdata != 8'h44) $error("  error: read data mismatch!");
 
         we    = 0;
         re    = 1;
         raddr = 10'h060;  // 读取刚才写入的地址
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0x77)", raddr, rdata);
-        if (rdata != 8'h77) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0x77)", raddr, rdata);
+        if (rdata != 8'h77) $error("  error: read data mismatch!");
 
-        $display("\n=== 简单双口RAM测试完成 ===");
+        $display("\n=== Simple dual-port RAM test done ===");
         #100;
         $finish;
     end

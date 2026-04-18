@@ -50,83 +50,83 @@ module single_port_ram_tb;
         reset = 0;
         #10;
 
-        $display("=== 单口RAM测试开始 ===");
-        $display("时间: %t", $time);
+        $display("=== Single-port RAM test start ===");
+        $display("Time: %t", $time);
 
-        // 测试1: 写入数据
-        $display("\n测试1: 写入数据到地址 0x000, 0x001, 0x002");
+        // Test 1: 写入数据
+        $display("\nTest 1: write data to addresses 0x000, 0x001, 0x002");
         we    = 1;
         addr  = 10'h000;
         wdata = 8'hAA;
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", addr, wdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", addr, wdata);
 
         addr  = 10'h001;
         wdata = 8'hBB;
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", addr, wdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", addr, wdata);
 
         addr  = 10'h002;
         wdata = 8'hCC;
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", addr, wdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", addr, wdata);
 
-        // 测试2: 读取数据
-        $display("\n测试2: 读取数据");
+        // Test 2: 读取数据
+        $display("\nTest 2: read data");
         we    = 0;
         addr  = 10'h000;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xAA)", addr, rdata);
-        if (rdata != 8'hAA) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xAA)", addr, rdata);
+        if (rdata != 8'hAA) $error("  error: read data mismatch!");
 
         addr  = 10'h001;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xBB)", addr, rdata);
-        if (rdata != 8'hBB) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xBB)", addr, rdata);
+        if (rdata != 8'hBB) $error("  error: read data mismatch!");
 
         addr  = 10'h002;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xCC)", addr, rdata);
-        if (rdata != 8'hCC) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xCC)", addr, rdata);
+        if (rdata != 8'hCC) $error("  error: read data mismatch!");
 
-        // 测试3: 写入后立即读取（同一地址）
-        $display("\n测试3: 写入后立即读取同一地址");
+        // Test 3: 写入后立即读取（同一地址）
+        $display("\nTest 3: read same addr immediately after write");
         we    = 1;
         addr  = 10'h100;
         wdata = 8'h55;
         #10;
-        $display("  写入: addr=0x%03h, data=0x%02h", addr, wdata);
+        $display("  Write: addr=0x%03h, data=0x%02h", addr, wdata);
 
         we    = 0;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0x55)", addr, rdata);
-        if (rdata != 8'h55) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0x55)", addr, rdata);
+        if (rdata != 8'h55) $error("  error: read data mismatch!");
 
-        // 测试4: 边界地址测试
-        $display("\n测试4: 边界地址测试");
+        // Test 4: boundary address test
+        $display("\nTest 4: boundary address test");
         we    = 1;
         addr  = 10'h000;  // 最小地址
         wdata = 8'h11;
         #10;
-        $display("  写入: addr=0x%03h (最小地址), data=0x%02h", addr, wdata);
+        $display("  Write: addr=0x%03h (min addr), data=0x%02h", addr, wdata);
 
         addr  = DEPTH - 1;  // 最大地址
         wdata = 8'hFF;
         #10;
-        $display("  写入: addr=0x%03h (最大地址), data=0x%02h", addr, wdata);
+        $display("  Write: addr=0x%03h (max addr), data=0x%02h", addr, wdata);
 
         we    = 0;
         addr  = 10'h000;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0x11)", addr, rdata);
-        if (rdata != 8'h11) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0x11)", addr, rdata);
+        if (rdata != 8'h11) $error("  error: read data mismatch!");
 
         addr  = DEPTH - 1;
         #10;
-        $display("  读取: addr=0x%03h, data=0x%02h (期望: 0xFF)", addr, rdata);
-        if (rdata != 8'hFF) $error("  错误: 读取值不匹配!");
+        $display("  Read: addr=0x%03h, data=0x%02h (expected: 0xFF)", addr, rdata);
+        if (rdata != 8'hFF) $error("  error: read data mismatch!");
 
-        $display("\n=== 单口RAM测试完成 ===");
+        $display("\n=== Single-port RAM test done ===");
         #100;
         $finish;
     end

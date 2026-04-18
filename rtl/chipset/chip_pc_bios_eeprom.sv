@@ -30,24 +30,29 @@ module chip_pc_bios_eeprom (
 
 	// 从 byte_off 起读 4 字节拼成 32 位字（小端）。
 	function automatic logic [31: 0] read_word(input int unsigned byte_off);
-		int unsigned a0;
-		int unsigned a1;
-		int unsigned a2;
-		int unsigned a3;
+		// map_off 结果落在 0..4095，用 12 位即可，避免 int unsigned 高位的 UNUSEDSIGNAL
+		logic [11: 0] a0;
+		logic [11: 0] a1;
+		logic [11: 0] a2;
+		logic [11: 0] a3;
 		begin
-			a0 = map_off(byte_off + 0);
-			a1 = map_off(byte_off + 1);
-			a2 = map_off(byte_off + 2);
-			a3 = map_off(byte_off + 3);
+			a0 = 12'(map_off(byte_off + 0));
+			a1 = 12'(map_off(byte_off + 1));
+			a2 = 12'(map_off(byte_off + 2));
+			a3 = 12'(map_off(byte_off + 3));
 			read_word = {mem[a3], mem[a2], mem[a1], mem[a0]};
 		end
 	endfunction
 
 	// 组合读：两路端口独立译码，系统区在逻辑上接在扩展区之后做取模。
-	// 显式扩展到 int unsigned，避免与 32 位地址/算术混用时的位宽告警
+	// 经中间 int unsigned 扩展位宽（避免 Verilator 对 int unsigned'(…) 的解析问题）
+	int unsigned r_ext_bios_byte_off;
+	int unsigned r_sys_bios_byte_off;
 	always_comb begin
-		o_ext_bios_rdata = read_word(int unsigned'(i_ext_bios_byte_off));
-		o_sys_bios_rdata = read_word(EXT_BIOS_BYTES + int unsigned'(i_sys_bios_byte_off));
+		r_ext_bios_byte_off = 32'(i_ext_bios_byte_off);
+		r_sys_bios_byte_off = 32'(i_sys_bios_byte_off);
+		o_ext_bios_rdata    = read_word(r_ext_bios_byte_off);
+		o_sys_bios_rdata    = read_word(EXT_BIOS_BYTES + r_sys_bios_byte_off);
 	end
 
 	integer i;

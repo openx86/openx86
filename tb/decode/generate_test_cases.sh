@@ -7,8 +7,8 @@
 
 # 检查是否有输入
 if [ -t 0 ]; then
-    echo "用法: echo '汇编指令' | $0"
-    echo "或者: $0 < assembly_file.s"
+    echo "Usage: echo 'assembly instruction' | $0"
+    echo "   or: $0 < assembly_file.s"
     exit 1
 fi
 
@@ -29,10 +29,10 @@ cat >> "$TEMP_ASM"
 if command -v nasm &> /dev/null; then
     nasm -f bin -o "$TEMP_BIN" "$TEMP_ASM" 2>/dev/null
     if [ $? -eq 0 ]; then
-        echo "机器码 (hex):"
+        echo "Machine code (hex):"
         hexdump -C "$TEMP_BIN" | head -20
         echo ""
-        echo "SystemVerilog 格式:"
+        echo "SystemVerilog format:"
         BYTES=$(hexdump -v -e '/1 "0x%02x, "' "$TEMP_BIN" | sed 's/, $//')
         echo "set_instruction($BYTES);"
         rm -f "$TEMP_ASM" "$TEMP_OBJ" "$TEMP_BIN"
@@ -48,10 +48,10 @@ if command -v gcc &> /dev/null; then
     if [ $? -eq 0 ]; then
         objcopy -O binary "$TEMP_OBJ" "$TEMP_BIN" 2>/dev/null
         if [ $? -eq 0 ]; then
-            echo "机器码 (hex):"
+            echo "Machine code (hex):"
             hexdump -C "$TEMP_BIN" | head -20
             echo ""
-            echo "SystemVerilog 格式:"
+            echo "SystemVerilog format:"
             BYTES=$(hexdump -v -e '/1 "0x%02x, "' "$TEMP_BIN" | sed 's/, $//')
             echo "set_instruction($BYTES);"
             rm -f "$TEMP_ASM" "$TEMP_OBJ" "$TEMP_BIN"
@@ -60,6 +60,6 @@ if command -v gcc &> /dev/null; then
     fi
 fi
 
-echo "错误: 未找到可用的汇编器 (nasm 或 gcc)"
+echo "error: no suitable assembler found (nasm or gcc)"
 rm -f "$TEMP_ASM" "$TEMP_OBJ" "$TEMP_BIN"
 exit 1

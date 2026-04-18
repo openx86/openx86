@@ -65,54 +65,54 @@ module true_dual_port_ram_tb;
         reset = 0;
         #10;
 
-        $display("=== 双口RAM测试开始 ===");
-        $display("时间: %t", $time);
+        $display("=== True dual-port RAM test start ===");
+        $display("Time: %t", $time);
 
-        // 测试1: 端口A写入，端口B读取
-        $display("\n测试1: 端口A写入，端口B读取");
+        // Test 1: port A write, port B read
+        $display("\nTest 1: port A write, port B read");
         wea    = 1;
         addra  = 10'h010;
         wdataa = 8'hAA;
         #10;
-        $display("  端口A写入: addr=0x%03h, data=0x%02h", addra, wdataa);
+        $display("  Port A write: addr=0x%03h, data=0x%02h", addra, wdataa);
 
         wea    = 0;
         addra  = 10'h010;
         web    = 0;
         addrb  = 10'h010;
         #10;
-        $display("  端口A读取: addr=0x%03h, data=0x%02h (期望: 0xAA)", addra, rdataa);
-        $display("  端口B读取: addr=0x%03h, data=0x%02h (期望: 0xAA)", addrb, rdatab);
-        if (rdataa != 8'hAA) $error("  错误: 端口A读取值不匹配!");
-        if (rdatab != 8'hAA) $error("  错误: 端口B读取值不匹配!");
+        $display("  Port A read: addr=0x%03h, data=0x%02h (expected: 0xAA)", addra, rdataa);
+        $display("  Port B read: addr=0x%03h, data=0x%02h (expected: 0xAA)", addrb, rdatab);
+        if (rdataa != 8'hAA) $error("  error: port A read mismatch!");
+        if (rdatab != 8'hAA) $error("  error: port B read mismatch!");
 
-        // 测试2: 端口B写入，端口A读取
-        $display("\n测试2: 端口B写入，端口A读取");
+        // Test 2: port B write, port A read
+        $display("\nTest 2: port B write, port A read");
         web    = 1;
         addrb  = 10'h020;
         wdatab = 8'hBB;
         #10;
-        $display("  端口B写入: addr=0x%03h, data=0x%02h", addrb, wdatab);
+        $display("  Port B write: addr=0x%03h, data=0x%02h", addrb, wdatab);
 
         web    = 0;
         addra  = 10'h020;
         addrb  = 10'h020;
         #10;
-        $display("  端口A读取: addr=0x%03h, data=0x%02h (期望: 0xBB)", addra, rdataa);
-        $display("  端口B读取: addr=0x%03h, data=0x%02h (期望: 0xBB)", addrb, rdatab);
-        if (rdataa != 8'hBB) $error("  错误: 端口A读取值不匹配!");
-        if (rdatab != 8'hBB) $error("  错误: 端口B读取值不匹配!");
+        $display("  Port A read: addr=0x%03h, data=0x%02h (expected: 0xBB)", addra, rdataa);
+        $display("  Port B read: addr=0x%03h, data=0x%02h (expected: 0xBB)", addrb, rdatab);
+        if (rdataa != 8'hBB) $error("  error: port A read mismatch!");
+        if (rdatab != 8'hBB) $error("  error: port B read mismatch!");
 
-        // 测试3: 同时读写不同地址
-        $display("\n测试3: 同时读写不同地址");
+        // Test 3: concurrent read/write different addrs
+        $display("\nTest 3: concurrent read/write different addrs");
         wea    = 1;
         addra  = 10'h030;
         wdataa = 8'hCC;
         web    = 0;
         addrb  = 10'h040;
         #10;
-        $display("  端口A写入: addr=0x%03h, data=0x%02h", addra, wdataa);
-        $display("  端口B读取: addr=0x%03h, data=0x%02h", addrb, rdatab);
+        $display("  Port A write: addr=0x%03h, data=0x%02h", addra, wdataa);
+        $display("  Port B read: addr=0x%03h, data=0x%02h", addrb, rdatab);
 
         wea    = 0;
         addra  = 10'h030;
@@ -120,50 +120,50 @@ module true_dual_port_ram_tb;
         addrb  = 10'h050;
         wdatab = 8'hDD;
         #10;
-        $display("  端口A读取: addr=0x%03h, data=0x%02h (期望: 0xCC)", addra, rdataa);
-        $display("  端口B写入: addr=0x%03h, data=0x%02h", addrb, wdatab);
-        if (rdataa != 8'hCC) $error("  错误: 端口A读取值不匹配!");
+        $display("  Port A read: addr=0x%03h, data=0x%02h (expected: 0xCC)", addra, rdataa);
+        $display("  Port B write: addr=0x%03h, data=0x%02h", addrb, wdatab);
+        if (rdataa != 8'hCC) $error("  error: port A read mismatch!");
 
-        // 测试4: 同时读写相同地址（写优先，但这里我们测试读取旧值）
-        $display("\n测试4: 同时读写相同地址");
+        // Test 4: concurrent read/write same addr（写优先，但这里我们测试读取旧值）
+        $display("\nTest 4: concurrent read/write same addr");
         wea    = 1;
         addra  = 10'h060;
         wdataa = 8'hEE;
         web    = 0;
         addrb  = 10'h060;
         #10;
-        $display("  端口A写入: addr=0x%03h, data=0x%02h", addra, wdataa);
-        $display("  端口B读取: addr=0x%03h, data=0x%02h (可能为旧值)", addrb, rdatab);
+        $display("  Port A write: addr=0x%03h, data=0x%02h", addra, wdataa);
+        $display("  Port B read: addr=0x%03h, data=0x%02h (may be stale)", addrb, rdatab);
 
         wea    = 0;
         addra  = 10'h060;
         #10;
-        $display("  端口A读取: addr=0x%03h, data=0x%02h (期望: 0xEE)", addra, rdataa);
-        if (rdataa != 8'hEE) $error("  错误: 端口A读取值不匹配!");
+        $display("  Port A read: addr=0x%03h, data=0x%02h (expected: 0xEE)", addra, rdataa);
+        if (rdataa != 8'hEE) $error("  error: port A read mismatch!");
 
-        // 测试5: 边界地址测试
-        $display("\n测试5: 边界地址测试");
+        // Test 5: boundary address test
+        $display("\nTest 5: boundary address test");
         wea    = 1;
         addra  = 10'h000;  // 最小地址
         wdataa = 8'h11;
         #10;
-        $display("  端口A写入: addr=0x%03h (最小地址), data=0x%02h", addra, wdataa);
+        $display("  Port A write: addr=0x%03h (min addr), data=0x%02h", addra, wdataa);
 
         addra  = DEPTH - 1;  // 最大地址
         wdataa = 8'hFF;
         #10;
-        $display("  端口A写入: addr=0x%03h (最大地址), data=0x%02h", addra, wdataa);
+        $display("  Port A write: addr=0x%03h (max addr), data=0x%02h", addra, wdataa);
 
         wea    = 0;
         addra  = 10'h000;
         addrb  = DEPTH - 1;
         #10;
-        $display("  端口A读取: addr=0x%03h, data=0x%02h (期望: 0x11)", addra, rdataa);
-        $display("  端口B读取: addr=0x%03h, data=0x%02h (期望: 0xFF)", addrb, rdatab);
-        if (rdataa != 8'h11) $error("  错误: 端口A读取值不匹配!");
-        if (rdatab != 8'hFF) $error("  错误: 端口B读取值不匹配!");
+        $display("  Port A read: addr=0x%03h, data=0x%02h (expected: 0x11)", addra, rdataa);
+        $display("  Port B read: addr=0x%03h, data=0x%02h (expected: 0xFF)", addrb, rdatab);
+        if (rdataa != 8'h11) $error("  error: port A read mismatch!");
+        if (rdatab != 8'hFF) $error("  error: port B read mismatch!");
 
-        $display("\n=== 双口RAM测试完成 ===");
+        $display("\n=== True dual-port RAM test done ===");
         #100;
         $finish;
     end

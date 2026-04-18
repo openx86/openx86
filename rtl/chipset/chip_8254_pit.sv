@@ -85,10 +85,10 @@ module chip_8254_pit (
         int unsigned d3;
         int unsigned v;
 
-        d0 = (i_raw[ 3: 0] > 4'd9) ? 4'd0 : i_raw[ 3: 0];
-        d1 = (i_raw[ 7: 4] > 4'd9) ? 4'd0 : i_raw[ 7: 4];
-        d2 = (i_raw[11: 8] > 4'd9) ? 4'd0 : i_raw[11: 8];
-        d3 = (i_raw[15:12] > 4'd9) ? 4'd0 : i_raw[15:12];
+        d0 = (i_raw[ 3: 0] > 4'd9) ? 32'd0 : 32'(i_raw[ 3: 0]);
+        d1 = (i_raw[ 7: 4] > 4'd9) ? 32'd0 : 32'(i_raw[ 7: 4]);
+        d2 = (i_raw[11: 8] > 4'd9) ? 32'd0 : 32'(i_raw[11: 8]);
+        d3 = (i_raw[15:12] > 4'd9) ? 32'd0 : 32'(i_raw[15:12]);
         v  = (d3 * 1000) + (d2 * 100) + (d1 * 10) + d0;
         if (v == 0)
             f_bcd_to_count = 17'd10000;
@@ -128,7 +128,7 @@ module chip_8254_pit (
         int unsigned d2;
         int unsigned d3;
 
-        v  = (i_count == 17'd10000) ? 0 : i_count;
+        v  = (i_count == 17'd10000) ? 32'd0 : 32'(i_count);
         v  = v % 10000;
         d3 = v / 1000;
         v  = v % 1000;
@@ -166,38 +166,38 @@ module chip_8254_pit (
 
     // 控制字/通道数据写、锁存命令、各方式计数与 OUT 波形更新；以及读相位。
     always_ff @(posedge clock or negedge reset_n) begin
-        int ch;
+        logic [ 1: 0] ch;
         logic [ 1: 0] cw_rw;
         logic [ 2: 0] cw_mode;
         logic [15: 0] raw_count;
         logic [16: 0] new_reload;
 
         if (~reset_n) begin
-            for (ch = 0; ch < 3; ch = ch + 1) begin
-                reload[ch]           <= 17'd65536;
-                count[ch]            <= 17'd65536;
-                latch_count[ch]      <= 17'd0;
-                mode[ch]             <= LP_MODE3;
-                rw_fmt[ch]           <= 2'b11;
-                bcd_en[ch]           <= 1'b0;
-                pending_lsb[ch]      <= 8'h00;
-                write_wait_msb[ch]   <= 1'b1;
-                load_pending[ch]     <= 1'b0;
-                run_en[ch]           <= 1'b0;
-                out_r[ch]            <= 1'b1;
-                latch_valid[ch]      <= 1'b0;
-                read_msb_phase[ch]   <= 1'b0;
-                mode2_low_pulse[ch]  <= 1'b0;
-                mode45_low_pulse[ch] <= 1'b0;
-                mode3_phase_high[ch] <= 1'b1;
-                mode3_high_ticks[ch] <= 17'd1;
-                mode3_low_ticks[ch]  <= 17'd1;
-                mode3_phase_ticks[ch] <= 17'd1;
+            for (int ri = 0; ri < 3; ri = ri + 1) begin
+                reload[ri]           <= 17'd65536;
+                count[ri]            <= 17'd65536;
+                latch_count[ri]      <= 17'd0;
+                mode[ri]             <= LP_MODE3;
+                rw_fmt[ri]           <= 2'b11;
+                bcd_en[ri]           <= 1'b0;
+                pending_lsb[ri]      <= 8'h00;
+                write_wait_msb[ri]   <= 1'b1;
+                load_pending[ri]     <= 1'b0;
+                run_en[ri]           <= 1'b0;
+                out_r[ri]            <= 1'b1;
+                latch_valid[ri]      <= 1'b0;
+                read_msb_phase[ri]   <= 1'b0;
+                mode2_low_pulse[ri]  <= 1'b0;
+                mode45_low_pulse[ri] <= 1'b0;
+                mode3_phase_high[ri] <= 1'b1;
+                mode3_high_ticks[ri] <= 17'd1;
+                mode3_low_ticks[ri]  <= 17'd1;
+                mode3_phase_ticks[ri] <= 17'd1;
             end
         end else begin
             if (wr && (i_a == 2'b11)) begin
                 if (i_d[ 7: 6] != 2'b11) begin
-                    ch    = i_d[ 7: 6];
+                    ch    = i_d[ 7:  6];
                     cw_rw = i_d[ 5: 4];
 
                     if (cw_rw == 2'b00) begin
@@ -229,7 +229,7 @@ module chip_8254_pit (
                     end
                 end
             end else if (wr && (i_a != 2'b11)) begin
-                ch = i_a;
+                ch = i_a[ 1: 0];
 
                 unique case (rw_fmt[ch])
                     2'b01: begin
@@ -401,7 +401,7 @@ module chip_8254_pit (
             end
 
             if (rd && (i_a != 2'b11)) begin
-                ch = i_a;
+                ch = i_a[ 1: 0];
                 if (rw_fmt[ch] == 2'b11) begin
                     if (read_msb_phase[ch]) begin
                         read_msb_phase[ch] <= 1'b0;

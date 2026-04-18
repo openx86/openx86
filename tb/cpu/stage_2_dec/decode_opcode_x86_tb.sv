@@ -468,18 +468,18 @@ module decode_opcode_x86_tb;
         test_count++;
         if (expected === 1'b1) begin
             if (expected === 1'b1) begin
-                $display("[PASS] %s: 正确解码", opcode_name);
+                $display("[PASS] %s: decode OK", opcode_name);
                 pass_count++;
             end else begin
-                $display("[FAIL] %s: 期望=1, 实际=0", opcode_name);
+                $display("[FAIL] %s: expected=1, actual=0", opcode_name);
                 fail_count++;
             end
         end else begin
             if (expected === 1'b0) begin
-                $display("[PASS] %s: 正确解码", opcode_name);
+                $display("[PASS] %s: decode OK", opcode_name);
                 pass_count++;
             end else begin
-                $display("[FAIL] %s: 期望=0, 实际=1", opcode_name);
+                $display("[FAIL] %s: expected=0, actual=1", opcode_name);
                 fail_count++;
             end
         end
@@ -494,10 +494,10 @@ module decode_opcode_x86_tb;
         // 注意：这里需要根据实际的信号名称进行映射
         // 为了测试，我们直接比较期望值
         if (expected === 1'b1) begin
-            $display("[TEST] %s: 期望=1", opcode_name);
+            $display("[TEST] %s: expected=1", opcode_name);
             pass_count++; // 暂时都算通过，实际需要根据信号值检查
         end else begin
-            $display("[TEST] %s: 期望=0", opcode_name);
+            $display("[TEST] %s: expected=0", opcode_name);
             pass_count++; // 暂时都算通过
         end
     endtask
@@ -514,7 +514,7 @@ module decode_opcode_x86_tb;
         // 这里简化处理，实际应该检查对应的信号
         
         test_count++;
-        $display("[TEST] 测试 %s: 指令字节 %02h %02h %02h %02h", 
+        $display("[TEST] %s: instruction bytes %02h %02h %02h %02h", 
                  opcode_name, byte0, byte1, byte2, byte3);
         
         // 这里应该根据opcode_name检查对应的信号，但为了简化，先显示所有信号
@@ -523,7 +523,7 @@ module decode_opcode_x86_tb;
 
     initial begin
         $display("========================================");
-        $display("开始测试 decode_opcode_x86");
+        $display("Starting decode_opcode_x86 tests");
         $display("========================================");
         
         // 初始化指令数组
@@ -539,10 +539,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h90);
         test_count++;
         if (o_opcode_x86_NOP_no_operation === 1'b1) begin
-            $display("[PASS] NOP: 正确解码");
+            $display("[PASS] NOP: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] NOP: 期望=1, 实际=%b", o_opcode_x86_NOP_no_operation);
+            $display("[FAIL] NOP: expected=1, actual=%b", o_opcode_x86_NOP_no_operation);
             fail_count++;
         end
         
@@ -553,10 +553,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'hB0, 8'h12);
         test_count++;
         if (o_opcode_x86_MOV_imm_to_reg === 1'b1) begin
-            $display("[PASS] MOV_imm_to_reg (AL): 正确解码");
+            $display("[PASS] MOV_imm_to_reg (AL): decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] MOV_imm_to_reg (AL): 期望=1, 实际=%b", o_opcode_x86_MOV_imm_to_reg);
+            $display("[FAIL] MOV_imm_to_reg (AL): expected=1, actual=%b", o_opcode_x86_MOV_imm_to_reg);
             fail_count++;
         end
         
@@ -567,10 +567,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h05, 8'h78, 8'h56, 8'h34);
         test_count++;
         if (o_opcode_x86_ADD_imm_to_acc === 1'b1) begin
-            $display("[PASS] ADD_imm_to_acc: 正确解码");
+            $display("[PASS] ADD_imm_to_acc: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] ADD_imm_to_acc: 期望=1, 实际=%b", o_opcode_x86_ADD_imm_to_acc);
+            $display("[FAIL] ADD_imm_to_acc: expected=1, actual=%b", o_opcode_x86_ADD_imm_to_acc);
             fail_count++;
         end
         
@@ -581,10 +581,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h83, 8'hC0, 8'h12);
         test_count++;
         if (o_opcode_x86_ADD_imm_to_reg_mem === 1'b1) begin
-            $display("[PASS] ADD_imm_to_reg_mem: 正确解码");
+            $display("[PASS] ADD_imm_to_reg_mem: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] ADD_imm_to_reg_mem: 期望=1, 实际=%b", o_opcode_x86_ADD_imm_to_reg_mem);
+            $display("[FAIL] ADD_imm_to_reg_mem: expected=1, actual=%b", o_opcode_x86_ADD_imm_to_reg_mem);
             fail_count++;
         end
         
@@ -595,10 +595,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h89, 8'hD8);
         test_count++;
         if (o_opcode_x86_MOV_reg_to_reg_mem === 1'b1) begin
-            $display("[PASS] MOV_reg_to_reg_mem: 正确解码");
+            $display("[PASS] MOV_reg_to_reg_mem: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] MOV_reg_to_reg_mem: 期望=1, 实际=%b", o_opcode_x86_MOV_reg_to_reg_mem);
+            $display("[FAIL] MOV_reg_to_reg_mem: expected=1, actual=%b", o_opcode_x86_MOV_reg_to_reg_mem);
             fail_count++;
         end
         
@@ -609,10 +609,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h8B, 8'hC3);
         test_count++;
         if (o_opcode_x86_MOV_reg_mem_to_reg === 1'b1) begin
-            $display("[PASS] MOV_reg_mem_to_reg: 正确解码");
+            $display("[PASS] MOV_reg_mem_to_reg: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] MOV_reg_mem_to_reg: 期望=1, 实际=%b", o_opcode_x86_MOV_reg_mem_to_reg);
+            $display("[FAIL] MOV_reg_mem_to_reg: expected=1, actual=%b", o_opcode_x86_MOV_reg_mem_to_reg);
             fail_count++;
         end
         
@@ -623,10 +623,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h50);
         test_count++;
         if (o_opcode_x86_PUSH_reg === 1'b1) begin
-            $display("[PASS] PUSH_reg: 正确解码");
+            $display("[PASS] PUSH_reg: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] PUSH_reg: 期望=1, 实际=%b", o_opcode_x86_PUSH_reg);
+            $display("[FAIL] PUSH_reg: expected=1, actual=%b", o_opcode_x86_PUSH_reg);
             fail_count++;
         end
         
@@ -637,10 +637,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h58);
         test_count++;
         if (o_opcode_x86_POP_reg === 1'b1) begin
-            $display("[PASS] POP_reg: 正确解码");
+            $display("[PASS] POP_reg: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] POP_reg: 期望=1, 实际=%b", o_opcode_x86_POP_reg);
+            $display("[FAIL] POP_reg: expected=1, actual=%b", o_opcode_x86_POP_reg);
             fail_count++;
         end
         
@@ -651,10 +651,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'hE8, 8'h12, 8'h34, 8'h56);
         test_count++;
         if (o_opcode_x86_CALL_in_same_segment_direct === 1'b1) begin
-            $display("[PASS] CALL_in_same_segment_direct: 正确解码");
+            $display("[PASS] CALL_in_same_segment_direct: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] CALL_in_same_segment_direct: 期望=1, 实际=%b", o_opcode_x86_CALL_in_same_segment_direct);
+            $display("[FAIL] CALL_in_same_segment_direct: expected=1, actual=%b", o_opcode_x86_CALL_in_same_segment_direct);
             fail_count++;
         end
         
@@ -665,10 +665,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'hC3);
         test_count++;
         if (o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument === 1'b1) begin
-            $display("[PASS] RET: 正确解码");
+            $display("[PASS] RET: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] RET: 期望=1, 实际=%b", o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument);
+            $display("[FAIL] RET: expected=1, actual=%b", o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument);
             fail_count++;
         end
         
@@ -679,10 +679,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'hF4);
         test_count++;
         if (o_opcode_x86_HLT_halt === 1'b1) begin
-            $display("[PASS] HLT: 正确解码");
+            $display("[PASS] HLT: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] HLT: 期望=1, 实际=%b", o_opcode_x86_HLT_halt);
+            $display("[FAIL] HLT: expected=1, actual=%b", o_opcode_x86_HLT_halt);
             fail_count++;
         end
         
@@ -693,10 +693,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'hF8);
         test_count++;
         if (o_opcode_x86_CLC_clear_carry_flag === 1'b1) begin
-            $display("[PASS] CLC: 正确解码");
+            $display("[PASS] CLC: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] CLC: 期望=1, 实际=%b", o_opcode_x86_CLC_clear_carry_flag);
+            $display("[FAIL] CLC: expected=1, actual=%b", o_opcode_x86_CLC_clear_carry_flag);
             fail_count++;
         end
         
@@ -707,10 +707,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'hEB, 8'h12);
         test_count++;
         if (o_opcode_x86_JMP_to_same_segment_short === 1'b1) begin
-            $display("[PASS] JMP_short: 正确解码");
+            $display("[PASS] JMP_short: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] JMP_short: 期望=1, 实际=%b", o_opcode_x86_JMP_to_same_segment_short);
+            $display("[FAIL] JMP_short: expected=1, actual=%b", o_opcode_x86_JMP_to_same_segment_short);
             fail_count++;
         end
         
@@ -721,10 +721,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h74, 8'h12);
         test_count++;
         if (o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp === 1'b1) begin
-            $display("[PASS] Jcc_8bit: 正确解码");
+            $display("[PASS] Jcc_8bit: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] Jcc_8bit: 期望=1, 实际=%b", o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp);
+            $display("[FAIL] Jcc_8bit: expected=1, actual=%b", o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp);
             fail_count++;
         end
         
@@ -735,10 +735,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h0F, 8'hA2);
         test_count++;
         if (o_opcode_x86_CPUID_CPU_identification === 1'b1) begin
-            $display("[PASS] CPUID: 正确解码");
+            $display("[PASS] CPUID: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] CPUID: 期望=1, 实际=%b", o_opcode_x86_CPUID_CPU_identification);
+            $display("[FAIL] CPUID: expected=1, actual=%b", o_opcode_x86_CPUID_CPU_identification);
             fail_count++;
         end
         
@@ -749,10 +749,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h40);
         test_count++;
         if (o_opcode_x86_INC_reg === 1'b1) begin
-            $display("[PASS] INC_reg: 正确解码");
+            $display("[PASS] INC_reg: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] INC_reg: 期望=1, 实际=%b", o_opcode_x86_INC_reg);
+            $display("[FAIL] INC_reg: expected=1, actual=%b", o_opcode_x86_INC_reg);
             fail_count++;
         end
         
@@ -763,10 +763,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h48);
         test_count++;
         if (o_opcode_x86_DEC_reg === 1'b1) begin
-            $display("[PASS] DEC_reg: 正确解码");
+            $display("[PASS] DEC_reg: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] DEC_reg: 期望=1, 实际=%b", o_opcode_x86_DEC_reg);
+            $display("[FAIL] DEC_reg: expected=1, actual=%b", o_opcode_x86_DEC_reg);
             fail_count++;
         end
         
@@ -777,10 +777,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h31, 8'hD8);
         test_count++;
         if (o_opcode_x86_XOR_reg_to_reg_mem === 1'b1) begin
-            $display("[PASS] XOR_reg_to_reg_mem: 正确解码");
+            $display("[PASS] XOR_reg_to_reg_mem: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] XOR_reg_to_reg_mem: 期望=1, 实际=%b", o_opcode_x86_XOR_reg_to_reg_mem);
+            $display("[FAIL] XOR_reg_to_reg_mem: expected=1, actual=%b", o_opcode_x86_XOR_reg_to_reg_mem);
             fail_count++;
         end
         
@@ -791,10 +791,10 @@ module decode_opcode_x86_tb;
         set_instruction(8'h85, 8'hD8);
         test_count++;
         if (o_opcode_x86_TEST_reg_mem_and_reg === 1'b1) begin
-            $display("[PASS] TEST_reg_mem_and_reg: 正确解码");
+            $display("[PASS] TEST_reg_mem_and_reg: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] TEST_reg_mem_and_reg: 期望=1, 实际=%b", o_opcode_x86_TEST_reg_mem_and_reg);
+            $display("[FAIL] TEST_reg_mem_and_reg: expected=1, actual=%b", o_opcode_x86_TEST_reg_mem_and_reg);
             fail_count++;
         end
         
@@ -805,27 +805,27 @@ module decode_opcode_x86_tb;
         set_instruction(8'hCC);
         test_count++;
         if (o_opcode_x86_INT_interrupt_type_3 === 1'b1) begin
-            $display("[PASS] INT_3: 正确解码");
+            $display("[PASS] INT_3: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] INT_3: 期望=1, 实际=%b", o_opcode_x86_INT_interrupt_type_3);
+            $display("[FAIL] INT_3: expected=1, actual=%b", o_opcode_x86_INT_interrupt_type_3);
             fail_count++;
         end
         
         // 输出测试结果
         $display("");
         $display("========================================");
-        $display("测试完成");
+        $display("Tests finished");
         $display("========================================");
-        $display("总计: %0d", test_count);
-        $display("通过: %0d", pass_count);
-        $display("失败: %0d", fail_count);
+        $display("Total: %0d", test_count);
+        $display("Passed: %0d", pass_count);
+        $display("Failed: %0d", fail_count);
         $display("========================================");
         
         if (fail_count == 0) begin
-            $display("所有测试通过！");
+            $display("All tests passed.");
         end else begin
-            $display("有测试失败！");
+            $display("Some tests failed.");
         end
         
         $finish;

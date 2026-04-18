@@ -116,7 +116,8 @@ module chip_mc146818_rtc #(
     function automatic logic [ 7: 0] u6_to_bcd(input logic [ 5: 0] v);
         logic [ 5: 0] t;
         t = v > 6'd59 ? 6'd59 : v;
-        u6_to_bcd = {2'b0, 4'(t / 10), 4'(t % 10)};
+        // 分十位/个位各 4 bit BCD，共 8 bit（原 {2'b0,...} 拼成 10 bit 触发 WIDTHTRUNC）
+        u6_to_bcd = {4'(t / 10), 4'(t % 10)};
     endfunction
 
     function automatic logic [ 7: 0] u5_to_bcd_hour(input logic [ 4: 0] v);
@@ -158,11 +159,11 @@ module chip_mc146818_rtc #(
     endfunction
 
     function automatic int century_bcd(input logic [ 7: 0] cf);
-        century_bcd = bcd_to_u8(cf);
+        century_bcd = 32'(bcd_to_u8(cf));
     endfunction
 
     function automatic int full_year(input logic [ 7: 0] cent_bcd, input  logic [ 7: 0] ybin);
-        full_year = century_bcd(cent_bcd) * 100 + ybin;
+        full_year = century_bcd(cent_bcd) * 32'd100 + 32'(ybin);
     endfunction
 
     function automatic logic leap_y(input int y);
@@ -227,7 +228,7 @@ module chip_mc146818_rtc #(
         end else begin
             pm = raw[7];
             if (bin_mode) begin
-                h = raw[ 5: 0];
+                h = 5'(raw[ 5: 0]);
                 if (h == 0 || h > 5'd12)
                     h = 5'd12;
             end else begin
@@ -433,8 +434,8 @@ module chip_mc146818_rtc #(
                                     begin
                                         int fy, dmax;
                                         fy = full_year(cmos_ram[50], year_bin);
-                                        dmax = dim(month_bin, fy);
-                                        if (dom_bin == dmax) begin
+                                        dmax = dim(32'(month_bin), fy);
+                                        if (32'(dom_bin) == 32'(dmax)) begin
                                             dom_bin <= 5'd1;
                                             if (month_bin == 4'd12) begin
                                                 month_bin <= 4'd1;

@@ -66,67 +66,67 @@ module vga_graphics_adapter_tb;
         reset = 0;
         #100;
 
-        $display("=== VGA Graphics Adapter 测试开始 ===");
-        $display("时间: %t", $time);
+        $display("=== VGA graphics adapter test start ===");
+        $display("Time: %t", $time);
 
-        // 测试1: I/O端口写入 - MISC输出寄存器
-        $display("\n测试1: I/O端口写入 - MISC输出寄存器");
+        // Test 1: I/O write - MISC output register
+        $display("\nTest 1: I/O write - MISC output register");
         io_en_w = 1;
         io_addr = 16'h03C2;
         io_data_w = 8'h01;
         #40;
         io_en_w = 0;
-        $display("  写入MISC寄存器: 0x%02h", io_data_w);
+        $display("  Write MISC: 0x%02h", io_data_w);
 
-        // 测试2: I/O端口读取 - MISC输出寄存器
-        $display("\n测试2: I/O端口读取 - MISC输出寄存器");
+        // Test 2: I/O read - MISC output register
+        $display("\nTest 2: I/O read - MISC output register");
         io_en_r = 1;
         io_addr = 16'h03C2;
         #40;
-        $display("  读取MISC寄存器: 0x%02h (期望: 0x01)", io_data_r);
-        if (io_data_r != 8'h01) $error("  错误: MISC寄存器读取值不匹配!");
+        $display("  Read MISC: 0x%02h (expected: 0x01)", io_data_r);
+        if (io_data_r != 8'h01) $error("  error: MISC register read mismatch!");
         io_en_r = 0;
 
-        // 测试3: I/O端口读取 - 状态寄存器1
-        $display("\n测试3: I/O端口读取 - 状态寄存器1");
+        // Test 3: I/O read - status register 1
+        $display("\nTest 3: I/O read - status register 1");
         io_en_r = 1;
         io_addr = 16'h03DA;
         #40;
-        $display("  读取状态寄存器: 0x%02h (VSYNC=%0d, HSYNC=%0d)", 
+        $display("  Read status: 0x%02h (VSYNC=%0d, HSYNC=%0d)", 
                  io_data_r, io_data_r[4], io_data_r[3]);
         io_en_r = 0;
 
-        // 测试4: 模式选择 - 图形模式
-        $display("\n测试4: 模式选择 - 图形模式");
+        // Test 4: Mode select - graphics
+        $display("\nTest 4: Mode select - graphics");
         io_en_w = 1;
         io_addr = 16'h03C0;
         io_data_w = 2'b00;  // 图形模式
         #40;
         io_en_w = 0;
-        $display("  设置模式: 图形模式");
+        $display("  Set mode: graphics");
 
-        // 测试5: VRAM写入和读取（图形模式）
-        $display("\n测试5: VRAM写入（图形模式）");
+        // Test 5: VRAM写入和读取（图形模式）
+        $display("\nTest 5: VRAM write (graphics mode)");
         mem_en_w = 1;
         for (int i = 0; i < 10; i++) begin
             mem_addr = i;
             mem_data_w = 8'hAA + i;
             #40;
-            $display("  写入VRAM: addr=0x%05h, data=0x%02h", mem_addr, mem_data_w);
+            $display("  Write VRAM: addr=0x%05h, data=0x%02h", mem_addr, mem_data_w);
         end
         mem_en_w = 0;
 
-        // 测试6: 模式选择 - 彩色文本模式
-        $display("\n测试6: 模式选择 - 彩色文本模式");
+        // Test 6: Mode select - color text
+        $display("\nTest 6: Mode select - color text");
         io_en_w = 1;
         io_addr = 16'h03C0;
         io_data_w = 2'b01;  // 彩色文本模式
         #40;
         io_en_w = 0;
-        $display("  设置模式: 彩色文本模式");
+        $display("  Set mode: color text");
 
-        // 测试7: VRAM写入（文本模式：字符码和属性）
-        $display("\n测试7: VRAM写入（文本模式）");
+        // Test 7: VRAM写入（文本模式：字符码和属性）
+        $display("\nTest 7: VRAM write (text mode)");
         mem_en_w = 1;
         // 写入第一行第一列的字符和属性
         mem_addr = 0;  // 字符码地址（偶数）
@@ -135,71 +135,71 @@ module vga_graphics_adapter_tb;
         mem_addr = 1;  // 属性地址（奇数）
         mem_data_w = 8'h0F;  // 白色前景，黑色背景
         #40;
-        $display("  写入文本: 字符=0x%02h, 属性=0x%02h", 8'h41, 8'h0F);
+        $display("  text write: char=0x%02h, attr=0x%02h", 8'h41, 8'h0F);
         mem_en_w = 0;
 
-        // 测试8: 模式选择 - 淡色文本模式
-        $display("\n测试8: 模式选择 - 淡色文本模式");
+        // Test 8: Mode select - high-intensity text
+        $display("\nTest 8: Mode select - high-intensity text");
         io_en_w = 1;
         io_addr = 16'h03C0;
         io_data_w = 2'b10;  // 淡色文本模式
         #40;
         io_en_w = 0;
-        $display("  设置模式: 淡色文本模式");
+        $display("  Set mode: high-intensity text");
 
-        // 测试9: 检查VGA同步信号
-        $display("\n测试9: 检查VGA同步信号");
+        // Test 9: Check VGA sync
+        $display("\nTest 9: Check VGA sync");
         vsync_count = 0;
 
         // 等待VSYNC上升沿
         @(posedge vga_vsync);
         vsync_count++;
-        $display("  检测到VSYNC上升沿 %d", vsync_count);
+        $display("  VSYNC rising edge detected %d", vsync_count);
 
         // 等待VSYNC下降沿
         @(negedge vga_vsync);
-        $display("  检测到VSYNC下降沿");
+        $display("  VSYNC falling edge detected");
 
         // 等待HSYNC
         @(negedge vga_hsync);
-        $display("  检测到HSYNC下降沿");
+        $display("  HSYNC falling edge detected");
 
-        // 测试10: 检查颜色输出
-        $display("\n测试10: 检查颜色输出");
+        // Test 10: Check color output
+        $display("\nTest 10: Check color output");
         #1000;  // 等待进入可见区域
-        $display("  VGA颜色输出: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
+        $display("  VGA color: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
 
-        // 测试11: 复位测试
-        $display("\n测试11: 复位测试");
+        // Test 11: Reset test
+        $display("\nTest 11: Reset test");
         reset = 1;
         #100;
-        $display("  复位时: RGB=(%1d,%1d,%1d) (期望: 0,0,0)", vga_r, vga_g, vga_b);
+        $display("  During reset: RGB=(%1d,%1d,%1d) (expected: 0,0,0)", vga_r, vga_g, vga_b);
         if (vga_r != 0 || vga_g != 0 || vga_b != 0) 
-            $error("  错误: 复位时颜色应该为0!");
+            $error("  error: RGB must be 0 during reset!");
 
-        // 测试12: 读取复位后的寄存器
-        $display("\n测试12: 读取复位后的寄存器");
+        // Test 12: Read registers after reset
+        $display("\nTest 12: Read registers after reset");
         reset = 0;
         #100;
         io_en_r = 1;
         io_addr = 16'h03C2;
         #40;
-        $display("  复位后MISC寄存器: 0x%02h", io_data_r);
+        $display("  MISC register after reset: 0x%02h", io_data_r);
         io_en_r = 0;
 
-        // 测试13: 测试多个模式切换
-        $display("\n测试13: 测试多个模式切换");
+        // Test 13: 测试多个模式切换
+        $display("\nTest 13: multiple mode switches");
         for (int mode = 0; mode < 3; mode++) begin
             io_en_w = 1;
             io_addr = 16'h03C0;
             io_data_w = mode[ 1: 0];
             #40;
             io_en_w = 0;
-            $display("  切换到模式: %0d", mode);
+            $display("  Switch to mode: %0d", mode);
             #200;
         end
 
-        $display("\n=== VGA Graphics Adapter 测试完成 ===");
+        $display("\n=== VGA graphics adapter test done ===");
         #2000;
         $finish();
     end

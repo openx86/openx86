@@ -75,49 +75,49 @@ module vga_port_tb;
         reset = 0;
         #100;
 
-        $display("=== VGA Port 测试开始 ===");
-        $display("时间: %t", $time);
+        $display("=== VGA port test start ===");
+        $display("Time: %t", $time);
 
-        // 测试1: 检查时序参数
-        $display("\n测试1: 检查时序参数");
-        $display("  水平总计: 800 像素");
-        $display("  垂直总计: 525 行");
-        $display("  可见区域: 640x480");
+        // Test 1: Check timing parameters
+        $display("\nTest 1: Check timing parameters");
+        $display("  Total horizontal: 800 pixels");
+        $display("  Total vertical: 525 lines");
+        $display("  Visible: 640x480");
 
-        // 测试2: 等待一个完整的帧
-        $display("\n测试2: 等待一个完整的帧");
+        // Test 2: Wait for one full frame
+        $display("\nTest 2: Wait for one full frame");
         frame_count = 0;
 
         @(posedge vga_vsync);
-        $display("  检测到帧开始 (VSYNC上升沿)");
+        $display("  Frame start (VSYNC rising)");
 
         @(negedge vga_vsync);
-        $display("  检测到垂直同步开始 (VSYNC下降沿)");
+        $display("  Vertical sync start (VSYNC falling)");
 
         @(posedge vga_vsync);
-        $display("  检测到垂直同步结束 (VSYNC上升沿)");
+        $display("  Vertical sync end (VSYNC rising)");
         frame_count++;
-        $display("  完成帧 %d", frame_count);
+        $display("  Frame done %d", frame_count);
 
-        // 测试3: 检查水平同步信号
-        $display("\n测试3: 检查水平同步信号");
+        // Test 3: Check horizontal sync
+        $display("\nTest 3: Check horizontal sync");
         hsync_count = 0;
 
         // 等待几个HSYNC周期
         for (int i = 0; i < 10; i++) begin
             @(negedge vga_hsync);
             hsync_count++;
-            $display("  检测到水平同步 %d (h_count=%0d, v_count=%0d)", hsync_count, h_count, v_count);
+            $display("  HSYNC pulse %d (h_count=%0d, v_count=%0d)", hsync_count, h_count, v_count);
         end
 
-        // 测试4: 检查可见区域
-        $display("\n测试4: 检查可见区域");
+        // Test 4: Check visible region
+        $display("\nTest 4: Check visible region");
         visible_pixels = 0;
         non_visible_pixels = 0;
         
         // 等待进入可见区域
         wait(video_active == 1);
-        $display("  进入可见区域 (h_count=%0d, v_count=%0d)", h_count, v_count);
+        $display("  Enter visible (h_count=%0d, v_count=%0d)", h_count, v_count);
         
         // 统计可见像素
         for (int i = 0; i < 1000; i++) begin
@@ -128,64 +128,64 @@ module vga_port_tb;
                 non_visible_pixels++;
             end
         end
-        $display("  可见像素: %d, 非可见像素: %d", visible_pixels, non_visible_pixels);
+        $display("  Visible pixels: %d, blanking pixels: %d", visible_pixels, non_visible_pixels);
 
-        // 测试5: 检查VRAM地址生成
-        $display("\n测试5: 检查VRAM地址生成");
+        // Test 5: Check VRAM address generation
+        $display("\nTest 5: Check VRAM address generation");
         wait(video_active == 1);
-        $display("  可见区域开始时的VRAM地址: 0x%02h", vram_rd_addr);
+        $display("  VRAM addr at visible start: 0x%02h", vram_rd_addr);
         
         // 等待一些时钟周期
         #2000;
-        $display("  2000ns后的VRAM地址: 0x%02h", vram_rd_addr);
+        $display("  VRAM addr after 2000ns: 0x%02h", vram_rd_addr);
 
-        // 测试6: 检查颜色输出
-        $display("\n测试6: 检查颜色输出");
+        // Test 6: Check color output
+        $display("\nTest 6: Check color output");
         wait(video_active == 1);
         for (int i = 0; i < 10; i++) begin
             @(posedge clock);
             if (video_active) begin
-                $display("  像素 %d: RGB=(%1d,%1d,%1d), VRAM数据=0x%02h", 
+                $display("  Pixel %d: RGB=(%1d,%1d,%1d), VRAM data=0x%02h", 
                          i, vga_r, vga_g, vga_b, vram_rd_data);
             end
         end
 
-        // 测试7: 复位测试
-        $display("\n测试7: 复位测试");
+        // Test 7: Reset test
+        $display("\nTest 7: Reset test");
         reset = 1;
         #100;
-        $display("  复位时: h_count=%0d, v_count=%0d, video_active=%0d", 
+        $display("  During reset: h_count=%0d, v_count=%0d, video_active=%0d", 
                  h_count, v_count, video_active);
-        if (h_count != 0 || v_count != 0) $error("  错误: 复位时计数应该为0!");
-        if (video_active != 0) $error("  错误: 复位时video_active应该为0!");
+        if (h_count != 0 || v_count != 0) $error("  error: counters must be 0 during reset!");
+        if (video_active != 0) $error("  error: video_active must be 0 during reset!");
 
         reset = 0;
         #100;
-        $display("  复位释放后: h_count=%0d, v_count=%0d", h_count, v_count);
+        $display("  After reset release: h_count=%0d, v_count=%0d", h_count, v_count);
 
-        // 测试8: 检查完整帧时序
-        $display("\n测试8: 检查完整帧时序");
+        // Test 8: Check full-frame timing
+        $display("\nTest 8: Check full-frame timing");
         reset = 1;
         #100;
         reset = 0;
         
         // 等待一帧
         wait(v_count == 0 && h_count == 0);
-        $display("  帧开始: h_count=0, v_count=0");
+        $display("  Frame start: h_count=0, v_count=0");
         
         // 等待到可见区域
         wait(video_active == 1);
-        $display("  进入可见区域: h_count=%0d, v_count=%0d", h_count, v_count);
+        $display("  Enter visible: h_count=%0d, v_count=%0d", h_count, v_count);
         
         // 等待到可见区域结束
         wait(video_active == 0);
-        $display("  离开可见区域: h_count=%0d, v_count=%0d", h_count, v_count);
+        $display("  Leave visible: h_count=%0d, v_count=%0d", h_count, v_count);
         
         // 等待帧结束
         wait(v_count == 524 && h_count == 799);
-        $display("  帧结束: h_count=799, v_count=524");
+        $display("  Frame end: h_count=799, v_count=524");
 
-        $display("\n=== VGA Port 测试完成 ===");
+        $display("\n=== VGA port test done ===");
         #1000;
         $finish();
     end

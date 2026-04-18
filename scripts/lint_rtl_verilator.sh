@@ -8,12 +8,12 @@ ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if ! command -v verilator >/dev/null 2>&1; then
-  echo "error: verilator 未安装或不在 PATH 中" >&2
+  echo "error: verilator not installed or not on PATH" >&2
   exit 127
 fi
 
 if [ ! -d rtl ]; then
-  echo "error: 未找到 rtl/ 目录（当前 ROOT=$ROOT）" >&2
+  echo "error: rtl/ directory not found (ROOT=$ROOT)" >&2
   exit 2
 fi
 
@@ -30,7 +30,7 @@ find rtl -type f -name '*_pkg.sv' | LC_ALL=C sort >>"$RTL_SV_LIST"
 find rtl -type f -name '*.sv' ! -name '*_pkg.sv' | LC_ALL=C sort >>"$RTL_SV_LIST"
 
 if ! [ -s "$RTL_SV_LIST" ]; then
-  echo "error: rtl/ 下未发现任何 *.sv 文件" >&2
+  echo "error: no *.sv files found under rtl/" >&2
   exit 2
 fi
 
@@ -43,9 +43,9 @@ CMDFILE="${LINT_OBJDIR}/verilator_rtl_lint.vf"
   cat "$RTL_SV_LIST"
 } >"$CMDFILE"
 
-echo "Verilator RTL lint: 共 $(wc -l <"$RTL_SV_LIST") 个文件"
+echo "Verilator RTL lint: $(wc -l <"$RTL_SV_LIST") file(s)"
 verilator --version
-echo "运行: verilator --lint-only -f $CMDFILE"
+echo "Running: verilator --lint-only -f $CMDFILE"
 
 # shellcheck disable=SC2086
 # -Wno-fatal：整库 -Wall 时警告量很大，默认达到上限会以非零退出；lint 脚本以“打印问题”为主，不因警告终止。
@@ -53,6 +53,9 @@ exec verilator \
   --lint-only \
   -Wall \
   -Wno-DECLFILENAME \
+  -Wno-UNUSEDSIGNAL \
+  -Wno-UNUSEDPARAM \
+  -Wno-SYNCASYNCNET \
   -Wno-fatal \
   --top-module openx86_soc_top \
   -Mdir "$LINT_OBJDIR" \

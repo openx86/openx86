@@ -53,18 +53,23 @@ module chip_i8042_ps2 #(
 
     localparam int KBD_D = 16;  // 键盘输出 FIFO 深度
     localparam int AUX_D = 16;  // AUX 输出 FIFO 深度
+    // 与计数器同宽，避免与 int 型 localparam 比较时触发 Verilator WIDTHEXPAND
+    localparam logic [ 4: 0] KBD_D_W = 5'(KBD_D);
+    localparam logic [ 4: 0] AUX_D_W = 5'(AUX_D);
 
     logic [ 7: 0] kbd_fifo [0:KBD_D-1];
     logic [ 7: 0] aux_fifo [0:AUX_D-1];
-    logic [ 3: 0] kbd_wptr, kbd_rptr, kbd_count;  // 键盘 FIFO 指针与计数
-    logic [ 3: 0] aux_wptr, aux_rptr, aux_count;
+    logic [ 3: 0] kbd_wptr, kbd_rptr;  // 环形索引 0..15
+    logic [ 4: 0] kbd_count;          // 占用计数 0..16（需 5 位）
+    logic [ 3: 0] aux_wptr, aux_rptr;
+    logic [ 4: 0] aux_count;
     logic       use_aux_out;  // 双端口均有数据时优先读出侧选择
 
     logic kbd_obf;  // 键盘输出缓冲满标志
     logic aux_obf;
 
-    assign kbd_obf = (kbd_count != 4'h0);
-    assign aux_obf = (aux_count != 4'h0);
+    assign kbd_obf = (kbd_count != 5'h0);
+    assign aux_obf = (aux_count != 5'h0);
 
     logic kbd_if_en;     // 键盘口接口使能（命令 AE/AD）
     logic aux_if_en;
@@ -229,38 +234,38 @@ module chip_i8042_ps2 #(
             kbd_tx_req <= 1'b0;
             aux_tx_req <= 1'b0;
 
-            if (USE_REAL_PS2 && kbd_rx_str && (kbd_count < KBD_D)) begin
+            if (USE_REAL_PS2 && kbd_rx_str && (kbd_count < KBD_D_W)) begin
                 kbd_fifo[kbd_wptr] <= kbd_rx_dat;
                 kbd_wptr           <= kbd_wptr + 4'h1;
-                kbd_count          <= kbd_count + 4'h1;
-                if ((kbd_count == 4'h0) && (aux_count == 4'h0))
+                kbd_count          <= kbd_count + 5'h1;
+                if ((kbd_count == 5'h0) && (aux_count == 5'h0))
                     use_aux_out <= 1'b0;
             end
             if (USE_REAL_PS2 && kbd_rx_err)
                 kbd_parity_err <= 1'b1;
 
-            if (USE_REAL_PS2 && aux_rx_str && (aux_count < AUX_D)) begin
+            if (USE_REAL_PS2 && aux_rx_str && (aux_count < AUX_D_W)) begin
                 aux_fifo[aux_wptr] <= aux_rx_dat;
                 aux_wptr           <= aux_wptr + 4'h1;
-                aux_count          <= aux_count + 4'h1;
-                if ((kbd_count == 4'h0) && (aux_count == 4'h0))
+                aux_count          <= aux_count + 5'h1;
+                if ((kbd_count == 5'h0) && (aux_count == 5'h0))
                     use_aux_out <= 1'b1;
             end
             if (USE_REAL_PS2 && aux_rx_err)
                 aux_parity_err <= 1'b1;
 
-            if (i_kbd_push && (kbd_count < KBD_D)) begin
+            if (i_kbd_push && (kbd_count < KBD_D_W)) begin
                 kbd_fifo[kbd_wptr] <= i_kbd_data;
                 kbd_wptr           <= kbd_wptr + 4'h1;
-                kbd_count          <= kbd_count + 4'h1;
-                if ((kbd_count == 4'h0) && (aux_count == 4'h0))
+                kbd_count          <= kbd_count + 5'h1;
+                if ((kbd_count == 5'h0) && (aux_count == 5'h0))
                     use_aux_out <= 1'b0;
             end
-            if (i_aux_push && (aux_count < AUX_D)) begin
+            if (i_aux_push && (aux_count < AUX_D_W)) begin
                 aux_fifo[aux_wptr] <= i_aux_data;
                 aux_wptr           <= aux_wptr + 4'h1;
-                aux_count          <= aux_count + 4'h1;
-                if ((kbd_count == 4'h0) && (aux_count == 4'h0))
+                aux_count          <= aux_count + 5'h1;
+                if ((kbd_count == 5'h0) && (aux_count == 5'h0))
                     use_aux_out <= 1'b1;
             end
 
@@ -296,18 +301,18 @@ module chip_i8042_ps2 #(
             if (wr && !i_a0) begin
                 last_wr_cmd <= 1'b0;
                 if (cmd_d2_pending) begin
-                    if (kbd_count < KBD_D) begin
+                    if (kbd_count < KBD_D_W) begin
                         kbd_fifo[kbd_wptr] <= i_d;
                         kbd_wptr           <= kbd_wptr + 4'h1;
-                        kbd_count          <= kbd_count + 4'h1;
+                        kbd_count          <= kbd_count + 5'h1;
                         use_aux_out        <= 1'b0;
                     end
                     cmd_d2_pending <= 1'b0;
                 end else if (cmd_d3_pending) begin
-                    if (aux_count < AUX_D) begin
+                    if (aux_count < AUX_D_W) begin
                         aux_fifo[aux_wptr] <= i_d;
                         aux_wptr           <= aux_wptr + 4'h1;
-                        aux_count          <= aux_count + 4'h1;
+                        aux_count          <= aux_count + 5'h1;
                         use_aux_out        <= 1'b1;
                     end
                     cmd_d3_pending <= 1'b0;
@@ -354,13 +359,13 @@ module chip_i8042_ps2 #(
             if (rd_data_port_d && !(rd && !i_a0)) begin
                 if (obf_from_aux && aux_obf) begin
                     aux_rptr  <= aux_rptr + 4'h1;
-                    aux_count <= aux_count - 4'h1;
-                    if ((aux_count == 4'h1) && kbd_obf)
+                    aux_count <= aux_count - 5'h1;
+                    if ((aux_count == 5'h1) && kbd_obf)
                         use_aux_out <= 1'b0;
                 end else if (kbd_obf) begin
                     kbd_rptr  <= kbd_rptr + 4'h1;
-                    kbd_count <= kbd_count - 4'h1;
-                    if ((kbd_count == 4'h1) && aux_obf)
+                    kbd_count <= kbd_count - 5'h1;
+                    if ((kbd_count == 5'h1) && aux_obf)
                         use_aux_out <= 1'b1;
                 end
             end

@@ -118,63 +118,63 @@ module vga_text_intense_tb;
         reset = 0;
         #100;
 
-        $display("=== VGA Text Intense 测试开始 ===");
-        $display("时间: %t", $time);
+        $display("=== VGA text intense test start ===");
+        $display("Time: %t", $time);
 
-        // 测试1: 检查字符位置计算
-        $display("\n测试1: 检查字符位置计算");
+        // Test 1: Check character position
+        $display("\nTest 1: Check character position");
         h_cnt = 0;
         v_cnt = 0;
         #100;
-        $display("  位置 (0,0): char_col=%0d, char_row=%0d, vram_addr=0x%04h", 
+        $display("  Pos (0,0): char_col=%0d, char_row=%0d, vram_addr=0x%04h", 
                  h_cnt[ 9:  3], v_cnt[ 8:  4], vram_rd_addr);
 
-        // 测试2: 检查淡色前景色输出
-        $display("\n测试2: 检查淡色前景色输出");
+        // Test 2: Check high-intensity foreground
+        $display("\nTest 2: Check high-intensity foreground");
         h_cnt = 0;
         v_cnt = 0;
         video_active = 1;
         #300;
-        $display("  淡色前景色: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
+        $display("  High-intensity FG: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
 
-        // 测试3: 测试不同淡色前景色
-        $display("\n测试3: 测试不同淡色前景色");
+        // Test 3: Sweep high-intensity foreground
+        $display("\nTest 3: Sweep high-intensity foreground");
         for (int i = 0; i < 16; i++) begin
             h_cnt = i * 8;
             v_cnt = 0;
             #200;
-            $display("  淡色前景色 %0d: RGB=(%1d,%1d,%1d)", i, vga_r, vga_g, vga_b);
+            $display("  High-intensity FG %0d: RGB=(%1d,%1d,%1d)", i, vga_r, vga_g, vga_b);
         end
 
-        // 测试4: 测试背景色（应该与标准模式相同）
-        $display("\n测试4: 测试背景色");
+        // Test 4: Background color（应该与标准模式相同）
+        $display("\nTest 4: Background color");
         h_cnt = 0;
         v_cnt = 0;
         #200;
-        $display("  背景色: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
+        $display("  Background: RGB=(%1d,%1d,%1d)", vga_r, vga_g, vga_b);
 
-        // 测试5: 复位测试
-        $display("\n测试5: 复位测试");
+        // Test 5: Reset test
+        $display("\nTest 5: Reset test");
         reset = 1;
         #100;
-        $display("  复位时: RGB=(%1d,%1d,%1d) (期望: 0,0,0)", vga_r, vga_g, vga_b);
+        $display("  During reset: RGB=(%1d,%1d,%1d) (expected: 0,0,0)", vga_r, vga_g, vga_b);
         if (vga_r != 0 || vga_g != 0 || vga_b != 0) 
-            $error("  错误: 复位时颜色应该为0!");
+            $error("  error: RGB must be 0 during reset!");
 
         reset = 0;
         #100;
 
-        // 测试6: 测试非可见区域
-        $display("\n测试6: 测试非可见区域");
+        // Test 6: Blanking region
+        $display("\nTest 6: Blanking region");
         h_cnt = 700;
         v_cnt = 0;
         video_active = 0;
         #100;
-        $display("  非可见区域: RGB=(%1d,%1d,%1d) (期望: 0,0,0)", vga_r, vga_g, vga_b);
+        $display("  Blanking: RGB=(%1d,%1d,%1d) (expected: 0,0,0)", vga_r, vga_g, vga_b);
         if (vga_r != 0 || vga_g != 0 || vga_b != 0) 
-            $error("  错误: 非可见区域颜色应该为0!");
+            $error("  error: RGB must be 0 in blanking!");
 
-        $display("\n=== VGA Text Intense 测试完成 ===");
+        $display("\n=== VGA text intense test done ===");
         #1000;
         $finish();
     end

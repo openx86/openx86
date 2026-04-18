@@ -40,93 +40,93 @@ module vga_font_rom_tb;
         reset = 0;
         #40;
 
-        $display("=== VGA Font ROM 测试开始 ===");
-        $display("时间: %t", $time);
+        $display("=== VGA font ROM test start ===");
+        $display("Time: %t", $time);
 
-        // 测试1: 读取字符'A' (ASCII 0x41) 的所有行
-        $display("\n测试1: 读取字符'A' (ASCII 0x41) 的所有行");
+        // Test 1: Read char'A' (ASCII 0x41) all rows
+        $display("\nTest 1: Read char'A' (ASCII 0x41) all rows");
         char_code = 8'h41;  // 'A'
         for (int i = 0; i < 16; i++) begin
             row_index = i[ 3: 0];
             #40;
-            $display("  字符'A' 第%2d行: data=0x%02h (二进制: %08b)", i, font_data, font_data);
+            $display("  char 'A' row %2d: data=0x%02h (binary: %08b)", i, font_data, font_data);
         end
 
-        // 测试2: 读取字符'0' (ASCII 0x30) 的所有行
-        $display("\n测试2: 读取字符'0' (ASCII 0x30) 的所有行");
+        // Test 2: Read char'0' (ASCII 0x30) all rows
+        $display("\nTest 2: Read char'0' (ASCII 0x30) all rows");
         char_code = 8'h30;  // '0'
         for (int i = 0; i < 16; i++) begin
             row_index = i[ 3: 0];
             #40;
-            $display("  字符'0' 第%2d行: data=0x%02h", i, font_data);
+            $display("  char '0' row %2d: data=0x%02h", i, font_data);
         end
 
-        // 测试3: 读取字符'@' (ASCII 0x40) 的所有行
-        $display("\n测试3: 读取字符'@' (ASCII 0x40) 的所有行");
+        // Test 3: Read char'@' (ASCII 0x40) all rows
+        $display("\nTest 3: Read char'@' (ASCII 0x40) all rows");
         char_code = 8'h40;  // '@'
         for (int i = 0; i < 16; i++) begin
             row_index = i[ 3: 0];
             #40;
-            $display("  字符'@' 第%2d行: data=0x%02h", i, font_data);
+            $display("  char '@' row %2d: data=0x%02h", i, font_data);
         end
 
-        // 测试4: 读取不同字符的同一行
-        $display("\n测试4: 读取不同字符的第0行");
+        // Test 4: 读取不同字符的同一行
+        $display("\nTest 4: read row 0 for different characters");
         row_index = 4'h0;
         for (int i = 0; i < 10; i++) begin
             char_code = 8'h30 + i;  // '0' 到 '9'
             #40;
-            $display("  字符'%c' (0x%02h) 第0行: data=0x%02h", 8'h30 + i, char_code, font_data);
+            $display("  char '%c' (0x%02h) row 0: data=0x%02h", 8'h30 + i, char_code, font_data);
         end
 
-        // 测试5: 边界测试 - 字符码0和255
-        $display("\n测试5: 边界测试");
+        // Test 5: Boundary test - 字符码0和255
+        $display("\nTest 5: Boundary test");
         char_code = 8'h00;  // 字符码0
         row_index = 4'h0;
         #40;
-        $display("  字符码0x00 第0行: data=0x%02h", font_data);
+        $display("  char code 0x00 row 0: data=0x%02h", font_data);
 
         char_code = 8'hFF;  // 字符码255
         row_index = 4'h0;
         #40;
-        $display("  字符码0xFF 第0行: data=0x%02h", font_data);
+        $display("  char code 0xFF row 0: data=0x%02h", font_data);
 
-        // 测试6: 行索引边界测试
-        $display("\n测试6: 行索引边界测试");
+        // Test 6: 行索引Boundary test
+        $display("\nTest 6: row index boundary");
         char_code = 8'h41;  // 'A'
         row_index = 4'h0;
         #40;
-        $display("  字符'A' 第0行: data=0x%02h", font_data);
+        $display("  char 'A' row 0: data=0x%02h", font_data);
 
         row_index = 4'hF;  // 第15行
         #40;
-        $display("  字符'A' 第15行: data=0x%02h", font_data);
+        $display("  char 'A' row 15: data=0x%02h", font_data);
 
-        // 测试7: 复位测试
-        $display("\n测试7: 复位测试");
+        // Test 7: Reset test
+        $display("\nTest 7: Reset test");
         reset = 1;
         char_code = 8'h41;
         row_index = 4'h0;
         #40;
-        $display("  复位时读取: data=0x%02h (期望: 0x00)", font_data);
-        if (font_data != 8'h00) $error("  错误: 复位时读取值应该为0!");
+        $display("  Read during reset: data=0x%02h (expected: 0x00)", font_data);
+        if (font_data != 8'h00) $error("  error: font data must be 0 during reset!");
 
         reset = 0;
         #40;
-        $display("  复位释放后读取: data=0x%02h", font_data);
+        $display("  Read after reset release: data=0x%02h", font_data);
 
-        // 测试8: 快速切换字符和行
-        $display("\n测试8: 快速切换字符和行");
+        // Test 8: Fast char/row switching
+        $display("\nTest 8: Fast char/row switching");
         for (int c = 0; c < 5; c++) begin
             char_code = 8'h41 + c;  // 'A' 到 'E'
             for (int r = 0; r < 3; r++) begin
                 row_index = r[ 3: 0];
                 #40;
-                $display("  字符'%c' 第%2d行: data=0x%02h", 8'h41 + c, r, font_data);
+                $display("  char '%c' row %2d: data=0x%02h", 8'h41 + c, r, font_data);
             end
         end
 
-        $display("\n=== VGA Font ROM 测试完成 ===");
+        $display("\n=== VGA font ROM test done ===");
         #200;
         $finish();
     end

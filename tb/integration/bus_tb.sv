@@ -262,7 +262,7 @@ module bus_tb;
         repeat (20000) @(posedge clock);
 
         // 测试1: 写入常规内存 (地址 0x00000000，经 SDRAM)
-        $display("\n[测试1] 写入RAM地址 0x00000000");
+        $display("\n[Test 1] Write RAM at 0x00000000");
         bus_valid = 1;
         bus_write_enable = 1;
         bus_io_access = 0;
@@ -275,20 +275,20 @@ module bus_tb;
         #20;
 
         // 测试2: 读取RAM (地址 0x00000000)
-        $display("[测试2] 读取RAM地址 0x00000000");
+        $display("[Test 2] Read RAM at 0x00000000");
         bus_valid = 1;
         bus_write_enable = 0;
         bus_io_access = 0;
         bus_address = 32'h0000_0000;
         #10;
         wait(bus_ready);
-        $display("  读取数据: 0x%08h (期望: 0x12345678)", bus_data_read);
+        $display("  Read data: 0x%08h (expected: 0x12345678)", bus_data_read);
         #10;
         bus_valid = 0;
         #20;
 
         // 测试3: 写入VRAM (地址 0x000A0000)
-        $display("\n[测试3] 写入VRAM地址 0x000A0000");
+        $display("\n[Test 3] Write VRAM at 0x000A0000");
         bus_valid = 1;
         bus_write_enable = 1;
         bus_io_access = 0;
@@ -296,27 +296,27 @@ module bus_tb;
         bus_data_write = 32'h0000_00AA;
         #10;
         wait(bus_ready);
-        $display("  VRAM写使能: %b, 地址: 0x%05h, 数据: 0x%02h",
+        $display("  VRAM write enable: %b, addr: 0x%05h, data: 0x%02h",
                  vga_mem_en_w, vga_mem_addr, vga_mem_data_w);
         #10;
         bus_valid = 0;
         #20;
 
         // 测试4: 读取系统BIOS (地址 0x000F0000)
-        $display("\n[测试4] 读取系统BIOS地址 0x000F0000");
+        $display("\n[Test 4] Read system BIOS at 0x000F0000");
         bus_valid = 1;
         bus_write_enable = 0;
         bus_io_access = 0;
         bus_address = 32'h000F_0000;
         #10;
         wait(bus_ready);
-        $display("  BIOS地址: 0x%04h, 读取数据: 0x%08h", bios_addr, bus_data_read);
+        $display("  BIOS addr: 0x%04h, read data: 0x%08h", bios_addr, bus_data_read);
         #10;
         bus_valid = 0;
         #20;
 
         // 测试5: 写入VGA I/O端口 (地址 0x03C2)
-        $display("\n[测试5] 写入VGA I/O端口 0x03C2");
+        $display("\n[Test 5] Write VGA I/O port 0x03C2");
         bus_valid = 1;
         bus_write_enable = 1;
         bus_io_access = 1;  // I/O访问
@@ -324,41 +324,41 @@ module bus_tb;
         bus_data_write = 32'h0000_0055;
         #10;
         wait(bus_ready);
-        $display("  VGA I/O写使能: %b, 地址: 0x%04h, 数据: 0x%02h",
+        $display("  VGA I/O write enable: %b, addr: 0x%04h, data: 0x%02h",
                  vga_io_en_w, vga_io_addr, vga_io_data_w);
         #10;
         bus_valid = 0;
         #20;
 
         // 测试6: 读取VGA I/O端口 (地址 0x03DA)
-        $display("\n[测试6] 读取VGA I/O端口 0x03DA");
+        $display("\n[Test 6] Read VGA I/O port 0x03DA");
         bus_valid = 1;
         bus_write_enable = 0;
         bus_io_access = 1;  // I/O访问
         bus_address = 32'h0000_03DA;
         #10;
         wait(bus_ready);
-        $display("  VGA I/O读使能: %b, 地址: 0x%04h, 读取数据: 0x%08h (低8位: 0x%02h)",
+        $display("  VGA I/O read enable: %b, addr: 0x%04h, read data: 0x%08h (low 8 bits: 0x%02h)",
                  vga_io_en_r, vga_io_addr, bus_data_read, bus_data_read[ 7: 0]);
         #10;
         bus_valid = 0;
         #20;
 
         // 测试7: 访问未映射的地址（非 SDRAM 窗口）
-        $display("\n[测试7] 访问未映射的地址 0x00100000");
+        $display("\n[Test 7] Read unmapped address 0x00100000");
         bus_valid = 1;
         bus_write_enable = 0;
         bus_io_access = 0;
         bus_address = 32'h0010_0000;
         #10;
         wait(bus_ready);
-        $display("  读取数据: 0x%08h (期望: 0xFFFFFFFF)", bus_data_read);
+        $display("  Read data: 0x%08h (expected: 0xFFFFFFFF)", bus_data_read);
         #10;
         bus_valid = 0;
         #20;
 
         // 测试7b: SDRAM 窗口 0x0100_0000 写后读
-        $display("\n[测试7b] SDRAM 写/读 0x0100_0000");
+        $display("\n[Test 7b] SDRAM write/read 0x0100_0000");
         bus_valid = 1;
         bus_write_enable = 1;
         bus_io_access = 0;
@@ -375,26 +375,26 @@ module bus_tb;
         bus_address = 32'h0100_0000;
         #10;
         wait(bus_ready);
-        $display("  SDRAM 读回: 0x%08h (期望 0xCAFE0001)", bus_data_read);
+        $display("  SDRAM readback: 0x%08h (expected 0xCAFE0001)", bus_data_read);
         #10;
         bus_valid = 0;
         #20;
 
         // 测试8: Chipset DMA 页寄存器 I/O 0x0080（读 0）
-        $display("\n[测试8] 读取 Chipset DMA 页寄存器 0x0080");
+        $display("\n[Test 8] Read chipset DMA page register 0x0080");
         bus_valid = 1;
         bus_write_enable = 0;
         bus_io_access = 1;
         bus_address = 32'h0000_0080;
         #10;
         wait(bus_ready);
-        $display("  读取数据低 8 位: 0x%02h (期望 0x00)", bus_data_read[ 7: 0]);
+        $display("  Read data low 8 bits: 0x%02h (expected 0x00)", bus_data_read[ 7: 0]);
         #10;
         bus_valid = 0;
         #20;
 
         $display("\n========================================");
-        $display("测试完成");
+        $display("Tests finished");
         $display("========================================");
         #100;
         $finish;
@@ -402,7 +402,7 @@ module bus_tb;
 
     // 监控信号
     initial begin
-        $monitor("时间: %0t | valid=%b ready=%b io=%b addr=0x%08h data_w=0x%08h data_r=0x%08h",
+        $monitor("Time: %0t | valid=%b ready=%b io=%b addr=0x%08h data_w=0x%08h data_r=0x%08h",
                  $time, bus_valid, bus_ready, bus_io_access,
                  bus_address, bus_data_write, bus_data_read);
     end
