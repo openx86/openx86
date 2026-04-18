@@ -1,0 +1,65 @@
+# 构建并推送带 Verilator 的 CI 镜像到 GHCR；测试工作流拉取该镜像，避免每次编译 Verilator。
+#
+# 首次启用：在本仓库 Actions 里手动运行一次本 workflow（workflow_dispatch），
+# 或推送修改 docker/verilator-ci/ 到 develop/main/master。
+#
+# 镜像标签与 verilator-test.yml 中的 container.image 需保持一致。
+
+name: Build Verilator CI image
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - develop
+      - main
+      - master
+    paths:
+      - "docker/verilator-ci/**"
+      - ".github/workflows/verilator-ci-image.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: verilator-ci-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    name: Build and push ghcr.io image
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set image name (lowercase for GHCR)
+        run: |
+          owner_repo="${GITHUB_REPOSITORY,,}"
+          echo "IMAGE_BASE=ghcr.io/${owner_repo}" >> "$GITHUB_ENV"
+          echo "IMAGE_TAG=verilator-5.046" >> "$GITHUB_ENV"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker/verilator-ci
+          file: ./docker/verilator-ci/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_BASE }}:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_BASE }}:verilator-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

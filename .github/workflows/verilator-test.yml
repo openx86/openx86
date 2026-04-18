@@ -13,35 +13,43 @@ on:
       - master
   workflow_dispatch: {}
 
+# 依赖 GHCR 预编译镜像（.github/workflows/verilator-ci-image.yml）。合并本改动后请先手动运行该 workflow 完成首次推送。
+
 permissions:
   contents: read
+  packages: read
 
 jobs:
+  # GHCR 镜像名必须小写；单独 job 输出供 container.image 使用（表达式里无法直接 toLower）
+  verilator-image-ref:
+    name: Resolve Verilator CI image
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.ref.outputs.image }}
+    steps:
+      - id: ref
+        run: |
+          owner_repo="${GITHUB_REPOSITORY,,}"
+          echo "image=ghcr.io/${owner_repo}:verilator-5.046" >> "$GITHUB_OUTPUT"
+
   test-ubuntu:
     name: verilator (Ubuntu)
+    needs: verilator-image-ref
     runs-on: ubuntu-latest
+    # 使用 GHCR 预编译镜像，避免每次 CI 编译 Verilator（由 verilator-ci-image.yml 构建推送）
+    container:
+      image: ${{ needs.verilator-image-ref.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     timeout-minutes: 45
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Install Verilator 5.046 (build from tag v5.046)
-        env:
-          VERILATOR_REF: v5.046
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git help2man perl python3 make autoconf g++ flex bison ccache \
-            libfl2 libfl-dev zlib1g zlib1g-dev
-          git clone --depth 1 --branch "${VERILATOR_REF}" \
-            https://github.com/verilator/verilator.git /tmp/verilator-src
-          cd /tmp/verilator-src
-          autoconf
-          ./configure --prefix=/usr/local
-          make -j"$(nproc)"
-          sudo make install
-          verilator --version
+      - name: Verify Verilator
+        run: verilator --version
 
       - name: Lint all rtl/*.sv (verilator --lint-only)
         run: |
