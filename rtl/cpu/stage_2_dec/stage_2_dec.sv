@@ -12,7 +12,11 @@ description: This module implements stage_2_dec.
 // ============================================================================
 
 module stage_2_dec (
-    input  logic  i_instruction_ready,    output logic o_stage_valid,    output logic o_insn_fire,    input  logic  reset_n,    input  logic  clock
+    input  logic i_instruction_ready,
+    output logic o_stage_valid,
+    output logic o_insn_fire,
+    input  logic clock,
+    input  logic reset_n
 );
     logic instruction_ready_d1;
 

@@ -9,7 +9,7 @@ Usage:
 Notes:
   - Requires: verilator (and a C++ toolchain available via verilator --binary)
   - RTL sources come from sim/filelists/*.f when present (fallback: scan rtl/).
-  - Default filelist is auto-selected by TB path (cpu/core unit tests use rtl_fullcore.f).
+  - Default filelist is auto-selected by TB path (tb/cpu tests use rtl_fullcore.f).
   - Extra arguments after '--' are forwarded to the produced binary, e.g. +SEABIOS_BIN=...
 EOF
 }
@@ -115,7 +115,7 @@ fi
 
 select_default_filelist() {
   local tb_path="$1"
-  if [[ "$tb_path" == *"/tb/unit/cpu/"* || "$tb_path" == *"/tb/unit/core/"* ]]; then
+  if [[ "$tb_path" == *"/tb/cpu/"* ]]; then
     echo "sim/filelists/rtl_fullcore.f"
     return
   fi
@@ -141,8 +141,13 @@ if [[ -f "$rtl_filelist" ]]; then
     rtl_sources+=("$line")
   done < "$rtl_filelist"
 else
-  mapfile -t rtl_sources < <(find src/rtl -type f -name "*.sv" ! -name "*_tb.sv" | sort)
-  incdirs+=("src/rtl")
+  rtl_scan_dir="rtl"
+  if [[ ! -d "$rtl_scan_dir" ]]; then
+    echo "ERROR: missing rtl/ directory and filelist not found: $rtl_filelist" >&2
+    exit 2
+  fi
+  mapfile -t rtl_sources < <(find "$rtl_scan_dir" -type f -name "*.sv" ! -name "*_tb.sv" | sort)
+  incdirs+=("$rtl_scan_dir")
 fi
 
 inc_args=()

@@ -16,7 +16,7 @@ if (!(Test-Path $runner)) {
 function Get-Testbenches {
     $roots = @()
     if (Test-Path "tb") { $roots += "tb" }
-    if (Test-Path "src/rtl") { $roots += "src/rtl" }
+    if (Test-Path "rtl") { $roots += "rtl" }
     if ($roots.Count -eq 0) { return @() }
 
     $tbs = @()

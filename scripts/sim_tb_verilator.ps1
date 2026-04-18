@@ -67,7 +67,7 @@ function Select-DefaultFilelist {
         [string] $TbPath
     )
 
-    if ($TbPath -match '[\\/]+tb[\\/]+unit[\\/]+(cpu|core)[\\/]+') {
+    if ($TbPath -match '[\\/]+tb[\\/]+cpu[\\/]+') {
         return "sim/filelists/rtl_fullcore.f"
     }
     return "sim/filelists/rtl.f"

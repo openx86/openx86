@@ -11,7 +11,12 @@ NC='\033[0m' # No Color
 
 # 项目根目录
 PROJECT_ROOT=$(pwd)
-RTL_DIR="$PROJECT_ROOT/src/rtl"
+RTL_DIR="$PROJECT_ROOT/rtl"
+
+if [ ! -d "$RTL_DIR" ]; then
+    echo -e "${RED}错误: 未找到 RTL 目录 $RTL_DIR${NC}"
+    exit 1
+fi
 
 # 检查结果统计
 ERROR_COUNT=0

@@ -6,7 +6,7 @@ param(
 $runner = Join-Path $PSScriptRoot "run_tb_group.ps1"
 $params = @{
     Name = "cpu"
-    PathPrefixes = @("tb/unit/cpu")
+    PathPrefixes = @("tb/cpu")
     NameRegex = ".*_tb\.sv$"
     OutDir = $OutDir
 }

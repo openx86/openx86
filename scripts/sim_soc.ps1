@@ -16,7 +16,7 @@ if ($env:DISK_BIN) { $plus += "+DISK_BIN=$($env:DISK_BIN)" }
 if ($env:DISK_HEX) { $plus += "+DISK_HEX=$($env:DISK_HEX)" }
 
 $runnerArgs = @{
-    Tb     = "tb/system/soc_top_tb.sv"
+  Tb     = "tb/top/soc_top_tb.sv"
     OutDir = "build"
 }
 if ($plus.Count -gt 0) {

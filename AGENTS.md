@@ -36,6 +36,9 @@ description: {desc_text}
   - Do NOT use `[31:0]`, `[3:0]`
 - Port declarations MUST be vertically aligned by columns:
   - direction, `logic`, width, name.
+- Module declaration port lists MUST be one port per line.
+- Module instantiation connection lists MUST be one connection per line.
+- In module instantiations, align connection parentheses by columns.
 
 Reference style:
 
@@ -48,6 +51,15 @@ module example_module (
     input  logic         clock,
     input  logic         reset_n
 );
+
+  example_module u_example_module (
+    .i_example_req  ( i_example_req  ),
+    .i_example_addr ( i_example_addr ),
+    .o_example_data ( o_example_data ),
+    .b_example_gpio ( b_example_gpio ),
+    .clock          ( clock          ),
+    .reset_n        ( reset_n        )
+  );
 ```
 
 ## 2) Signal Type Rules
@@ -136,6 +148,7 @@ module example_module (
 - [ ] PHY ports follow `{dir}_{module}_phy_{name}`.
 - [ ] `clock` and `reset_n` are the final ports.
 - [ ] Width formatting is `[31: 0]` style with aligned columns.
+- [ ] Module declaration and instantiation connection lists are one-per-line with aligned parentheses.
 - [ ] All ports/signals use `logic`.
 - [ ] `rtl/**/*.sv` content is synthesizable.
 - [ ] New CPU-bus-visible modules are implemented as controllers under `rtl/device/`.

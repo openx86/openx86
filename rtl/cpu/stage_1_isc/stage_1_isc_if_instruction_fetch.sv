@@ -38,7 +38,8 @@ module stage_1_isc_if_instruction_fetch (
     // instruction pointer register file
     input  logic [31: 0]  EIP,
     // common
-    input  logic          clock, reset_n
+    input  logic          clock,
+    input  logic          reset_n
 );
 
 logic        i_vaild = i_IP_vaild;

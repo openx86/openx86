@@ -10,5 +10,10 @@ module stage_3_exe_ari_sbb (
     input  logic          cf,
     output logic [31: 0] y
 );
-    stage_3_exe_ari_execute_arithmetic_sbb u_impl (.operand_1(a), .operand_2(b), .carry_flag(cf), .result(y));
+    stage_3_exe_ari_execute_arithmetic_sbb u_impl (
+        .operand_1  ( a  ),
+        .operand_2  ( b  ),
+        .carry_flag ( cf ),
+        .result     ( y  )
+    );
 endmodule

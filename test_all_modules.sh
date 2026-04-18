@@ -12,9 +12,12 @@ NC='\033[0m' # No Color
 
 # 项目根目录
 PROJECT_ROOT=$(pwd)
-# RTL 根目录：优先本仓库的 rtl/，兼容旧布局 src/rtl
+# RTL 根目录
 RTL_DIR="$PROJECT_ROOT/rtl"
-[[ -d "$RTL_DIR" ]] || RTL_DIR="$PROJECT_ROOT/src/rtl"
+if [[ ! -d "$RTL_DIR" ]]; then
+    echo -e "${RED}错误: 未找到 RTL 目录 $RTL_DIR${NC}"
+    exit 1
+fi
 TB_DIR="$PROJECT_ROOT/tb"
 
 # 检测可用的仿真器
@@ -54,8 +57,8 @@ RTL_INCDIRS=()
 
 select_rtl_filelist_for_tb() {
     local tb_path="$1"
-    # CPU/core unit tests need the broader set.
-    if [[ "$tb_path" == *"/tb/unit/cpu/"* || "$tb_path" == *"/tb/unit/core/"* ]]; then
+    # CPU unit tests need the broader set.
+    if [[ "$tb_path" == *"/tb/cpu/"* ]]; then
         if [[ -f "$RTL_FILELIST_FULLCORE" ]]; then
             echo "$RTL_FILELIST_FULLCORE"
             return
@@ -117,35 +120,35 @@ get_dependencies() {
         deps="$deps $RTL_DIR/common/edge_detect.sv"
     fi
     if grep -q "vga_port" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga_port.sv"
+        deps="$deps $RTL_DIR/device/vga/vga_port.sv"
     fi
     if grep -q "vga_font_rom" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/device/vga/vga_font_rom.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
     fi
     if grep -q "vga_text_color" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga_text_color.sv"
+        deps="$deps $RTL_DIR/device/vga/vga_text_color.sv"
     fi
     if grep -q "vga_text_intense" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga_text_intense.sv"
+        deps="$deps $RTL_DIR/device/vga/vga_text_intense.sv"
     fi
     if grep -q "ide_controller" "$module_file"; then
         deps="$deps $RTL_DIR/device/ide_controller.sv"
-        deps="$deps $RTL_DIR/peripheral/sdcard_controller.sv"
-        deps="$deps $RTL_DIR/peripheral/sd_native_host_4bit.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard/sdcard_controller.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard/sdcard_native_host_4bit.sv"
     fi
     if grep -q "sd_mmc_card_model_native" "$module_file"; then
-        deps="$deps $TB_DIR/unit/peripheral/sdcard/sd_mmc_card_model_native.sv"
+        deps="$deps $TB_DIR/peripheral/sdcard/sd_mmc_card_model_native.sv"
     fi
-    if grep -q "sd_native_host_4bit" "$module_file"; then
-        deps="$deps $RTL_DIR/peripheral/sd_native_host_4bit.sv"
-        deps="$deps $RTL_DIR/peripheral/sdcard_controller.sv"
+    if grep -qE "sd_native_host_4bit|sdcard_native_host_4bit" "$module_file"; then
+        deps="$deps $RTL_DIR/peripheral/sdcard/sdcard_native_host_4bit.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard/sdcard_controller.sv"
     fi
     if grep -q "chip_pc_bios_eeprom" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/chip_pc_bios_eeprom.sv"
     fi
     if grep -q "chip_i8042_ps2" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/ps2_host_phy.sv"
+        deps="$deps $RTL_DIR/device/ps2/ps2_host_phy.sv"
     fi
     if grep -qE "(bus_controller|bus)[[:space:]]+u_" "$module_file"; then
         deps="$deps $RTL_DIR/chipset/chip_pkg.sv"
@@ -153,25 +156,25 @@ get_dependencies() {
         deps="$deps $RTL_DIR/chipset/chip_8259_pic.sv"
         deps="$deps $RTL_DIR/chipset/chip_8237_dma.sv"
         deps="$deps $RTL_DIR/chipset/chip_mc146818_rtc.sv"
-        deps="$deps $RTL_DIR/periph/ps2_host_phy.sv"
+        deps="$deps $RTL_DIR/device/ps2/ps2_host_phy.sv"
         deps="$deps $RTL_DIR/chipset/chip_i8042_ps2.sv"
         deps="$deps $RTL_DIR/chipset/chip_ns16550_com.sv"
         deps="$deps $RTL_DIR/chipset/chip_centronics_lpt.sv"
         deps="$deps $RTL_DIR/device/ide_controller.sv"
-        deps="$deps $RTL_DIR/peripheral/sdcard_controller.sv"
-        deps="$deps $RTL_DIR/peripheral/sd_native_host_4bit.sv"
-        deps="$deps $RTL_DIR/peripheral/sd_4bit_phy.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard/sdcard_controller.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard/sdcard_native_host_4bit.sv"
+        deps="$deps $RTL_DIR/peripheral/sdcard/sdcard_4bit_phy.sv"
         deps="$deps $RTL_DIR/bus_controller.sv"
     fi
     if grep -q "sdram_controller" "$module_file"; then
         deps="$deps $RTL_DIR/memory/sdram_controller.sv"
     fi
     if grep -q "vga_graphics_adapter" "$module_file"; then
-        deps="$deps $RTL_DIR/periph/vga_graphics_adapter.sv"
-        deps="$deps $RTL_DIR/periph/vga_port.sv"
-        deps="$deps $RTL_DIR/periph/vga_font_rom.sv"
-        deps="$deps $RTL_DIR/periph/vga_text_color.sv"
-        deps="$deps $RTL_DIR/periph/vga_text_intense.sv"
+        deps="$deps $RTL_DIR/device/vga/vga_graphics_adapter.sv"
+        deps="$deps $RTL_DIR/device/vga/vga_port.sv"
+        deps="$deps $RTL_DIR/device/vga/vga_font_rom.sv"
+        deps="$deps $RTL_DIR/device/vga/vga_text_color.sv"
+        deps="$deps $RTL_DIR/device/vga/vga_text_intense.sv"
         deps="$deps $RTL_DIR/common/single_port_rom.sv"
         deps="$deps $RTL_DIR/common/simple_dual_port_ram.sv"
     fi
@@ -277,7 +280,7 @@ run_test() {
 
         local extra_tb_sv=""
         if [[ "$testbench" == *"ide_sd_native_disk_tb.sv" ]]; then
-            extra_tb_sv="$PROJECT_ROOT/tb/unit/peripheral/sdcard/sd_mmc_card_model_native.sv"
+            extra_tb_sv="$PROJECT_ROOT/tb/peripheral/sdcard/sd_mmc_card_model_native.sv"
         fi
 
         # 添加testbench

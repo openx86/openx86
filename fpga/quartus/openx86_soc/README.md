@@ -1,7 +1,7 @@
 # Quartus 工程：openx86_soc
 
 ## 目标
-用 Quartus Prime 打开/综合 `src/rtl/soc_top.sv`（顶层实体 `soc_top`），并且复用仓库的仿真 filelist（`sim/filelists/rtl.f`）来管理源文件集合与 include/search path。
+用 Quartus Prime 打开/综合 `rtl/openx86_soc_top.sv`（顶层实体 `openx86_soc_top`），并且复用仓库的仿真 filelist（`sim/filelists/rtl.f`）来管理源文件集合与 include/search path。
 
 ## 快速开始
 - **生成/更新工程**

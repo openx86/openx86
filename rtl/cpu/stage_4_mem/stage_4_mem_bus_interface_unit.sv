@@ -39,7 +39,8 @@ module stage_4_mem_bus_interface_unit (
     input  logic [31: 0] i_bus_data_read,
     output logic [31: 0] o_bus_data_write,
 
-    input  logic          clock, reset_n
+    input  logic          clock,
+    input  logic          reset_n
 );
 
 assign o_mmu_data_read  = i_bus_data_read;

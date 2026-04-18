@@ -1,46 +1,112 @@
 # openx86
 
-本仓库包含一个 **bring-up 级** 的 x86 SoC 顶层（用于快速跑通总线/内存/BIOS/VGA 等系统路径），以及一套仍在演进中的 `w686_*` CPU RTL（用于更完整的指令/流水/寄存器/MMU 等单元测试）。
+openx86 是一个面向 bring-up 和持续演进的 x86 SoC/CPU RTL 仓库。
 
-## 目录结构（高层）
-- **`src/rtl/`**：主要 RTL 实现
-  - `src/rtl/soc_top.sv`：当前 SoC 主线顶层（默认综合/默认系统仿真），CPU 侧例化 `w686_cpu`
-  - `src/rtl/cpu/`：`w686_*` CPU 与相关单元（`soc_top` 与 CPU 单测共用）
-  - `src/rtl/experimental/`：草稿/实验性 RTL（默认不进入 CI）
-- **`tb/`**：testbenches
-- **`scripts/`**：仿真/测试脚本
-- **`sim/filelists/`**：RTL filelist（“权威源文件集合”）
+- SoC 主线用于打通总线、芯片组、内存与外设路径。
+- `w686_*` CPU 相关模块在 `rtl/cpu/` 下持续迭代，并配有分层 testbench。
 
-## RTL filelist（单一事实来源）
-为避免脚本/工程各自扫描目录导致源文件集合漂移，本仓库用 filelist 固化 RTL 集合：
-- **`sim/filelists/rtl.f`**：默认 bring-up SoC 集合（`soc_top` + 外设/芯片组）
-- **`sim/filelists/rtl_fullcore.f`**：CPU 单测用的更大集合（包含 `w686_*` 与依赖）
-- **`sim/filelists/rtl_experimental.f`**：实验性集合（包含 `src/rtl/experimental/`）
+## 当前目录结构
 
-## 快速运行（Windows / PowerShell）
-- **系统级 smoke test（SoC）**：
+### RTL
+
+- `rtl/openx86_soc_top.sv`：SoC 顶层
+- `rtl/bus_controller.sv`：总线整合
+- `rtl/chipset/`：825x、RTC、COM、LPT、PS2 等芯片组模块
+- `rtl/common/`：ROM/RAM/边沿检测等公共模块
+- `rtl/cpu/`：`w686_*` CPU 与各 stage 模块
+- `rtl/device/`：设备侧模块（如 `ide_controller`、`vga`、`ps2`）
+- `rtl/memory/`：内存控制器
+- `rtl/peripheral/`：外设协议/PHY 相关模块（如 SDCard）
+
+### Testbench
+
+`tb/` 已按 `rtl/` 代码结构重构：
+
+- `tb/chipset/`
+- `tb/common/`
+- `tb/cpu/stage_1_isc/`
+- `tb/cpu/stage_2_dec/`
+- `tb/cpu/stage_3_exe/`
+- `tb/device/`
+- `tb/memory/`
+- `tb/peripheral/`
+- `tb/top/`（SoC 顶层 TB）
+- `tb/integration/`（系统集成类 TB）
+
+## Filelist（单一事实来源）
+
+为避免源文件集合漂移，仿真优先使用 `sim/filelists/*.f`：
+
+- `sim/filelists/rtl.f`：默认 SoC/系统路径集合
+- `sim/filelists/rtl_fullcore.f`：CPU 单测所需更完整集合
+- `sim/filelists/rtl_experimental.f`：实验性集合
+- `sim/filelists/tb.f`：testbench filelist（按需使用）
+
+默认自动选择规则：
+
+- TB 路径位于 `tb/cpu/**` 时，默认使用 `rtl_fullcore.f`
+- 其他路径默认使用 `rtl.f`
+
+## 快速运行
+
+### Windows（PowerShell / iverilog）
+
+SoC smoke test：
 
 ```powershell
 ./scripts/sim_soc.ps1
 ```
 
-- **运行单个 TB（iverilog）**：
+运行单个 TB：
 
 ```powershell
-./scripts/sim_tb.ps1 -Tb tb/system/soc_top_tb.sv
+./scripts/sim_tb.ps1 -Tb tb/top/soc_top_tb.sv
 ```
 
-脚本会根据 TB 路径自动选择 filelist（`tb/unit/cpu/**`、`tb/unit/core/**` 默认用 `rtl_fullcore.f`）。
+分组回归：
 
-## Linux / macOS（verilator）
-- **运行单个 TB（verilator）**：
+```powershell
+./scripts/test_soc.ps1
+./scripts/test_bus.ps1
+./scripts/test_chipset_periph.ps1
+./scripts/test_memory_controller.ps1
+./scripts/test_cpu.ps1
+./scripts/test_all.ps1
+```
+
+### Linux/macOS（Verilator）
+
+运行单个 TB：
 
 ```bash
-scripts/sim_tb_verilator.sh --tb tb/system/soc_top_tb.sv
+scripts/sim_tb_verilator.sh --tb tb/top/soc_top_tb.sv
 ```
 
-如需强制指定 filelist，可用环境变量（示例）：
+分组/全量回归：
 
 ```bash
-RTL_FILELIST=sim/filelists/rtl_experimental.f scripts/sim_tb_verilator.sh --tb tb/unit/cpu/execute_unit/execute_unit_tb.sv
+scripts/test_soc.sh
+scripts/test_bus.sh
+scripts/test_chipset_periph.sh
+scripts/test_memory_controller.sh
+scripts/test_cpu.sh
+scripts/test_all_verilator.sh
 ```
+
+强制指定 filelist（示例）：
+
+```bash
+RTL_FILELIST=sim/filelists/rtl_experimental.f scripts/sim_tb_verilator.sh --tb tb/cpu/stage_3_exe/execute_unit_tb.sv
+```
+
+## 其他脚本
+
+- `check_syntax.sh`：语法检查
+- `test_all_modules.sh`：按可用仿真器（iverilog/vsim）运行模块测试
+- `test_video_modules.sh`：VGA 相关 testbench 快速回归
+
+## 约定
+
+- 新增/重构 RTL 模块时，优先在 `tb/` 中按 `rtl/` 对应层级放置 testbench。
+- SoC 顶层测试统一放在 `tb/top/`。
+- 集成链路测试统一放在 `tb/integration/`。

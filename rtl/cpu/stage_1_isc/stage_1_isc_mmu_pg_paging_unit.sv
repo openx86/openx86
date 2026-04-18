@@ -57,7 +57,8 @@ module stage_1_isc_mmu_pg_paging_unit (
     input  logic [31: 0] i_bus_data_read,
     output logic [31: 0] o_bus_data_write,
     // common
-    input  logic          clock, reset_n
+    input  logic          clock,
+    input  logic          reset_n
 );
 
 logic  [ 9: 0] page_directory_index = i_linear_address[31: 22];

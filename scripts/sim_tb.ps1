@@ -72,8 +72,8 @@ function Select-DefaultFilelist {
         [string] $TbPath
     )
 
-    # CPU/core unit tests typically need the broader RTL set.
-    if ($TbPath -match '[\\/]+tb[\\/]+unit[\\/]+(cpu|core)[\\/]+') {
+    # CPU unit tests typically need the broader RTL set.
+    if ($TbPath -match '[\\/]+tb[\\/]+cpu[\\/]+') {
         return "sim/filelists/rtl_fullcore.f"
     }
     return "sim/filelists/rtl.f"

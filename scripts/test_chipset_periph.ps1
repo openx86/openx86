@@ -6,7 +6,7 @@ param(
 $runner = Join-Path $PSScriptRoot "run_tb_group.ps1"
 $params = @{
     Name = "chipset-periph"
-    PathPrefixes = @("tb/unit/chipset", "tb/unit/peripheral")
+    PathPrefixes = @("tb/chipset", "tb/peripheral")
     NameRegex = ".*_tb\.sv$"
     OutDir = $OutDir
 }

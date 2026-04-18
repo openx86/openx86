@@ -8,7 +8,7 @@
 # - 引脚绑定（放在 .qsf 中）
 # - I/O 标准、驱动强度、slew rate 等
 #
-# 约定：顶层端口名为 `i_clk_50m` / `i_reset_n`（见 src/rtl/soc_top.sv）
+# 约定：顶层端口名为 `i_clk_50m` / `i_reset_n`（见 rtl/openx86_soc_top.sv）
 #
 
 # 例：50MHz 主时钟（按需修改）
