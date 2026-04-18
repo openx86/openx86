@@ -46,10 +46,12 @@ CMDFILE="${LINT_OBJDIR}/verilator_rtl_lint.vf"
 echo "Verilator RTL lint: $(wc -l <"$RTL_SV_LIST") file(s)"
 verilator --version
 echo "Running: verilator --lint-only -f $CMDFILE"
+# 英文提示便于 CI/日志工具稳定抓取，中文信息保留在注释里帮助本地维护。
+echo "Info: temporary lint objdir = $LINT_OBJDIR"
 
 # shellcheck disable=SC2086
 # -Wno-fatal：整库 -Wall 时警告量很大，默认达到上限会以非零退出；lint 脚本以“打印问题”为主，不因警告终止。
-exec verilator \
+verilator \
   --lint-only \
   -Wall \
   -Wno-DECLFILENAME \
@@ -61,3 +63,5 @@ exec verilator \
   -Mdir "$LINT_OBJDIR" \
   -f "$CMDFILE" \
   ${VERILATOR_EXTRA_ARGS:-}
+
+echo "Lint completed: no fatal Verilator errors."
