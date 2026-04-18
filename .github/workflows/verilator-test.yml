@@ -32,6 +32,11 @@ jobs:
           sudo apt-get install -y verilator
           verilator --version
 
+      - name: Lint all rtl/*.sv (verilator --lint-only)
+        run: |
+          chmod +x scripts/lint_rtl_verilator.sh
+          ./scripts/lint_rtl_verilator.sh
+
       - name: Run all testbenches (verilator)
         run: |
           chmod +x scripts/test_all_verilator.sh scripts/sim_tb_verilator.sh
