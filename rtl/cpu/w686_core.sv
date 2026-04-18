@@ -106,32 +106,31 @@ module w686_core (
     logic [15: 0] IDTR_limit;
     logic [31: 0] IDTR_base;
 
-    w686_register_files u_register_files (
-        .wb_write_enable ( wb_write_enable ),
-        .wb_write_index ( wb_write_index ),
-        .wb_write_data ( wb_write_data ),
-        .wb_SREG_write_enable ( wb_SREG_write_enable ),
-        .wb_SREG_write_index ( wb_SREG_write_index ),
-        .wb_SREG_write_selector ( wb_SREG_write_selector ),
-        .wb_SREG_write_descriptor ( wb_SREG_write_descriptor ),
-        .wb_FLAGS_write_enable ( wb_FLAGS_write_enable ),
-        .wb_FLAGS_write_data ( wb_FLAGS_write_data ),
-        .wb_IP_write_enable ( wb_IP_write_enable ),
-        .wb_IP_write_data ( wb_IP_write_data ),
-        .wb_CR_write_enable ( wb_CR_write_enable ),
-        .wb_CR_write_index ( wb_CR_write_index ),
-        .wb_CR_write_data ( wb_CR_write_data ),
-        .wb_DR_write_enable ( wb_DR_write_enable ),
-        .wb_DR_write_index ( wb_DR_write_index ),
-        .wb_DR_write_data ( wb_DR_write_data ),
-        .wb_TR_write_enable ( wb_TR_write_enable ),
-        .wb_TR_write_index ( wb_TR_write_index ),
-        .wb_TR_write_data ( wb_TR_write_data ),
-        .GPR_read__8 ( GPR_read__8 ),
-        .GPR_read_16 ( GPR_read_16 ),
-        .GPR_read_32 ( GPR_read_32 ),
+    rf_general_purpose_register u_rf_gpr (
+        .write_enable ( wb_write_enable ),
+        .write_index ( wb_write_index ),
+        .write_data ( wb_write_data ),
+        .read__8 ( GPR_read__8 ),
+        .read_16 ( GPR_read_16 ),
+        .read_32 ( GPR_read_32 ),
+        .clock ( clock ),
+        .reset_n ( reset_n )
+    );
+
+    rf_segment_register u_rf_sreg (
+        .write_enable ( wb_SREG_write_enable ),
+        .write_index ( wb_SREG_write_index ),
+        .write_selector ( wb_SREG_write_selector ),
+        .write_descriptor ( wb_SREG_write_descriptor ),
         .segment_selector ( segment_selector ),
         .descriptor_cache ( descriptor_cache ),
+        .clock ( clock ),
+        .reset_n ( reset_n )
+    );
+
+    rf_flags_register u_rf_flags (
+        .write_enable ( wb_FLAGS_write_enable ),
+        .write_data ( wb_FLAGS_write_data ),
         .CF ( CF ),
         .PF ( PF ),
         .AF ( AF ),
@@ -147,8 +146,23 @@ module w686_core (
         .VM ( VM ),
         .EFLAGS ( EFLAGS ),
         .FLAGS ( FLAGS ),
+        .clock ( clock ),
+        .reset_n ( reset_n )
+    );
+
+    rf_instruction_pointer_register u_rf_ip (
+        .write_enable ( wb_IP_write_enable ),
+        .write_data ( wb_IP_write_data ),
         .IP ( IP ),
         .EIP ( EIP ),
+        .clock ( clock ),
+        .reset_n ( reset_n )
+    );
+
+    rf_control_register u_rf_cr (
+        .write_enable ( wb_CR_write_enable ),
+        .write_index ( wb_CR_write_index ),
+        .write_data ( wb_CR_write_data ),
         .CR ( CR ),
         .PE ( PE ),
         .MP ( MP ),
@@ -157,12 +171,44 @@ module w686_core (
         .R ( R ),
         .PG ( PG ),
         .page_directory_base ( page_directory_base ),
+        .clock ( clock ),
+        .reset_n ( reset_n )
+    );
+
+    rf_debug_register u_rf_dr (
+        .write_enable ( wb_DR_write_enable ),
+        .write_index ( wb_DR_write_index ),
+        .write_data ( wb_DR_write_data ),
         .DR ( DR ),
+        .clock ( clock ),
+        .reset_n ( reset_n )
+    );
+
+    rf_test_register u_rf_tr (
+        .write_enable ( wb_TR_write_enable ),
+        .write_index ( wb_TR_write_index ),
+        .write_data ( wb_TR_write_data ),
         .TR ( TR ),
-        .GDTR_limit ( GDTR_limit ),
-        .GDTR_base ( GDTR_base ),
-        .IDTR_limit ( IDTR_limit ),
-        .IDTR_base ( IDTR_base ),
+        .clock ( clock ),
+        .reset_n ( reset_n )
+    );
+
+    rf_gdtr_register u_rf_gdtr (
+        .gdtr_write_enable ( 1'b0 ),
+        .gdtr_write_data_limit ( 16'd0 ),
+        .gdtr_write_data_base ( 32'd0 ),
+        .gdtr_limit ( GDTR_limit ),
+        .gdtr_base ( GDTR_base ),
+        .clock ( clock ),
+        .reset_n ( reset_n )
+    );
+
+    rf_idtr_register u_rf_idtr (
+        .idtr_write_enable ( 1'b0 ),
+        .idtr_write_data_limit ( 16'd0 ),
+        .idtr_write_data_base ( 32'd0 ),
+        .idtr_limit ( IDTR_limit ),
+        .idtr_base ( IDTR_base ),
         .clock ( clock ),
         .reset_n ( reset_n )
     );

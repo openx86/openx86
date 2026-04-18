@@ -42,7 +42,6 @@ set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/co
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/common/true_dual_port_ram.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/stage_2_dec/stage_2_dec_decode_x87_pkg.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/stage_3_exe/stage_3_exe_execute_unit_pkg.sv"
-set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/register_files/w686_register_files.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/w686_core.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/w686_cpu.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/stage_1_isc/stage_1_isc.sv"
