@@ -55,10 +55,11 @@ module sdcard_native_host_4bit (
     logic [31: 0]  latched_lba;
     logic [47: 0]  cmd_frame;
     logic          start_d;
-    logic          start_pulse = i_start & ~start_d;
+    logic          start_pulse;
 
     always_comb begin
-        cmd_frame = { 1'b0, 1'b1, 6'd17, latched_lba, 7'h7F, 1'b1 };
+        start_pulse = i_start & ~start_d;
+        cmd_frame   = { 1'b0, 1'b1, 6'd17, latched_lba, 7'h7F, 1'b1 };
     end
 
     always_ff @(posedge clock or negedge reset_n) begin

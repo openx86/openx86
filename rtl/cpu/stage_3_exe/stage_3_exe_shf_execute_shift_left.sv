@@ -21,7 +21,9 @@ module stage_3_exe_shf_execute_shift_left #(
 );
 
 localparam int SHIFT_W = (BIT_WIDTH <= 1) ? 1 : $clog2(BIT_WIDTH);
-logic [SHIFT_W-1: 0] shift_amt = count[SHIFT_W-1:0];
+logic [SHIFT_W-1: 0] shift_amt;
+
+assign shift_amt = count[SHIFT_W-1:0];
 
 assign result = operand << shift_amt;
 

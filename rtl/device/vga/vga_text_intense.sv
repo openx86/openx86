@@ -43,10 +43,15 @@ module vga_text_intense (
     localparam int CHAR_HEIGHT = 16;
 
     // 当前字符位置
-    logic [ 6: 0] char_col = h_count[ 9:  3];  // 0-79
-    logic [ 4: 0] char_row = v_count[ 8:  4];  // 0-24
-    logic [ 3: 0] char_pixel_x = h_count[ 2: 0];  // 0-7（字符内 X）
-    logic [ 3: 0] char_pixel_y = v_count[ 3: 0];  // 0-15（字符内 Y）
+    logic [ 6: 0] char_col;  // 0-79
+    logic [ 4: 0] char_row;  // 0-24
+    logic [ 3: 0] char_pixel_x;  // 0-7（字符内 X）
+    logic [ 3: 0] char_pixel_y;  // 0-15（字符内 Y）
+
+    assign char_col = h_count[ 9:  3];
+    assign char_row = v_count[ 8:  4];
+    assign char_pixel_x = h_count[ 2: 0];
+    assign char_pixel_y = v_count[ 3: 0];
 
     // 字符和属性寄存器
     logic [ 7: 0] char_code_reg;
@@ -54,10 +59,15 @@ module vga_text_intense (
     logic [ 7: 0] font_data_reg;
 
     // 属性解码
-    logic        blink = attr_reg[7];  // 闪烁位
-    logic [ 2: 0]  bg_color = attr_reg[ 6:  4];  // 背景色（3bit）
-    logic [ 3: 0]  fg_color = attr_reg[ 3: 0];  // 前景色（4bit）
-    logic        pixel_on = font_data_reg[7 - char_pixel_x[ 2: 0]];  // 当前像素是否为字符前景
+    logic         blink;  // 闪烁位
+    logic [ 2: 0] bg_color;  // 背景色（3bit）
+    logic [ 3: 0] fg_color;  // 前景色（4bit）
+    logic         pixel_on;  // 当前像素是否为字符前景
+
+    assign blink = attr_reg[7];
+    assign bg_color = attr_reg[ 6:  4];
+    assign fg_color = attr_reg[ 3: 0];
+    assign pixel_on = font_data_reg[7 - char_pixel_x[ 2: 0]];
 
     // 计算字符位置
 

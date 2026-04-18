@@ -24,15 +24,9 @@ module stage_3_exe_execute_branch_unit (
     output logic [31: 0]       o_target_eip
 );
 
-    logic signed [31: 0] offset_s;
-    logic [31: 0]        offset_u = 32'(offset_s);
+    logic [31: 0]        offset_u;
 
-    always_comb begin
-        if (i_use_rel8)
-            offset_s = 32'(i_rel8);
-        else
-            offset_s = 32'(signed'(i_rel32));
-    end
+    assign offset_u = i_use_rel8 ? {{24{i_rel8[7]}}, i_rel8} : i_rel32;
 
 
     always_comb begin

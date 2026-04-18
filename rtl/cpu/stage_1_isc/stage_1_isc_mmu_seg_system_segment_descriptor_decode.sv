@@ -45,15 +45,8 @@ module stage_1_isc_mmu_seg_system_segment_descriptor_decode (
     input  logic [63: 0] i_descriptor
 );
 
-logic [15: 0] o_base_15__0 = i_descriptor[63: 48];
-logic [ 7: 0] o_base_23_16 = i_descriptor[ 7: 0];
-logic [ 7: 0] o_base_31_24 = i_descriptor[31: 24];
-
-logic [ 7: 0] o_limit_15__0 = i_descriptor[47: 32];
-logic [ 7: 0] o_limit_19_16 = i_descriptor[19: 16];
-
-assign o_base                = { o_base_31_24, o_base_23_16, o_base_15__0 };
-assign o_limit               = { o_limit_19_16, o_limit_15__0 };
+assign o_base                = { i_descriptor[31: 24], i_descriptor[ 7: 0], i_descriptor[63: 48] };
+assign o_limit               = { i_descriptor[19: 16], i_descriptor[47: 32] };
 assign o_granularity         = i_descriptor[   23];
 assign o_present             = i_descriptor[   15];
 assign o_privilege_level     = i_descriptor[14: 13];

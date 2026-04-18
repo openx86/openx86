@@ -59,11 +59,18 @@ module chip_at24lc32_eeprom #(
         end
     end
 
-    logic scl_rise = (scl_q == 1'b0) && (i_scl == 1'b1);
-    logic scl_fall = (scl_q == 1'b1) && (i_scl == 1'b0);
+    logic scl_rise;
+    logic scl_fall;
 
-    logic start_cond = (sda_q == 1'b1) && (i_sda == 1'b0) && (i_scl == 1'b1);
-    logic stop_cond  = (sda_q == 1'b0) && (i_sda == 1'b1) && (i_scl == 1'b1);
+    logic start_cond;
+    logic stop_cond;
+
+    always_comb begin
+        scl_rise   = (scl_q == 1'b0) && (i_scl == 1'b1);
+        scl_fall   = (scl_q == 1'b1) && (i_scl == 1'b0);
+        start_cond = (sda_q == 1'b1) && (i_sda == 1'b0) && (i_scl == 1'b1);
+        stop_cond  = (sda_q == 1'b0) && (i_sda == 1'b1) && (i_scl == 1'b1);
+    end
 
     typedef enum logic [ 3: 0] {
         ST_IDLE,

@@ -23,8 +23,11 @@ module stage_2_dec_decode_x87_esc (
 
     import stage_2_dec_decode_x87_pkg::*;
 
-    logic [ 7: 0] esc = i_b0;
-    logic [ 7: 0] mr = i_b1;
+    logic [ 7: 0] esc;
+    logic [ 7: 0] mr;
+
+    assign esc = i_b0;
+    assign mr = i_b1;
 
     assign o_mod = mr[ 7:  6];
     assign o_reg = mr[ 5:  3];

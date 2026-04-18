@@ -131,11 +131,16 @@ module sdram_controller #(
     // ------------------------------------------------------------------------
     // Address mapping helpers
     // ------------------------------------------------------------------------
-    logic [22: 0] halfword_addr = i_addr_off[23:  1]; // 16-bit addressed (byte_off >> 1)
+    logic [22: 0] halfword_addr; // 16-bit addressed (byte_off >> 1)
 
-    logic [12: 0] row  = halfword_addr[22: 10];
-    logic [ 1: 0]  bank = halfword_addr[ 9:  8];
-    logic [ 8: 0]  col  = {1'b0, halfword_addr[ 7: 0]}; // burst start col
+    logic [12: 0] row;
+    logic [ 1: 0] bank;
+    logic [ 8: 0] col; // burst start col
+
+    assign halfword_addr = i_addr_off[23:  1];
+    assign row = halfword_addr[22: 10];
+    assign bank = halfword_addr[ 9:  8];
+    assign col = {1'b0, halfword_addr[ 7: 0]};
 
     // ------------------------------------------------------------------------
     // Mode register value: BL=2, burst sequential, CAS=CAS, write burst=programmed
@@ -196,8 +201,10 @@ module sdram_controller #(
     logic        lat_we;
     logic [31: 0] lat_wdata;
 
-    logic refresh_due = (refresh_ctr >= REFRESH_CYCLES-1);
+    logic refresh_due;
     int unsigned refresh_ctr;
+
+    assign refresh_due = (refresh_ctr >= REFRESH_CYCLES-1);
 
     // dq output for writes
     logic [15: 0] dq_out_r;

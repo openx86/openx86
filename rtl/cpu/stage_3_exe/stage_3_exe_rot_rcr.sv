@@ -20,6 +20,7 @@ module stage_3_exe_rot_rcr (
         tmp = a;
         sh = count[ 4: 0];
         cf = cf_in;
+        next_cf = cf_in;
 
         for (int i = 0; i < 32; i++) begin
             if (i < sh) begin

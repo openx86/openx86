@@ -19,16 +19,22 @@ module sdcard_4bit_phy (
     input  logic         i_host_dat_oe,
     output logic [ 3: 0] o_host_dat_in,
     output logic         o_sd_clk_pin,
-    inout  logic         io_sd_cmd,
-    inout  logic [ 3: 0] io_sd_dat
+    output logic         o_sd_cmd_out,
+    output logic         o_sd_cmd_oe,
+    input  logic         i_sd_cmd_in,
+    output logic [ 3: 0] o_sd_dat_out,
+    output logic         o_sd_dat_oe,
+    input  logic [ 3: 0] i_sd_dat_in
 );
 
     assign o_sd_clk_pin = i_sd_clk;
 
-    assign io_sd_cmd = i_host_cmd_oe ? i_host_cmd_out : 1'bz;
-    assign o_host_cmd_in = io_sd_cmd;
+    assign o_sd_cmd_out = i_host_cmd_out;
+    assign o_sd_cmd_oe = i_host_cmd_oe;
+    assign o_host_cmd_in = i_sd_cmd_in;
 
-    assign io_sd_dat = i_host_dat_oe ? i_host_dat_out : 4'bzzzz;
-    assign o_host_dat_in = io_sd_dat;
+    assign o_sd_dat_out = i_host_dat_out;
+    assign o_sd_dat_oe = i_host_dat_oe;
+    assign o_host_dat_in = i_sd_dat_in;
 
 endmodule

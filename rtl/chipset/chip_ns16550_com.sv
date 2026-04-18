@@ -29,7 +29,9 @@ module chip_ns16550_com (
     localparam logic [ 3: 0] LP_IIR_THRE = 4'b0010;
     localparam logic [ 3: 0] LP_IIR_RDA  = 4'b0100;
 
-    logic [ 2: 0] off = i_a;
+    logic [ 2: 0] off;
+
+    assign off = i_a;
 
     logic [ 7: 0] rbr;
     logic         rbr_valid;
@@ -41,9 +43,13 @@ module chip_ns16550_com (
     logic [ 7: 0] dll;
     logic [ 7: 0] dlm;
 
-    logic         dlab = lcr[7];
-    logic         wr = !i_cs_n && !i_wr_n;
-    logic         rd = !i_cs_n && !i_rd_n;
+    logic         dlab;
+    logic         wr;
+    logic         rd;
+
+    assign dlab = lcr[7];
+    assign wr = !i_cs_n && !i_wr_n;
+    assign rd = !i_cs_n && !i_rd_n;
 
     logic         thr_empty;
     logic         tx_empty;
@@ -53,16 +59,25 @@ module chip_ns16550_com (
     logic [ 3: 0] msr_status;
     logic [ 3: 0] msr_status_prev;
     logic [ 3: 0] msr_delta;
-    logic [ 7: 0] msr = {msr_status, msr_delta};
+    logic [ 7: 0] msr;
 
-    logic         irq_rda = ier[0] && rbr_valid;
-    logic         irq_thre = ier[1] && thre_irq_pending;
-    logic         irq_ms = ier[3] && (|msr_delta);
+    assign msr = {msr_status, msr_delta};
+
+    logic         irq_rda;
+    logic         irq_thre;
+    logic         irq_ms;
     logic [ 3: 0] iir_code;
-    logic [ 1: 0] iir_fifo_bits = fcr[0] ? 2'b11 : 2'b00;
-    logic [ 7: 0] iir = {iir_fifo_bits, 2'b00, iir_code[3:1], iir_code[0]};
+    logic [ 1: 0] iir_fifo_bits;
+    logic [ 7: 0] iir;
 
-    logic [ 7: 0] lsr = {1'b0, tx_empty, thr_empty, 1'b0, 1'b0, 1'b0, 1'b0, rbr_valid};
+    logic [ 7: 0] lsr;
+
+    assign irq_rda = ier[0] && rbr_valid;
+    assign irq_thre = ier[1] && thre_irq_pending;
+    assign irq_ms = ier[3] && (|msr_delta);
+    assign iir_fifo_bits = fcr[0] ? 2'b11 : 2'b00;
+    assign iir = {iir_fifo_bits, 2'b00, iir_code[3:1], iir_code[0]};
+    assign lsr = {1'b0, tx_empty, thr_empty, 1'b0, 1'b0, 1'b0, 1'b0, rbr_valid};
 
 
 

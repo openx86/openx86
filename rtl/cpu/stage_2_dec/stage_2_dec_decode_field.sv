@@ -258,18 +258,21 @@ module stage_2_dec_decode_field (
     output logic        o_error
 );
 
-logic tttn_at_1_3_0 =
+logic tttn_at_1_3_0;
+assign tttn_at_1_3_0 =
 i_opcode_x86_SETcc_byte_set_on_condition |
 0;
 assign o_tttn = tttn_at_1_3_0 ? i_instruction[1][ 3: 0] : 4'b0000;
 
-logic sreg3_at_1_5_3 =
+logic sreg3_at_1_5_3;
+assign sreg3_at_1_5_3 =
 i_opcode_x86_MOV_reg_mem_to_sreg |
 i_opcode_x86_MOV_sreg_to_reg_mem |
 i_opcode_x86_POP_sreg_3 |
 i_opcode_x86_PUSH_sreg_3 |
 0;
-logic sreg2_at_0_4_3 =
+logic sreg2_at_0_4_3;
+assign sreg2_at_0_4_3 =
 i_opcode_x86_POP_sreg_2 |
 i_opcode_x86_PUSH_sreg_2 |
 0;
@@ -285,7 +288,8 @@ always_comb begin
     endcase
 end
 
-logic eee_at_2_5_3 =
+logic eee_at_2_5_3;
+assign eee_at_2_5_3 =
 i_opcode_x86_MOV_CR_from_reg |
 i_opcode_x86_MOV_reg_from_CR |
 i_opcode_x86_MOV_DR_from_reg |
@@ -295,7 +299,8 @@ i_opcode_x86_MOV_reg_from_TR |
 0;
 assign o_eee = i_instruction[2][ 5:  3];
 
-logic reg_1_at_0_2_0 =
+logic reg_1_at_0_2_0;
+assign reg_1_at_0_2_0 =
 i_opcode_x86_DEC_reg |
 i_opcode_x86_INC_reg |
 i_opcode_x86_MOV_imm_to_reg |
@@ -303,7 +308,8 @@ i_opcode_x86_POP_reg |
 i_opcode_x86_PUSH_reg |
 i_opcode_x86_XCHG_reg_with_acc_short |
 0;
-logic reg_1_at_1_5_3 =
+logic reg_1_at_1_5_3;
+assign reg_1_at_1_5_3 =
 i_opcode_x86_ADC_reg_to_reg_mem |
 i_opcode_x86_ADC_reg_mem_to_reg |
 i_opcode_x86_ADD_reg_to_reg_mem |
@@ -311,10 +317,12 @@ i_opcode_x86_ADD_reg_mem_to_reg |
 i_opcode_x86_AND_reg_to_reg_mem |
 i_opcode_x86_AND_reg_mem_to_reg |
 0;
-logic reg_1_at_1_2_0 =
+logic reg_1_at_1_2_0;
+assign reg_1_at_1_2_0 =
 i_opcode_x86_BSWAP_byte_swap |
 0;
-logic reg_1_at_2_2_0 =
+logic reg_1_at_2_2_0;
+assign reg_1_at_2_2_0 =
 i_opcode_x86_MOV_CR_from_reg |
 i_opcode_x86_MOV_reg_from_CR |
 i_opcode_x86_MOV_DR_from_reg |
@@ -338,7 +346,8 @@ always_comb begin
     endcase
 end
 
-logic w_at_0_0 =
+logic w_at_0_0;
+assign w_at_0_0 =
 i_opcode_x86_ADC_reg_to_reg_mem |
 i_opcode_x86_ADC_reg_mem_to_reg |
 i_opcode_x86_ADC_imm_to_reg_mem |
@@ -420,10 +429,12 @@ i_opcode_x86_XOR_reg_mem_to_reg |
 i_opcode_x86_XOR_imm_to_reg_mem |
 i_opcode_x86_XOR_imm_to_acc |
 0;
-logic w_at_0_3 =
+logic w_at_0_3;
+assign w_at_0_3 =
 i_opcode_x86_MOV_imm_to_reg |
 0;
-logic w_at_1_0 =
+logic w_at_1_0;
+assign w_at_1_0 =
 i_opcode_x86_CMPXCHG_compare_and_exchange |
 i_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg |
 i_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg |
@@ -443,7 +454,8 @@ always_comb begin
     endcase
 end
 
-logic s_at_0_1 =
+logic s_at_0_1;
+assign s_at_0_1 =
 i_opcode_x86_ADC_imm_to_reg_mem |
 i_opcode_x86_ADD_imm_to_reg_mem |
 i_opcode_x86_AND_imm_to_reg_mem |
@@ -598,7 +610,8 @@ always_comb begin
     endcase
 end
 
-logic unsigned_full_offset_selector_is_present =
+logic unsigned_full_offset_selector_is_present;
+assign unsigned_full_offset_selector_is_present =
 i_opcode_x86_CALL_in_other_segment_direct |
 i_opcode_x86_JMP_to_other_segment_direct |
 0;

@@ -88,49 +88,83 @@ module stage_2_dec_decode_mod_rm (
 // sib_is_present is 1'b1 means this module's signal is invalid
 // need to check s-i-b byte for correct segment & base & index & displacement signal
 
-logic mod_00 = (i_mod == 2'b00);
-logic mod_01 = (i_mod == 2'b01);
-logic mod_10 = (i_mod == 2'b10);
-logic mod_11 = (i_mod == 2'b11);
+logic mod_00;
+logic mod_01;
+logic mod_10;
+logic mod_11;
 
-logic rm_000 = (i_rm == 3'b000);
-logic rm_001 = (i_rm == 3'b001);
-logic rm_010 = (i_rm == 3'b010);
-logic rm_011 = (i_rm == 3'b011);
-logic rm_100 = (i_rm == 3'b100);
-logic rm_101 = (i_rm == 3'b101);
-logic rm_110 = (i_rm == 3'b110);
-logic rm_111 = (i_rm == 3'b111);
+logic rm_000;
+logic rm_001;
+logic rm_010;
+logic rm_011;
+logic rm_100;
+logic rm_101;
+logic rm_110;
+logic rm_111;
 
-logic default_operation_size_16 = (i_default_operand_size == `default_operation_size_16);
-logic default_operation_size_32 = (i_default_operand_size == `default_operation_size_32);
+logic default_operation_size_16;
+logic default_operation_size_32;
+
+assign mod_00 = (i_mod == 2'b00);
+assign mod_01 = (i_mod == 2'b01);
+assign mod_10 = (i_mod == 2'b10);
+assign mod_11 = (i_mod == 2'b11);
+assign rm_000 = (i_rm == 3'b000);
+assign rm_001 = (i_rm == 3'b001);
+assign rm_010 = (i_rm == 3'b010);
+assign rm_011 = (i_rm == 3'b011);
+assign rm_100 = (i_rm == 3'b100);
+assign rm_101 = (i_rm == 3'b101);
+assign rm_110 = (i_rm == 3'b110);
+assign rm_111 = (i_rm == 3'b111);
+assign default_operation_size_16 = (i_default_operand_size == `default_operation_size_16);
+assign default_operation_size_32 = (i_default_operand_size == `default_operation_size_32);
 
 
 // segment register
 
-logic mod_00_DS_16_bit = mod_00 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_110 | rm_111);
-logic mod_01_DS_16_bit = mod_01 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_111);
-logic mod_10_DS_16_bit = mod_10 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_111);
+logic mod_00_DS_16_bit;
+logic mod_01_DS_16_bit;
+logic mod_10_DS_16_bit;
 
-logic mod_00_SS_16_bit = mod_00 & (rm_010 | rm_011);
-logic mod_01_SS_16_bit = mod_01 & (rm_010 | rm_011 | rm_110);
-logic mod_10_SS_16_bit = mod_10 & (rm_010 | rm_011 | rm_110);
+logic mod_00_SS_16_bit;
+logic mod_01_SS_16_bit;
+logic mod_10_SS_16_bit;
 
-logic mod_00_DS_32_bit = mod_00;
-logic mod_01_DS_32_bit = mod_01 & ~rm_101;
-logic mod_10_DS_32_bit = mod_10 & ~rm_101;
+logic mod_00_DS_32_bit;
+logic mod_01_DS_32_bit;
+logic mod_10_DS_32_bit;
 
-logic mod_00_SS_32_bit = 1'b0;
-logic mod_01_SS_32_bit = mod_01 & rm_101;
-logic mod_10_SS_32_bit = mod_10 & rm_101;
+logic mod_00_SS_32_bit;
+logic mod_01_SS_32_bit;
+logic mod_10_SS_32_bit;
 
-logic DS_16_bit = mod_00_DS_16_bit | mod_01_DS_16_bit | mod_10_DS_16_bit;
-logic SS_16_bit = mod_00_SS_16_bit | mod_01_SS_16_bit | mod_10_SS_16_bit;
-logic DS_32_bit = mod_00_DS_32_bit | mod_01_DS_32_bit | mod_10_DS_32_bit;
-logic SS_32_bit = mod_00_SS_32_bit | mod_01_SS_32_bit | mod_10_SS_32_bit;
+logic DS_16_bit;
+logic SS_16_bit;
+logic DS_32_bit;
+logic SS_32_bit;
 
-logic segment_reg_index_DS = (default_operation_size_16 & DS_16_bit) | (default_operation_size_32 & DS_32_bit);
-logic segment_reg_index_SS = (default_operation_size_16 & SS_16_bit) | (default_operation_size_32 & SS_32_bit);
+logic segment_reg_index_DS;
+logic segment_reg_index_SS;
+
+assign mod_00_DS_16_bit = mod_00 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_110 | rm_111);
+assign mod_01_DS_16_bit = mod_01 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_111);
+assign mod_10_DS_16_bit = mod_10 & (rm_000 | rm_001 | rm_100 | rm_101 | rm_111);
+assign mod_00_SS_16_bit = mod_00 & (rm_010 | rm_011);
+assign mod_01_SS_16_bit = mod_01 & (rm_010 | rm_011 | rm_110);
+assign mod_10_SS_16_bit = mod_10 & (rm_010 | rm_011 | rm_110);
+assign mod_00_DS_32_bit = mod_00;
+assign mod_01_DS_32_bit = mod_01 & ~rm_101;
+assign mod_10_DS_32_bit = mod_10 & ~rm_101;
+assign mod_00_SS_32_bit = 1'b0;
+assign mod_01_SS_32_bit = mod_01 & rm_101;
+assign mod_10_SS_32_bit = mod_10 & rm_101;
+assign DS_16_bit = mod_00_DS_16_bit | mod_01_DS_16_bit | mod_10_DS_16_bit;
+assign SS_16_bit = mod_00_SS_16_bit | mod_01_SS_16_bit | mod_10_SS_16_bit;
+assign DS_32_bit = mod_00_DS_32_bit | mod_01_DS_32_bit | mod_10_DS_32_bit;
+assign SS_32_bit = mod_00_SS_32_bit | mod_01_SS_32_bit | mod_10_SS_32_bit;
+assign segment_reg_index_DS = (default_operation_size_16 & DS_16_bit) | (default_operation_size_32 & DS_32_bit);
+assign segment_reg_index_SS = (default_operation_size_16 & SS_16_bit) | (default_operation_size_32 & SS_32_bit);
 
 always_comb begin
     unique case (1'b1)
@@ -146,13 +180,20 @@ assign o_sib_is_present = default_operation_size_32 & ~mod_11 & rm_100;
 
 
 // base register
-logic base_mod_xx_BX = ~mod_11 & (rm_000 | rm_001 | rm_111);
-logic base_mod_00_BP =  mod_00 & (rm_010 | rm_011);
-logic base_mod_01_BP =  mod_01 & (rm_010 | rm_011 | rm_110);
-logic base_mod_10_BP =  mod_10 & (rm_010 | rm_011 | rm_110);
+logic base_mod_xx_BX;
+logic base_mod_00_BP;
+logic base_mod_01_BP;
+logic base_mod_10_BP;
 
-logic base_16_BX = base_mod_xx_BX;
-logic base_16_BP = base_mod_00_BP | base_mod_01_BP | base_mod_10_BP;
+logic base_16_BX;
+logic base_16_BP;
+
+assign base_mod_xx_BX = ~mod_11 & (rm_000 | rm_001 | rm_111);
+assign base_mod_00_BP = mod_00 & (rm_010 | rm_011);
+assign base_mod_01_BP = mod_01 & (rm_010 | rm_011 | rm_110);
+assign base_mod_10_BP = mod_10 & (rm_010 | rm_011 | rm_110);
+assign base_16_BX = base_mod_xx_BX;
+assign base_16_BP = base_mod_00_BP | base_mod_01_BP | base_mod_10_BP;
 
 always_comb begin
     unique case (1'b1)
@@ -162,23 +203,37 @@ always_comb begin
     endcase
 end
 
-logic base_reg_size_16 = default_operation_size_16 & (base_16_BX | base_16_BP);
-logic base_reg_size_32 = 0;
+logic base_reg_size_16;
+logic base_reg_size_32;
+
+assign base_reg_size_16 = default_operation_size_16 & (base_16_BX | base_16_BP);
+assign base_reg_size_32 = 1'b0;
 
 assign o_base_reg_is_present = base_reg_size_16 | base_reg_size_32;
 
 
 // index register
-logic index_mod_xx__SI = default_operation_size_16 & ~mod_11 & (rm_000 | rm_010 | rm_100);
-logic index_mod_xx__DI = default_operation_size_16 & ~mod_11 & (rm_001 | rm_011 | rm_101);
-logic index_mod_xx_EAX = default_operation_size_32 & ~mod_11 & rm_000;
-logic index_mod_xx_ECX = default_operation_size_32 & ~mod_11 & rm_001;
-logic index_mod_xx_EDX = default_operation_size_32 & ~mod_11 & rm_010;
-logic index_mod_xx_EBX = default_operation_size_32 & ~mod_11 & rm_011;
-logic index_mod_xx_ESP = 0;
-logic index_mod_xx_EBP = default_operation_size_32 & (mod_01 | mod_10) & rm_101;
-logic index_mod_xx_ESI = default_operation_size_32 & ~mod_11 & rm_110;
-logic index_mod_xx_EDI = default_operation_size_32 & ~mod_11 & rm_111;
+logic index_mod_xx__SI;
+logic index_mod_xx__DI;
+logic index_mod_xx_EAX;
+logic index_mod_xx_ECX;
+logic index_mod_xx_EDX;
+logic index_mod_xx_EBX;
+logic index_mod_xx_ESP;
+logic index_mod_xx_EBP;
+logic index_mod_xx_ESI;
+logic index_mod_xx_EDI;
+
+assign index_mod_xx__SI = default_operation_size_16 & ~mod_11 & (rm_000 | rm_010 | rm_100);
+assign index_mod_xx__DI = default_operation_size_16 & ~mod_11 & (rm_001 | rm_011 | rm_101);
+assign index_mod_xx_EAX = default_operation_size_32 & ~mod_11 & rm_000;
+assign index_mod_xx_ECX = default_operation_size_32 & ~mod_11 & rm_001;
+assign index_mod_xx_EDX = default_operation_size_32 & ~mod_11 & rm_010;
+assign index_mod_xx_EBX = default_operation_size_32 & ~mod_11 & rm_011;
+assign index_mod_xx_ESP = 1'b0;
+assign index_mod_xx_EBP = default_operation_size_32 & (mod_01 | mod_10) & rm_101;
+assign index_mod_xx_ESI = default_operation_size_32 & ~mod_11 & rm_110;
+assign index_mod_xx_EDI = default_operation_size_32 & ~mod_11 & rm_111;
 
 always_comb begin
     unique case (1'b1)
@@ -196,8 +251,11 @@ always_comb begin
     endcase
 end
 
-logic index_reg_size_16 = default_operation_size_16 & (index_mod_xx__SI | index_mod_xx__DI);
-logic index_reg_size_32 = default_operation_size_32 & (
+logic index_reg_size_16;
+logic index_reg_size_32;
+
+assign index_reg_size_16 = default_operation_size_16 & (index_mod_xx__SI | index_mod_xx__DI);
+assign index_reg_size_32 = default_operation_size_32 & (
     index_mod_xx_EAX |
     index_mod_xx_ECX |
     index_mod_xx_EDX |
@@ -231,9 +289,13 @@ assign o_gen_reg_index = i_rm;
 // which may appear in the primary opcode bytes, or as
 // the reg field of the ``mod r/m'' byte, or as the r/m
 // field of the ``mod r/m'' byte.
-logic gpr_reg_bit_width__8 = i_w_is_present ? (~i_w) : 1'b0;
-logic gpr_reg_bit_width_16 = i_w_is_present ? (i_w & default_operation_size_16) : default_operation_size_16;
-logic gpr_reg_bit_width_32 = i_w_is_present ? (i_w & default_operation_size_32) : default_operation_size_32;
+logic gpr_reg_bit_width__8;
+logic gpr_reg_bit_width_16;
+logic gpr_reg_bit_width_32;
+
+assign gpr_reg_bit_width__8 = i_w_is_present ? (~i_w) : 1'b0;
+assign gpr_reg_bit_width_16 = i_w_is_present ? (i_w & default_operation_size_16) : default_operation_size_16;
+assign gpr_reg_bit_width_32 = i_w_is_present ? (i_w & default_operation_size_32) : default_operation_size_32;
 always_comb begin
     unique case (1'b1)
         gpr_reg_bit_width__8: o_gen_reg_bit_width <= `bit_width_gpr__8;

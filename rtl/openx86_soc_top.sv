@@ -105,7 +105,6 @@ module openx86_soc_top #(
     logic [15: 0] sdram_phy_dq_out;
     logic        sdram_phy_dq_oe;
     logic        sdram_phy_clk, sdram_phy_cke;
-    logic [15: 0] sdram_phy_dq_in = io_sdram_dq;
 
     logic        pic_intr;
 
@@ -116,6 +115,12 @@ module openx86_soc_top #(
     logic [ 3: 0]  b_sd_dat_o;
     logic        b_sd_dat_oe;
     logic [ 3: 0]  b_nat_dat_i;
+    logic        sdio_cmd_out;
+    logic        sdio_cmd_oe;
+    logic        sdio_cmd_in;
+    logic [ 3: 0]  sdio_dat_out;
+    logic        sdio_dat_oe;
+    logic [ 3: 0]  sdio_dat_in;
 
     w686_cpu u_cpu (
         .bus_vaild        ( bus_valid ),
@@ -143,6 +148,12 @@ module openx86_soc_top #(
     assign o_sdram_ba    = sdram_phy_ba;
     assign o_sdram_a     = sdram_phy_a;
     assign o_sdram_dqm   = sdram_phy_dqm;
+
+    // SDIO CMD/DAT tri-state at top-level to satisfy synthesis structural-net requirements.
+    assign io_sdio_cmd = sdio_cmd_oe ? sdio_cmd_out : 1'bz;
+    assign sdio_cmd_in = io_sdio_cmd;
+    assign io_sdio_dat = sdio_dat_oe ? sdio_dat_out : 4'bzzzz;
+    assign sdio_dat_in = io_sdio_dat;
 
     bus_controller #(
         .USE_SDIO_DISK ( USE_SDIO_DISK )
@@ -207,8 +218,12 @@ module openx86_soc_top #(
         .i_host_dat_oe  ( b_sd_dat_oe ),
         .o_host_dat_in  ( b_nat_dat_i ),
         .o_sd_clk_pin   ( o_sdio_clk ),
-        .io_sd_cmd      ( io_sdio_cmd ),
-        .io_sd_dat      ( io_sdio_dat )
+        .o_sd_cmd_out   ( sdio_cmd_out ),
+        .o_sd_cmd_oe    ( sdio_cmd_oe ),
+        .i_sd_cmd_in    ( sdio_cmd_in ),
+        .o_sd_dat_out   ( sdio_dat_out ),
+        .o_sd_dat_oe    ( sdio_dat_oe ),
+        .i_sd_dat_in    ( sdio_dat_in )
     );
 
     sdram_controller #(
@@ -241,7 +256,7 @@ module openx86_soc_top #(
         .o_sdram_dqm    ( sdram_phy_dqm ),
         .o_sdram_dq_out ( sdram_phy_dq_out ),
         .o_sdram_dq_oe  ( sdram_phy_dq_oe ),
-        .i_sdram_dq_in  ( sdram_phy_dq_in )
+        .i_sdram_dq_in  ( io_sdram_dq )
     );
 
     // VGA Graphics Adapter: bus VRAM writes + VGA I/O decode (see rtl/bus_controller.sv)

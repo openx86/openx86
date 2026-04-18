@@ -21,12 +21,16 @@ module chip_centronics_lpt (
     input  logic         clock
 );
 
-    logic [ 2: 0] off = i_a;
+    logic [ 2: 0] off;
+
+    assign off = i_a;
 
     logic [ 7: 0] data_reg;
     logic [ 7: 0] ctrl_reg;
 
-    logic wr = !i_cs_n && !i_wr_n;
+    logic wr;
+
+    assign wr = !i_cs_n && !i_wr_n;
 
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
@@ -52,7 +56,9 @@ module chip_centronics_lpt (
         1'b1
     };
 
-    logic rd = !i_cs_n && !i_rd_n;
+    logic rd;
+
+    assign rd = !i_cs_n && !i_rd_n;
 
     always_comb begin
         o_d = 8'hFF;

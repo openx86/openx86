@@ -40,7 +40,7 @@ module stage_1_isc_mmu_seg_segmentation_unit #(
     input  logic          reset_n
 );
 
-logic  [63: 0] segment_descriptor = i_segment_descriptor[i_segment_index];
+logic  [63: 0] segment_descriptor;
 
 logic [31: 0] base;
 logic [19: 0] limit;
@@ -75,27 +75,40 @@ stage_1_isc_mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .i_descriptor                          ( segment_descriptor )
 );
 
-logic is_index_CS = (i_segment_index == 3'b001); // CS
+logic is_index_CS; // CS
 
-logic is_code_segment = segment_type & date_or_code_executable;
-logic is_data_segment = segment_type & ~date_or_code_executable;
+logic is_code_segment;
+logic is_data_segment;
 
-logic is_read  = ~i_write_enable;
-logic is_write = i_write_enable;
+logic is_read;
+logic is_write;
 
-logic is_granularity_byte = date_or_code_granularity;
-logic is_granularity_page = ~date_or_code_granularity;
+logic is_granularity_byte;
+logic is_granularity_page;
 
 // need to confirm the logic is greater equal than(=>) or greater than(>)
-logic exception_limit = (is_granularity_byte & i_effective_address >= limit) | (is_granularity_page & i_effective_address >= (limit << 4));
+logic exception_limit;
 
 // check CPL > RPL when execute loading to segment register instruction
 // check CPL > DPL immediately
-logic exception_privilege_level = i_current_privilege_level >= date_or_code_privilege_level;
+logic exception_privilege_level;
 
-logic exception_read = is_read & ~read_from_fetch & ~code_readable;
+logic exception_read;
 
-logic exception_write = (is_write & is_index_CS) | (is_write & is_data_segment & ~data_writeable);
+logic exception_write;
+
+assign segment_descriptor = i_segment_descriptor[i_segment_index];
+assign is_index_CS = (i_segment_index == 3'b001);
+assign is_code_segment = segment_type & date_or_code_executable;
+assign is_data_segment = segment_type & ~date_or_code_executable;
+assign is_read = ~i_write_enable;
+assign is_write = i_write_enable;
+assign is_granularity_byte = date_or_code_granularity;
+assign is_granularity_page = ~date_or_code_granularity;
+assign exception_limit = (is_granularity_byte & i_effective_address >= limit) | (is_granularity_page & i_effective_address >= (limit << 4));
+assign exception_privilege_level = i_current_privilege_level >= date_or_code_privilege_level;
+assign exception_read = is_read & ~read_from_fetch & ~code_readable;
+assign exception_write = (is_write & is_index_CS) | (is_write & is_data_segment & ~data_writeable);
 
 assign o_segment_privilege_error =
 exception_limit |

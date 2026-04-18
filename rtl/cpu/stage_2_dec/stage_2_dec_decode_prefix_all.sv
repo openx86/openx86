@@ -94,16 +94,26 @@ logic        group_4_is_present [ 0:  3];
 logic        is_present [ 0:  3];
 logic [ 2: 0] segment_override_index [ 0:  3];
 
-logic  [ 2: 0] sum_group_1 = ({2'b0, group_1_is_present[0]} + {2'b0, group_1_is_present[1]} + {2'b0, group_1_is_present[2]} + {2'b0, group_1_is_present[3]});
-logic  [ 2: 0] sum_group_2 = ({2'b0, group_2_is_present[0]} + {2'b0, group_2_is_present[1]} + {2'b0, group_2_is_present[2]} + {2'b0, group_2_is_present[3]});
-logic  [ 2: 0] sum_group_3 = ({2'b0, group_3_is_present[0]} + {2'b0, group_3_is_present[1]} + {2'b0, group_3_is_present[2]} + {2'b0, group_3_is_present[3]});
-logic  [ 2: 0] sum_group_4 = ({2'b0, group_4_is_present[0]} + {2'b0, group_4_is_present[1]} + {2'b0, group_4_is_present[2]} + {2'b0, group_4_is_present[3]});
+logic  [ 2: 0] sum_group_1;
+logic  [ 2: 0] sum_group_2;
+logic  [ 2: 0] sum_group_3;
+logic  [ 2: 0] sum_group_4;
 
-logic         error_repeat_group_1 = (sum_group_1 > 1) ? 1'b1 : 1'b0;
-logic         error_repeat_group_2 = (sum_group_2 > 1) ? 1'b1 : 1'b0;
-logic         error_repeat_group_3 = (sum_group_3 > 1) ? 1'b1 : 1'b0;
-logic         error_repeat_group_4 = (sum_group_4 > 1) ? 1'b1 : 1'b0;
-logic         error_repeat         = error_repeat_group_1 | error_repeat_group_2 | error_repeat_group_3 | error_repeat_group_4;
+logic         error_repeat_group_1;
+logic         error_repeat_group_2;
+logic         error_repeat_group_3;
+logic         error_repeat_group_4;
+logic         error_repeat;
+
+assign sum_group_1 = ({2'b0, group_1_is_present[0]} + {2'b0, group_1_is_present[1]} + {2'b0, group_1_is_present[2]} + {2'b0, group_1_is_present[3]});
+assign sum_group_2 = ({2'b0, group_2_is_present[0]} + {2'b0, group_2_is_present[1]} + {2'b0, group_2_is_present[2]} + {2'b0, group_2_is_present[3]});
+assign sum_group_3 = ({2'b0, group_3_is_present[0]} + {2'b0, group_3_is_present[1]} + {2'b0, group_3_is_present[2]} + {2'b0, group_3_is_present[3]});
+assign sum_group_4 = ({2'b0, group_4_is_present[0]} + {2'b0, group_4_is_present[1]} + {2'b0, group_4_is_present[2]} + {2'b0, group_4_is_present[3]});
+assign error_repeat_group_1 = (sum_group_1 > 1) ? 1'b1 : 1'b0;
+assign error_repeat_group_2 = (sum_group_2 > 1) ? 1'b1 : 1'b0;
+assign error_repeat_group_3 = (sum_group_3 > 1) ? 1'b1 : 1'b0;
+assign error_repeat_group_4 = (sum_group_4 > 1) ? 1'b1 : 1'b0;
+assign error_repeat = error_repeat_group_1 | error_repeat_group_2 | error_repeat_group_3 | error_repeat_group_4;
 
 
 assign o_consume_bytes_prefix_1 = (is_present[0] == 1 & is_present[1] == 0);

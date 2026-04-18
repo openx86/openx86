@@ -50,10 +50,10 @@ module ide_controller #(
     logic [31: 0] mem_off;
     logic         rd_data_d;
 
-    logic [31: 0] disk_raddr = byte_addr;
+    logic [31: 0] disk_raddr;
     logic [ 7: 0] disk_rdata;
     logic         disk_sector_ready;
-    logic         disk_sector_req = async_on && (state == ST_WAIT_SECTOR);
+    logic         disk_sector_req;
 
     localparam logic [ 7: 0] LP_ST_RDY = 8'h40;
     localparam logic [ 7: 0] LP_ST_DRQ  = 8'h08;
@@ -61,13 +61,22 @@ module ide_controller #(
 
     localparam int LP_DISK_BYTES = P_SECTOR_BYTES * P_SECTOR_COUNT;
 
-    logic async_on = P_USE_SDIO_DISK;
-    logic [31: 0] mem_bytes = P_SECTOR_BYTES * P_SECTOR_COUNT;
-    logic [31: 0] byte_addr = mem_off * 32'(P_SECTOR_BYTES) + { 23'h0, buf_ptr };
+    logic         async_on;
+    logic [31: 0] mem_bytes;
+    logic [31: 0] byte_addr;
+
+    assign async_on = P_USE_SDIO_DISK;
+    assign mem_bytes = P_SECTOR_BYTES * P_SECTOR_COUNT;
+    assign byte_addr = mem_off * 32'(P_SECTOR_BYTES) + { 23'h0, buf_ptr };
+    assign disk_raddr = byte_addr;
+    assign disk_sector_req = async_on && (state == ST_WAIT_SECTOR);
 
 
-    logic wr = !i_cs_n && !i_wr_n;
-    logic rd = !i_cs_n && !i_rd_n;
+    logic wr;
+    logic rd;
+
+    assign wr = !i_cs_n && !i_wr_n;
+    assign rd = !i_cs_n && !i_rd_n;
 
 
     sdcard_controller #(
@@ -102,45 +111,47 @@ module ide_controller #(
             buf_ptr    <= '0;
             mem_off    <= '0;
             rd_data_d  <= 1'b0;
-        end else if (async_on && (state == ST_WAIT_SECTOR) && disk_sector_ready) begin
-            state    <= ST_DRQ;
-            buf_ptr  <= '0;
-            status_r <= LP_ST_DRQ | LP_ST_RDY;
-        end else if (wr) begin
-            unique case (i_addr)
-                16'h01F2: sector_cnt <= i_wdata;
-                16'h01F3: lba_lo  <= i_wdata;
-                16'h01F4: lba_mid <= i_wdata;
-                16'h01F5: lba_hi  <= i_wdata;
-                16'h01F6: drv_head <= i_wdata;
-                16'h01F7: begin
-                    if (i_wdata == 8'h20) begin
-                        mem_off <= { lba_hi, lba_mid, lba_lo };
-                        buf_ptr <= '0;
-                        if (async_on) begin
-                            state    <= ST_WAIT_SECTOR;
-                            status_r <= LP_ST_BSY;
-                        end else begin
-                            state    <= ST_DRQ;
-                            status_r <= LP_ST_DRQ | LP_ST_RDY;
+        end else begin
+            if (async_on && (state == ST_WAIT_SECTOR) && disk_sector_ready) begin
+                state    <= ST_DRQ;
+                buf_ptr  <= '0;
+                status_r <= LP_ST_DRQ | LP_ST_RDY;
+            end else if (wr) begin
+                unique case (i_addr)
+                    16'h01F2: sector_cnt <= i_wdata;
+                    16'h01F3: lba_lo  <= i_wdata;
+                    16'h01F4: lba_mid <= i_wdata;
+                    16'h01F5: lba_hi  <= i_wdata;
+                    16'h01F6: drv_head <= i_wdata;
+                    16'h01F7: begin
+                        if (i_wdata == 8'h20) begin
+                            mem_off <= { lba_hi, lba_mid, lba_lo };
+                            buf_ptr <= '0;
+                            if (async_on) begin
+                                state    <= ST_WAIT_SECTOR;
+                                status_r <= LP_ST_BSY;
+                            end else begin
+                                state    <= ST_DRQ;
+                                status_r <= LP_ST_DRQ | LP_ST_RDY;
+                            end
                         end
                     end
-                end
-                16'h03F6: ;
-                default: ;
-            endcase
-        end
+                    16'h03F6: ;
+                    default: ;
+                endcase
+            end
 
-        if (rd_data_d && !(rd && (i_addr == 16'h01F0) && (state == ST_DRQ))) begin
-            if (buf_ptr == (9'(P_SECTOR_BYTES) - 9'd1)) begin
-                state    <= ST_IDLE;
-                status_r <= LP_ST_RDY;
-                buf_ptr  <= '0;
-            end else
-                buf_ptr <= buf_ptr + 9'h1;
-        end
+            if (rd_data_d && !(rd && (i_addr == 16'h01F0) && (state == ST_DRQ))) begin
+                if (buf_ptr == (9'(P_SECTOR_BYTES) - 9'd1)) begin
+                    state    <= ST_IDLE;
+                    status_r <= LP_ST_RDY;
+                    buf_ptr  <= '0;
+                end else
+                    buf_ptr <= buf_ptr + 9'h1;
+            end
 
-        rd_data_d <= (rd && (i_addr == 16'h01F0) && (state == ST_DRQ));
+            rd_data_d <= (rd && (i_addr == 16'h01F0) && (state == ST_DRQ));
+        end
     end
 
 

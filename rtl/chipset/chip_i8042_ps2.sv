@@ -46,8 +46,11 @@ module chip_i8042_ps2 #(
     input  logic         reset_n
 );
 
-    logic wr = !i_cs_n && !i_wr_n;
-    logic rd = !i_cs_n && !i_rd_n;
+    logic wr;
+    logic rd;
+
+    assign wr = !i_cs_n && !i_wr_n;
+    assign rd = !i_cs_n && !i_rd_n;
 
     localparam int KBD_D = 16;
     localparam int AUX_D = 16;
@@ -58,8 +61,11 @@ module chip_i8042_ps2 #(
     logic [ 3: 0] aux_wptr, aux_rptr, aux_count;
     logic       use_aux_out;
 
-    logic kbd_obf = (kbd_count != 4'h0);
-    logic aux_obf = (aux_count != 4'h0);
+    logic kbd_obf;
+    logic aux_obf;
+
+    assign kbd_obf = (kbd_count != 4'h0);
+    assign aux_obf = (aux_count != 4'h0);
 
     logic kbd_if_en;
     logic aux_if_en;
@@ -74,21 +80,21 @@ module chip_i8042_ps2 #(
 
     logic        kbd_tx_req;
     logic [ 7: 0]  kbd_tx_byte;
-    logic        kbd_tx_busy = 1'b0;
-    logic        kbd_rx_str = 1'b0;
-    logic [ 7: 0]  kbd_rx_dat = '0;
-    logic        kbd_rx_err = 1'b0;
-    logic        kbd_tx_done = 1'b0;
-    logic        kbd_tx_err = 1'b0;
+    logic         kbd_tx_busy;
+    logic         kbd_rx_str;
+    logic [ 7: 0] kbd_rx_dat;
+    logic         kbd_rx_err;
+    logic         kbd_tx_done;
+    logic         kbd_tx_err;
 
     logic        aux_tx_req;
     logic [ 7: 0]  aux_tx_byte;
-    logic        aux_tx_busy = 1'b0;
-    logic        aux_rx_str = 1'b0;
-    logic [ 7: 0]  aux_rx_dat = '0;
-    logic        aux_rx_err = 1'b0;
-    logic        aux_tx_done = 1'b0;
-    logic        aux_tx_err = 1'b0;
+    logic         aux_tx_busy;
+    logic         aux_rx_str;
+    logic [ 7: 0] aux_rx_dat;
+    logic         aux_rx_err;
+    logic         aux_tx_done;
+    logic         aux_tx_err;
 
     logic        kbd_tx_pending;
     logic [ 7: 0]  kbd_tx_hold;
@@ -96,16 +102,24 @@ module chip_i8042_ps2 #(
     logic [ 7: 0]  aux_tx_hold;
     logic        rd_data_port_d;
 
-    logic obf_stat = kbd_obf | aux_obf;
-    logic obf_from_aux = aux_obf && (use_aux_out || !kbd_obf);
-    logic ibf_stat = kbd_tx_pending | aux_tx_pending | next_wr_to_aux | cmd_d2_pending | cmd_d3_pending;
-    logic [ 7: 0] kbd_head = kbd_fifo[kbd_rptr];
-    logic [ 7: 0] aux_head = aux_fifo[aux_rptr];
+    logic         obf_stat;
+    logic         obf_from_aux;
+    logic         ibf_stat;
+    logic [ 7: 0] kbd_head;
+    logic [ 7: 0] aux_head;
+
+    assign obf_stat = kbd_obf | aux_obf;
+    assign obf_from_aux = aux_obf && (use_aux_out || !kbd_obf);
+    assign ibf_stat = kbd_tx_pending | aux_tx_pending | next_wr_to_aux | cmd_d2_pending | cmd_d3_pending;
+    assign kbd_head = kbd_fifo[kbd_rptr];
+    assign aux_head = aux_fifo[aux_rptr];
 
     assign o_kbd_irq = kbd_if_en && kbd_irq_en && kbd_obf;
     assign o_aux_irq = aux_if_en && aux_irq_en && aux_obf;
 
-    logic [ 7: 0] status_rd = {
+    logic [ 7: 0] status_rd;
+
+    assign status_rd = {
         kbd_parity_err | aux_parity_err,
         1'b0,
         obf_from_aux,
@@ -168,6 +182,18 @@ module chip_i8042_ps2 #(
             assign o_ps2_aux_clk_oe  = 1'b0;
             assign o_ps2_aux_dat_out = 1'b1;
             assign o_ps2_aux_dat_oe  = 1'b0;
+            assign kbd_tx_busy       = 1'b0;
+            assign kbd_rx_str        = 1'b0;
+            assign kbd_rx_dat        = 8'h00;
+            assign kbd_rx_err        = 1'b0;
+            assign kbd_tx_done       = 1'b0;
+            assign kbd_tx_err        = 1'b0;
+            assign aux_tx_busy       = 1'b0;
+            assign aux_rx_str        = 1'b0;
+            assign aux_rx_dat        = 8'h00;
+            assign aux_rx_err        = 1'b0;
+            assign aux_tx_done       = 1'b0;
+            assign aux_tx_err        = 1'b0;
         end
     endgenerate
 

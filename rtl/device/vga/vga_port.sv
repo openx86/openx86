@@ -70,8 +70,11 @@ module vga_port (
 
     // h_count 和 v_count 现在是输出端口
 
-    logic h_visible = (h_count < H_VISIBLE);
-    logic v_visible = (v_count < V_VISIBLE);
+    logic h_visible;
+    logic v_visible;
+
+    assign h_visible = (h_count < H_VISIBLE);
+    assign v_visible = (v_count < V_VISIBLE);
 
     // 像素/行/帧计数
     always_ff @(posedge clock or negedge reset_n) begin

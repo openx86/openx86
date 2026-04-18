@@ -34,7 +34,9 @@ module stage_3_exe_ld_execute_load_segment (
     output logic         ready
 );
 
-logic is_code_segment_index = index_segment_register == `sreg_index_CS;
+logic is_code_segment_index;
+
+assign is_code_segment_index = index_segment_register == `sreg_index_CS;
 
 logic [31: 0] encode_base;
 logic [19: 0] encode_limit;

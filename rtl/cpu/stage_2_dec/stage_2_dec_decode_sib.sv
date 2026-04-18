@@ -34,28 +34,48 @@ module stage_2_dec_decode_sib (
     output logic        o_effecitve_address_undefined
 );
 
-logic [ 1: 0] sib_7_6 = i_sib[ 7:  6];
-logic [ 2: 0] sib_5_3 = i_sib[ 5:  3];
-logic [ 2: 0] sib_2_0 = i_sib[ 2: 0];
+logic [ 1: 0] sib_7_6;
+logic [ 2: 0] sib_5_3;
+logic [ 2: 0] sib_2_0;
 
-logic mod_00 = (i_mod == 2'b00);
-logic mod_01 = (i_mod == 2'b01);
-logic mod_10 = (i_mod == 2'b10);
-logic mod_11 = (i_mod == 2'b11);
+logic mod_00;
+logic mod_01;
+logic mod_10;
+logic mod_11;
 
-logic base_000 = (sib_2_0 == 3'b000);
-logic base_001 = (sib_2_0 == 3'b001);
-logic base_010 = (sib_2_0 == 3'b010);
-logic base_011 = (sib_2_0 == 3'b011);
-logic base_100 = (sib_2_0 == 3'b100);
-logic base_101 = (sib_2_0 == 3'b101);
-logic base_110 = (sib_2_0 == 3'b110);
-logic base_111 = (sib_2_0 == 3'b111);
+logic base_000;
+logic base_001;
+logic base_010;
+logic base_011;
+logic base_100;
+logic base_101;
+logic base_110;
+logic base_111;
 
-logic seg_SS_mod_00 = mod_00 & base_100;
-logic seg_SS_mod_01 = mod_01 & (base_100 | base_101);
-logic seg_SS_mod_10 = mod_10 & (base_100 | base_101);
-logic seg_SS_mod_xx = seg_SS_mod_00 | seg_SS_mod_01 | seg_SS_mod_10;
+logic seg_SS_mod_00;
+logic seg_SS_mod_01;
+logic seg_SS_mod_10;
+logic seg_SS_mod_xx;
+
+assign sib_7_6 = i_sib[ 7:  6];
+assign sib_5_3 = i_sib[ 5:  3];
+assign sib_2_0 = i_sib[ 2: 0];
+assign mod_00 = (i_mod == 2'b00);
+assign mod_01 = (i_mod == 2'b01);
+assign mod_10 = (i_mod == 2'b10);
+assign mod_11 = (i_mod == 2'b11);
+assign base_000 = (sib_2_0 == 3'b000);
+assign base_001 = (sib_2_0 == 3'b001);
+assign base_010 = (sib_2_0 == 3'b010);
+assign base_011 = (sib_2_0 == 3'b011);
+assign base_100 = (sib_2_0 == 3'b100);
+assign base_101 = (sib_2_0 == 3'b101);
+assign base_110 = (sib_2_0 == 3'b110);
+assign base_111 = (sib_2_0 == 3'b111);
+assign seg_SS_mod_00 = mod_00 & base_100;
+assign seg_SS_mod_01 = mod_01 & (base_100 | base_101);
+assign seg_SS_mod_10 = mod_10 & (base_100 | base_101);
+assign seg_SS_mod_xx = seg_SS_mod_00 | seg_SS_mod_01 | seg_SS_mod_10;
 
 assign o_segment_reg_index = seg_SS_mod_xx ? `index_reg_seg__SS : `index_reg_seg__DS;
 

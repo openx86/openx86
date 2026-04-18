@@ -54,8 +54,11 @@ module chip_8254_pit (
     logic [16: 0] mode3_low_ticks  [0:2];
     logic [16: 0] mode3_phase_ticks [0:2];
 
-    logic wr = (!i_cs_n) && (!i_wr_n);
-    logic rd = (!i_cs_n) && (!i_rd_n);
+    logic wr;
+    logic rd;
+
+    assign wr = (!i_cs_n) && (!i_wr_n);
+    assign rd = (!i_cs_n) && (!i_rd_n);
 
     assign o_out0 = out_r[0];
     assign o_out1 = out_r[1];
