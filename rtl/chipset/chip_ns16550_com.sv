@@ -12,16 +12,16 @@ description: This module implements chip_ns16550_com.
 // ============================================================================
 
 module chip_ns16550_com (
-    input  logic         i_cs_n,
-    input  logic         i_rd_n,
-    input  logic         i_wr_n,
-    input  logic [ 2: 0] i_a,
-    input  logic [ 7: 0] i_d,
-    output logic [ 7: 0] o_d,
-    input  logic         i_rx_push,
-    input  logic [ 7: 0] i_rx_data,
-    input  logic         reset_n,
-    input  logic         clock
+    input  logic         i_cs_n,       // 低有效片选
+    input  logic         i_rd_n,       // 低有效读
+    input  logic         i_wr_n,       // 低有效写
+    input  logic [ 2: 0] i_a,          // 寄存器偏移（相对 0x3F8）
+    input  logic [ 7: 0] i_d,          // 写数据
+    output logic [ 7: 0] o_d,          // 读数据
+    input  logic         i_rx_push,    // 仿真/注入：推入一字节到接收缓冲
+    input  logic [ 7: 0] i_rx_data,    // 注入数据
+    input  logic         reset_n,      // 异步低有效复位
+    input  logic         clock         // 系统时钟
 );
 
     localparam logic [ 3: 0] LP_IIR_NONE = 4'b0001;
@@ -29,21 +29,21 @@ module chip_ns16550_com (
     localparam logic [ 3: 0] LP_IIR_THRE = 4'b0010;
     localparam logic [ 3: 0] LP_IIR_RDA  = 4'b0100;
 
-    logic [ 2: 0] off;
+    logic [ 2: 0] off;  // 当前寄存器索引
 
     assign off = i_a;
 
-    logic [ 7: 0] rbr;
-    logic         rbr_valid;
-    logic [ 7: 0] ier;
-    logic [ 7: 0] fcr;
-    logic [ 7: 0] lcr;
-    logic [ 7: 0] mcr;
-    logic [ 7: 0] scr;
-    logic [ 7: 0] dll;
-    logic [ 7: 0] dlm;
+    logic [ 7: 0] rbr;         // 接收缓冲（读）
+    logic         rbr_valid;   // RBR 有数据
+    logic [ 7: 0] ier;         // 中断允许
+    logic [ 7: 0] fcr;         // FIFO 控制（简化模型）
+    logic [ 7: 0] lcr;         // 线路控制（含 DLAB）
+    logic [ 7: 0] mcr;         // 调制解调器控制（含回环）
+    logic [ 7: 0] scr;         // 暂存寄存器
+    logic [ 7: 0] dll;         // 除数锁存低字节
+    logic [ 7: 0] dlm;         // 除数锁存高字节
 
-    logic         dlab;
+    logic         dlab;  // 除数锁存访问位
     logic         wr;
     logic         rd;
 
@@ -51,26 +51,26 @@ module chip_ns16550_com (
     assign wr = !i_cs_n && !i_wr_n;
     assign rd = !i_cs_n && !i_rd_n;
 
-    logic         thr_empty;
-    logic         tx_empty;
-    logic         tx_drain_pending;
-    logic         thre_irq_pending;
+    logic         thr_empty;         // THR 空（简化 TX）
+    logic         tx_empty;          // 发送移位路径空
+    logic         tx_drain_pending;  // 写 THR 后一拍排空
+    logic         thre_irq_pending;  // THRE 中断挂起
 
-    logic [ 3: 0] msr_status;
-    logic [ 3: 0] msr_status_prev;
-    logic [ 3: 0] msr_delta;
+    logic [ 3: 0] msr_status;       // MSR 高半字节（状态）
+    logic [ 3: 0] msr_status_prev;  // 上一拍状态（边沿检测）
+    logic [ 3: 0] msr_delta;        // MSR 低半字节（变化锁存）
     logic [ 7: 0] msr;
 
     assign msr = {msr_status, msr_delta};
 
-    logic         irq_rda;
-    logic         irq_thre;
-    logic         irq_ms;
-    logic [ 3: 0] iir_code;
-    logic [ 1: 0] iir_fifo_bits;
+    logic         irq_rda;       // 接收数据可用中断条件
+    logic         irq_thre;      // THRE 中断条件
+    logic         irq_ms;        // 调制解调器状态中断条件
+    logic [ 3: 0] iir_code;      // IIR 优先级编码结果
+    logic [ 1: 0] iir_fifo_bits; // IIR 中 FIFO 使能位占位
     logic [ 7: 0] iir;
 
-    logic [ 7: 0] lsr;
+    logic [ 7: 0] lsr;  // 线路状态（简化）
 
     assign irq_rda = ier[0] && rbr_valid;
     assign irq_thre = ier[1] && thre_irq_pending;
@@ -81,6 +81,7 @@ module chip_ns16550_com (
 
 
 
+    // MSR 高半字节：回环时反映 MCR 位；否则外部调制解调器输入未建模为 0。
     always_comb begin
         if (mcr[4])
             // loopback mode: MSR[7:4] reflects internal modem outputs
@@ -90,6 +91,7 @@ module chip_ns16550_com (
             msr_status = 4'b0000;
     end
 
+    // IIR 中断类型优先级：RDA > THRE > 调制解调器状态。
     always_comb begin
         // implemented priorities: RDA > THRE > Modem Status
         if (irq_rda)
@@ -103,6 +105,7 @@ module chip_ns16550_com (
     end
 
 
+    // 寄存器与简化发送/接收路径、MSR 边沿与读清逻辑。
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             rbr       <= 8'h0;
@@ -210,6 +213,7 @@ module chip_ns16550_com (
         end
     end
 
+    // 读寄存器：DLAB 影响 DLL/DLM 与 THR 选择。
     always_comb begin
         o_d = 8'hFF;
         if (rd) begin

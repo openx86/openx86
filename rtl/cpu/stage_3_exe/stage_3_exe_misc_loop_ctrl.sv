@@ -5,13 +5,15 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_misc_loop_ctrl.
 */
 module stage_3_exe_misc_loop_ctrl (
-    input  logic [31: 0]  ecx,
-    input  logic          zf,
-    input  logic [ 1: 0]   mode,
-    output logic [31: 0] ecx_next,
-    output logic         taken
+    input  logic [31: 0]  ecx,  // ECX 当前值
+    input  logic          zf,  // 零标志
+    input  logic [ 1: 0]   mode,  // LOOP 族模式
+    output logic [31: 0] ecx_next,  // LOOP 后 ECX
+    output logic         taken  // 条件成立 / 跳转
 );
+    // 组合逻辑：推导输出
     always_comb begin
+        // LOOP / LOOPE / LOOPNE：ECX 递减后与 ZF 组合
         unique case (mode)
             2'b00: begin
                 ecx_next = ecx - 32'd1;

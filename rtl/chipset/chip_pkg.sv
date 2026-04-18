@@ -15,6 +15,7 @@ description: This package defines shared declarations for chip_pkg.
 //   i_d[ 7: 0] 写数据；o_d[ 7: 0] 读数据（父级按优先级 mux）
 //   i_a*     寄存器/地址线，语义见各模块端口注释
 // ============================================================================
+// 芯片侧 I/O 基址与窗口常量（与 bus_controller 译码一致）。
 package chip_pkg;
 
     // DMA 8237 主片

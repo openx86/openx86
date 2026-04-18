@@ -12,41 +12,40 @@ description: This module implements stage_1_isc_if_instruction_fetch.
 
 `include "openx86_defs.h.sv"
 module stage_1_isc_if_instruction_fetch (
-    // signal from stage_4_mem_bus_interface_unit
+    // 取指总线（对 BIU/存储子系统）
     output logic         o_code_vaild,
     input  logic          i_code_ready,
     output logic [31: 0] o_code_address,
     input  logic [31: 0] i_code_data_read,
-    // MMU page-table walk (higher BIU priority than code/data)
+    // MMU 页表遍历总线（通常高于普通 code/data 优先级）
     output logic         o_mmu_bus_vaild,
     input  logic          i_mmu_bus_ready,
     output logic [31: 0] o_mmu_bus_addr,
     input  logic [31: 0] i_mmu_bus_rdata,
-    // signal from outside
+    // 段/分页上下文（来自 CPU 寄存器侧）
     input  logic          i_protected_mode,
     input  logic [15: 0] i_segment_selector [ 0:  5],
     input  logic [63: 0] i_segment_descriptor [ 0:  5],
     input  logic [ 1: 0]   i_current_privilege_level,
     input  logic          i_paging_enable,
     input  logic [31: 0] i_page_directory_base,
-    // signal from execute unit
+    // 执行单元：IP 更新完成后再取下一批
     input  logic          i_IP_vaild,
-    // instruction fetch
+    // 输出到译码：16B 指令缓冲
     output logic [ 7: 0] o_instruction [ 0: 15],
     output logic         o_instruction_ready,
     output logic         o_segment_fault,
-    // instruction pointer register file
+    // 指令指针
     input  logic [31: 0]  EIP,
-    // common
     input  logic          clock,
     input  logic          reset_n
 );
 
-logic        i_vaild;
-logic        o_ready;
-logic        if_mmu_bus_we;
-logic [31: 0] if_mmu_bus_wdata;
-logic        if_seg_fault;
+logic        i_vaild;           // MMU 请求门控（与 IP 有效对齐）
+logic        o_ready;           // MMU 完成（本模块当前未扇出使用）
+logic        if_mmu_bus_we;     // 取指路径不写内存（恒 0 语义由 MMU 封装）
+logic [31: 0] if_mmu_bus_wdata; // 写数据占位
+logic        if_seg_fault;      // 段单元报告的 fault
 
 assign i_vaild = i_IP_vaild;
 
@@ -80,11 +79,13 @@ stage_1_isc_mmu_memory_management_unit #(
 
 assign o_segment_fault = if_seg_fault;
 
+// 取指小状态机：等 EIP 有效 → 拉取 4×32b 并拼装 16B → 再回等 IP
 enum logic {
-    STATE_WAIT_FOR_CODE_DATA_READY = 1'h1,
-    STATE_WAIT_FOR_IP_VALID = 1'h0
+    STATE_WAIT_FOR_CODE_DATA_READY = 1'h1, // 等待存储返回并收齐 16 字节
+    STATE_WAIT_FOR_IP_VALID = 1'h0         // 等待执行侧给出有效 IP
 } state;
 
+// 状态转移：与 bytes_index 配合完成 4 次 32b 读
 always_ff @(posedge clock or negedge reset_n) begin
     if (~reset_n) begin
         state <= STATE_WAIT_FOR_IP_VALID;
@@ -111,8 +112,9 @@ always_ff @(posedge clock or negedge reset_n) begin
     end
 end
 
-logic [ 1: 0] bytes_index;
+logic [ 1: 0] bytes_index; // 当前正在接收第几个 32b 槽（0..3）
 
+// 输出握手与缓冲装载：按槽把 big-endian 32b 拆入 o_instruction
 always_ff @(posedge clock or negedge reset_n) begin
     if (~reset_n) begin
         o_code_vaild <= 0;
@@ -131,6 +133,7 @@ always_ff @(posedge clock or negedge reset_n) begin
                 if (i_code_ready) begin
                     bytes_index <= bytes_index + 1;
                     if (bytes_index < 2'h3) begin
+                        // 每个 i_code_ready 周期写入一个 32b 小端槽到 16B 缓冲
                         unique case (bytes_index)
                             2'h0: begin
                                 o_instruction[0*4:0*4+3] <= '{

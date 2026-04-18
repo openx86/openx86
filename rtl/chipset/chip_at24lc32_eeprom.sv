@@ -29,17 +29,17 @@ module chip_at24lc32_eeprom #(
     parameter int         PAGE_BYTES = 32
 ) (
     // ------------------------------------------------------------------------
-    // I2C bus pins
+    // I2C 总线引脚
     // ------------------------------------------------------------------------
-    input  logic i_scl,
-    input  logic i_sda,
-    output logic o_sda_oe, // 1 = drive low (0), 0 = release (Z)
+    input  logic i_scl,      // I2C 串行时钟（输入采样）
+    input  logic i_sda,    // I2C 串行数据
+    output logic o_sda_oe, // 1=开漏拉低 SDA，0=释放由上拉决定
 
     // ------------------------------------------------------------------------
-    // Simulation clock / reset
+    // 仿真/集成用系统时钟与复位
     // ------------------------------------------------------------------------
-    input  logic clock,
-    input  logic reset_n
+    input  logic clock,    // 模块采样时钟
+    input  logic reset_n   // 异步低有效复位
 );
 
     localparam int AW = $clog2(NUM_BYTES);
@@ -48,7 +48,8 @@ module chip_at24lc32_eeprom #(
     (* ramstyle = "M9K" *)
     logic [ 7: 0] mem[0:NUM_BYTES-1];
 
-    logic scl_q, sda_q;
+    logic scl_q, sda_q;  // SCL/SDA 输入同步寄存
+    // 同步 I2C 输入，滤毛刺意图由外部保证。
     always_ff @(posedge clock) begin
         if (~reset_n) begin
             scl_q <= 1'b1;
@@ -62,9 +63,10 @@ module chip_at24lc32_eeprom #(
     logic scl_rise;
     logic scl_fall;
 
-    logic start_cond;
-    logic stop_cond;
+    logic start_cond;  // START 条件
+    logic stop_cond;   // STOP 条件
 
+    // 边沿与起停条件（相对同步后的前一拍）。
     always_comb begin
         scl_rise   = (scl_q == 1'b0) && (i_scl == 1'b1);
         scl_fall   = (scl_q == 1'b1) && (i_scl == 1'b0);
@@ -73,31 +75,31 @@ module chip_at24lc32_eeprom #(
     end
 
     typedef enum logic [ 3: 0] {
-        ST_IDLE,
-        ST_RECV_CTRL,
-        ST_ACK_CTRL,
-        ST_RECV_AH,
-        ST_ACK_AH,
-        ST_RECV_AL,
-        ST_ACK_AL,
-        ST_RECV_DATA,
+        ST_IDLE,       // 空闲
+        ST_RECV_CTRL,  // 收器件地址+RW
+        ST_ACK_CTRL,   // 控制字节 ACK 相位
+        ST_RECV_AH,    // 收字地址高字节
+        ST_ACK_AH,     // 高地址字节 ACK
+        ST_RECV_AL,    // 收字地址低字节
+        ST_ACK_AL,     // 低地址字节 ACK
+        ST_RECV_DATA,  // 页写字节
         ST_ACK_DATA,
-        ST_SEND_DATA,
-        ST_RECV_MACK
+        ST_SEND_DATA,  // 读数据位移位输出
+        ST_RECV_MACK   // 读字节后收主机 ACK
     } state_t;
 
-    state_t state;
+    state_t state;  // I2C 位级 FSM
 
-    logic [ 7: 0] shreg;
-    logic [ 2: 0] bitcnt;
-    logic       rw;
-    logic       addr_match;
+    logic [ 7: 0] shreg;   // 移位寄存器
+    logic [ 2: 0] bitcnt;  // 位计数
+    logic       rw;        // 当前事务读/写
+    logic       addr_match;// 7 位地址匹配
 
-    logic [15: 0] word_addr;
-    logic [15: 0] write_base;
+    logic [15: 0] word_addr;  // 当前字地址指针
+    logic [15: 0] write_base; // 页写基址（页回绕）
 
-    logic [ 7: 0]  tx_byte;
-    logic [ 2: 0]  tx_bit;
+    logic [ 7: 0]  tx_byte; // 读事务待移出字节
+    logic [ 2: 0]  tx_bit;  // 读位移位索引
 
     function automatic logic is_ctrl_match(input logic [ 7: 0] ctrl);
         logic [ 6: 0] a7;
@@ -109,6 +111,7 @@ module chip_at24lc32_eeprom #(
         return wa[AW-1:0];
     endfunction
 
+    // I2C 位/字节状态机：起停、ACK、读写与开漏 SDA 驱动。
     always_ff @(posedge clock) begin
         if (~reset_n) begin
             o_sda_oe    <= 1'b0;

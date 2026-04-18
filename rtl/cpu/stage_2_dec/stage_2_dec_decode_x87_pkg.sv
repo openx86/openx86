@@ -14,7 +14,7 @@ description: This package defines shared declarations for stage_2_dec_decode_x87
 
 package stage_2_dec_decode_x87_pkg;
 
-    // o_opmask 各位：寄存器形式 (mod=11) 下常见算术/数据传送（可按需扩展）
+    // o_opmask 位图：与 decode_x87_esc 中各分支一一对应（0..31 预分配常用 ESC）
     localparam int unsigned M_FADD_ST0_STI     = 0;
     localparam int unsigned M_FMUL_ST0_STI     = 1;
     localparam int unsigned M_FCOM_STI         = 2;

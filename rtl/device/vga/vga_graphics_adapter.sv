@@ -9,27 +9,27 @@ module vga_graphics_adapter (
     // bus
 
     // CPU I/O port access
-    input  logic          io_en_w,
-    input  logic          io_en_r,
-    input  logic [15: 0] io_addr,
-    input  logic [ 7: 0] io_data_w,
-    output logic [ 7: 0] io_data_r,
+    input  logic          io_en_w,    // I/O 写选通（已译码到 VGA 窗口）
+    input  logic          io_en_r,    // I/O 读选通
+    input  logic [15: 0] io_addr,     // I/O 地址（如 03C0/03C2/03DA）
+    input  logic [ 7: 0] io_data_w,   // I/O 写数据
+    output logic [ 7: 0] io_data_r,   // I/O 读数据
 
     // CPU memory access (VRAM window)
-    input  logic          mem_en_w,
-    input  logic [19: 0]  mem_addr,
-    input  logic [ 7: 0]  mem_data_w,
+    input  logic          mem_en_w,   // VRAM 窗口写使能
+    input  logic [19: 0]  mem_addr,   // VRAM 字节地址（高位由映射决定）
+    input  logic [ 7: 0]  mem_data_w, // VRAM 写数据
 
     // VGA physical signals
-    output logic         vga_hsync,
-    output logic         vga_vsync,
-    output logic [ 3: 0] vga_r,
+    output logic         vga_hsync,   // 行同步（负极性约定由 vga_port 产生）
+    output logic         vga_vsync,   // 场同步
+    output logic [ 3: 0] vga_r,       // 像素红分量
     output logic [ 3: 0] vga_g,
     output logic [ 3: 0] vga_b,
 
     // common
-    input  logic          reset_n,
-    input  logic          clock
+    input  logic          reset_n,    // 异步低有效复位
+    input  logic          clock       // 像素域主时钟
 );
 
     // VGA VRAM 容量：307 KB = 314,368 字节
@@ -52,21 +52,21 @@ module vga_graphics_adapter (
     localparam logic [ 1: 0] MODE_TEXT_COLOR = 2'b01;  // 彩色文本模式
     localparam logic [ 1: 0] MODE_TEXT_INTENSE = 2'b10;  // 淡色文本模式
 
-    // MISC 输出寄存器
+    // MISC 输出寄存器（简化：低几位控制显示相关开关）
     logic [ 7: 0] misc_out_reg;
     
-    // 模式选择寄存器
+    // 当前显示模式：图形 / 彩色文本 / 高亮文本
     logic [ 1: 0] vga_mode;
 
     // ------------------------------------------------------------------------
     // VRAM：使用读写信号分离的RAM，CPU 写入 + VGA 读取
     // ------------------------------------------------------------------------
 
-    // VGA 读 VRAM 接口（连接到 vga_port）
+    // VGA 读 VRAM 接口（连接到 vga_port 读口）
     logic [VRAM_ADDR_WIDTH-1: 0] vram_rd_addr;
     logic [ 7: 0]                 vram_rd_data;
 
-    // CPU 写地址（截断到VRAM地址宽度内）
+    // CPU 写地址截断到 VRAM 深度（避免越界综合）
     logic [VRAM_ADDR_WIDTH-1: 0] vram_wr_addr;
 
     assign vram_wr_addr = mem_addr[VRAM_ADDR_WIDTH-1:0];
@@ -96,22 +96,22 @@ module vga_graphics_adapter (
     // VGA 时序生成（共享）
     // ------------------------------------------------------------------------
     
-    // 时序信号（从 vga_port 或文本模式模块获取）
+    // 时序计数与可视窗口标志（由 vga_port 驱动）
     logic [$clog2(800)-1: 0] h_count;
     logic [$clog2(525)-1: 0] v_count;
     logic video_active;
     
-    // 图形模式输出
+    // 图形模式 RGB（RRRGGGBB 展开）
     logic [ 3: 0] vga_r_graphics;
     logic [ 3: 0] vga_g_graphics;
     logic [ 3: 0] vga_b_graphics;
     
-    // 文本模式输出
+    // 文本 RGB 中间声明（当前未参与最终 mux，保留不删以免大范围改动）
     logic [ 3: 0] vga_r_text;
     logic [ 3: 0] vga_g_text;
     logic [ 3: 0] vga_b_text;
     
-    // 文本模式 VRAM 接口
+    // 文本子模块给出的 VRAM 字地址与回读数据
     logic [12: 0] text_vram_addr;
     logic [ 7: 0] text_vram_char_data;
     logic [ 7: 0] text_vram_attr_data;
@@ -120,8 +120,8 @@ module vga_graphics_adapter (
     assign text_vram_attr_data = text_vram_attr_data_reg;
     
     // 文本模式 VRAM 地址映射（文本模式使用 VRAM 的前 4000 字节）
-    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_char;  // 字符码地址（偶数地址）
-    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_attr;  // 属性地址（奇数地址）
+    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_char;  // 字符码字节在 VRAM 中的索引
+    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_attr;  // 属性字节索引（+1 相对字符）
 
     assign text_vram_rd_addr_char = text_vram_addr[12:  1];
     assign text_vram_rd_addr_attr = text_vram_addr[12:  1] + 1;
@@ -132,7 +132,7 @@ module vga_graphics_adapter (
     logic [ 7: 0] text_vram_char_data_reg;
     logic [ 7: 0] text_vram_attr_data_reg;
     
-    // 文本模式 VRAM 读取流水线
+    // 文本模式：将两次 VRAM 读流水对齐到字符/属性（与 vram_rd_data 对齐）
     always_ff @(posedge clock) begin
         if (vga_mode != MODE_GRAPHICS) begin
             // 第一级：读取字符码
@@ -147,7 +147,7 @@ module vga_graphics_adapter (
     end
     
     
-    // 字符生成器接口
+    // 字符生成器接口（文本子模块驱动 char/row，font_rom 输出点阵）
     logic [ 7: 0] font_char_code;
     logic [ 3: 0] font_row_index;
     logic [ 7: 0] font_data;
@@ -181,7 +181,7 @@ module vga_graphics_adapter (
     logic [ 3: 0] vga_r_text_color;
     logic [ 3: 0] vga_g_text_color;
     logic [ 3: 0] vga_b_text_color;
-    logic [ 3: 0] vga_r_text_intense;
+    logic [ 3: 0] vga_r_text_intense; // 高亮文本模式 RGB
     logic [ 3: 0] vga_g_text_intense;
     logic [ 3: 0] vga_b_text_intense;
     
@@ -221,25 +221,25 @@ module vga_graphics_adapter (
         .reset_n        ( reset                )
     );
     
-    // 模式选择输出
+    // 按 vga_mode 在图形与两种文本流水线输出间切换
     always_comb begin
         unique case (vga_mode)
-            MODE_GRAPHICS: begin
+            MODE_GRAPHICS: begin // 640x480 直接 VRAM 调色板展开
                 vga_r = vga_r_graphics;
                 vga_g = vga_g_graphics;
                 vga_b = vga_b_graphics;
             end
-            MODE_TEXT_COLOR: begin
+            MODE_TEXT_COLOR: begin // 80x25 彩色文本
                 vga_r = vga_r_text_color;
                 vga_g = vga_g_text_color;
                 vga_b = vga_b_text_color;
             end
-            MODE_TEXT_INTENSE: begin
+            MODE_TEXT_INTENSE: begin // 80x25 高亮/淡色文本调色
                 vga_r = vga_r_text_intense;
                 vga_g = vga_g_text_intense;
                 vga_b = vga_b_text_intense;
             end
-            default: begin
+            default: begin // 未定义模式回退图形
                 vga_r = vga_r_graphics;
                 vga_g = vga_g_graphics;
                 vga_b = vga_b_graphics;
@@ -251,6 +251,7 @@ module vga_graphics_adapter (
     // CPU I/O 端口访问（简化版 VGA 寄存器）
     // ------------------------------------------------------------------------
 
+    // 锁存 MISC/模式等可写寄存器
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             misc_out_reg <= 8'h01; // 默认启用显示、选择合适极性等（具体含义参考 VGA 标准）
@@ -258,7 +259,7 @@ module vga_graphics_adapter (
         end else begin
             if (io_en_w) begin
                 unique case (io_addr)
-                    PORT_MISC_OUT: begin
+                    PORT_MISC_OUT: begin // 杂项输出
                         misc_out_reg <= io_data_w;
                     end
                     PORT_MODE_REG: begin
@@ -273,13 +274,13 @@ module vga_graphics_adapter (
         end
     end
 
-    // I/O 读：组合逻辑
+    // I/O 读：组合译码状态/MISC
     always_comb begin
         io_data_r = 8'hFF;
 
         if (io_en_r) begin
             unique case (io_addr)
-                PORT_MISC_OUT: begin
+                PORT_MISC_OUT: begin // 读回 MISC
                     io_data_r = misc_out_reg;
                 end
                 PORT_STATUS1: begin

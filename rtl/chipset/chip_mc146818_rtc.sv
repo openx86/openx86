@@ -17,18 +17,17 @@ description: This module implements chip_mc146818_rtc.
 // ============================================================================
 
 module chip_mc146818_rtc #(
-    parameter int CLK_HZ = 8_000
+    parameter int CLK_HZ = 8_000  // 日历推进与分频器参考频率（仿真可放低）
 ) (
-    input  logic         i_cs_n,
-    input  logic         i_rd_n,
-    input  logic         i_wr_n,
-    input  logic         i_a0,
-    input  logic [ 7: 0] i_d,
-    // 0 = 索引口 0x70，1 = 数据口 0x71
-    output logic [ 7: 0] o_d,
-    output logic         o_rtc_irq,
-    input  logic         clock,
-    input  logic         reset_n
+    input  logic         i_cs_n,      // 低有效片选
+    input  logic         i_rd_n,      // 低有效读
+    input  logic         i_wr_n,      // 低有效写
+    input  logic         i_a0,        // 0=索引口 0x70，1=数据口 0x71
+    input  logic [ 7: 0] i_d,         // 写数据
+    output logic [ 7: 0] o_d,         // 读数据
+    output logic         o_rtc_irq,   // 寄存器 C 中 IRQF 聚合输出
+    input  logic         clock,       // 系统时钟
+    input  logic         reset_n      // 异步低有效复位
 );
 
     localparam int UIP_CYC = ((CLK_HZ * 244) / 1_000_000) > 0 ? ((CLK_HZ * 244) / 1_000_000) : 1;
@@ -42,15 +41,15 @@ module chip_mc146818_rtc #(
     assign wr = !i_cs_n && !i_wr_n;
     assign rd = !i_cs_n && !i_rd_n;
 
-    logic [ 7: 0] index_reg;
-    logic [ 7: 0] cmos_ram [ 0: 127];
+    logic [ 7: 0] index_reg;           // 当前 CMOS 索引（含 NMI 屏蔽位存储）
+    logic [ 7: 0] cmos_ram [ 0: 127];   // 128 字节 CMOS RAM
 
-    logic dm_bin;
-    logic mode_24h;
-    logic set_stop;
-    logic pie_en;
-    logic aie_en;
-    logic uie_en;
+    logic dm_bin;      // 1=二进制时间格式
+    logic mode_24h;    // 1=24 小时制
+    logic set_stop;    // SET=1 时冻结日历更新
+    logic pie_en;      // 周期中断允许
+    logic aie_en;      // 闹钟中断允许
+    logic uie_en;      // 更新结束中断允许
 
     assign dm_bin = cmos_ram[11][2];
     assign mode_24h = cmos_ram[11][1];
@@ -66,18 +65,18 @@ module chip_mc146818_rtc #(
     logic [ 3: 0] month_bin;
     logic [ 7: 0] year_bin;
 
-    logic [CW-1: 0] sub_sec;
-    logic          uip_phase;
+    logic [CW-1: 0] sub_sec;  // 秒内子计数
+    logic          uip_phase; // 更新进行中（近似 UIP）
 
-    logic reg_c_pf, reg_c_af, reg_c_uf, reg_c_irqf;
+    logic reg_c_pf, reg_c_af, reg_c_uf, reg_c_irqf;  // 寄存器 C 标志位
 
-    logic [23: 0] pie_div;
-    logic [23: 0] pie_reload_q;
-    logic        alarm_match_d;
+    logic [23: 0] pie_div;       // 周期中断分频器
+    logic [23: 0] pie_reload_q;  // 分频器重装载（由 RegA RS 编码）
+    logic        alarm_match_d;  // 闹钟匹配延迟一拍
 
-    logic read_c_pulse;
-    logic read_c_d1;
-    logic rstn_i;
+    logic read_c_pulse;  // 读 Reg C 脉冲
+    logic read_c_d1;     // 读 Reg C 后一拍清标志
+    logic rstn_i;        // 复位同步/整形（兼容 X）
 
     assign read_c_pulse = rd && i_a0 && (index_reg[ 6: 0] == 7'h0C);
     assign rstn_i = (reset_n === 1'b0) ? 1'b0 : 1'b1;
@@ -259,6 +258,7 @@ module chip_mc146818_rtc #(
             century_bcd_inc = u8_to_bcd(v + 1'b1);
     endfunction
 
+    // RegA 速率选择位 RS[3:0] → 周期中断分频常数。
     always_comb begin
         unique case (cmos_ram[10][ 3: 0])
             4'd0: pie_reload_q = 24'd0;
@@ -295,7 +295,7 @@ module chip_mc146818_rtc #(
     logic [ 7: 0] enc_year;
     logic [ 7: 0] enc_dow;
 
-    logic alarm_now;
+    logic alarm_now;  // 闹钟字段全匹配（含“不关心”位 7）
 
     assign enc_sec = enc_sec_min(sec_bin, dm_bin);
     assign enc_min = enc_sec_min(min_bin, dm_bin);
@@ -309,6 +309,7 @@ module chip_mc146818_rtc #(
                        && alarm_field_ok(cmos_ram[5], enc_hourv);
 
     logic [ 6: 0] rd_idx;
+    // 读数据口：索引寄存器或 RAM/特殊寄存器编码值。
     always_comb begin
         o_d = 8'hFF;
         rd_idx = index_reg[ 6: 0];
@@ -339,6 +340,7 @@ module chip_mc146818_rtc #(
 
     assign o_rtc_irq = reg_c_irqf;
 
+    // CMOS 写、日历推进、UIP、PIE/AIE/UIE 与读 C 清标志。
     always_ff @(posedge clock or negedge rstn_i) begin
         if (!rstn_i) begin
             index_reg <= '0;

@@ -14,8 +14,9 @@ description: decode prefix from instruction
 */
 
 `include "openx86_defs.h.sv"
+// 单字节前缀译码：判定属于手册四组中的哪一类，并给出段覆盖索引
 module stage_2_dec_decode_prefix (
-    input  logic [ 7: 0] i_instruction,
+    input  logic [ 7: 0] i_instruction,          // 当前字节
     output logic        o_group_1_lock_bus,
     output logic        o_group_1_repeat_not_equal,
     output logic        o_group_1_repeat_equal,
@@ -71,6 +72,7 @@ assign o_group_4_is_present = o_group_4_address_size;
 
 assign o_is_present = o_group_1_is_present | o_group_2_is_present | o_group_3_is_present | o_group_4_is_present;
 
+// 段覆盖前缀命中多种编码时，按 unique case 固定优先级映射到段寄存器索引
 always_comb begin
     unique case (1'b1)
         segment_override_CS: o_segment_override_index <= `index_reg_seg__CS;

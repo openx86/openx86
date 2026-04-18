@@ -15,9 +15,10 @@ description: decode unit (模块名与文件名 stage_2_dec_decode_unit 一致)
 
 `include "openx86_defs.h.sv"
 
+// 顶层译码单元：前缀解析 → 主操作码 one-hot → 域提取 → ModRM/SIB → 位移/立即数 → 字节消耗
 module stage_2_dec_decode_unit (
-    input  logic [ 7: 0]   i_instruction [ 0: 15],
-    input  logic          i_default_operand_size,
+    input  logic [ 7: 0]   i_instruction [ 0: 15], // 16B 指令滑窗（低字节为首字节）
+    input  logic          i_default_operand_size,  // 默认操作数宽度（16/32）
     output logic         o_opcode_x86_AAA_ASCII_adjust_after_add,
     output logic         o_opcode_x86_AAD_ASCII_AX_before_div,
     output logic         o_opcode_x86_AAM_ASCII_AX_after_mul,
@@ -260,9 +261,10 @@ module stage_2_dec_decode_unit (
     output logic [ 2: 0] o_x87_reg,
     output logic [ 2: 0] o_x87_rm,
     output logic [ 1: 0] o_dbg_modrm_mod,
-    output logic [ 1: 0] o_sib_scale_factor
+    output logic [ 1: 0] o_sib_scale_factor   // SIB scale（无 SIB 时输出 0）
 );
 
+// 前缀字节窗口（最多 4 个前缀槽）
 logic [ 7: 0] prefix_instruction [ 0:  3];
 logic        prefix_o_group_1_lock_bus;
 logic        prefix_o_group_1_repeat_not_equal;
@@ -284,6 +286,7 @@ logic        prefix_o_consume_bytes_prefix_3;
 logic        prefix_o_consume_bytes_prefix_4;
 logic        prefix_o_error;
 assign prefix_instruction = i_instruction[ 0:  3];
+// 解析四组前缀并给出消费字节数/错误（非法重复前缀）
 stage_2_dec_decode_prefix_all deocde_decode_prefix_all (
     .i_instruction ( prefix_instruction ),
     .o_group_1_lock_bus ( prefix_o_group_1_lock_bus ),
@@ -306,6 +309,7 @@ stage_2_dec_decode_prefix_all deocde_decode_prefix_all (
     .o_consume_bytes_prefix_4 ( prefix_o_consume_bytes_prefix_4 ),
     .o_error ( prefix_o_error )
 );
+// 主 opcode 相对首字节的偏移（0..4，取决于吃掉多少前缀）
 logic [ 3: 0] offset_opcode;
 always_comb begin
     unique case (1'b1)
@@ -317,6 +321,7 @@ always_comb begin
     endcase
 end
 
+// 对齐到主 opcode 起始位置的 4B 窗口，供 opcode/域译码使用
 logic [ 7: 0] opcode_instruction [ 0:  3];
 always_comb begin
     unique case (1'b1)
@@ -328,6 +333,7 @@ always_comb begin
     endcase
 end
 
+// x87 ESC（D8–DF）快速识别与 ModR/M 拆分
 logic        x87_esc_int;
 logic [31: 0] x87_opmask_int;
 logic [ 2: 0] x87_grp_int;
@@ -350,6 +356,7 @@ stage_2_dec_decode_x87_esc u_decode_x87_esc (
     .o_memory_operand   ( x87_mem_int )
 );
 
+// IA-32 主 opcode → 各指令 one-hot（大表，纯组合）
 stage_2_dec_decode_opcode_x86 deocde_decode_opcode_x86 (
     .o_opcode_x86_AAA_ASCII_adjust_after_add ( o_opcode_x86_AAA_ASCII_adjust_after_add ),
     .o_opcode_x86_AAD_ASCII_AX_before_div ( o_opcode_x86_AAD_ASCII_AX_before_div ),
@@ -569,6 +576,7 @@ stage_2_dec_decode_opcode_x86 deocde_decode_opcode_x86 (
     .i_instruction ( opcode_instruction )
 );
 
+// 依据 opcode one-hot 选择寄存器/ModRM/立即数/位移等字段规则
 logic [ 7: 0] field_instruction [ 0:  3];
 logic [ 3: 0] field_o_tttn;
 logic        field_o_gen_reg_index_is_present;
@@ -837,6 +845,8 @@ stage_2_dec_decode_field deocde_decode_field (
     .o_primary_opcode_byte_3 ( field_o_primary_opcode_byte_3 ),
     .o_error ( field_o_error )
 );
+
+// ModRM 相对指令首字节的偏移（随主 opcode 长度变化）
 logic [ 3: 0] offset_mod_rm;
 always_comb begin
     unique case (1'b1)
@@ -872,6 +882,7 @@ assign mod_rm_i_w_is_present = field_o_w_is_present;
 assign mod_rm_i_w = field_o_w;
 assign mod_rm_i_default_operand_size = i_default_operand_size;
 
+// ModR/M：解析寻址模式、寄存器/段、位移宽度、是否需要 SIB
 stage_2_dec_decode_mod_rm deocde_decode_mod_rm (
     .i_mod ( mod_rm_i_mod ),
     .i_rm ( mod_rm_i_rm ),
@@ -892,6 +903,8 @@ stage_2_dec_decode_mod_rm deocde_decode_mod_rm (
     .o_displacement_size_32 ( mod_rm_o_displacement_size_32 ),
     .o_sib_is_present ( mod_rm_o_sib_is_present )
 );
+
+// SIB 紧跟 ModRM 后一字节
 logic [ 3: 0] offset_sib;
 always_comb begin
     offset_sib <= offset_mod_rm + 4'h1;
@@ -921,6 +934,7 @@ assign sib_i_mod = mod_rm_i_mod;
 //         4'h7: sib_i_sib <= i_instruction[7];
 //         4'h8: sib_i_sib <= i_instruction[8];
 //     endcase
+// SIB：scale/index/base 与 disp8/disp32 特例（mod=00,base=101）
 stage_2_dec_decode_sib deocde_decode_sib (
     .i_sib ( sib_i_sib ),
     .i_mod ( sib_i_mod ),
@@ -934,6 +948,8 @@ stage_2_dec_decode_sib deocde_decode_sib (
     .o_displacement_size_4 ( sib_o_displacement_size_4 ),
     .o_effecitve_address_undefined ( sib_o_effecitve_address_undefined )
 );
+
+// 位移/立即数起点：有 ModRM 时 +1；若有 SIB 再 +1
 logic [ 3: 0] offset_disp_imm;
 always_comb begin
     if (field_o_mod_rm_is_present) begin
@@ -978,6 +994,7 @@ assign disp_imm_i_instruction = '{
     i_instruction[offset_disp_imm + 6],
     i_instruction[offset_disp_imm + 7]
 };
+// 从位移/立即数起点顺序拼接变长字段
 stage_2_dec_decode_disp_imm deocde_decode_disp_imm (
     .i_instruction ( disp_imm_i_instruction ),
     .i_displacement_size_1 ( disp_imm_i_displacement_size_1 ),
@@ -993,6 +1010,7 @@ stage_2_dec_decode_disp_imm deocde_decode_disp_imm (
     .o_error ( disp_imm_o_error )
 );
 
+// 预留：后续可在此汇总更多组合约束（当前为空）
 always_comb begin
 
 end

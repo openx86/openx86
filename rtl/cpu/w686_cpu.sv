@@ -14,6 +14,7 @@ description: This module implements w686_cpu.
 // - 历史命名 `w80386_*`/`w486_*` 已统一更名为 `w686_*`。
 // ============================================================================
 module w686_cpu (
+    // 以下为历史 80386 风格总线信号（保留注释，未接线）
     // input  logic        next_address_n,
     // input  logic        bus_ready_n,
     // input  logic        bus_size_16_n,
@@ -32,28 +33,31 @@ module w686_cpu (
     // output logic        memory_io_n,
     // output logic        bus_lock_n,
     // output logic        address_status_n,
-    output logic         bus_vaild,
-    input  logic          bus_ready,
-    input  logic          bus_busy,
-    output logic         bus_write_enable,
-    output logic         bus_io_access,
-    output logic [31: 0] bus_address,
-    input  logic [31: 0]  bus_read_data,
-    output logic [31: 0] bus_write_data,
+    output logic         bus_vaild,         // 对外总线事务请求有效（拼写沿用 legacy）
+    input  logic          bus_ready,         // 从设备就绪（完成）
+    input  logic          bus_busy,          // 总线忙（与 ready 相与后送入 BIU）
+    output logic         bus_write_enable,  // 写/读指示
+    output logic         bus_io_access,      // 存储器或 I/O 映射访问
+    output logic [31: 0] bus_address,        // 地址
+    input  logic [31: 0]  bus_read_data,     // 读数据
+    output logic [31: 0] bus_write_data,     // 写数据
     input  logic          reset_n,
     input  logic          clock
 );
 
+// core → BIU：MMU（页表遍历）端口
 logic        mmu_vaild;
 logic        mmu_ready;
 logic [31: 0] mmu_address;
 logic [31: 0] mmu_data_read;
 
+// core → BIU：指令取指端口
 logic        code_vaild;
 logic        code_ready;
 logic [31: 0] code_address;
 logic [31: 0] code_data_read;
 
+// core → BIU：数据 load/store 端口
 logic        data_vaild;
 logic        data_ready;
 logic        data_write_enable;
@@ -62,6 +66,7 @@ logic [31: 0] data_address;
 logic [31: 0] data_data_read;
 logic [31: 0] data_data_write;
 
+// 具体 CPU 微架构实现（MMU/取指/数据三主端口出核）
 w686_core core_0 (
     .o_mmu_vaild        ( mmu_vaild ),
     .i_mmu_ready        ( mmu_ready ),
@@ -82,6 +87,7 @@ w686_core core_0 (
     .reset_n              ( reset_n )
 );
 
+// 总线接口单元：仲裁并折叠到单一 valid/ready SoC 总线
 stage_4_mem_bus_interface_unit biu_0 (
     .i_mmu_vaild        ( mmu_vaild ),
     .o_mmu_ready        ( mmu_ready ),
@@ -99,7 +105,7 @@ stage_4_mem_bus_interface_unit biu_0 (
     .o_data_data_read   ( data_data_read ),
     .i_data_data_write  ( data_data_write ),
     .o_bus_vaild        ( bus_vaild ),
-    .i_bus_ready        ( bus_ready & ~bus_busy ),
+    .i_bus_ready        ( bus_ready & ~bus_busy ),  // 忙时不视为完成
     .i_bus_busy         ( bus_busy ),
     .o_bus_write_enable ( bus_write_enable ),
     .o_bus_io_access    ( bus_io_access ),

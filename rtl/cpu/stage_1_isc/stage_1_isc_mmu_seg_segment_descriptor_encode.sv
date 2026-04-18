@@ -35,7 +35,7 @@ segment
 */
 
 module stage_1_isc_mmu_seg_segment_descriptor_encode (
-    // ports
+    // 将结构化属性打包回 64b 描述符（写回/构造路径）
     input  logic [31: 0]  base,
     input  logic [19: 0]  limit,
     input  logic          present,
@@ -51,6 +51,7 @@ module stage_1_isc_mmu_seg_segment_descriptor_encode (
     output logic [63: 0] descriptor
 );
 
+// 按手册位序拼接（含 AVL/G/D/B 等属性位）
 assign descriptor = {
     base[15: 0],
     limit[15: 0],

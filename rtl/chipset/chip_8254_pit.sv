@@ -13,17 +13,17 @@ description: This module implements chip_8254_pit.
 // ============================================================================
 
 module chip_8254_pit (
-    input  logic         i_cs_n,
-    input  logic         i_rd_n,
-    input  logic         i_wr_n,
-    input  logic [ 1: 0] i_a,
-    input  logic [ 7: 0] i_d,
-    output logic [ 7: 0] o_d,
-    output logic         o_out0,
-    output logic         o_out1,
-    output logic         o_out2,
-    input  logic         reset_n,
-    input  logic         clock
+    input  logic         i_cs_n,      // 低有效片选
+    input  logic         i_rd_n,      // 低有效读
+    input  logic         i_wr_n,      // 低有效写
+    input  logic [ 1: 0] i_a,         // 2'b11=控制字，其它=通道 0..2
+    input  logic [ 7: 0] i_d,         // 写数据
+    output logic [ 7: 0] o_d,         // 读数据
+    output logic         o_out0,      // 通道 0 OUT（常用接 IRQ0）
+    output logic         o_out1,      // 通道 1 OUT
+    output logic         o_out2,      // 通道 2 OUT
+    input  logic         reset_n,     // 异步低有效复位
+    input  logic         clock         // 系统时钟（计数在此域递减）
 );
 
     localparam logic [ 2: 0] LP_MODE0 = 3'd0;
@@ -33,29 +33,29 @@ module chip_8254_pit (
     localparam logic [ 2: 0] LP_MODE4 = 3'd4;
     localparam logic [ 2: 0] LP_MODE5 = 3'd5;
 
-    logic [16: 0] reload          [0:2];
-    logic [16: 0] count           [0:2];
-    logic [16: 0] latch_count     [0:2];
-    logic [ 2: 0] mode            [0:2];
-    logic [ 1: 0] rw_fmt          [0:2];
-    logic          bcd_en         [0:2];
-    logic [ 7: 0] pending_lsb     [0:2];
-    logic          write_wait_msb [0:2];
-    logic          load_pending   [0:2];
-    logic          run_en         [0:2];
-    logic          out_r          [0:2];
-    logic          latch_valid    [0:2];
-    logic          read_msb_phase [0:2];
+    logic [16: 0] reload          [0:2];  // 有效重装载值（含 0→65536）
+    logic [16: 0] count           [0:2];  // 当前计数值
+    logic [16: 0] latch_count     [0:2];  // 锁存读快照
+    logic [ 2: 0] mode            [0:2];  // 工作方式 0..5
+    logic [ 1: 0] rw_fmt          [0:2];  // 读写格式（LSB/MSB/先后）
+    logic          bcd_en         [0:2];  // 1=BCD 计数
+    logic [ 7: 0] pending_lsb     [0:2];  // 16 位写时的低字节暂存
+    logic          write_wait_msb [0:2];  // 尚缺 MSB 的半字写状态
+    logic          load_pending   [0:2];  // 下一拍装入 reload→count
+    logic          run_en         [0:2];  // 计数运行使能
+    logic          out_r          [0:2];  // 通道 OUT 寄存
+    logic          latch_valid    [0:2];  // 锁存读有效
+    logic          read_msb_phase [0:2];  // 先后读时当前为高/低字节相位
 
-    logic          mode2_low_pulse [0:2];
-    logic          mode45_low_pulse [0:2];
-    logic          mode3_phase_high [0:2];
+    logic          mode2_low_pulse [0:2];   // 方式 2 低脉宽相位
+    logic          mode45_low_pulse [0:2];  // 方式 4/5 低脉宽相位
+    logic          mode3_phase_high [0:2];  // 方式 3 方波高半周标志
     logic [16: 0] mode3_high_ticks [0:2];
     logic [16: 0] mode3_low_ticks  [0:2];
     logic [16: 0] mode3_phase_ticks [0:2];
 
-    logic wr;
-    logic rd;
+    logic wr;  // 写事务
+    logic rd;  // 读事务
 
     assign wr = (!i_cs_n) && (!i_wr_n);
     assign rd = (!i_cs_n) && (!i_rd_n);
@@ -164,6 +164,7 @@ module chip_8254_pit (
         endcase
     endfunction
 
+    // 控制字/通道数据写、锁存命令、各方式计数与 OUT 波形更新；以及读相位。
     always_ff @(posedge clock or negedge reset_n) begin
         int ch;
         logic [ 1: 0] cw_rw;
@@ -232,6 +233,7 @@ module chip_8254_pit (
 
                 unique case (rw_fmt[ch])
                     2'b01: begin
+                        // 只写低字节
                         raw_count = { 8'h00, i_d };
                         new_reload = f_effective_reload(raw_count, mode[ch], bcd_en[ch]);
 
@@ -248,6 +250,7 @@ module chip_8254_pit (
                             out_r[ch] <= 1'b0;
                     end
                     2'b10: begin
+                        // 只写高字节
                         raw_count = { i_d, 8'h00 };
                         new_reload = f_effective_reload(raw_count, mode[ch], bcd_en[ch]);
 
@@ -264,6 +267,7 @@ module chip_8254_pit (
                             out_r[ch] <= 1'b0;
                     end
                     2'b11: begin
+                        // 先低后高
                         if (write_wait_msb[ch]) begin
                             pending_lsb[ch]    <= i_d;
                             write_wait_msb[ch] <= 1'b0;
@@ -319,6 +323,7 @@ module chip_8254_pit (
                         unique case (mode[ch])
                             LP_MODE0,
                             LP_MODE1: begin
+                                // 方式 0/1：减计数至 0 拉高 OUT
                                 if (count[ch] > 17'd1) begin
                                     count[ch] <= count[ch] - 17'd1;
                                 end else if (count[ch] == 17'd1) begin
@@ -328,6 +333,7 @@ module chip_8254_pit (
                                 end
                             end
                             LP_MODE2: begin
+                                // 方式 2：速率发生器，低脉宽固定 1 拍
                                 if (mode2_low_pulse[ch]) begin
                                     mode2_low_pulse[ch] <= 1'b0;
                                     out_r[ch]           <= 1'b1;
@@ -341,6 +347,7 @@ module chip_8254_pit (
                                 end
                             end
                             LP_MODE3: begin
+                                // 方式 3：方波，高低半周按 reload 折半
                                 if (mode3_phase_ticks[ch] > 17'd1) begin
                                     mode3_phase_ticks[ch] <= mode3_phase_ticks[ch] - 17'd1;
                                 end else if (mode3_phase_high[ch]) begin
@@ -366,6 +373,7 @@ module chip_8254_pit (
                             end
                             LP_MODE4,
                             LP_MODE5: begin
+                                // 方式 4/5：软件触发脉冲
                                 if (mode45_low_pulse[ch]) begin
                                     mode45_low_pulse[ch] <= 1'b0;
                                     out_r[ch]            <= 1'b1;
@@ -410,6 +418,7 @@ module chip_8254_pit (
         end
     end
 
+    // 读数据口：锁存或当前 count，按 RW 格式拼字节。
     always_comb begin
         logic [15: 0] read0;
         logic [15: 0] read1;

@@ -17,28 +17,28 @@ module stage_1_isc_mmu_memory_management_unit #(
     parameter bit read_from_fetch = 1'b0
 ) (
     // ------------------------------------------------------------------------
-    // Handshake
+    // Handshake（与上游地址请求握手）
     // ------------------------------------------------------------------------
-    input  logic          i_vaild,
-    output logic         o_ready,
+    input  logic          i_vaild,          // 一次地址翻译请求有效
+    output logic         o_ready,          // 翻译完成，o_physical_address 可用
 
     // ------------------------------------------------------------------------
-    // Address translation context
+    // Address translation context（段 + 分页输入）
     // ------------------------------------------------------------------------
-    input  logic          i_protected_mode,                              // from CR0.PE (CR[0][0])
-    input  logic [15: 0] i_segment_selector [ 0: 5],                      // from segment register file
-    input  logic [63: 0] i_segment_descriptor [ 0: 5],                    // cached segment descriptors
-    input  logic [ 1: 0] i_current_privilege_level,                     // from flags register file
-    input  logic [ 2: 0] i_segment_index,                               // from stage_4_mem_bus_interface_unit module
-    input  logic [31: 0] i_effective_address,                           // from stage_4_mem_bus_interface_unit module
-    input  logic          i_write_enable,                                // from stage_4_mem_bus_interface_unit module
-    input  logic          i_paging_enable,                               // from CR register
-    input  logic [31: 0] i_page_directory_base,                         // from CR[3]
-    output logic [31: 0] o_physical_address,
-    output logic         o_segment_fault,
+    input  logic          i_protected_mode,                              // CR0.PE
+    input  logic [15: 0] i_segment_selector [ 0: 5],                      // 段选择子
+    input  logic [63: 0] i_segment_descriptor [ 0: 5],                    // 段描述符缓存
+    input  logic [ 1: 0] i_current_privilege_level,                     // CPL
+    input  logic [ 2: 0] i_segment_index,                               // 访问哪个段（CS/DS/...）
+    input  logic [31: 0] i_effective_address,                           // 段内有效地址/偏移
+    input  logic          i_write_enable,                                // 写访问（取指路径为 0）
+    input  logic          i_paging_enable,                               // CR0.PG
+    input  logic [31: 0] i_page_directory_base,                         // CR3：页目录物理基址
+    output logic [31: 0] o_physical_address,                            // 最终物理地址
+    output logic         o_segment_fault,                                // 段保护 fault
 
     // ------------------------------------------------------------------------
-    // Bus for paging walks (used only when paging enabled)
+    // Bus for paging walks (used only when paging enabled)（两级页表读）
     // ------------------------------------------------------------------------
     output logic         o_bus_vaild,
     input  logic          i_bus_ready,
@@ -54,12 +54,12 @@ module stage_1_isc_mmu_memory_management_unit #(
     input  logic          reset_n
 );
 
-logic [31: 0] linear_address;
-logic [31: 0] physical_address;
+logic [31: 0] linear_address;   // 段单元输出线性地址
+logic [31: 0] physical_address; // 分页单元输出物理页基 + 页内偏移合成前保存在此
 
-logic         paging_vaild;
-logic         paging_ready;
-logic         seg_priv_err;
+logic         paging_vaild;     // 启动分页 walk
+logic         paging_ready;     // 分页 walk 完成
+logic         seg_priv_err;     // 段检查失败
 
 stage_1_isc_mmu_seg_segmentation_unit #(
     .read_from_fetch ( read_from_fetch )
@@ -96,12 +96,14 @@ stage_1_isc_mmu_pg_paging_unit mmu_paging_unit (
 );
 
 
+// MMU 组合状态：空闲 →（可选）等分页 → 输出物理或线性
 enum logic [ 1: 0] {
-    STATE_WAIT_FOR_PAGING_UNIT_READY = 2'h1,
-    STATE_OUTPUT_LINEAR_ADDRESS = 2'h2,
-    STATE_WAIT_FOR_VAILD = 2'h0
+    STATE_WAIT_FOR_PAGING_UNIT_READY = 2'h1, // 等待页表两级读完成
+    STATE_OUTPUT_LINEAR_ADDRESS = 2'h2,      // 未分页：直接输出线性地址
+    STATE_WAIT_FOR_VAILD = 2'h0              // 等待新请求
 } state;
 
+// 顺序控制：分页关闭时一拍完成；开启时委托 paging_unit
 always_ff @(posedge clock or negedge reset_n) begin
     if (~reset_n) begin
         state <= STATE_WAIT_FOR_VAILD;

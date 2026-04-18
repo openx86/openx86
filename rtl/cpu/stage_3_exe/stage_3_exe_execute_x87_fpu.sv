@@ -10,36 +10,41 @@ description: This module implements stage_3_exe_execute_x87_fpu.
 // ============================================================================
 
 module stage_3_exe_execute_x87_fpu (
-    input  logic          i_valid,
-    input  logic [ 4: 0]   i_op,
-    input  logic [63: 0] i_push_data,
-    input  logic [ 2: 0]   i_st_src,
-    output logic [63: 0] o_st0,
-    output logic [63: 0] o_st1,
-    output logic         o_zf,
-    output logic         o_pf,
-    output logic         o_cf,
-    input  logic          clk,
-    input  logic          rst
+    input  logic          i_valid,  // 操作有效
+    input  logic [ 4: 0]   i_op,  // 乘除操作类型
+    input  logic [63: 0] i_push_data,  // 压栈数据
+    input  logic [ 2: 0]   i_st_src,  // 源栈寄存器编号
+    output logic [63: 0] o_st0,  // 栈顶 ST0
+    output logic [63: 0] o_st1,  // 次栈顶 ST1
+    output logic         o_zf,  // ZF 输出
+    output logic         o_pf,  // PF 输出
+    output logic         o_cf,  // CF 输出
+    input  logic          clk,  // 时钟
+    input  logic          rst  // 复位（高有效）
 );
 
     import stage_3_exe_execute_unit_pkg::*;
 
+    // ST0–ST7 物理寄存器；top 为栈顶索引（向下增长）
     logic [63: 0] phys [ 0:  7];
     logic [ 2: 0] top;
+    // 最近一次比较类指令输出的标志影子寄存器
     logic        zf_r;
     logic        pf_r;
     logic        cf_r;
     logic [63: 0] swap_tmp;
 
+    // 物理索引：p0=栈顶，p1=次栈顶，px=操作数 STi
     logic [ 2: 0] p0;
     logic [ 2: 0] p1;
     logic [ 2: 0] px;
 
+    // 组合逻辑：连续赋值
     assign p0 = top + 3'd0;
     assign p1 = top + 3'd1;
     assign px = top + i_st_src;
 
+    // 时序逻辑：寄存器更新
     always_ff @(posedge clk) begin
         if (rst) begin
             top <= 3'd0;
@@ -48,6 +53,7 @@ module stage_3_exe_execute_x87_fpu (
             cf_r <= 1'b0;
             for (int k = 0; k < 8; k++) phys[k] <= 64'h0;
         end else if (i_valid) begin
+            // X87 子操作：更新物理寄存器堆与栈顶指针
             unique case (i_op)
                 X87_FLD: begin
                     phys[top - 3'd1] <= i_push_data;
@@ -168,6 +174,7 @@ module stage_3_exe_execute_x87_fpu (
         end
     end
 
+    // 组合逻辑：推导输出
     always_comb begin
         o_st0 = phys[p0];
         o_st1 = phys[p1];

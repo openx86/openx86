@@ -38,31 +38,31 @@ module sdram_controller #(
     // Refresh period cycles (typical: 7.8us -> 390 cycles @ 50MHz)
     parameter int REFRESH_CYCLES = 390
 ) (
-    input  logic          clk,
-    input  logic          rst,
+    input  logic          clk,            // 控制器与 SDRAM 同频系统时钟
+    input  logic          rst,            // 高有效复位：初始化 FSM 与输出
 
     // Host (SoC 中仅由 bus_controller 的 o_sdram_* 驱动；CPU 经 bus_controller 访问)
-    input  logic          i_en,
-    input  logic          i_we,
-    input  logic [23: 0] i_addr_off,
-    input  logic [31: 0] i_wdata,
-    output logic [31: 0] o_rdata,
-    output logic         o_ready,
-    output logic         o_busy,
+    input  logic          i_en,           // 主机请求：与握手配合发起一次 32b 访问
+    input  logic          i_we,           // 1=写，0=读（在 i_en 有效时锁存）
+    input  logic [23: 0] i_addr_off,      // 字节窗口内偏移（映射见文件头；半字地址由高位推导）
+    input  logic [31: 0] i_wdata,         // 写数据（32b，分两拍 16b 下发到 DQ）
+    output logic [31: 0] o_rdata,        // 读回数据（两拍 16b 拼成）
+    output logic         o_ready,        // 单周期完成脉冲：事务结束可接受新请求
+    output logic         o_busy,         // 非空闲：初始化/刷新/传输任一进行中
 
     // SDRAM PHY
-    output logic         o_sdram_clk,
-    output logic         o_sdram_cke,
-    output logic         o_sdram_cs_n,
-    output logic         o_sdram_ras_n,
-    output logic         o_sdram_cas_n,
-    output logic         o_sdram_we_n,
-    output logic [ 1: 0] o_sdram_ba,
-    output logic [12: 0] o_sdram_a,
-    output logic [ 1: 0] o_sdram_dqm,
-    output logic [15: 0] o_sdram_dq_out,
-    output logic         o_sdram_dq_oe,
-    input  logic [15: 0] i_sdram_dq_in
+    output logic         o_sdram_clk,    // 送至器件的时钟（本实现直连 clk）
+    output logic         o_sdram_cke,    // 时钟使能（常 1）
+    output logic         o_sdram_cs_n,   // 片选#（与 RAS/CAS/WE 组成命令）
+    output logic         o_sdram_ras_n,  // 行地址选通#
+    output logic         o_sdram_cas_n,  // 列地址选通#
+    output logic         o_sdram_we_n,   // 写使能#
+    output logic [ 1: 0] o_sdram_ba,     // Bank 选择
+    output logic [12: 0] o_sdram_a,      // 地址/模式字段（含 A10 自动预充等语义）
+    output logic [ 1: 0] o_sdram_dqm,    // 数据掩码（常 0 表示全字节有效）
+    output logic [15: 0] o_sdram_dq_out, // 写驱动到 DQ 总线的数据
+    output logic         o_sdram_dq_oe,  // DQ 输出使能（写节拍拉高）
+    input  logic [15: 0] i_sdram_dq_in   // 从 DQ 总线采样（读数据）
 );
 
     // SDRAM clock is the same as system clock for bring-up
@@ -74,17 +74,19 @@ module sdram_controller #(
     // Command encoding (active low)
     // ------------------------------------------------------------------------
     typedef enum logic [ 2: 0] {
-        CMD_NOP,
-        CMD_PRECHARGE_ALL,
-        CMD_AUTO_REFRESH,
-        CMD_LOAD_MODE,
-        CMD_ACTIVE,
-        CMD_READ_AP,
-        CMD_WRITE_AP
+        CMD_NOP,             // 空操作：保持总线空闲
+        CMD_PRECHARGE_ALL, // 全 Bank 预充电
+        CMD_AUTO_REFRESH,  // 自动刷新
+        CMD_LOAD_MODE,     // 加载模式寄存器
+        CMD_ACTIVE,        // 行激活（打开行）
+        CMD_READ_AP,       // 带自动预充的读命令
+        CMD_WRITE_AP       // 带自动预充的写命令
     } cmd_t;
 
+    // 当前周期下发到 SDRAM 的命令（组合译码到 RAS/CAS/WE/CS）
     cmd_t cmd;
 
+    // 将逻辑命令译码为 SDRAM 引脚上的 RAS#/CAS#/WE# 组合（默认 NOP）
     always_comb begin
         // Defaults: NOP (CS# asserted, RAS/CAS/WE deasserted)
         o_sdram_cs_n  = 1'b0;
@@ -93,7 +95,7 @@ module sdram_controller #(
         o_sdram_we_n  = 1'b1;
 
         unique case (cmd)
-            CMD_NOP: begin end
+            CMD_NOP: begin end // 无额外拉低
             CMD_PRECHARGE_ALL: begin
                 o_sdram_ras_n = 1'b0;
                 o_sdram_cas_n = 1'b1;
@@ -114,28 +116,28 @@ module sdram_controller #(
                 o_sdram_cas_n = 1'b1;
                 o_sdram_we_n  = 1'b1;
             end
-            CMD_READ_AP: begin
+            CMD_READ_AP: begin // READ：CAS# 有效，WE# 读
                 o_sdram_ras_n = 1'b1;
                 o_sdram_cas_n = 1'b0;
                 o_sdram_we_n  = 1'b1;
             end
-            CMD_WRITE_AP: begin
+            CMD_WRITE_AP: begin // WRITE：CAS#+WE# 同时有效
                 o_sdram_ras_n = 1'b1;
                 o_sdram_cas_n = 1'b0;
                 o_sdram_we_n  = 1'b0;
             end
-            default: begin end
+            default: begin end // 兜底保持 NOP 译码
         endcase
     end
 
     // ------------------------------------------------------------------------
     // Address mapping helpers
     // ------------------------------------------------------------------------
-    logic [22: 0] halfword_addr; // 16-bit addressed (byte_off >> 1)
+    logic [22: 0] halfword_addr; // 半字线性地址（字节偏移右移 1 位）
 
-    logic [12: 0] row;
-    logic [ 1: 0] bank;
-    logic [ 8: 0] col; // burst start col
+    logic [12: 0] row;   // 行地址（ACTIVE 用）
+    logic [ 1: 0] bank;  // Bank 号
+    logic [ 8: 0] col;   // 列地址起点（BL=2 突发首列）
 
     assign halfword_addr = i_addr_off[23:  1];
     assign row = halfword_addr[22: 10];
@@ -156,9 +158,9 @@ module sdram_controller #(
             mr[3]   = 1'b0;
             // CAS
             unique case (cas_lat)
-                2: mr[ 6:  4] = 3'b010;
-                3: mr[ 6:  4] = 3'b011;
-                default: mr[ 6:  4] = 3'b010;
+                2: mr[ 6:  4] = 3'b010; // CAS latency = 2
+                3: mr[ 6:  4] = 3'b011; // CAS latency = 3
+                default: mr[ 6:  4] = 3'b010; // 非法值回退到 2
             endcase
             // WB=0 (programmed burst length)
             mr[9] = 1'b0;
@@ -170,43 +172,45 @@ module sdram_controller #(
     // Init + refresh + transaction FSM
     // ------------------------------------------------------------------------
     typedef enum logic [ 4: 0] {
-        ST_INIT_WAIT,
-        ST_INIT_PRE,
-        ST_INIT_TRP,
-        ST_INIT_AR1,
-        ST_INIT_TRFC1,
-        ST_INIT_AR2,
-        ST_INIT_TRFC2,
-        ST_INIT_MRS,
-        ST_INIT_TMRD,
-        ST_IDLE,
-        ST_REFRESH,
-        ST_REFRESH_TRFC,
-        ST_ACTIVATE,
-        ST_TRCD,
-        ST_RW_CMD,
-        ST_READ_WAIT,
-        ST_READ_BEAT0,
-        ST_READ_BEAT1,
-        ST_WRITE_BEAT0,
-        ST_WRITE_BEAT1,
-        ST_TWR,
-        ST_DONE
+        ST_INIT_WAIT,      // 上电/复位后等待 ≥200µs
+        ST_INIT_PRE,       // 发全 Bank 预充
+        ST_INIT_TRP,       // 等待 tRP
+        ST_INIT_AR1,       // 第一次自刷新
+        ST_INIT_TRFC1,     // 等待 tRFC（第一次刷新后）
+        ST_INIT_AR2,       // 第二次自刷新
+        ST_INIT_TRFC2,     // 等待 tRFC（第二次刷新后）
+        ST_INIT_MRS,       // 加载模式寄存器
+        ST_INIT_TMRD,      // 等待 tMRD
+        ST_IDLE,           // 空闲：可接主机或调度刷新
+        ST_REFRESH,        // 发周期性刷新
+        ST_REFRESH_TRFC,   // 刷新后等待 tRFC
+        ST_ACTIVATE,       // 行激活
+        ST_TRCD,           // 等待 tRCD
+        ST_RW_CMD,         // 发读或写（带自动预充）
+        ST_READ_WAIT,      // 读：等待 CAS latency
+        ST_READ_BEAT0,     // 读突发第 0 拍（低 16b）
+        ST_READ_BEAT1,     // 读突发第 1 拍（高 16b）
+        ST_WRITE_BEAT0,    // 写突发第 0 拍
+        ST_WRITE_BEAT1,    // 写突发第 1 拍
+        ST_TWR,            // 写恢复等待 tWR
+        ST_DONE            // 事务完成，拉高 o_ready 一拍
     } st_t;
 
+    // 主 FSM 当前状态
     st_t st;
+    // 通用等待计数器（各状态复用）
     int unsigned ctr;
 
-    logic [23: 0] lat_addr;
-    logic        lat_we;
-    logic [31: 0] lat_wdata;
+    logic [23: 0] lat_addr;   // 锁存的主机字节地址偏移
+    logic        lat_we;      // 锁存的读写方向
+    logic [31: 0] lat_wdata;  // 锁存的写数据
 
-    logic refresh_due;
-    int unsigned refresh_ctr;
+    logic refresh_due;        // 刷新计数到期，应在空闲时插入刷新
+    int unsigned refresh_ctr; // 空闲周期累计的刷新节拍计数
 
     assign refresh_due = (refresh_ctr >= REFRESH_CYCLES-1);
 
-    // dq output for writes
+    // 写路径：DQ 输出寄存与输出使能
     logic [15: 0] dq_out_r;
     logic        dq_oe_r;
     assign o_sdram_dq_out = dq_out_r;
@@ -215,36 +219,36 @@ module sdram_controller #(
     // Busy whenever not idle
     assign o_busy = (st != ST_IDLE);
 
-    // Address pins default
+    // 按当前命令驱动 BA/A（默认全 0，各命令覆写相关位）
     always_comb begin
         o_sdram_ba = 2'b00;
         o_sdram_a  = 13'b0;
 
         unique case (cmd)
             CMD_PRECHARGE_ALL: begin
-                // A10=1 means precharge all banks
+                // A10=1：全 Bank 预充语义
                 o_sdram_a[10] = 1'b1;
             end
             CMD_LOAD_MODE: begin
-                o_sdram_a  = mode_reg_value(CAS);
+                o_sdram_a  = mode_reg_value(CAS); // 模式字送上 A[12:0]
                 o_sdram_ba = 2'b00;
             end
             CMD_ACTIVE: begin
                 o_sdram_ba = bank;
-                o_sdram_a  = row;
+                o_sdram_a  = row; // 行地址
             end
             CMD_READ_AP,
             CMD_WRITE_AP: begin
                 o_sdram_ba = bank;
                 o_sdram_a[ 8: 0] = col;
-                // Auto-precharge: A10=1
+                // A10=1：本读写结束后自动预充关闭行
                 o_sdram_a[10] = 1'b1;
             end
-            default: begin end
+            default: begin end // 其他命令不改 BA/A
         endcase
     end
 
-    // Refresh schedule
+    // 仅在空闲态累加刷新间隔计数，到阈值由主 FSM 取走刷新
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             refresh_ctr <= 0;
@@ -258,6 +262,7 @@ module sdram_controller #(
         end
     end
 
+    // 主 FSM：上电初始化、周期刷新、主机读写突发（BL=2）与握手
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             st       <= ST_INIT_WAIT;
@@ -337,10 +342,10 @@ module sdram_controller #(
                 // Idle: accept request or do refresh
                 // ----------------------------------------------------------------
                 ST_IDLE: begin
-                    if (refresh_due) begin
+                    if (refresh_due) begin // 到时插入刷新，阻塞新事务
                         st  <= ST_REFRESH;
                         ctr <= 0;
-                    end else if (i_en) begin
+                    end else if (i_en) begin // 主机请求：锁存参数并开行
                         lat_addr  <= i_addr_off;
                         lat_we    <= i_we;
                         lat_wdata <= i_wdata;
@@ -376,10 +381,10 @@ module sdram_controller #(
                     end else ctr <= ctr + 1;
                 end
                 ST_RW_CMD: begin
-                    if (lat_we) begin
+                    if (lat_we) begin // 写事务：两拍 DQ 输出
                         cmd <= CMD_WRITE_AP;
                         st  <= ST_WRITE_BEAT0;
-                    end else begin
+                    end else begin // 读事务：等待 CAS 后采两拍
                         cmd <= CMD_READ_AP;
                         ctr <= 0;
                         st  <= ST_READ_WAIT;

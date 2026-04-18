@@ -35,7 +35,7 @@ segment
 */
 
 module stage_1_isc_mmu_seg_system_segment_descriptor_decode (
-    // ports
+    // 系统段描述符（S=0）：基址/limit/粒度/类型等
     output logic [31: 0] o_base,
     output logic [19: 0] o_limit,
     output logic         o_granularity,
@@ -45,6 +45,7 @@ module stage_1_isc_mmu_seg_system_segment_descriptor_decode (
     input  logic [63: 0] i_descriptor
 );
 
+// 系统段描述符：基址与 limit 非连续字节拼接
 assign o_base                = { i_descriptor[31: 24], i_descriptor[ 7: 0], i_descriptor[63: 48] };
 assign o_limit               = { i_descriptor[19: 16], i_descriptor[47: 32] };
 assign o_granularity         = i_descriptor[   23];

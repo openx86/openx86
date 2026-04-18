@@ -55,6 +55,7 @@ Kevin McGrath and Dave Christie, "The AMD x86-64 Architecture: Extending the x86
 */
 
 `include "openx86_defs.h.sv"
+// 连续前缀扫描：最多 4 字节，检测每组前缀重复非法并折叠输出
 module stage_2_dec_decode_prefix_all (
     input  logic [ 7: 0] i_instruction [ 0:  3],
     output logic        o_group_1_lock_bus,
@@ -105,6 +106,7 @@ logic         error_repeat_group_3;
 logic         error_repeat_group_4;
 logic         error_repeat;
 
+// 各组前缀计数：同组出现 >1 记为非法编码
 assign sum_group_1 = ({2'b0, group_1_is_present[0]} + {2'b0, group_1_is_present[1]} + {2'b0, group_1_is_present[2]} + {2'b0, group_1_is_present[3]});
 assign sum_group_2 = ({2'b0, group_2_is_present[0]} + {2'b0, group_2_is_present[1]} + {2'b0, group_2_is_present[2]} + {2'b0, group_2_is_present[3]});
 assign sum_group_3 = ({2'b0, group_3_is_present[0]} + {2'b0, group_3_is_present[1]} + {2'b0, group_3_is_present[2]} + {2'b0, group_3_is_present[3]});
@@ -122,6 +124,7 @@ assign o_consume_bytes_prefix_3 = (is_present[0] == 1 & is_present[1] == 1 & is_
 assign o_consume_bytes_prefix_4 = (is_present[0] == 1 & is_present[1] == 1 & is_present[2] == 1 & is_present[3] == 1);
 assign o_error                         = error_repeat;
 
+// 按已消费前缀数量折叠 1~4 级前缀属性（OR 聚合标志，段索引按位或简化处理）
 always_comb begin
     unique case (1'b1)
         o_consume_bytes_prefix_1: begin

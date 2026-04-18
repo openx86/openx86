@@ -25,14 +25,14 @@ module bus_controller #(
     parameter bit  USE_SDIO_DISK = 1'b0
 ) (
     // CPU 总线接口
-    input  logic         i_bus_valid,
-    output logic         o_bus_ready,
-    output logic         o_bus_busy,
-    input  logic         i_bus_write_enable,
-    input  logic         i_bus_io_access,  // 1=I/O访问, 0=内存访问 (类似x86的M/IO#信号)
-    input  logic [31: 0] i_bus_address,
-    output logic [31: 0] o_bus_data_read,
-    input  logic [31: 0] i_bus_data_write,
+    input  logic         i_bus_valid,         // CPU 总线事务有效
+    output logic         o_bus_ready,         // 从设备就绪（本拍可完成）
+    output logic         o_bus_busy,          // SDRAM 等多周期外设忙
+    input  logic         i_bus_write_enable,  // 1=写，0=读
+    input  logic         i_bus_io_access,     // 1=I/O 端口访问，0=存储器（类 M/IO#）
+    input  logic [31: 0] i_bus_address,       // 地址（I/O 时用低 16 位）
+    output logic [31: 0] o_bus_data_read,     // 读回数据
+    input  logic [31: 0] i_bus_data_write,    // 写出数据
 
     // VGA 内存访问接口（VRAM窗口 0xA0000-0xBFFFF）
     // 注意：VGA VRAM 通常是只写的（从CPU角度），VGA控制器自己读取显示
@@ -66,14 +66,14 @@ module bus_controller #(
     input  logic         i_sdram_busy,
 
     // PS/2 键盘与鼠标（8042）：开漏驱动 + 总线回读；未用 PHY 时可上拉输入为 1
-    output logic         o_ps2_kbd_clk_out,
-    output logic         o_ps2_kbd_clk_oe,
-    input  logic         i_ps2_kbd_clk_in,
+    output logic         o_ps2_kbd_clk_out, // 键盘时钟驱动
+    output logic         o_ps2_kbd_clk_oe,  // 键盘时钟 OE
+    input  logic         i_ps2_kbd_clk_in,  // 键盘时钟回读
     output logic         o_ps2_kbd_dat_out,
     output logic         o_ps2_kbd_dat_oe,
     input  logic         i_ps2_kbd_dat_in,
 
-    output logic         o_ps2_aux_clk_out,
+    output logic         o_ps2_aux_clk_out, // 鼠标时钟驱动
     output logic         o_ps2_aux_clk_oe,
     input  logic         i_ps2_aux_clk_in,
     output logic         o_ps2_aux_dat_out,
@@ -81,22 +81,22 @@ module bus_controller #(
     input  logic         i_ps2_aux_dat_in,
 
     // SDIO / SD 4-bit（由 ide_controller → sdcard_controller 驱动；USE_SDIO_DISK=0 时为空闲电平）
-    output logic         o_sdio_clk,
-    output logic         o_sdio_cmd_o,
-    output logic         o_sdio_cmd_oe,
-    input  logic         i_sdio_cmd_i,
-    output logic [ 3: 0] o_sdio_dat_o,
-    output logic         o_sdio_dat_oe,
-    input  logic [ 3: 0] i_sdio_dat_i,
+    output logic         o_sdio_clk,      // SDIO 时钟至 PHY/卡
+    output logic         o_sdio_cmd_o,  // CMD 线主机驱动数据
+    output logic         o_sdio_cmd_oe, // CMD 输出使能
+    input  logic         i_sdio_cmd_i,  // CMD 总线回读
+    output logic [ 3: 0] o_sdio_dat_o,  // DAT[3:0] 主机驱动
+    output logic         o_sdio_dat_oe, // DAT 输出使能
+    input  logic [ 3: 0] i_sdio_dat_i,  // DAT 总线回读
 
     // PIC 主片中断输出（接 CPU INTR）
-    output logic         o_pic_intr,
+    output logic         o_pic_intr,      // 主片 INTR（高有效）
 
     // Chipset（IBM PC/AT I/O：各 chip_* 模块由 bus_controller 直连例化；未命中时读回 0xFF）
 
-    // 公共信号
-    input  logic          clock,
-    input  logic          reset_n
+    // 公共时钟与复位
+    input  logic          clock,         // 系统时钟
+    input  logic          reset_n        // 异步低有效复位
 );
 
 // ============================================================================
@@ -175,8 +175,8 @@ assign is_chipset_io = is_other_io_access && (
     ((i_bus_address[15: 0] >= 16'h0378) && (i_bus_address[15: 0] <= 16'h037F)) ||
     ((i_bus_address[15: 0] >= 16'h03F8) && (i_bus_address[15: 0] <= 16'h03FF))
 );
-logic [ 7: 0] chipset_io_rdata;
-logic         chipset_io_hit;
+logic [ 7: 0] chipset_io_rdata;  // 片选 I/O 字节读 MUX 结果
+logic         chipset_io_hit;  // 当前事务命中某片内 chipset 从设备
 
 // 数据选择信号
 logic [31: 0] vram_data_selected;  // VRAM不支持读操作
@@ -225,7 +225,7 @@ logic hit_com;
 logic hit_lpt;
 logic hit_ide;
 
-logic vld;
+logic vld;  // 与 chip_io_vld 同义别名（片选生成）
 
 logic cs_dma_n;
 logic rd_dma_n;
@@ -305,14 +305,14 @@ assign cs_ide_n = !(vld & hit_ide);
 assign rd_ide_n = !(vld & !chip_io_we & hit_ide);
 assign wr_ide_n = !(vld &  chip_io_we & hit_ide);
 
-logic       pit_out0;
-logic       intr_m, intr_s;
+logic       pit_out0;   // PIT 通道 0 OUT → IRQ0
+logic       intr_m, intr_s;  // 主/从 PIC INTR
 
-logic [ 7: 0] ir_m;
-logic       rtc_irq;
-logic       ps2_kbd_irq;
-logic       ps2_aux_irq;
-logic [ 7: 0] pic_slave_ir_merged;
+logic [ 7: 0] ir_m;            // 主片 IRR 输入向量
+logic       rtc_irq;           // RTC 闹钟/周期等聚合
+logic       ps2_kbd_irq;       // 8042 键盘 OBF
+logic       ps2_aux_irq;       // 8042 AUX OBF
+logic [ 7: 0] pic_slave_ir_merged; // 从片 IR 线合并到主片 IR2
 
 assign pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
 
@@ -464,6 +464,7 @@ ide_controller #(
     .reset_n        ( reset_n )
 );
 
+// chipset 各从设备读数据优先级 MUX（DMA→…→IDE）。
 always_comb begin
     chipset_io_rdata = 8'hFF;
     if (chip_io_vld) begin
@@ -541,7 +542,7 @@ logic [ 7: 0] io_byte_data;
 assign io_byte_data = is_vga_io_access ? i_vga_io_data_r :
                       (chipset_io_hit ? chipset_io_rdata : 8'hFF);
 
-// 最终数据输出
+// CPU 读数据总线：按访问类型选择 SDRAM/BIOS/VGA I/O/chipset 等。
 always_comb begin
     if (is_ram_access || is_sdram_access) begin
         o_bus_data_read = i_sdram_ready ? i_sdram_rdata : 32'h0;
@@ -570,7 +571,7 @@ end
 
 
 
-// 总线就绪信号
+// 总线就绪：SDRAM 多周期就绪，其余 I/O/ROM 组合就绪。
 always_comb begin
     if (is_ram_access || is_sdram_access) begin
         o_bus_ready = sdram_ready_internal;

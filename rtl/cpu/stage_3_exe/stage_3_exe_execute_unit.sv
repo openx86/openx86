@@ -12,61 +12,61 @@ description: This module implements stage_3_exe_execute_unit.
 module stage_3_exe_execute_unit (
 
     // --- AGU ---
-    input  logic [31: 0]        i_agu_base,
-    input  logic [31: 0]        i_agu_index,
-    input  logic [ 1: 0]         i_agu_scale,
-    input  logic [31: 0]        i_agu_disp,
-    output logic [31: 0]       o_agu_effective_addr,
+    input  logic [31: 0]        i_agu_base,  // 输入：agu base
+    input  logic [31: 0]        i_agu_index,  // 输入：agu index
+    input  logic [ 1: 0]         i_agu_scale,  // 输入：agu scale
+    input  logic [31: 0]        i_agu_disp,  // 输入：agu disp
+    output logic [31: 0]       o_agu_effective_addr,  // 输出：agu effective addr
 
     // --- Branch ---
-    input  logic                i_br_is_jcc,
-    input  logic [ 3: 0]         i_br_jcc_nibble,
-    input  logic                i_br_CF,
-    input  logic                i_br_PF,
-    input  logic                i_br_ZF,
-    input  logic                i_br_SF,
-    input  logic                i_br_OF,
-    input  logic [31: 0]        i_br_eip,
-    input  logic [31: 0]        i_br_rel32,
-    input  logic signed [ 7: 0] i_br_rel8,
-    input  logic                i_br_use_rel8,
-    output logic               o_br_taken,
-    output logic [31: 0]       o_br_target_eip,
+    input  logic                i_br_is_jcc,  // 输入：br is jcc
+    input  logic [ 3: 0]         i_br_jcc_nibble,  // 输入：br jcc nibble
+    input  logic                i_br_CF,  // 输入：br CF
+    input  logic                i_br_PF,  // 输入：br PF
+    input  logic                i_br_ZF,  // 输入：br ZF
+    input  logic                i_br_SF,  // 输入：br SF
+    input  logic                i_br_OF,  // 输入：br OF
+    input  logic [31: 0]        i_br_eip,  // 输入：br eip
+    input  logic [31: 0]        i_br_rel32,  // 输入：br rel32
+    input  logic signed [ 7: 0] i_br_rel8,  // 输入：br rel8
+    input  logic                i_br_use_rel8,  // 输入：br use rel8
+    output logic               o_br_taken,  // 输出：br taken
+    output logic [31: 0]       o_br_target_eip,  // 输出：br target eip
 
     // --- Mul/Div ---
-    input  logic [ 2: 0]        i_md_op,
-    input  logic [31: 0]        i_md_lo,
-    input  logic [31: 0]        i_md_hi,
-    input  logic [31: 0]        i_md_src,
-    output logic [31: 0]       o_md_lo,
-    output logic [31: 0]       o_md_hi,
-    output logic               o_md_div0,
+    input  logic [ 2: 0]        i_md_op,  // 输入：md op
+    input  logic [31: 0]        i_md_lo,  // 输入：md lo
+    input  logic [31: 0]        i_md_hi,  // 输入：md hi
+    input  logic [31: 0]        i_md_src,  // 输入：md src
+    output logic [31: 0]       o_md_lo,  // 输出：md lo
+    output logic [31: 0]       o_md_hi,  // 输出：md hi
+    output logic               o_md_div0,  // 输出：md div0
 
     // --- Integer op dispatch ---
-    input  logic                i_int_valid,
-    input  logic [ 5: 0]         i_int_op,
-    input  logic [31: 0]        i_int_a,
-    input  logic [31: 0]        i_int_b,
-    input  logic                i_int_cf,
-    input  logic                i_int_af,
-    input  logic [31: 0]        i_int_count,
-    output logic [31: 0]       o_int_result,
-    output logic               o_int_cf,
-    output logic               o_int_af,
-    output logic               o_int_zf,
+    input  logic                i_int_valid,  // 输入：int valid
+    input  logic [ 5: 0]         i_int_op,  // 输入：int op
+    input  logic [31: 0]        i_int_a,  // 输入：int a
+    input  logic [31: 0]        i_int_b,  // 输入：int b
+    input  logic                i_int_cf,  // 输入：int cf
+    input  logic                i_int_af,  // 输入：int af
+    input  logic [31: 0]        i_int_count,  // 输入：int count
+    output logic [31: 0]       o_int_result,  // 输出：int result
+    output logic               o_int_cf,  // 输出：int cf
+    output logic               o_int_af,  // 输出：int af
+    output logic               o_int_zf,  // 输出：int zf
 
     // --- X87 ---
-    input  logic                i_x87_valid,
-    input  logic [ 4: 0]         i_x87_op,
-    input  logic [63: 0]        i_x87_push_data,
-    input  logic [ 2: 0]         i_x87_st_src,
-    output logic [63: 0]       o_x87_st0,
-    output logic [63: 0]       o_x87_st1,
-    output logic               o_x87_zf,
-    output logic               o_x87_pf,
-    output logic               o_x87_cf,
-    input  logic                clk,
-    input  logic                rst
+    input  logic                i_x87_valid,  // 输入：x87 valid
+    input  logic [ 4: 0]         i_x87_op,  // 输入：x87 op
+    input  logic [63: 0]        i_x87_push_data,  // 输入：x87 push data
+    input  logic [ 2: 0]         i_x87_st_src,  // 输入：x87 st src
+    output logic [63: 0]       o_x87_st0,  // 输出：x87 st0
+    output logic [63: 0]       o_x87_st1,  // 输出：x87 st1
+    output logic               o_x87_zf,  // 输出：x87 zf
+    output logic               o_x87_pf,  // 输出：x87 pf
+    output logic               o_x87_cf,  // 输出：x87 cf
+    input  logic                clk,  // 时钟
+    input  logic                rst  // 复位（高有效）
 );
 
     import stage_3_exe_execute_unit_pkg::*;
@@ -105,6 +105,7 @@ module stage_3_exe_execute_unit (
         .o_div0 ( o_md_div0 )
     );
 
+    // 并行整数子单元结果与边带标志（供下方 int_op 汇聚）
     logic [31: 0] int_add_res;
     logic [31: 0] int_adc_res;
     logic [31: 0] int_sub_res;
@@ -183,8 +184,8 @@ module stage_3_exe_execute_unit (
     logic        int_das_cf;
 
     function automatic logic add_cf(
-        input  logic [31: 0] a,
-        input  logic [31: 0] b,
+        input  logic [31: 0] a,  // 操作数 / 源 1
+        input  logic [31: 0] b,  // 操作数 / 源 2
         input  logic        carry_in
     );
         logic [32: 0] sum;
@@ -195,8 +196,8 @@ module stage_3_exe_execute_unit (
     endfunction
 
     function automatic logic add_af(
-        input  logic [31: 0] a,
-        input  logic [31: 0] b,
+        input  logic [31: 0] a,  // 操作数 / 源 1
+        input  logic [31: 0] b,  // 操作数 / 源 2
         input  logic        carry_in
     );
         logic [ 4: 0] nibble_sum;
@@ -207,8 +208,8 @@ module stage_3_exe_execute_unit (
     endfunction
 
     function automatic logic sub_cf(
-        input  logic [31: 0] a,
-        input  logic [31: 0] b,
+        input  logic [31: 0] a,  // 操作数 / 源 1
+        input  logic [31: 0] b,  // 操作数 / 源 2
         input  logic        borrow_in
     );
         logic [32: 0] diff;
@@ -219,8 +220,8 @@ module stage_3_exe_execute_unit (
     endfunction
 
     function automatic logic sub_af(
-        input  logic [31: 0] a,
-        input  logic [31: 0] b,
+        input  logic [31: 0] a,  // 操作数 / 源 1
+        input  logic [31: 0] b,  // 操作数 / 源 2
         input  logic        borrow_in
     );
         logic [ 4: 0] b_term;
@@ -571,12 +572,15 @@ module stage_3_exe_execute_unit (
         .flags_out ( int_flag_status_res )
     );
 
+    // 组合逻辑：推导输出
     always_comb begin
         o_int_result = 32'd0;
         o_int_cf = i_int_cf;
         o_int_af = i_int_af;
         o_int_zf = 1'b0;
+        // 仅当整数簇请求有效时写回聚合结果与相关标志
         if (i_int_valid) begin
+            // 主分派：按 int_op 选通各子模块输出并计算 CF/AF/ZF
             unique case (i_int_op)
                 INT_ADD: begin
                     o_int_result = int_add_res;

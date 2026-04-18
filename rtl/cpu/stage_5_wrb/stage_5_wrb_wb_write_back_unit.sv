@@ -16,7 +16,7 @@ description: This module implements stage_5_wrb_wb_write_back_unit.
 // ============================================================================
 
 module stage_5_wrb_wb_write_back_unit (
-    // --- GPR ---
+    // --- GPR：通用寄存器写回（直通）---
     input  logic          i_gpr_write_enable,
     input  logic [ 2: 0]   i_gpr_write_index,
     input  logic [31: 0] i_gpr_write_data,
@@ -24,7 +24,7 @@ module stage_5_wrb_wb_write_back_unit (
     output logic [ 2: 0] o_gpr_write_index,
     output logic [31: 0] o_gpr_write_data,
 
-    // --- Segment registers ---
+    // --- 段寄存器：选择子与隐藏描述符（直通）---
     input  logic          i_sreg_write_enable,
     input  logic [ 2: 0]   i_sreg_write_index,
     input  logic [15: 0] i_sreg_write_selector,
@@ -34,7 +34,7 @@ module stage_5_wrb_wb_write_back_unit (
     output logic [15: 0] o_sreg_write_selector,
     output logic [63: 0] o_sreg_write_descriptor,
 
-    // --- FLAGS/EIP ---
+    // --- EFLAGS / EIP（直通）---
     input  logic          i_flags_write_enable,
     input  logic [31: 0] i_flags_write_data,
     output logic         o_flags_write_enable,
@@ -45,7 +45,7 @@ module stage_5_wrb_wb_write_back_unit (
     output logic         o_ip_write_enable,
     output logic [31: 0] o_ip_write_data,
 
-    // --- Control/Debug/Test registers ---
+    // --- CR / DR / TR（控制、调试、测试寄存器，直通）---
     input  logic          i_cr_write_enable,
     input  logic [ 2: 0]   i_cr_write_index,
     input  logic [31: 0] i_cr_write_data,
@@ -67,7 +67,7 @@ module stage_5_wrb_wb_write_back_unit (
     output logic [ 2: 0] o_tr_write_index,
     output logic [31: 0] o_tr_write_data,
 
-    // --- Memory bus commit path ---
+    // --- 总线提交：store 等访存意图（直通）---
     input  logic          i_mem_valid,
     input  logic          i_mem_write_enable,
     input  logic [31: 0] i_mem_address,
@@ -78,6 +78,7 @@ module stage_5_wrb_wb_write_back_unit (
     output logic [31: 0] o_mem_write_data
 );
 
+    // 当前为全直通：将来可插入优先级、互锁与提交日志
     always_comb begin
         o_gpr_write_enable = i_gpr_write_enable;
         o_gpr_write_index  = i_gpr_write_index;

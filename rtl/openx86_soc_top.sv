@@ -5,24 +5,24 @@ repo: https://github.com/openx86/openx86
 description: This module implements openx86_soc_top.
 */
 // ============================================================================
-// Minimal SoC: w686_cpu 仅接 bus_controller；SDRAM/ROM/VGA/chipset 均由总线控制器译码后驱动
+// 最小 SoC：w686_cpu 仅接 bus_controller；SDRAM/ROM/VGA/chipset 由总线控制器译码驱动
 // ============================================================================
 
 module openx86_soc_top #(
-    parameter bit USE_SDIO_DISK = 1'b0
+    parameter bit USE_SDIO_DISK = 1'b0  // 1：IDE 走 SDIO 盘体；0：空闲/占位
 ) (
 
     // ------------------------------------------------------------------------
-    // VGA (RGB444 + sync)
+    // VGA：RGB444 + 同步
     // ------------------------------------------------------------------------
-    output logic         o_vga_hsync,
-    output logic         o_vga_vsync,
-    output logic [ 3: 0] o_vga_r,
+    output logic         o_vga_hsync,   // 行同步
+    output logic         o_vga_vsync,   // 场同步
+    output logic [ 3: 0] o_vga_r,       // 红基色
     output logic [ 3: 0] o_vga_g,
     output logic [ 3: 0] o_vga_b,
 
     // ------------------------------------------------------------------------
-    // PS/2 ports (open-drain). Each line is (out, oe, in).
+    // PS/2：开漏；每线为（输出数据、输出使能、总线回读）
     // ------------------------------------------------------------------------
     output logic         o_ps2_kbd_clk_out,
     output logic         o_ps2_kbd_clk_oe,
@@ -38,59 +38,59 @@ module openx86_soc_top #(
     input  logic          i_ps2_aux_dat_in,
 
     // ------------------------------------------------------------------------
-    // SDIO / SD 4-bit（IDE 盘体经片内主机；PHY 在片内）
+    // SDIO / SD 4-bit（IDE 通道；PHY 在片内）
     // ------------------------------------------------------------------------
-    output logic         o_sdio_clk,
-    inout  logic         io_sdio_cmd,
-    inout  logic [ 3: 0] io_sdio_dat,
+    output logic         o_sdio_clk,     // SD 时钟至卡
+    inout  logic         io_sdio_cmd,    // CMD 双向
+    inout  logic [ 3: 0] io_sdio_dat,    // DAT[3:0] 双向
 
     // ------------------------------------------------------------------------
-    // SDRAM physical interface (16-bit device)
+    // SDRAM 物理接口（x16 器件）
     // ------------------------------------------------------------------------
-    output logic         o_sdram_clk,
-    output logic         o_sdram_cke,
-    output logic         o_sdram_cs_n,
-    output logic         o_sdram_ras_n,
-    output logic         o_sdram_cas_n,
-    output logic         o_sdram_we_n,
-    output logic [ 1: 0] o_sdram_ba,
-    output logic [12: 0] o_sdram_a,
-    output logic [ 1: 0] o_sdram_dqm,
-    inout  logic [15: 0] io_sdram_dq,
+    output logic         o_sdram_clk,    // SDRAM 时钟输出
+    output logic         o_sdram_cke,    // 时钟使能
+    output logic         o_sdram_cs_n,   // 片选
+    output logic         o_sdram_ras_n,  // 行地址选通
+    output logic         o_sdram_cas_n,  // 列地址选通
+    output logic         o_sdram_we_n,   // 写使能
+    output logic [ 1: 0] o_sdram_ba,     // Bank 地址
+    output logic [12: 0] o_sdram_a,      // 地址/命令复用
+    output logic [ 1: 0] o_sdram_dqm,    // 字节掩码
+    inout  logic [15: 0] io_sdram_dq,    // 数据总线
 
     // ------------------------------------------------------------------------
-    // Board-level clock / reset_n
+    // 板级时钟与复位
     // ------------------------------------------------------------------------
-    // clock: external 50MHz oscillator
-    // reset_n: active-low reset input (board push-button / POR)
-    input  logic          clock,
-    input  logic          reset_n
+    // clock：外部 50MHz 振荡器
+    // reset_n：低有效复位（按键/POR）
+    input  logic          clock,         // 系统时钟
+    input  logic          reset_n        // 异步低有效复位
 );
 
-    logic        bus_valid;
-    logic        bus_ready;
-    logic        bus_busy;
-    logic        bus_we;
-    logic        bus_io;
-    logic [31: 0] bus_addr;
-    logic [31: 0] bus_rdata;
-    logic [31: 0] bus_wdata;
+    logic        bus_valid;      // CPU 总线事务有效
+    logic        bus_ready;      // 从设备就绪
+    logic        bus_busy;       // 多周期外设忙
+    logic        bus_we;         // 写使能
+    logic        bus_io;         // I/O 访问
+    logic [31: 0] bus_addr;      // 地址
+    logic [31: 0] bus_rdata;     // 读数据
+    logic [31: 0] bus_wdata;     // 写数据
 
-    logic        vga_mem_en_w;
-    logic [19: 0] vga_mem_addr;
+    logic        vga_mem_en_w;   // VGA VRAM 写字节使能
+    logic [19: 0] vga_mem_addr;  // VRAM 字节地址
     logic [ 7: 0]  vga_mem_data_w;
-    logic        vga_io_en_w;
-    logic        vga_io_en_r;
-    logic [15: 0] vga_io_addr;
+    logic        vga_io_en_w;    // VGA I/O 写使能
+    logic        vga_io_en_r;    // VGA I/O 读使能
+    logic [15: 0] vga_io_addr;   // VGA I/O 地址
     logic [ 7: 0]  vga_io_data_w;
     logic [ 7: 0]  vga_io_data_r;
 
-    logic [15: 0] bios_addr;
+    logic [15: 0] bios_addr;     // 系统 BIOS 窗口内字偏移→字节
     logic [31: 0] bios_rdata;
-    logic [16: 0] ext_bios_addr;
+    logic [16: 0] ext_bios_addr; // 扩展 ROM 窗口地址
     logic [31: 0] ext_bios_rdata;
 
-    logic        o_sdram_en;
+    logic        o_sdram_en;     // SDRAM 控制器访问请求
     logic        o_sdram_we;
     logic [23: 0] o_sdram_addr_off;
     logic [31: 0] o_sdram_wdata;
@@ -102,26 +102,27 @@ module openx86_soc_top #(
     logic [ 1: 0]  sdram_phy_ba;
     logic [12: 0] sdram_phy_a;
     logic [ 1: 0]  sdram_phy_dqm;
-    logic [15: 0] sdram_phy_dq_out;
-    logic        sdram_phy_dq_oe;
+    logic [15: 0] sdram_phy_dq_out;  // DQ 输出数据
+    logic        sdram_phy_dq_oe;    // DQ 输出使能
     logic        sdram_phy_clk, sdram_phy_cke;
 
-    logic        pic_intr;
+    logic        pic_intr;       // 主 PIC INTR → CPU
 
-    logic        b_sd_nat_clk;
+    logic        b_sd_nat_clk;   // ide→native 主机时钟
     logic        b_sd_cmd_o;
     logic        b_sd_cmd_oe;
     logic        b_nat_cmd_i;
     logic [ 3: 0]  b_sd_dat_o;
     logic        b_sd_dat_oe;
     logic [ 3: 0]  b_nat_dat_i;
-    logic        sdio_cmd_out;
+    logic        sdio_cmd_out;  // PHY 侧 CMD 驱动
     logic        sdio_cmd_oe;
     logic        sdio_cmd_in;
     logic [ 3: 0]  sdio_dat_out;
     logic        sdio_dat_oe;
     logic [ 3: 0]  sdio_dat_in;
 
+    // W686 CPU 与总线控制器之间的主事务通道
     w686_cpu u_cpu (
         .bus_vaild        ( bus_valid ),
         .bus_ready        ( bus_ready ),
@@ -135,10 +136,10 @@ module openx86_soc_top #(
         .reset_n            ( reset_n )
     );
 
-    // SDRAM DQ bus (temporary: only driven by controller when sdram_phy_dq_oe=1)
+    // SDRAM DQ：仅当控制器 OE 时驱动，否则高阻。
     assign io_sdram_dq = sdram_phy_dq_oe ? sdram_phy_dq_out : 16'hZZZZ;
 
-    // Export SDRAM command/address pins to board
+    // SDRAM 命令/地址引脚直连板级封装
     assign o_sdram_clk   = sdram_phy_clk;
     assign o_sdram_cke   = sdram_phy_cke;
     assign o_sdram_cs_n  = sdram_phy_cs_n;
@@ -149,7 +150,7 @@ module openx86_soc_top #(
     assign o_sdram_a     = sdram_phy_a;
     assign o_sdram_dqm   = sdram_phy_dqm;
 
-    // SDIO CMD/DAT tri-state at top-level to satisfy synthesis structural-net requirements.
+    // SDIO CMD/DAT：顶层三态以满足综合对 inout 的结构要求
     assign io_sdio_cmd = sdio_cmd_oe ? sdio_cmd_out : 1'bz;
     assign sdio_cmd_in = io_sdio_cmd;
     assign io_sdio_dat = sdio_dat_oe ? sdio_dat_out : 4'bzzzz;

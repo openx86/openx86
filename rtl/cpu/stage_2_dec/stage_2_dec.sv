@@ -12,14 +12,15 @@ description: This module implements stage_2_dec.
 // ============================================================================
 
 module stage_2_dec (
-    input  logic i_instruction_ready,
-    output logic o_stage_valid,
-    output logic o_insn_fire,
+    input  logic i_instruction_ready, // 取指缓冲就绪（上游 stage1）
+    output logic o_stage_valid,       // 本译码级数据有效跟随就绪
+    output logic o_insn_fire,         // 就绪上升沿脉冲：启动一拍译码
     input  logic clock,
     input  logic reset_n
 );
-    logic instruction_ready_d1;
+    logic instruction_ready_d1; // 就绪打一拍，用于边沿检测
 
+    // 打拍：检测 i_instruction_ready 上升沿
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n)
             instruction_ready_d1 <= 1'b0;

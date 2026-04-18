@@ -6,16 +6,17 @@ description: Test register file.
 */
 
 module rf_test_register (
-    input  logic         write_enable,
-    input  logic [ 2: 0] write_index,
-    input  logic [31: 0] write_data,
-    output logic [31: 0] TR [ 0:  7],
+    input  logic         write_enable,       // 写使能
+    input  logic [ 2: 0] write_index,      // 目标寄存器索引（0–7）
+    input  logic [31: 0] write_data,       // 写入数据
+    output logic [31: 0] TR [ 0:  7],      // 测试寄存器组 TR0–TR7
     input  logic         clock,
     input  logic         reset_n
 );
 
+// 异步复位：清零全部 TR；使能时按索引写入
 always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin
+    if (~reset_n) begin  // 复位：全部清零
         TR[0] <= 32'b0;
         TR[1] <= 32'b0;
         TR[2] <= 32'b0;
@@ -24,7 +25,7 @@ always_ff @(posedge clock or negedge reset_n) begin
         TR[5] <= 32'b0;
         TR[6] <= 32'b0;
         TR[7] <= 32'b0;
-    end else if (write_enable) begin
+    end else if (write_enable) begin  // 单口写：更新选中 TR
         TR[write_index] <= write_data;
     end
 end

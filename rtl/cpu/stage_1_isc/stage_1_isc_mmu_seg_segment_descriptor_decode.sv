@@ -35,7 +35,7 @@ segment
 */
 
 module stage_1_isc_mmu_seg_segment_descriptor_decode (
-    // ports
+    // 8 字节代码/数据段描述符字段展开（非系统段路径）
     output logic [31: 0] o_base,
     output logic [19: 0] o_limit,
     output logic         o_date_or_code_present,
@@ -53,6 +53,7 @@ module stage_1_isc_mmu_seg_segment_descriptor_decode (
     input  logic [63: 0] i_descriptor
 );
 
+// 手册中的系统段 TYPE 全集（本模块组合逻辑实际拆解的是 S=1 代码/数据段 8 字节布局）
 typedef enum logic [ 3: 0] {
     SYS_SEG_TYPE_INVALID_80286 = 4'h0,
     SYS_SEG_TYPE_AVAILABLE_80286_TSS = 4'h1,
@@ -72,6 +73,7 @@ typedef enum logic [ 3: 0] {
     SYS_SEG_TYPE_80386_TRAP_GATE = 4'hF
 } system_segment_type_t;
 
+// 描述符各碎片（与 Fig 4-5 位域对应）
 logic [15: 0] o_base_15__0;
 logic [ 7: 0] o_base_23_16;
 logic [ 7: 0] o_base_31_24;

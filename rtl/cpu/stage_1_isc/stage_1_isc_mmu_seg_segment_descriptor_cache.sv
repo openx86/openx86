@@ -16,10 +16,10 @@ description: segment_descriptor_cache
 `include "openx86_defs.h.sv"
 
 module stage_1_isc_mmu_seg_segment_descriptor_cache (
-    input  logic         protect_enable,
+    input  logic         protect_enable,       // 1=保护模式：走描述符译码
     input  logic [15: 0] segment_selector,
     input  logic [63: 0] segment_descriptor,
-    input  logic         is_code_segment,
+    input  logic         is_code_segment,      // 实模式简化路径：是否代码语义
     input  logic [15: 0] write_data,
     input  logic         write_enable,
     output logic         read_data,
@@ -37,6 +37,7 @@ module stage_1_isc_mmu_seg_segment_descriptor_cache (
     output logic         conforming_privilege
 );
 
+// 子译码器输出（保护模式）
 logic [31: 0] dec_base;
 logic [19: 0] dec_limit;
 logic        dec_present;
@@ -70,6 +71,7 @@ stage_1_isc_mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .i_descriptor                               ( segment_descriptor )
 );
 
+// 保护/实模式两套属性展开：实模式用段寄存器左移拼“基址”，limit 固定 64K
 always_comb begin
     if (protect_enable) begin
         base                 = dec_base;

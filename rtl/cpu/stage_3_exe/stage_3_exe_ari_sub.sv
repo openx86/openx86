@@ -5,9 +5,9 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_ari_sub.
 */
 module stage_3_exe_ari_sub (
-    input  logic [31: 0]  a,
-    input  logic [31: 0]  b,
-    output logic [31: 0] y
+    input  logic [31: 0]  a,  // 操作数 / 源 1
+    input  logic [31: 0]  b,  // 操作数 / 源 2
+    output logic [31: 0] y  // 结果输出
 );
     stage_3_exe_ari_execute_arithmetic_sub u_impl (
         .operand_1 ( a ),

@@ -24,25 +24,25 @@ description: This module implements vga_port.
 
 module vga_port (
     // VRAM 读接口
-    output logic [ 7: 0]           vram_rd_addr, // VRAM读地址（给双口RAM端口B）
-    input  logic [ 7: 0]            vram_rd_data, // VRAM读数据（从双口RAM端口B）
+    output logic [ 7: 0]           vram_rd_addr, // 当前像素对应的 VRAM 字节地址（截断宽度）
+    input  logic [ 7: 0]            vram_rd_data, // VRAM 同步读回数据
 
     
     // VGA 物理信号输出
-    output logic                   vga_hsync,
-    output logic                   vga_vsync,
-    output logic [ 3: 0]           vga_r,
+    output logic                   vga_hsync,   // 行同步（低有效区间见时序块）
+    output logic                   vga_vsync,   // 场同步
+    output logic [ 3: 0]           vga_r,       // RGB 各 4 位（图形调色展开）
     output logic [ 3: 0]           vga_g,
     output logic [ 3: 0]           vga_b,
     
     // 时序输出（供其他模块使用）
-    output logic [$clog2(800)-1: 0] h_count,
-    output logic [$clog2(525)-1: 0] v_count,
-    output logic                   video_active,
+    output logic [$clog2(800)-1: 0] h_count,     // 行内像素计数 0..799
+    output logic [$clog2(525)-1: 0] v_count,     // 行计数 0..524
+    output logic                   video_active, // 可见像素窗口内为 1
     
     // 时钟和复位（放在末尾）
-    input  logic                    reset_n,
-    input  logic                    clock
+    input  logic                    reset_n,     // 异步低有效复位
+    input  logic                    clock        // 像素时钟
 );
 
     // ------------------------------------------------------------------------
@@ -70,13 +70,14 @@ module vga_port (
 
     // h_count 和 v_count 现在是输出端口
 
+    // 行列可见区标志（不含消隐）
     logic h_visible;
     logic v_visible;
 
     assign h_visible = (h_count < H_VISIBLE);
     assign v_visible = (v_count < V_VISIBLE);
 
-    // 像素/行/帧计数
+    // 像素/行/帧计数：800x525 扫描计数器
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             h_count <= '0;
@@ -98,7 +99,7 @@ module vga_port (
     // 可见区域
     assign video_active = (reset_n) && h_visible && v_visible;
 
-    // 同步信号（VGA 标准为负极性）
+    // 产生负极性 HSYNC/VSYNC 脉冲窗口
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             vga_hsync <= 1'b1;
@@ -126,6 +127,7 @@ module vga_port (
     // 帧缓冲读地址生成（线性、逐像素递增）
     // ------------------------------------------------------------------------
 
+    // 可见区内线性递增 vram_rd_addr；帧起点复位
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             vram_rd_addr <= '0;
@@ -153,6 +155,7 @@ module vga_port (
     //   - B: [ 1: 0]
     // 对应扩展到 4bit VGA R/G/B 输出。
 
+    // 将 RRRGGGBB 展开为 4:4:4 RGB；消隐区输出黑
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             vga_r <= 4'h0;

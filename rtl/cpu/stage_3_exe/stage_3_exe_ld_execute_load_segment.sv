@@ -20,22 +20,24 @@ description: This module implements stage_3_exe_ld_execute_load_segment.
 // ============================================================================
 
 module stage_3_exe_ld_execute_load_segment (
-    input  logic          protected_mode_enable,
-    input  logic [15: 0] index_segment_register,
-    input  logic [15: 0] index_general_register,
-    input  logic [ 7: 0]   greg__8,
-    input  logic [15: 0]  greg_16,
-    input  logic [31: 0]  greg_32,
-    output logic [15: 0] write_enable,
-    output logic [15: 0] write_index,
-    output logic [15: 0] write_selector,
-    output logic [63: 0] write_descriptor,
-    input  logic          valid,
-    output logic         ready
+    input  logic          protected_mode_enable,  // 1=保护模式
+    input  logic [15: 0] index_segment_register,  // 目标段寄存器索引
+    input  logic [15: 0] index_general_register,  // 源通用寄存器索引
+    input  logic [ 7: 0]   greg__8,  // 8 位源操作数
+    input  logic [15: 0]  greg_16,  // 16 位源操作数（选择子）
+    input  logic [31: 0]  greg_32,  // 32 位源操作数
+    output logic [15: 0] write_enable,  // 段寄存器写使能掩码
+    output logic [15: 0] write_index,  // 写回段寄存器索引
+    output logic [15: 0] write_selector,  // 写回选择子
+    output logic [63: 0] write_descriptor,  // 写回 64 位描述符缓存
+    input  logic          valid,  // 上游握手：有效
+    output logic         ready  // 本子模块就绪（恒 1）
 );
 
+// 当前装载是否针对 CS
 logic is_code_segment_index;
 
+// 组合逻辑：连续赋值
 assign is_code_segment_index = index_segment_register == `sreg_index_CS;
 
 logic [31: 0] encode_base;
@@ -102,10 +104,12 @@ stage_1_isc_mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .i_descriptor                               ( encode_descriptor )
 );
 
+// 组合逻辑：推导输出
 always_comb begin
     write_enable   = 16'b0;
     write_index    = index_segment_register;
     write_selector = greg_16;
+    // 实模式：选择子左移 4 位作基址，界限固定 0xFFFFF
     if (~protected_mode_enable) begin
         encode_base                                     = { 16'b0, greg_16, 4'b0 };
         encode_limit                                    = 20'h0_FFFF;
@@ -121,6 +125,7 @@ always_comb begin
         encode_date_or_code_accessed                    = 1'b1;
         write_descriptor                                = encode_descriptor;
     end else begin
+        // 保护模式 bring-up：描述符清零占位
         encode_base                                     = '0;
         encode_limit                                    = '0;
         encode_present                                  = 1'b0;
@@ -137,6 +142,7 @@ always_comb begin
     end
 end
 
+// 组合逻辑：连续赋值
 assign ready = 1'b1;
 
 endmodule

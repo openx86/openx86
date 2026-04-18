@@ -9,17 +9,18 @@ description: This module implements stage_3_exe_execute_muldiv_unit.
 // ============================================================================
 
 module stage_3_exe_execute_muldiv_unit (
-    input  logic [ 2: 0] i_op,
-    input  logic [31: 0] i_lo,
-    input  logic [31: 0] i_hi,
-    input  logic [31: 0] i_src,
-    output logic [31: 0] o_lo,
-    output logic [31: 0] o_hi,
-    output logic         o_div0
+    input  logic [ 2: 0] i_op,  // 乘除操作类型
+    input  logic [31: 0] i_lo,  // 低半部 / 被除数低 32 位
+    input  logic [31: 0] i_hi,  // 被除数高 32 位
+    input  logic [31: 0] i_src,  // 乘数或除数
+    output logic [31: 0] o_lo,  // 结果低半 / 商
+    output logic [31: 0] o_hi,  // 结果高半 / 余
+    output logic         o_div0  // 除数为 0
 );
 
     import stage_3_exe_execute_unit_pkg::*;
 
+    // 64 位中间量：乘积、扩展被除数、商余（有/无符号）
     logic [63: 0] umul;
     logic signed [63: 0] smul;
     logic [63: 0] dividend;
@@ -29,6 +30,7 @@ module stage_3_exe_execute_muldiv_unit (
     logic [63: 0] uquot, urem;
     logic signed [63: 0] squot, srem;
 
+    // 组合逻辑：推导输出
     always_comb begin
         umul = 64'(i_lo) * 64'(i_src);
         smul = $signed(i_lo) * $signed(i_src);
@@ -45,6 +47,7 @@ module stage_3_exe_execute_muldiv_unit (
         o_lo   = 32'h0;
         o_hi   = 32'h0;
 
+        // MUL/IMUL/DIV/IDIV 数据通路选择
         unique case (i_op)
             MD_MULU32: begin
                 o_lo = umul[31: 0];
@@ -55,6 +58,7 @@ module stage_3_exe_execute_muldiv_unit (
                 o_hi = smul[63: 32];
             end
             MD_DIVU32: begin
+                // 除数为 0：置 div0，不写商余
                 if (i_src == 32'h0) begin
                     o_div0 = 1'b1;
                 end else begin
@@ -65,6 +69,7 @@ module stage_3_exe_execute_muldiv_unit (
                 end
             end
             MD_IDIV32: begin
+                // 除数为 0：置 div0，不写商余
                 if (i_src == 32'h0) begin
                     o_div0 = 1'b1;
                 end else begin

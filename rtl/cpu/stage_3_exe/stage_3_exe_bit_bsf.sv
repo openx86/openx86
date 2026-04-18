@@ -5,10 +5,11 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_bit_bsf.
 */
 module stage_3_exe_bit_bsf (
-    input  logic [31: 0]  a,
-    output logic [31: 0] y,
-    output logic         zf
+    input  logic [31: 0]  a,  // 操作数 / 源 1
+    output logic [31: 0] y,  // 结果输出
+    output logic         zf  // 零标志
 );
+    // 组合逻辑：推导输出
     always_comb begin
         y = 32'd0;
         zf = 1'b1;

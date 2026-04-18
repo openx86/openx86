@@ -16,24 +16,24 @@ description: This module implements chip_8259_pic.
 // ============================================================================
 
 module chip_8259_pic (
-    input  logic         i_cs_n,
-    input  logic         i_rd_n,
-    input  logic         i_wr_n,
-    input  logic         i_a0,
-    input  logic [ 7: 0] i_d,
-    output logic [ 7: 0] o_d,
-    input  logic [ 7: 0] i_ir,
-    output logic         o_intr,
-    input  logic         reset_n,
-    input  logic         clock
+    input  logic         i_cs_n,      // 低有效片选
+    input  logic         i_rd_n,      // 低有效读
+    input  logic         i_wr_n,      // 低有效写
+    input  logic         i_a0,        // 0=命令口，1=数据口
+    input  logic [ 7: 0] i_d,         // 写数据
+    output logic [ 7: 0] o_d,         // 读数据
+    input  logic [ 7: 0] i_ir,        // 中断请求输入 IR7..IR0
+    output logic         o_intr,      // 向 CPU 输出的中断请求
+    input  logic         reset_n,     // 异步低有效复位
+    input  logic         clock        // 系统时钟
 );
 
     typedef enum logic [ 2: 0] {
-        ST_RESET,
-        ST_ICW2,
-        ST_ICW3,
-        ST_ICW4,
-        ST_READY
+        ST_RESET,  // 等待 ICW1
+        ST_ICW2,   // 收 ICW2（向量基址）
+        ST_ICW3,   // 收 ICW3（级联/从片标识）
+        ST_ICW4,   // 收 ICW4（模式位）
+        ST_READY   // 运行态：数据口写 OCW1(IMR)
     } pic_state_e;
 
     function automatic logic [ 2: 0] f_highest_prio_idx(input logic [ 7: 0] i_vec);
@@ -51,34 +51,34 @@ module chip_8259_pic (
         end
     endfunction
 
-    pic_state_e          state, state_n;
-    logic                need_icw3, need_icw3_n;
-    logic                need_icw4, need_icw4_n;
-    logic                ltim, ltim_n;
-    logic                aeoi, aeoi_n;
-    logic                read_isr, read_isr_n;
+    pic_state_e          state, state_n;       // 初始化 FSM 现态/次态
+    logic                need_icw3, need_icw3_n;  // 是否需要 ICW3
+    logic                need_icw4, need_icw4_n;  // 是否需要 ICW4
+    logic                ltim, ltim_n;       // 1=电平触发，0=边沿触发
+    logic                aeoi, aeoi_n;       // 自动 EOI
+    logic                read_isr, read_isr_n; // 0 读 IRR，1 读 ISR
     logic [ 7: 0]        icw1, icw1_n;
-    logic [ 7: 0]        icw2_vec, icw2_vec_n;
+    logic [ 7: 0]        icw2_vec, icw2_vec_n; // 中断向量基址（高 5 位等）
     logic [ 7: 0]        icw3, icw3_n;
     logic [ 7: 0]        icw4, icw4_n;
-    logic [ 7: 0]        imr, imr_n;
-    logic [ 7: 0]        irr, irr_n;
-    logic [ 7: 0]        isr, isr_n;
-    logic [ 7: 0]        ir_prev, ir_prev_n;
+    logic [ 7: 0]        imr, imr_n;           // 中断屏蔽
+    logic [ 7: 0]        irr, irr_n;           // 请求寄存器
+    logic [ 7: 0]        isr, isr_n;           // 服务寄存器
+    logic [ 7: 0]        ir_prev, ir_prev_n;  // IR 前一拍（边沿检测）
 
     logic                wr;
     logic                rd;
-    logic [ 7: 0]        masked_irr, masked_irr_n;
-    logic                pending_valid, pending_valid_n;
-    logic [ 2: 0]        pending_idx, pending_idx_n;
-    logic                isr_valid, isr_valid_n;
-    logic [ 2: 0]        isr_idx, isr_idx_n;
-    logic                irq_eligible, irq_eligible_n;
+    logic [ 7: 0]        masked_irr, masked_irr_n;  // 屏蔽后的 IRR
+    logic                pending_valid, pending_valid_n;  // 存在未屏蔽请求
+    logic [ 2: 0]        pending_idx, pending_idx_n;      // 当前最高优先级请求索引
+    logic                isr_valid, isr_valid_n;          // ISR 非空
+    logic [ 2: 0]        isr_idx, isr_idx_n;                // 正在服务的中断索引
+    logic                irq_eligible, irq_eligible_n;    // 可拉 INTR（含嵌套规则）
 
     assign wr = !i_cs_n && !i_wr_n;
     assign rd = !i_cs_n && !i_rd_n;
 
-
+    // 屏蔽 IRR、优先级索引与 INTR 条件（基于现态寄存器）。
     always_comb begin
         masked_irr    = irr & ~imr;
         pending_valid = |masked_irr;
@@ -91,6 +91,7 @@ module chip_8259_pic (
 
     assign o_intr = irq_eligible;
 
+    // 次态与写副作用：ICW/OCW 译码、IRR 采样、内部 INTA 近似。
     always_comb begin
         state_n      = state;
         need_icw3_n  = need_icw3;
@@ -116,6 +117,7 @@ module chip_8259_pic (
 
         if (wr) begin
             if (i_a0 == 1'b0) begin
+                // 命令口：ICW1（D4=1）或 OCW2/OCW3
                 if (i_d[4]) begin
                     icw1_n      = i_d;
                     need_icw3_n = !i_d[1];
@@ -131,10 +133,12 @@ module chip_8259_pic (
                     state_n     = ST_ICW2;
                 end else if (state == ST_READY) begin
                     if (i_d[3]) begin
+                        // OCW3：读 IRR/ISR 选择
                         if (i_d[1]) begin
                             read_isr_n = i_d[0];
                         end
                     end else begin
+                        // OCW2：EOI 与非特定 EOI
                         if (i_d[5]) begin
                             if (i_d[6]) begin
                                 isr_n[i_d[2:0]] = 1'b0;
@@ -145,6 +149,7 @@ module chip_8259_pic (
                     end
                 end
             end else begin
+                // 数据口：ICW2/3/4 序列或运行态 IMR(OCW1)
                 unique case (state)
                     ST_RESET: ;
                     ST_ICW2: begin
@@ -182,6 +187,7 @@ module chip_8259_pic (
         isr_idx_n      = f_highest_prio_idx(isr_n);
         irq_eligible_n = (state_n == ST_READY) && pending_valid_n && (!isr_valid_n || (pending_idx_n < isr_idx_n));
 
+        // 无写且可服务：内部“自动 INTA”清 IRR、置 ISR（非 AEOI）。
         if (!wr && irq_eligible_n) begin
             irr_n[pending_idx_n] = 1'b0;
             if (!aeoi_n) begin
@@ -190,6 +196,7 @@ module chip_8259_pic (
         end
     end
 
+    // 寄存器采样次态（IRR/ISR 等由组合块计算）。
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             state      <= ST_RESET;
@@ -224,6 +231,7 @@ module chip_8259_pic (
         end
     end
 
+    // 读：命令口返回 IRR 或 ISR；数据口返回 IMR。
     always_comb begin
         o_d = 8'hFF;
         if (rd) begin

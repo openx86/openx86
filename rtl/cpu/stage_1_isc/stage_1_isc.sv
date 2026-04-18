@@ -12,47 +12,48 @@ description: This module implements stage_1_isc.
 
 module stage_1_isc (
     // ------------------------------------------------------------------------
-    // Instruction fetch bus interface
+    // Instruction fetch bus interface（取指总线：地址/数据/就绪握手）
     // ------------------------------------------------------------------------
-    output logic         o_code_vaild,
-    input  logic          i_code_ready,
-    output logic [31: 0] o_code_address,
-    input  logic [31: 0] i_code_data_read,
+    output logic         o_code_vaild,              // 取指请求有效
+    input  logic          i_code_ready,             // 取指侧可接收完成
+    output logic [31: 0] o_code_address,            // 物理取指地址
+    input  logic [31: 0] i_code_data_read,          // 返回的指令字（32b）
 
     // ------------------------------------------------------------------------
-    // MMU backend bus interface
+    // MMU backend bus interface（分页遍历时访问页表的总线）
     // ------------------------------------------------------------------------
-    output logic         o_mmu_bus_vaild,
-    input  logic          i_mmu_bus_ready,
-    output logic [31: 0] o_mmu_bus_addr,
-    input  logic [31: 0] i_mmu_bus_rdata,
+    output logic         o_mmu_bus_vaild,           // MMU 总线请求有效
+    input  logic          i_mmu_bus_ready,          // MMU 总线完成
+    output logic [31: 0] o_mmu_bus_addr,            // 页目录/页表/物理访问地址
+    input  logic [31: 0] i_mmu_bus_rdata,           // MMU 总线读数据
 
     // ------------------------------------------------------------------------
-    // CPU execution context inputs
+    // CPU execution context inputs（段/分页/特权等执行上下文）
     // ------------------------------------------------------------------------
-    input  logic          i_protected_mode,
-    input  logic [15: 0] i_segment_selector [ 0: 5],
-    input  logic [63: 0] i_segment_descriptor [ 0: 5],
-    input  logic [ 1: 0] i_current_privilege_level,
-    input  logic          i_paging_enable,
-    input  logic [31: 0] i_page_directory_base,
-    input  logic          i_IP_vaild,
+    input  logic          i_protected_mode,         // 保护模式（CR0.PE）
+    input  logic [15: 0] i_segment_selector [ 0: 5], // 段选择子（CS 等）
+    input  logic [63: 0] i_segment_descriptor [ 0: 5], // 段描述符缓存
+    input  logic [ 1: 0] i_current_privilege_level, // 当前 CPL
+    input  logic          i_paging_enable,          // 分页使能（CR0.PG）
+    input  logic [31: 0] i_page_directory_base,     // 页目录基址（CR3）
+    input  logic          i_IP_vaild,               // EIP 有效（可发起新取指）
 
     // ------------------------------------------------------------------------
-    // Decoded instruction stream outputs
+    // Decoded instruction stream outputs（输出到译码级的指令缓冲）
     // ------------------------------------------------------------------------
-    output logic [ 7: 0] o_instruction [ 0:15],
-    output logic         o_instruction_ready,
-    output logic         o_segment_fault,
+    output logic [ 7: 0] o_instruction [ 0:15],      // 已组装的指令字节窗口
+    output logic         o_instruction_ready,       // 本窗口有效且已填满
+    output logic         o_segment_fault,           // 段保护/越界等 fault
 
     // ------------------------------------------------------------------------
-    // Clock / reset
+    // Clock / reset（时钟与复位；EIP 为取指指针输入）
     // ------------------------------------------------------------------------
-    input  logic [31: 0]  EIP,
+    input  logic [31: 0]  EIP,                     // 指令指针（线性/有效地址侧由 MMU 前级使用）
     input  logic          reset_n,
     input  logic          clock
 );
 
+    // 取指 + 段/分页翻译封装
     stage_1_isc_if_instruction_fetch u_if_instruction_fetch (
         .o_code_vaild              ( o_code_vaild ),
         .i_code_ready              ( i_code_ready ),

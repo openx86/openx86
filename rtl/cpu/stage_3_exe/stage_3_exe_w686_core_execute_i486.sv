@@ -10,36 +10,37 @@ description: This module implements stage_3_exe_w686_core_execute_i486.
 `include "openx86_defs.h.sv"
 
 module stage_3_exe_w686_core_execute_i486 (
-    input  logic          insn_fire,
-    input  logic          op_cpuid,
-    input  logic [31: 0]  gpr_eax,
-    input  logic [31: 0]  gpr_ecx,
-    output logic         cpuid_busy,
-    output logic         gpr_wr_en,
-    output logic [ 2: 0] gpr_wr_idx,
-    output logic [31: 0] gpr_wr_data,
-    output logic         cpuid_done_pulse,
-    input  logic          op_invd,
-    input  logic          op_wbinvd,
-    input  logic          op_invlpg,
-    input  logic [31: 0] invlpg_ea,
-    output logic         cache_flush_pulse,
-    output logic         invlpg_pulse,
-    output logic [31: 0] invlpg_linear_addr,
-    input  logic          clk,
-    input  logic          rst
+    input  logic          insn_fire,  // 指令发射脉冲
+    input  logic          op_cpuid,  // CPUID 微操作
+    input  logic [31: 0]  gpr_eax,  // 当前 EAX（叶号）
+    input  logic [31: 0]  gpr_ecx,  // 当前 ECX（子叶，占位）
+    output logic         cpuid_busy,  // CPUID 序列忙
+    output logic         gpr_wr_en,  // 通用寄存器写使能
+    output logic [ 2: 0] gpr_wr_idx,  // 写回寄存器索引
+    output logic [31: 0] gpr_wr_data,  // 写回数据
+    output logic         cpuid_done_pulse,  // CPUID 完成脉冲
+    input  logic          op_invd,  // INVD 微操作
+    input  logic          op_wbinvd,  // WBINVD 微操作
+    input  logic          op_invlpg,  // INVLPG 微操作
+    input  logic [31: 0] invlpg_ea,  // INVLPG 线性地址
+    output logic         cache_flush_pulse,  // 缓存冲刷脉冲
+    output logic         invlpg_pulse,  // TLB 失效脉冲
+    output logic [31: 0] invlpg_linear_addr,  // 失效线性地址输出
+    input  logic          clk,  // 时钟
+    input  logic          rst  // 复位（高有效）
 );
 
     typedef enum logic [ 2: 0] {
-        CS_IDLE,
-        CS_W1,
-        CS_W2,
-        CS_W3,
-        CS_W4
+        CS_IDLE,  // 空闲
+        CS_W1,  // 写 EAX
+        CS_W2,  // 写 EDX
+        CS_W3,  // 写 ECX
+        CS_W4   // 写 EBX 并结束
     } cpuid_seq_e;
 
-    cpuid_seq_e cpuid_st;
+    cpuid_seq_e cpuid_st;  // CPUID 多周期状态
 
+    // 组合逻辑：连续赋值
     assign cpuid_busy = (cpuid_st != CS_IDLE);
 
     localparam logic [31: 0] V_EBX = 32'h756e6547;
@@ -81,6 +82,7 @@ module stage_3_exe_w686_core_execute_i486 (
         };
     endfunction
 
+    // 时序逻辑：寄存器更新
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             cpuid_st <= CS_IDLE;
@@ -108,6 +110,7 @@ module stage_3_exe_w686_core_execute_i486 (
                 invlpg_linear_addr <= invlpg_ea;
             end
 
+            // CPUID 节拍状态机
             unique case (cpuid_st)
                 CS_IDLE: begin
                     if (insn_fire && op_cpuid) begin
@@ -117,6 +120,7 @@ module stage_3_exe_w686_core_execute_i486 (
                 CS_W1: begin
                     gpr_wr_en <= 1'b1;
                     gpr_wr_idx <= 3'd0;
+                    // 叶 0/1：返回最大叶号或 family/model/stepping
                     unique case (gpr_eax)
                         32'd0: gpr_wr_data <= 32'd1;
                         32'd1: gpr_wr_data <= {
@@ -136,6 +140,7 @@ module stage_3_exe_w686_core_execute_i486 (
                 CS_W2: begin
                     gpr_wr_en <= 1'b1;
                     gpr_wr_idx <= 3'd3;
+                    // 叶 0：厂商串 EBX；其余写 0
                     if (gpr_eax == 32'd0) begin
                         gpr_wr_data <= V_EBX;
                     end else if (gpr_eax == 32'd1) begin
@@ -148,6 +153,7 @@ module stage_3_exe_w686_core_execute_i486 (
                 CS_W3: begin
                     gpr_wr_en <= 1'b1;
                     gpr_wr_idx <= 3'd2;
+                    // 叶 0：厂商串 EDX；叶 1：特征位 EDX
                     if (gpr_eax == 32'd0) begin
                         gpr_wr_data <= V_EDX;
                     end else if (gpr_eax == 32'd1) begin
@@ -160,6 +166,7 @@ module stage_3_exe_w686_core_execute_i486 (
                 CS_W4: begin
                     gpr_wr_en <= 1'b1;
                     gpr_wr_idx <= 3'd1;
+                    // 叶 0：厂商串 ECX；其余写 0
                     if (gpr_eax == 32'd0) begin
                         gpr_wr_data <= V_ECX;
                     end else begin

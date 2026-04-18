@@ -5,8 +5,9 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_ari_neg.
 */
 module stage_3_exe_ari_neg (
-    input  logic [31: 0]  a,
-    output logic [31: 0] y
+    input  logic [31: 0]  a,  // 操作数 / 源 1
+    output logic [31: 0] y  // 结果输出
 );
+    // 组合逻辑：连续赋值
     assign y = (~a) + 32'd1;
 endmodule

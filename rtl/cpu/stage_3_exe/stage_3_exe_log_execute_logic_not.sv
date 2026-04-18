@@ -13,9 +13,11 @@ description: This module implements stage_3_exe_log_execute_logic_not.
 module stage_3_exe_log_execute_logic_not #(
     BIT_WIDTH = 32
 ) (
-    // ports
-    input  logic [BIT_WIDTH-1: 0] operand_1,    output logic [BIT_WIDTH-1: 0] result);
+    input  logic [BIT_WIDTH-1: 0] operand_1,  // 第一操作数
+    output logic [BIT_WIDTH-1: 0] result      // 按位取反结果
+);
 
+// 组合逻辑：连续赋值
 assign result = ~operand_1;
 
 endmodule

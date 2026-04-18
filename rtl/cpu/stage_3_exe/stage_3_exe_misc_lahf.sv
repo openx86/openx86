@@ -5,10 +5,11 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_misc_lahf.
 */
 module stage_3_exe_misc_lahf (
-    input  logic [31: 0]  eax_in,
-    input  logic [31: 0]  flags_in,
-    output logic [31: 0] eax_out
+    input  logic [31: 0]  eax_in,  // 输入 EAX
+    input  logic [31: 0]  flags_in,  // 输入标志
+    output logic [31: 0] eax_out  // 输出 EAX
 );
+    // 组合逻辑：推导输出
     always_comb begin
         eax_out = {
             eax_in[31: 16],

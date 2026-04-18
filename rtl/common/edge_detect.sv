@@ -18,15 +18,17 @@ description: This module implements edge_detect.
 
 module edge_detect (
     // ports
-    input  logic signal,
-    output logic pos_edge,
-    output logic neg_edge,
-    input  logic clock,
-    input  logic reset_n
+    input  logic signal,    // 待检测的单比特输入（建议已同步到本域）
+    output logic pos_edge,  // 上升沿脉冲：0→1 后维持 1 个 clock
+    output logic neg_edge,  // 下降沿脉冲：1→0 后维持 1 个 clock
+    input  logic clock,     // 采样时钟
+    input  logic reset_n    // 异步低有效复位：清零输出与上一拍寄存
 );
 
+// 上一拍输入，用于与当前 signal 比较得到边沿
 logic signal_prev;
 
+// 寄存上一拍输入并产生单周期边沿脉冲
 always_ff @(posedge clock or negedge reset_n) begin
     if (~reset_n) begin
         pos_edge <= 0;

@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements w686_core.
+description: w686_core — 80486 级 CPU 核：取指/译码/执行单元与 LSU 握手，GPR/FLAGS/段/CR 写回及异常分派。
 */
 // ============================================================================
 // w686_core — 80486 级取指/译码/执行闭环（core-side pipeline）
@@ -11,32 +11,36 @@ description: This module implements w686_core.
 `include "w686_decode_outputs_decl.svh"
 
 module w686_core (
-    output logic         o_mmu_vaild,
-    input  logic          i_mmu_ready,
-    output logic [31: 0] o_mmu_address,
-    input  logic [31: 0] i_mmu_data_read,
+    // MMU 通道：向 BIU/MMU 发起线性地址翻译或取数
+    output logic         o_mmu_vaild,       // MMU 请求有效（与 i_mmu_ready 握手）
+    input  logic          i_mmu_ready,      // MMU 可接收或已完成当前事务
+    output logic [31: 0] o_mmu_address,     // 发往 MMU 的线性/物理侧地址
+    input  logic [31: 0] i_mmu_data_read,   // MMU 读回数据
 
-    output logic         o_code_vaild,
-    input  logic          i_code_ready,
-    output logic [31: 0] o_code_address,
-    input  logic [31: 0] i_code_data_read,
+    // 指令取指通道：向 I-cache/BIU 取指字节流
+    output logic         o_code_vaild,    // 取指请求有效
+    input  logic          i_code_ready,     // 取指侧可接受或已返回当前拍数据
+    output logic [31: 0] o_code_address,    // 取指线性地址
+    input  logic [31: 0] i_code_data_read,  // 取指返回的指令字
 
-    output logic         o_data_vaild,
-    input  logic          i_data_ready,
-    output logic         o_data_write_enable,
-    output logic         o_data_io_access,
-    output logic [31: 0] o_data_address,
-    input  logic [31: 0] i_data_data_read,
-    output logic [31: 0] o_data_data_write,
+    // 数据访存通道：向 D-cache/BIU 发起 load/store
+    output logic         o_data_vaild,        // 数据访问请求有效
+    input  logic          i_data_ready,       // 数据总线可完成当前事务
+    output logic         o_data_write_enable, // 1=写事务，0=读事务
+    output logic         o_data_io_access,    // 本 core 固定为内存访问（非 IO）
+    output logic [31: 0] o_data_address,      // 数据访问地址
+    input  logic [31: 0] i_data_data_read,    // load 读回数据
+    output logic [31: 0] o_data_data_write,   // store 写出数据
 
-    input  logic          reset_n,
-    input  logic          clock
+    input  logic          reset_n,          // 异步低有效复位
+    input  logic          clock             // 核心时钟
 );
 
     import stage_3_exe_execute_unit_pkg::*;
     import stage_2_dec_decode_x87_pkg::*;
 
     // --- GPR / 段 / 标志 / EIP / 控制寄存器 ---
+    // 组合级写口（本拍译码/执行结果）；wb_* 为 WRB 级打拍后真正写入 RF 的信号
     logic        write_enable;
     logic [ 2: 0] write_index;
     logic [31: 0] write_data;
@@ -84,9 +88,11 @@ module w686_core (
     logic [ 2: 0] wb_TR_write_index;
     logic [31: 0] wb_TR_write_data;
 
+    // GPR 读出口：按 8/16/32 位视图广播给译码与 EU
     logic [31: 0] GPR_read__8 [ 0:  7];
     logic [31: 0] GPR_read_16 [ 0:  7];
     logic [31: 0] GPR_read_32 [ 0:  7];
+    // 6 个段寄存器：选择子 + 段描述符 cache（供 AGU/保护检查）
     logic [15: 0] segment_selector [ 0:  5];
     logic [63: 0] descriptor_cache [ 0:  5];
     logic         CF, PF, AF, ZF, SF, TF, IF, DF, OF;
@@ -101,6 +107,7 @@ module w686_core (
     logic [19: 0] page_directory_base;
     logic [31: 0] DR [ 0:  7];
     logic [31: 0] TR [ 0:  7];
+    // GDTR/IDTR：当前实现写死为 0，仅用于 SGDT/SIDT 类指令读回占位
     logic [15: 0] GDTR_limit;
     logic [31: 0] GDTR_base;
     logic [15: 0] IDTR_limit;
@@ -217,6 +224,7 @@ module w686_core (
     logic [ 1: 0] current_privilege_level;
 
     // --- Core-side memory request channels (BIU is instantiated in w686_cpu) ---
+    // 与顶层 i_mmu_* / o_mmu_* 之间的 core 内 MMU 事务线
     logic        mmu_bus_vaild;
     logic        mmu_bus_ready;
     logic [31: 0] mmu_bus_addr;
@@ -227,6 +235,7 @@ module w686_core (
     logic [31: 0] code_address;
     logic [31: 0] code_data_read;
 
+    // 数据总线侧影子信号：经 WRB 打拍后与 o_data_* 对齐到外部 BIU
     logic        data_vaild;
     logic        data_ready;
     logic        data_write_enable;
@@ -254,15 +263,17 @@ module w686_core (
 
     assign o_data_vaild        = data_vaild;
     assign o_data_write_enable = data_write_enable;
-    assign o_data_io_access    = 1'b0;
+    assign o_data_io_access    = 1'b0; // 本核仅内存映射访问（I/O 指令未走此聚合口）
     assign o_data_address      = data_address;
     assign o_data_data_write   = data_data_write;
 
     // --- 取指 ---
+    // IF：stage_1 输出的定长指令字节窗口与就绪、段故障指示
     logic [ 7: 0] instruction [ 0: 15];
     logic        instruction_ready;
     logic        if_segment_fault;
 
+    // 执行背压：stall 时暂停向 IF 提交有效 EIP 推进
     logic         exec_stall;
     logic         ip_valid_to_fetch;
 
@@ -302,6 +313,7 @@ module w686_core (
     // --- 80486：非 486 指令 → #UD（非法操作码）---
     logic post486_illegal;
 
+    // 译码命中 Pentium+ 等扩展指令时拉高，与 o_error 一起在写回块置 #UD
     assign post486_illegal =
         o_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size |
         o_opcode_x86_RDMSR_read_from_model_specific_reg |
@@ -313,6 +325,7 @@ module w686_core (
         o_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem;
 
     // --- 执行辅助（CPUID 多周期）---
+    // 流水线有效位与发射：insn_fire=本拍进入执行相关组合逻辑
     logic        insn_fire;
     logic        stage2_valid;
     logic        stage3_valid;
@@ -361,9 +374,11 @@ module w686_core (
     );
 
     // --- EU/AM：EU 负责计算，AM 负责访存握手 ---
+    // 相对跳转立即数：Jcc 等使用（32 位位移 / 8 位符号扩展）
     logic [31: 0] br_rel32;
     logic signed [ 7: 0] br_rel8;
 
+    // ModR/M：第一字节与第二字节（双 ModR/M 指令）解析
     logic modrm_is_reg;
     logic [ 2: 0] modrm_reg_field;
     logic [ 2: 0] modrm_rm_field;
@@ -371,6 +386,7 @@ module w686_core (
     logic [ 2: 0] modrm2_reg_field;
     logic [ 2: 0] modrm2_rm_field;
 
+    // AGU 输入：来自译码的 base/index 寄存器值
     logic [31: 0] agu_base_w;
     logic [31: 0] agu_index_w;
 
@@ -389,6 +405,7 @@ module w686_core (
     assign agu_index_w =
         o_index_reg_is_present ? GPR_read_32[o_index_reg_index] : 32'd0;
 
+    // 数据/栈/代码段基址（从描述符 cache 拼线性基址）
     logic [31: 0] dseg_base_linear;
     logic [31: 0] sseg_base_linear;
     logic [31: 0] cseg_base_linear;
@@ -409,11 +426,13 @@ module w686_core (
         descriptor_cache[`sreg_index_CS][63: 48]
     };
 
+    // EU 有效地址与 LSU 线性地址（数据段基址 + EA）
     logic [31: 0] eu_agu_ea;
     logic [31: 0] lsu_linear_address;
 
     assign lsu_linear_address = dseg_base_linear + eu_agu_ea;
 
+    // 乘除单元：操作码与 64 位乘除操作数/结果高位
     logic [ 2: 0] eu_md_op;
     logic [31: 0] eu_md_lo;
     logic [31: 0] eu_md_hi;
@@ -433,6 +452,7 @@ module w686_core (
     logic        eu_int_af_out;
     logic        eu_int_zf_out;
 
+    // 组合逻辑：按译码 one-hot 选择乘除单元操作（仅寄存器型 ModR/M=11）
     always_comb begin
         eu_md_op  = MD_NOP;
         eu_md_lo  = GPR_read_32[0];
@@ -452,6 +472,7 @@ module w686_core (
             eu_md_op = MD_IDIV32;
     end
 
+    // 组合逻辑：译码 one-hot → 整数 EU 操作/源操作数/移位次数（供 stage_3_exe_execute_unit）
     always_comb begin
         eu_int_op_sel = INT_NOP;
         eu_int_valid  = 1'b0;
@@ -461,6 +482,7 @@ module w686_core (
         eu_int_af     = AF;
         eu_int_count  = 32'd0;
 
+        // 长链 if：每条为译码 one-hot +（多数 ALU 指令要求 ModR/M 寄存器模式 mod==11）
         if (o_opcode_x86_ADD_reg_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_ADD;
@@ -664,6 +686,7 @@ module w686_core (
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_RCL;
             eu_int_a      = GPR_read_32[modrm_rm_field];
+            // 移位次数：单步为 1；否则取 CL 低 5 位或立即数字段低 5 位（下同 RCR/ROL/…）
             if (o_opcode_x86_RCL_reg_mem_by_1)
                 eu_int_count = 32'd1;
             else if (o_opcode_x86_RCL_reg_mem_by_CL)
@@ -1005,8 +1028,10 @@ module w686_core (
     end
 
     x87_op_e eu_x87_op_sel;
+    // 组合逻辑：ESC 与 o_x87_opmask 译出具体 x87 微操作（送入 EU x87 通道）
     always_comb begin
         eu_x87_op_sel = X87_NOP;
+        // 按译码生成的掩码优先级链式命中（先匹配的助记生效）
         if ( o_x87_is_esc ) begin
             if ( o_x87_opmask[M_FADD_ST0_STI] )
                 eu_x87_op_sel = X87_FADD;
@@ -1070,20 +1095,23 @@ module w686_core (
     end
 
     logic [63: 0] eu_x87_push_data;
+    // 组合逻辑：需压栈的常数型加载（FLD1=+1.0、FLDZ=+0.0）编码为 64 位数据
     always_comb begin
         eu_x87_push_data = 64'd0;
         unique case (eu_x87_op_sel)
-            X87_FLD1: eu_x87_push_data = 64'd1;
-            X87_FLDZ: eu_x87_push_data = 64'd0;
-            default:  eu_x87_push_data = 64'd0;
+            X87_FLD1: eu_x87_push_data = 64'd1;   // 常数 1 的整数位型占位（由 EU 解释）
+            X87_FLDZ: eu_x87_push_data = 64'd0;   // 常数 0
+            default:  eu_x87_push_data = 64'd0;   // 非压栈常数指令：不关心
         endcase
     end
 
+    // MOV 与 moffs：区分寄存器-内存方向及 [disp32] 累加器形式
     logic mov_ld_mem_e;
     logic mov_st_mem_e;
     logic mov_ld_acc_mem_e;
     logic mov_st_acc_mem_e;
     logic [31: 0] mov_moffs_linear;
+    // LSU 请求组合：是否写、地址/写数据、是否启动 stage_4_mem
     logic        lsu_is_store_w;
     logic [31: 0] lsu_addr_req_w;
     logic [31: 0] lsu_wdata_req_w;
@@ -1101,6 +1129,7 @@ module w686_core (
         insn_fire & ~cpuid_busy & ~in_exception & ~o_error & ~post486_illegal & ~if_segment_fault &
         ( mov_ld_mem_e | mov_st_mem_e | mov_ld_acc_mem_e | mov_st_acc_mem_e );
 
+    // AM（stage_4_mem）与 EU 分支结果
     logic        am_lsu_done;
     logic        am_lsu_busy;
     logic        am_lsu_mem_valid;
@@ -1111,18 +1140,21 @@ module w686_core (
     logic        br_taken;
     logic [31: 0] br_tgt;
 
+    // LSU 完成边沿检测与多周期 mul/div、load 目的寄存器锁存
     logic        lsu_done_d1;
     logic        muldiv_pair_wait;
     logic [31: 0] muldiv_hi_latch;
     logic        lsu_last_was_store_r;
     logic [ 2: 0] lsu_ld_dst_reg;
 
+    // x87 EU 输出影子（比较类写 EFLAGS 子集）
     logic [63: 0] eu_x87_st0;
     logic [63: 0] eu_x87_st1;
     logic        eu_x87_zf;
     logic        eu_x87_pf;
     logic        eu_x87_cf;
 
+    // WRB 打拍后的数据总线请求（接至顶层 o_data_*）
     logic        wb_mem_valid;
     logic        wb_mem_write_enable;
     logic [31: 0] wb_mem_address;
@@ -1255,6 +1287,7 @@ module w686_core (
         .i_mem_ready ( data_ready )
     );
 
+    // 时序：打拍 LSU done，用于检测上升沿（与写回 EIP/GPR 对齐）
     always_ff @(posedge clock or negedge reset_n) begin
         if (!reset_n)
             lsu_done_d1 <= 1'b0;
@@ -1265,6 +1298,7 @@ module w686_core (
 
     assign lsu_done_rise = am_lsu_done & ~lsu_done_d1;
 
+    // 时序：记录最近一次启动的 LSU 事务是否为 store（done 上升沿时选 EIP 或读数据写回）
     always_ff @(posedge clock or negedge reset_n) begin
         if (!reset_n)
             lsu_last_was_store_r <= 1'b0;
@@ -1272,14 +1306,15 @@ module w686_core (
             lsu_last_was_store_r <= lsu_is_store_w;
     end
 
+    // 时序：load 完成时目标 GPR 索引（MOV 累加器形式固定写 EAX）
     always_ff @(posedge clock or negedge reset_n) begin
         if (!reset_n)
             lsu_ld_dst_reg <= 3'd0;
         else if ( am_lsu_start_w & ~lsu_is_store_w ) begin
             if (mov_ld_acc_mem_e)
-                lsu_ld_dst_reg <= 3'd0;
+                lsu_ld_dst_reg <= 3'd0;           // MOV AL/AX/EAX,[disp32] → 目的固定 EAX
             else
-                lsu_ld_dst_reg <= modrm_reg_field;
+                lsu_ld_dst_reg <= modrm_reg_field; // 其余 load：目的为 ModR/M 的 reg 域
         end
     end
 
@@ -1294,9 +1329,10 @@ module w686_core (
     );
 
     // --- 异常 / 写回 ---
-    logic [ 7: 0] exception_vector;
-    logic       in_exception;
+    logic [ 7: 0] exception_vector; // 待投递异常号（如 #UD=6、#GP=13）
+    logic       in_exception;         // 已进入异常处理路径时阻塞正常发射
 
+    // 第二 ModR/M 字节域、短寄存器编码、线性下一条 EIP、短 jmp 符号扩展位移
     logic [ 2: 0] cx_rm_idx;
     logic [ 2: 0] cx_r_idx;
     logic [ 2: 0] bswap_rd_n;
@@ -1311,6 +1347,7 @@ module w686_core (
     assign eip_next_linear = EIP + { 28'h0, o_consume_bytes };
     assign rel8_disp32 = { { 24{ o_immediate[7] } }, o_immediate[ 7: 0] };
 
+    // 移位写回临时；shadow_ret_* 为 CALL/RET 的软件栈影子模型（与真实 ESP 并行简化）
     logic [31: 0] xadd_a;
     logic [31: 0] sh_tmp;
     logic [ 4: 0] sh_cnt;
@@ -1319,6 +1356,7 @@ module w686_core (
     logic [31: 0] shadow_ret_stack [ 0: 15];
     logic [ 3: 0] shadow_ret_sp;
 
+    // --- 标志、栈与影子返回栈：纯函数辅助 ---
     function automatic logic parity_even8(input logic [ 7: 0] v);
         parity_even8 = ~^v;
     endfunction
@@ -1505,6 +1543,7 @@ module w686_core (
             shadow_ret_top16_or = fallback;
     endfunction
 
+    // 时序：指令写回仲裁 — 复位初始化；否则默认关闭各写口，再按异常/多周期/LSU/发射指令分派
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             write_enable <= 1'b0;
@@ -1540,12 +1579,14 @@ module w686_core (
             DR_write_enable <= 1'b0;
             TR_write_enable <= 1'b0;
 
+            // CPUID 多周期：独立写 GPR（与下方 if-else 链可同时置位）
             if (cpuid_gpr_wr) begin
                 write_enable <= 1'b1;
                 write_index <= cpuid_gpr_idx;
                 write_data <= cpuid_gpr_wdata;
             end
 
+            // 多周期/访存完成优先链：CPUID 结束 → XADD/CMPXCHG 第二 GPR 写 → MUL/DIV 写 EDX → LSU 完成
             if (cpuid_done_pulse) begin
                 IP_write_enable <= 1'b1;
                 IP_write_data <= EIP + { 28'h0, o_consume_bytes };
@@ -1576,6 +1617,7 @@ module w686_core (
                 exception_vector <= 8'd13;
                 in_exception <= 1'b1;
             end else if (insn_fire && !cpuid_busy && !in_exception) begin
+                // 单拍发射写回：按译码 one-hot 更新 GPR/FLAGS/段/控制寄存器或进入异常态
                 if (o_error || post486_illegal) begin
                     exception_vector <= 8'd6;
                     in_exception <= 1'b1;
@@ -1596,6 +1638,7 @@ module w686_core (
                     exception_vector <= 8'd6;
                     in_exception <= 1'b1;
                 end else if (o_opcode_x86_AAA_ASCII_adjust_after_add) begin
+                    // BCD / ASCII 调整等：改 AL/AH 与 CF/AF 或部分 FLAGS
                     write_enable <= 1'b1;
                     write_index <= 3'd0;
                     write_data <= eu_int_result;
@@ -1691,6 +1734,7 @@ module w686_core (
                 end else if (o_opcode_x86_INVLPG_invalidate_TLB_entry) begin
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                // 控制转移：短 jmp / 直接远 jmp / 寄存器间接 jmp
                 end else if (o_opcode_x86_JMP_to_same_segment_short) begin
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + 32'd2 + { { 24{ o_immediate[7] } }, o_immediate[ 7: 0] };
@@ -1706,6 +1750,7 @@ module w686_core (
                 end else if (o_opcode_x86_JMP_to_other_segment_indirect && modrm_is_reg) begin
                     IP_write_enable <= 1'b1;
                     IP_write_data <= GPR_read_32[modrm_rm_field];
+                // CALL：压返回 EIP 影子、更新 ESP、改 EIP（近/远、直接/间接）
                 end else if (o_opcode_x86_CALL_in_same_segment_direct) begin
                     shadow_ret_stack[shadow_ret_sp] <= eip_next_linear;
                     shadow_ret_sp <= shadow_ret_sp + 4'd1;
@@ -1765,6 +1810,7 @@ module w686_core (
                         IP_write_data <= eip_next_linear + rel8_disp32;
                     else
                         IP_write_data <= eip_next_linear;
+                // RET：从影子栈取返回 EIP，并调整 ESP
                 end else if (o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument || o_opcode_x86_RET_return_from_procedure_to_other_segment_no_argument) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
@@ -1796,6 +1842,7 @@ module w686_core (
                         IP_write_data <= eip_next_linear;
                     end
                 end else if (o_opcode_x86_IRET_interrupt_return) begin
+                    // 保护模式：简化实现为保持 FLAGS/EIP 并清异常态；实模式仅顺序推进 EIP
                     if (PE) begin
                         FLAGS_write_enable <= 1'b1;
                         FLAGS_write_data <= EFLAGS;
@@ -1812,6 +1859,7 @@ module w686_core (
                     write_data <= GPR_read_32[5];
                     IP_write_enable <= 1'b1;
                     IP_write_data <= eip_next_linear;
+                // PUSH/POP 族：更新 ESP 与内存影子或 FLAGS
                 end else if (o_opcode_x86_PUSH_reg || o_opcode_x86_PUSH_imm || o_opcode_x86_PUSH_sreg_2 || o_opcode_x86_PUSH_sreg_3 || o_opcode_x86_PUSH_reg_mem || o_opcode_x86_PUSHF_push_flags_onto_stack) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
@@ -1871,6 +1919,7 @@ module w686_core (
                 end else if (o_opcode_x86_OUT_port_fixed || o_opcode_x86_OUT_port_variable) begin
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                // 串指令：SI/DI 步进由 DF 决定，部分指令第二拍写另一索引寄存器（xadd_wait_reg_wr）
                 end else if (o_opcode_x86_LODS_load_string_operand) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd6;
@@ -1928,6 +1977,7 @@ module w686_core (
                     end
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                // 除零：DIV/IDIV 除数为 0 → #DE(0)
                 end else if (
                     ( o_opcode_x86_DIV_acc_by_reg_mem | o_opcode_x86_IDIV_acc_by_reg_mem ) && modrm_is_reg &&
                     eu_md_div0
@@ -1965,6 +2015,7 @@ module w686_core (
                     FLAGS_write_data <= flags_with_cf_of(EFLAGS, eu_int_cf_out, eu_int_cf_out);
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                // MOV / LEA / 寄存器间传送：不含访存完成路径（由 LSU 链处理）
                 end else if (o_opcode_x86_MOV_imm_to_reg) begin
                     write_enable <= 1'b1;
                     write_index <= short_reg_idx;
@@ -2162,6 +2213,7 @@ module w686_core (
                     write_data <= eu_int_result;
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                // 算术/逻辑：ADD..XOR、CMP、TEST — 写结果并按 EU 输出重算 OF 等
                 end else if (o_opcode_x86_ADD_reg_to_reg_mem && modrm_is_reg) begin
                     write_enable <= 1'b1;
                     write_index <= modrm_rm_field;
@@ -2649,6 +2701,7 @@ module w686_core (
                     );
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                // 循环移位/算术移位族：sh_cnt 非零时才更新结果与 FLAGS
                 end else if (
                     (
                         o_opcode_x86_ROL_reg_mem_by_1 | o_opcode_x86_ROL_reg_mem_by_CL | o_opcode_x86_ROL_reg_mem_by_imm |
@@ -2660,6 +2713,7 @@ module w686_core (
                         o_opcode_x86_SAR_reg_mem_by_1 | o_opcode_x86_SAR_reg_mem_by_CL | o_opcode_x86_SAR_reg_mem_by_imm
                     ) && modrm_is_reg
                 ) begin
+                    // 位移量：_by_1 →1；_by_CL→ECX 低 5 位；否则 imm8 低 5 位
                     if (
                         o_opcode_x86_ROL_reg_mem_by_1 | o_opcode_x86_ROR_reg_mem_by_1 | o_opcode_x86_RCL_reg_mem_by_1 |
                         o_opcode_x86_RCR_reg_mem_by_1 | o_opcode_x86_SHL_reg_mem_by_1 | o_opcode_x86_SHR_reg_mem_by_1 |
@@ -2678,6 +2732,7 @@ module w686_core (
                     sh_tmp = eu_int_result;
 
                     if (sh_cnt != 5'd0) begin
+                        // ROL：CF=移出 MSB；OF 仅在 count==1 时有定义（MSB^CF）
                         if (o_opcode_x86_ROL_reg_mem_by_1 | o_opcode_x86_ROL_reg_mem_by_CL | o_opcode_x86_ROL_reg_mem_by_imm) begin
                             sh_cf = eu_int_cf_out;
                             sh_of = (sh_cnt == 5'd1) ? (sh_tmp[31] ^ sh_cf) : EFLAGS[11];
@@ -2709,6 +2764,7 @@ module w686_core (
                             FLAGS_write_enable <= 1'b1;
                             FLAGS_write_data <= flags_from_eu_result(EFLAGS, sh_tmp, sh_cf, EFLAGS[4], sh_of);
                         end else begin
+                            // SAR：算术右移；count==1 时 OF 置 0，其余位由 flags_from_eu_result 组装
                             sh_cf = eu_int_cf_out;
                             sh_of = (sh_cnt == 5'd1) ? 1'b0 : EFLAGS[11];
                             FLAGS_write_enable <= 1'b1;
@@ -2723,6 +2779,7 @@ module w686_core (
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if ((o_opcode_x86_SHLD_reg_mem_by_imm | o_opcode_x86_SHLD_reg_mem_by_CL) && modrm2_is_reg) begin
+                    // SHLD：移位量来自 CL 或立即数低 5 位
                     if (o_opcode_x86_SHLD_reg_mem_by_CL)
                         sh_cnt = GPR_read_32[1][ 4: 0];
                     else
@@ -2743,6 +2800,7 @@ module w686_core (
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if ((o_opcode_x86_SHRD_reg_mem_by_imm | o_opcode_x86_SHRD_reg_mem_by_CL) && modrm2_is_reg) begin
+                    // SHRD：同上，第二操作数提供移入位
                     if (o_opcode_x86_SHRD_reg_mem_by_CL)
                         sh_cnt = GPR_read_32[1][ 4: 0];
                     else
@@ -2763,6 +2821,7 @@ module w686_core (
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BSF_bit_scan_forward && modrm2_is_reg) begin
+                    // BSF：源为 0 则 ZF=1 不写 dst；否则写位位置并清 ZF
                     if (eu_int_zf_out) begin
                         FLAGS_write_enable <= 1'b1;
                         FLAGS_write_data <= flags_with_zf(EFLAGS, 1'b1);
@@ -2776,6 +2835,7 @@ module w686_core (
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else if (o_opcode_x86_BSR_bit_scan_reverse && modrm2_is_reg) begin
+                    // BSR：语义同 BSF（全 0 源时仅置 ZF）
                     if (eu_int_zf_out) begin
                         FLAGS_write_enable <= 1'b1;
                         FLAGS_write_data <= flags_with_zf(EFLAGS, 1'b1);
@@ -2853,7 +2913,9 @@ module w686_core (
                     xadd_saved_reg <= modrm_reg_field;
                     xadd_saved_val <= eu_int_a;
                     xadd_wait_reg_wr <= 1'b1;
+                // XCHG：两拍完成第二寄存器写（复用 xadd_wait_reg_wr 状态）
                 end else if (o_opcode_x86_XCHG_reg_with_acc_short) begin
+                    // reg 为 EAX 时与自身交换：无第二 GPR 写，仅推进 EIP
                     if (short_reg_idx == 3'd0) begin
                         IP_write_enable <= 1'b1;
                         IP_write_data <= EIP + { 28'h0, o_consume_bytes };
@@ -2865,10 +2927,12 @@ module w686_core (
                         xadd_saved_val <= eu_int_a;
                         xadd_wait_reg_wr <= 1'b1;
                     end
+                // 纯访存 MOV：无本拍 GPR 写（数据在 LSU done 上升沿写回）
                 end else if ( mov_ld_mem_e | mov_st_mem_e | mov_ld_acc_mem_e | mov_st_acc_mem_e ) begin
                 end else if (o_opcode_x86_CMPXCHG_compare_and_exchange && modrm2_is_reg) begin
                     write_enable <= 1'b1;
                     write_data <= eu_int_result;
+                    // 比较相等写 r/m；不等则只回写 EAX（accumulator）
                     if (eu_int_zf_out)
                         write_index <= cx_rm_idx;
                     else
@@ -2891,6 +2955,7 @@ module w686_core (
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else begin
+                    // 未覆盖的译码组合：视为非法 → #UD
                     exception_vector <= 8'd6;
                     in_exception <= 1'b1;
                 end

@@ -233,9 +233,10 @@ module stage_2_dec_decode_opcode_x86 (
     output logic       o_opcode_x86_XOR_reg_mem_to_reg,
     output logic       o_opcode_x86_XOR_imm_to_reg_mem,
     output logic       o_opcode_x86_XOR_imm_to_acc,
-    input  logic [ 7: 0] i_instruction [ 0:  3]
+    input  logic [ 7: 0] i_instruction [ 0:  3] // 已与前缀偏移对齐的 opcode 窗口
 );
 
+// 组合译码：对 i_instruction[0..3] 做模式匹配，输出各指令 one-hot（可多条同时为真时需上层约束）
 assign o_opcode_x86_AAA_ASCII_adjust_after_add                                  = (i_instruction[0][ 7: 0] == 8'b0011_0111);
 
 assign o_opcode_x86_AAD_ASCII_AX_before_div                                     = (i_instruction[0][ 7: 0] == 8'b1101_0101) & (i_instruction[1][ 7: 0] == 8'b0000_1010);

@@ -14,36 +14,35 @@ description: This module implements chip_i8042_ps2.
 // ============================================================================
 
 module chip_i8042_ps2 #(
-    parameter bit  USE_REAL_PS2 = 1'b0,
-    parameter int CLK_HZ        = 50_000_000
+    parameter bit  USE_REAL_PS2 = 1'b0,   // 1：接真实 PS/2 PHY；0：仿真注入/引脚空闲模型
+    parameter int CLK_HZ        = 50_000_000  // PHY 位时序参考时钟频率
 ) (
-    input  logic         i_cs_n,
-    input  logic         i_rd_n,
-    input  logic         i_wr_n,
-    input  logic         i_a0,
-    input  logic [ 7: 0] i_d,
-    // 0 = 数据口 0x60，1 = 状态/命令 0x64
-    output logic [ 7: 0] o_d,
-    input  logic         i_kbd_push,
-    input  logic [ 7: 0] i_kbd_data,
-    input  logic         i_aux_push,
-    input  logic [ 7: 0] i_aux_data,
-    output logic         o_kbd_irq,
-    output logic         o_aux_irq,
-    output logic         o_ps2_kbd_clk_out,
-    output logic         o_ps2_kbd_clk_oe,
-    input  logic         i_ps2_kbd_clk_in,
-    output logic         o_ps2_kbd_dat_out,
-    output logic         o_ps2_kbd_dat_oe,
-    input  logic         i_ps2_kbd_dat_in,
-    output logic         o_ps2_aux_clk_out,
+    input  logic         i_cs_n,             // 低有效片选
+    input  logic         i_rd_n,           // 低有效读
+    input  logic         i_wr_n,           // 低有效写
+    input  logic         i_a0,             // 0=数据口 0x60，1=状态/命令 0x64
+    input  logic [ 7: 0] i_d,              // 写数据
+    output logic [ 7: 0] o_d,              // 读数据
+    input  logic         i_kbd_push,       // 仿真：键盘 FIFO 注入脉冲
+    input  logic [ 7: 0] i_kbd_data,       // 仿真：键盘注入字节
+    input  logic         i_aux_push,       // 仿真：AUX FIFO 注入脉冲
+    input  logic [ 7: 0] i_aux_data,       // 仿真：AUX 注入字节
+    output logic         o_kbd_irq,        // 键盘 OBF 中断请求
+    output logic         o_aux_irq,        // AUX OBF 中断请求
+    output logic         o_ps2_kbd_clk_out,// 键盘时钟线驱动数据（开漏模型）
+    output logic         o_ps2_kbd_clk_oe, // 键盘时钟输出使能（1=拉低驱动）
+    input  logic         i_ps2_kbd_clk_in, // 键盘时钟总线回读
+    output logic         o_ps2_kbd_dat_out,// 键盘数据线驱动数据
+    output logic         o_ps2_kbd_dat_oe, // 键盘数据输出使能
+    input  logic         i_ps2_kbd_dat_in, // 键盘数据总线回读
+    output logic         o_ps2_aux_clk_out,// 鼠标时钟线驱动
     output logic         o_ps2_aux_clk_oe,
     input  logic         i_ps2_aux_clk_in,
     output logic         o_ps2_aux_dat_out,
     output logic         o_ps2_aux_dat_oe,
-    input  logic         i_ps2_aux_dat_in,
-    input  logic         clock,
-    input  logic         reset_n
+    input  logic         i_ps2_aux_dat_in, // 鼠标数据总线回读
+    input  logic         clock,            // 系统时钟
+    input  logic         reset_n           // 异步低有效复位
 );
 
     logic wr;
@@ -52,36 +51,36 @@ module chip_i8042_ps2 #(
     assign wr = !i_cs_n && !i_wr_n;
     assign rd = !i_cs_n && !i_rd_n;
 
-    localparam int KBD_D = 16;
-    localparam int AUX_D = 16;
+    localparam int KBD_D = 16;  // 键盘输出 FIFO 深度
+    localparam int AUX_D = 16;  // AUX 输出 FIFO 深度
 
     logic [ 7: 0] kbd_fifo [0:KBD_D-1];
     logic [ 7: 0] aux_fifo [0:AUX_D-1];
-    logic [ 3: 0] kbd_wptr, kbd_rptr, kbd_count;
+    logic [ 3: 0] kbd_wptr, kbd_rptr, kbd_count;  // 键盘 FIFO 指针与计数
     logic [ 3: 0] aux_wptr, aux_rptr, aux_count;
-    logic       use_aux_out;
+    logic       use_aux_out;  // 双端口均有数据时优先读出侧选择
 
-    logic kbd_obf;
+    logic kbd_obf;  // 键盘输出缓冲满标志
     logic aux_obf;
 
     assign kbd_obf = (kbd_count != 4'h0);
     assign aux_obf = (aux_count != 4'h0);
 
-    logic kbd_if_en;
+    logic kbd_if_en;     // 键盘口接口使能（命令 AE/AD）
     logic aux_if_en;
-    logic kbd_irq_en;
+    logic kbd_irq_en;    // 键盘 OBF 中断允许（简化常开缺省）
     logic aux_irq_en;
-    logic last_wr_cmd;
-    logic next_wr_to_aux;
-    logic cmd_d2_pending;
-    logic cmd_d3_pending;
+    logic last_wr_cmd;   // 上一拍写是否命中命令口
+    logic next_wr_to_aux;// D4 后下一字节发往 AUX
+    logic cmd_d2_pending;// D2：写入键盘控制器缓冲
+    logic cmd_d3_pending;// D3：写入 AUX 设备缓冲
     logic kbd_parity_err;
     logic aux_parity_err;
 
-    logic        kbd_tx_req;
+    logic        kbd_tx_req;   // 发往键盘 PHY 的发送请求
     logic [ 7: 0]  kbd_tx_byte;
     logic         kbd_tx_busy;
-    logic         kbd_rx_str;
+    logic         kbd_rx_str;  // 键盘接收选通
     logic [ 7: 0] kbd_rx_dat;
     logic         kbd_rx_err;
     logic         kbd_tx_done;
@@ -96,15 +95,15 @@ module chip_i8042_ps2 #(
     logic         aux_tx_done;
     logic         aux_tx_err;
 
-    logic        kbd_tx_pending;
+    logic        kbd_tx_pending;  // THR 型挂起发送
     logic [ 7: 0]  kbd_tx_hold;
     logic        aux_tx_pending;
     logic [ 7: 0]  aux_tx_hold;
-    logic        rd_data_port_d;
+    logic        rd_data_port_d;  // 读后弹出 FIFO 的延迟一拍对齐
 
-    logic         obf_stat;
-    logic         obf_from_aux;
-    logic         ibf_stat;
+    logic         obf_stat;       // 状态口：OBF 综合
+    logic         obf_from_aux;   // 当前应呈现 AUX 还是 KBD 数据
+    logic         ibf_stat;       // 输入缓冲忙（主机→设备）
     logic [ 7: 0] kbd_head;
     logic [ 7: 0] aux_head;
 
@@ -117,7 +116,7 @@ module chip_i8042_ps2 #(
     assign o_kbd_irq = kbd_if_en && kbd_irq_en && kbd_obf;
     assign o_aux_irq = aux_if_en && aux_irq_en && aux_obf;
 
-    logic [ 7: 0] status_rd;
+    logic [ 7: 0] status_rd;  // 0x64 读状态位拼接
 
     assign status_rd = {
         kbd_parity_err | aux_parity_err,
@@ -197,6 +196,7 @@ module chip_i8042_ps2 #(
         end
     endgenerate
 
+    // 8042 命令/数据口、FIFO、PHY 收发与读后弹出时序。
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             kbd_wptr       <= '0;
@@ -268,16 +268,19 @@ module chip_i8042_ps2 #(
                 last_wr_cmd <= 1'b1;
                 unique case (i_d)
                     8'hD4: begin
+                        // 下一写数据口发往 AUX
                         next_wr_to_aux <= 1'b1;
                         cmd_d2_pending <= 1'b0;
                         cmd_d3_pending <= 1'b0;
                     end
                     8'hD2: begin
+                        // 写输出缓冲到键盘
                         cmd_d2_pending <= 1'b1;
                         cmd_d3_pending <= 1'b0;
                         next_wr_to_aux <= 1'b0;
                     end
                     8'hD3: begin
+                        // 写输出缓冲到 AUX
                         cmd_d2_pending <= 1'b0;
                         cmd_d3_pending <= 1'b1;
                         next_wr_to_aux <= 1'b0;
@@ -367,6 +370,7 @@ module chip_i8042_ps2 #(
         end
     end
 
+    // 读 0x60/0x64：数据 FIFO 或状态寄存器。
     always_comb begin
         o_d = 8'hFF;
         if (rd) begin

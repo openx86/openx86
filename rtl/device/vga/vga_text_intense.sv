@@ -11,25 +11,25 @@ description: This module implements vga_text_intense.
 
 module vga_text_intense (
     // VRAM 读接口（文本模式：80x25 = 2000 字符 = 4000 字节）
-    output logic [12: 0]          vram_rd_addr,   // 文本 VRAM 地址（0-3999）
-    input  logic [ 7: 0]           vram_char_data, // 字符码（偶数地址）
-    input  logic [ 7: 0]           vram_attr_data, // 属性字节（奇数地址）
+    output logic [12: 0]          vram_rd_addr,   // 文本单元字节地址（字符/属性交错）
+    input  logic [ 7: 0]           vram_char_data, // 上游对齐的字符码字节
+    input  logic [ 7: 0]           vram_attr_data, // 上游对齐的属性字节
 
 
     // 字符生成器接口
-    output logic [ 7: 0]          font_char_code,
-    output logic [ 3: 0]          font_row_index,
-    input  logic [ 7: 0]           font_data,
+    output logic [ 7: 0]          font_char_code, // 送至字体 ROM 的字符码
+    output logic [ 3: 0]          font_row_index, // 字符内扫描行
+    input  logic [ 7: 0]           font_data,     // 当前行点阵
 
     // VGA 输出
-    output logic [ 3: 0]          vga_r,
+    output logic [ 3: 0]          vga_r,         // 文本渲染 RGB
     output logic [ 3: 0]          vga_g,
     output logic [ 3: 0]          vga_b,
 
     // 时序输入
     input  logic [$clog2(800)-1: 0] h_count,      // 水平计数（0-799）
     input  logic [$clog2(525)-1: 0] v_count,      // 垂直计数（0-524）
-    input  logic                   video_active,
+    input  logic                   video_active,  // 可见窗口
 
     // 时钟和复位
     input  logic                   reset_n,
@@ -82,7 +82,7 @@ module vga_text_intense (
 
     // 像素判断：从字体数据中提取当前像素
 
-    // 第一级：读取字符码和属性
+    // 第一级流水：在 video_active 下根据 vram_rd_addr 奇偶锁存字符或属性
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             char_code_reg <= '0;
@@ -98,7 +98,7 @@ module vga_text_intense (
         end
     end
 
-    // 第二级：读取字体数据
+    // 第二级流水：锁存字体 ROM 输出供像素着色
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             font_data_reg <= '0;
@@ -109,7 +109,7 @@ module vga_text_intense (
         end
     end
 
-    // VGA 颜色输出（淡色调色板 - 前景色使用较淡的颜色）
+    // 按 pixel_on 在前景/背景间选色（淡色前景调色）
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             vga_r <= 4'h0;
@@ -118,7 +118,7 @@ module vga_text_intense (
         end else begin
             if (video_active) begin
                 if (pixel_on) begin
-                    // 前景色（淡色模式：使用较淡的颜色）
+                    // 前景：淡色 16 色调色
                     unique case (fg_color)
                         4'h0: begin vga_r <= 4'h0; vga_g <= 4'h0; vga_b <= 4'h0; end  // 黑
                         4'h1: begin vga_r <= 4'h5; vga_g <= 4'h5; vga_b <= 4'hA; end  // 淡蓝
@@ -138,7 +138,7 @@ module vga_text_intense (
                         4'hF: begin vga_r <= 4'hF; vga_g <= 4'hF; vga_b <= 4'hF; end  // 白
                     endcase
                 end else begin
-                    // 背景色（标准颜色，与彩色模式相同）
+                    // 背景：标准 8 色
                     unique case (bg_color)
                         3'h0: begin vga_r <= 4'h0; vga_g <= 4'h0; vga_b <= 4'h0; end  // 黑
                         3'h1: begin vga_r <= 4'h0; vga_g <= 4'h0; vga_b <= 4'hA; end  // 蓝

@@ -64,7 +64,7 @@ addressing modes.
 `include "openx86_defs.h.sv"
 
 module stage_2_dec_decode_mod_rm (
-    // ports
+    // ModR/M 输入：mod/rm + W/默认操作数尺寸 → 寻址分量与位移宽度
     input  logic [ 1: 0] i_mod,
     input  logic [ 2: 0] i_rm,
     input  logic         i_w_is_present,
@@ -85,9 +85,7 @@ module stage_2_dec_decode_mod_rm (
     output logic        o_sib_is_present
 );
 
-// sib_is_present is 1'b1 means this module's signal is invalid
-// need to check s-i-b byte for correct segment & base & index & displacement signal
-
+// o_sib_is_present=1：32 位寻址且 rm=100 时需再读 SIB，本模块输出的 base/index/seg 仅部分有效
 logic mod_00;
 logic mod_01;
 logic mod_10;
@@ -166,6 +164,7 @@ assign SS_32_bit = mod_00_SS_32_bit | mod_01_SS_32_bit | mod_10_SS_32_bit;
 assign segment_reg_index_DS = (default_operation_size_16 & DS_16_bit) | (default_operation_size_32 & DS_32_bit);
 assign segment_reg_index_SS = (default_operation_size_16 & SS_16_bit) | (default_operation_size_32 & SS_32_bit);
 
+// 默认段：多数寻址用 DS；BP 基址栈帧用 SS
 always_comb begin
     unique case (1'b1)
         segment_reg_index_DS: o_segment_reg_index <= `index_reg_seg__DS;
@@ -195,6 +194,7 @@ assign base_mod_10_BP = mod_10 & (rm_010 | rm_011 | rm_110);
 assign base_16_BX = base_mod_xx_BX;
 assign base_16_BP = base_mod_00_BP | base_mod_01_BP | base_mod_10_BP;
 
+// 16 位寻址：基址寄存器为 BX 或 BP
 always_comb begin
     unique case (1'b1)
         base_16_BX: o_base_reg_index <= `index_reg_gpr__BX;
@@ -235,6 +235,7 @@ assign index_mod_xx_EBP = default_operation_size_32 & (mod_01 | mod_10) & rm_101
 assign index_mod_xx_ESI = default_operation_size_32 & ~mod_11 & rm_110;
 assign index_mod_xx_EDI = default_operation_size_32 & ~mod_11 & rm_111;
 
+// 16/32 位寻址：索引分量（SI/DI 或 EAX..EDI 子集）
 always_comb begin
     unique case (1'b1)
         index_mod_xx__SI: o_index_reg_index <= `index_reg_gpr__SI;
@@ -296,6 +297,7 @@ logic gpr_reg_bit_width_32;
 assign gpr_reg_bit_width__8 = i_w_is_present ? (~i_w) : 1'b0;
 assign gpr_reg_bit_width_16 = i_w_is_present ? (i_w & default_operation_size_16) : default_operation_size_16;
 assign gpr_reg_bit_width_32 = i_w_is_present ? (i_w & default_operation_size_32) : default_operation_size_32;
+// mod=11：r/m 字段直接编码通用寄存器及其位宽
 always_comb begin
     unique case (1'b1)
         gpr_reg_bit_width__8: o_gen_reg_bit_width <= `bit_width_gpr__8;

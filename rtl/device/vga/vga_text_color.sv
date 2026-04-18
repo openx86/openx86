@@ -10,9 +10,9 @@ description: This module implements vga_text_color.
 
 module vga_text_color (
     // VRAM 读接口（文本模式：80x25 = 2000 字符 = 4000 字节）
-    output logic [12: 0]          vram_rd_addr,   // 文本 VRAM 地址（0-3999）
-    input  logic [ 7: 0]           vram_char_data, // 字符码（偶数地址）
-    input  logic [ 7: 0]           vram_attr_data, // 属性字节（奇数地址）
+    output logic [12: 0]          vram_rd_addr,   // 文本缓冲字节地址
+    input  logic [ 7: 0]           vram_char_data, // 对齐后的字符码
+    input  logic [ 7: 0]           vram_attr_data, // 对齐后的属性字节
 
 
     // 字符生成器接口
@@ -83,11 +83,11 @@ module vga_text_color (
 
     // 像素判断：从字体数据中提取当前像素
 
-    // 字符码和属性寄存器（需要流水线处理）
+    // 未连接内部寄存（声明存在但无赋值，不改变综合意图）
     logic [ 7: 0] char_code_next;
     logic [ 7: 0] attr_next;
 
-    // 第一级：读取字符码和属性
+    // 第一级流水：锁存字符码与属性
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             char_code_reg <= '0;
@@ -103,7 +103,7 @@ module vga_text_color (
         end
     end
 
-    // 第二级：读取字体数据
+    // 第二级流水：锁存点阵行
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             font_data_reg <= '0;
@@ -114,7 +114,7 @@ module vga_text_color (
         end
     end
 
-    // VGA 颜色输出（16 色 VGA 调色板）
+    // 16 色前景 + 8 色背景查表输出
     always_ff @(posedge clock or negedge reset_n) begin
         if (~reset_n) begin
             vga_r <= 4'h0;
@@ -123,7 +123,7 @@ module vga_text_color (
         end else begin
             if (video_active) begin
                 if (pixel_on) begin
-                    // 前景色（16 色）
+                    // 前景 16 色
                     unique case (fg_color)
                         4'h0: begin vga_r <= 4'h0; vga_g <= 4'h0; vga_b <= 4'h0; end  // 黑
                         4'h1: begin vga_r <= 4'h0; vga_g <= 4'h0; vga_b <= 4'hA; end  // 蓝
@@ -143,7 +143,7 @@ module vga_text_color (
                         4'hF: begin vga_r <= 4'hF; vga_g <= 4'hF; vga_b <= 4'hF; end  // 白
                     endcase
                 end else begin
-                    // 背景色（8 色，bit 3 控制亮度）
+                    // 背景 8 色
                     unique case (bg_color)
                         3'h0: begin vga_r <= 4'h0; vga_g <= 4'h0; vga_b <= 4'h0; end  // 黑
                         3'h1: begin vga_r <= 4'h0; vga_g <= 4'h0; vga_b <= 4'hA; end  // 蓝

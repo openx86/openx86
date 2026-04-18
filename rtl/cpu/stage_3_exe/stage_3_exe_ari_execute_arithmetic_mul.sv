@@ -18,9 +18,12 @@ description: This module implements stage_3_exe_ari_execute_arithmetic_mul.
 module stage_3_exe_ari_execute_arithmetic_mul #(
     BIT_WIDTH = 32
 ) (
-    // ports
-    input  logic [BIT_WIDTH-1: 0] operand_1,    input  logic [BIT_WIDTH-1: 0] operand_2,    output logic [BIT_WIDTH-1: 0] result);
+    input  logic [BIT_WIDTH-1: 0] operand_1,  // 第一操作数
+    input  logic [BIT_WIDTH-1: 0] operand_2,  // 第二操作数
+    output logic [BIT_WIDTH-1: 0] result      // 乘积低位（高位见乘除单元）
+);
 
+// 组合逻辑：连续赋值
 assign result = operand_1 * operand_2;
 
 endmodule

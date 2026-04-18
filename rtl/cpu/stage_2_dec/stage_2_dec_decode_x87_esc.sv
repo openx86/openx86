@@ -38,6 +38,7 @@ module stage_2_dec_decode_x87_esc (
     assign o_modrm_required = o_is_esc;
     assign o_memory_operand = o_is_esc && (o_mod != 2'b11);
 
+    // 粗粒度 ESC 译码：内存形式优先按 esc 选择存取模板；寄存器形式按 reg/整字节再细分
     always_comb begin
         o_opmask = 32'h0;
         if (!o_is_esc) begin

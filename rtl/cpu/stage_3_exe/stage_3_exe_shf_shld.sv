@@ -5,14 +5,15 @@ repo: https://github.com/openx86/openx86
 description: This module implements stage_3_exe_shf_shld.
 */
 module stage_3_exe_shf_shld (
-    input  logic [31: 0]  a,
-    input  logic [31: 0]  b,
-    input  logic [31: 0]  count,
-    output logic [31: 0] y
+    input  logic [31: 0]  a,  // 操作数 / 源 1
+    input  logic [31: 0]  b,  // 操作数 / 源 2
+    input  logic [31: 0]  count,  // 移位或旋转计数值（低位有效）
+    output logic [31: 0] y  // 结果输出
 );
     logic [ 4: 0] sh;
     logic [ 5: 0] sh6;
 
+    // 组合逻辑：推导输出
     always_comb begin
         sh = count[ 4: 0];
         sh6 = { 1'b0, sh };
