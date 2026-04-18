@@ -48,10 +48,12 @@ verilator --version
 echo "运行: verilator --lint-only -f $CMDFILE"
 
 # shellcheck disable=SC2086
+# -Wno-fatal：整库 -Wall 时警告量很大，默认达到上限会以非零退出；lint 脚本以“打印问题”为主，不因警告终止。
 exec verilator \
   --lint-only \
   -Wall \
   -Wno-DECLFILENAME \
+  -Wno-fatal \
   --top-module openx86_soc_top \
   -Mdir "$LINT_OBJDIR" \
   -f "$CMDFILE" \
