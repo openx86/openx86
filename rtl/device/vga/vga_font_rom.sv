@@ -25,8 +25,7 @@ module vga_font_rom (
     input  logic          clock
 );
 
-    logic [11: 0] font_addr;
-    assign font_addr = {char_code, row_index};
+    logic [11: 0] font_addr = {char_code, row_index};
 
     single_port_rom #(
         .DATA_WIDTH ( 8      ),

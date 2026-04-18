@@ -128,75 +128,28 @@ localparam logic [15: 0] IO_BASE_COM1        = 16'h03F8;  // COM1 串口起始
 localparam logic [15: 0] IO_END_COM1         = 16'h03FF;  // COM1 串口结束
 
 // 地址解码信号
-logic is_memory_access;
-logic is_io_access;
-logic is_ram_access;
-logic is_vram_access;
-logic is_ext_bios_access;
-logic is_sys_bios_access;
-logic is_sdram_access;
-logic is_vga_io_access;
-logic is_other_io_access;
-logic is_chipset_io;
-logic [ 7: 0] chipset_io_rdata;
-logic       chipset_io_hit;
-
-// 数据选择信号
-logic [31: 0] vram_data_selected;
-logic [31: 0] bios_data_selected;
-logic [31: 0] ext_bios_data_selected;
-logic [31: 0] io_data_selected;
-
-// 就绪信号
-logic vram_ready_internal;
-logic bios_ready_internal;
-logic ext_bios_ready_internal;
-logic sdram_ready_internal;
-logic io_ready_internal;
-
-// ============================================================================
-// 地址解码逻辑
-// ============================================================================
-
-// 判断是内存访问还是 I/O 访问
-// 在 x86 架构中，I/O 访问通过 IN/OUT 指令，使用专门的 I/O 地址空间
-// CPU 通过 i_bus_io_access 信号来区分：
-// - i_bus_io_access = 0: 内存访问
-// - i_bus_io_access = 1: I/O 端口访问（地址的低16位是I/O端口地址）
-
-assign is_memory_access = !i_bus_io_access;
-assign is_io_access     = i_bus_io_access;
-
-// 内存地址解码
-assign is_ram_access      = is_memory_access &&
+logic is_memory_access = !i_bus_io_access;
+logic is_io_access = i_bus_io_access;
+logic is_ram_access = is_memory_access &&
                              (i_bus_address >= MEM_BASE_RAM) &&
                              (i_bus_address <= MEM_END_RAM);
-
-assign is_vram_access     = is_memory_access &&
+logic is_vram_access = is_memory_access &&
                              (i_bus_address >= MEM_BASE_VRAM) &&
                              (i_bus_address <= MEM_END_VRAM);
-
-assign is_ext_bios_access = is_memory_access &&
+logic is_ext_bios_access = is_memory_access &&
                              (i_bus_address >= MEM_BASE_EXT_BIOS) &&
                              (i_bus_address <= MEM_END_EXT_BIOS);
-
-assign is_sys_bios_access = is_memory_access &&
+logic is_sys_bios_access = is_memory_access &&
                              (i_bus_address >= MEM_BASE_SYS_BIOS) &&
                              (i_bus_address <= MEM_END_SYS_BIOS);
-
-assign is_sdram_access    = is_memory_access &&
+logic is_sdram_access = is_memory_access &&
                              (i_bus_address >= MEM_BASE_SDRAM) &&
                              (i_bus_address <= MEM_END_SDRAM);
-
-// I/O 地址解码
-assign is_vga_io_access   = is_io_access &&
+logic is_vga_io_access = is_io_access &&
                              (i_bus_address[15: 0] >= IO_BASE_VGA) &&
                              (i_bus_address[15: 0] <= IO_END_VGA);
-
-assign is_other_io_access = is_io_access && !is_vga_io_access;
-
-// Chipset 端口并集（与各 chip_* 模块地址一致）
-assign is_chipset_io = is_other_io_access && (
+logic is_other_io_access = is_io_access && !is_vga_io_access;
+logic is_chipset_io = is_other_io_access && (
     ((i_bus_address[15: 0] >= 16'h0000) && (i_bus_address[15: 0] <= 16'h000F)) ||
     ((i_bus_address[15: 0] >= 16'h0080) && (i_bus_address[15: 0] <= 16'h008F)) ||
     ((i_bus_address[15: 0] >= 16'h00C0) && (i_bus_address[15: 0] <= 16'h00DF)) ||
@@ -211,6 +164,43 @@ assign is_chipset_io = is_other_io_access && (
     ((i_bus_address[15: 0] >= 16'h0378) && (i_bus_address[15: 0] <= 16'h037F)) ||
     ((i_bus_address[15: 0] >= 16'h03F8) && (i_bus_address[15: 0] <= 16'h03FF))
 );
+logic [ 7: 0] chipset_io_rdata;
+logic       chipset_io_hit = chip_io_vld & (hit_dma | hit_pic_m | hit_pic_s | hit_pit | hit_ps2 | hit_rtc | hit_com | hit_lpt | hit_ide);
+
+// 数据选择信号
+logic [31: 0] vram_data_selected = 32'h0;  // VRAM不支持读操作
+logic [31: 0] bios_data_selected = is_sys_bios_access ? i_bios_rdata : 32'h0;
+logic [31: 0] ext_bios_data_selected = is_ext_bios_access ? i_ext_bios_rdata : 32'h0;
+logic [31: 0] io_data_selected = is_io_access ? {24'h0, io_byte_data} : 32'h0;
+
+// 就绪信号
+logic vram_ready_internal = o_vga_mem_en_w ? 1'b1 : 1'b0;  // VGA 写操作假设立即完成
+logic bios_ready_internal = is_sys_bios_access ? 1'b1 : 1'b0;
+logic ext_bios_ready_internal = is_ext_bios_access ? 1'b1 : 1'b0;
+logic sdram_ready_internal = (is_ram_access || is_sdram_access) ? i_sdram_ready : 1'b0;
+logic io_ready_internal = (o_vga_io_en_w || o_vga_io_en_r || is_other_io_access) ? 1'b1 : 1'b0;  // I/O 操作假设立即完成
+
+// ============================================================================
+// 地址解码逻辑
+// ============================================================================
+
+// 判断是内存访问还是 I/O 访问
+// 在 x86 架构中，I/O 访问通过 IN/OUT 指令，使用专门的 I/O 地址空间
+// CPU 通过 i_bus_io_access 信号来区分：
+// - i_bus_io_access = 0: 内存访问
+// - i_bus_io_access = 1: I/O 端口访问（地址的低16位是I/O端口地址）
+
+
+// 内存地址解码
+
+
+
+
+
+// I/O 地址解码
+
+
+// Chipset 端口并集（与各 chip_* 模块地址一致）
 
 // -------------------------------------------------------------------------
 // IBM PC/AT：各 chip_* 在 bus_controller 内直连例化
@@ -218,59 +208,61 @@ assign is_chipset_io = is_other_io_access && (
 localparam int CHIP_DISK_IMAGE_BYTES = 512 * 2048;
 localparam int CHIP_DISK_SECTOR_CNT  = CHIP_DISK_IMAGE_BYTES / 512;
 
-logic [15: 0] chip_io_addr;
-logic        chip_io_vld;
-logic        chip_io_we;
+logic [15: 0] chip_io_addr = i_bus_address[15: 0];
+logic        chip_io_vld = is_chipset_io && i_bus_valid;
+logic        chip_io_we = i_bus_write_enable;
 
 logic [ 7: 0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
 
-logic hit_dma;
-logic hit_pic_m;
-logic hit_pic_s;
-logic hit_pit;
-logic hit_ps2;
-logic hit_rtc;
-logic hit_com;
-logic hit_lpt;
-logic hit_ide;
+logic hit_dma = (chip_io_addr <= 16'h000F)
+                | ((chip_io_addr >= 16'h0080) & (chip_io_addr <= 16'h008F))
+                | ((chip_io_addr >= 16'h00C0) & (chip_io_addr <= 16'h00DF));
+logic hit_pic_m = (chip_io_addr >= 16'h0020) & (chip_io_addr <= 16'h0021);
+logic hit_pic_s = (chip_io_addr >= 16'h00A0) & (chip_io_addr <= 16'h00A1);
+logic hit_pit = (chip_io_addr >= 16'h0040) & (chip_io_addr <= 16'h0043);
+logic hit_ps2 = (chip_io_addr == 16'h0060) | (chip_io_addr == 16'h0064);
+logic hit_rtc = (chip_io_addr == 16'h0070) | (chip_io_addr == 16'h0071);
+logic hit_com = (chip_io_addr >= 16'h03F8) & (chip_io_addr <= 16'h03FF);
+logic hit_lpt = (chip_io_addr >= 16'h0378) & (chip_io_addr <= 16'h037F);
+logic hit_ide = ((chip_io_addr >= 16'h01F0) & (chip_io_addr <= 16'h01F7)) | (chip_io_addr == 16'h03F6);
 
-logic vld;
+logic vld = chip_io_vld;
 
-logic cs_dma_n;
-logic rd_dma_n;
-logic wr_dma_n;
+logic cs_dma_n = !(vld & hit_dma);
+logic rd_dma_n = !(vld & !chip_io_we & hit_dma);
+logic wr_dma_n = !(vld &  chip_io_we & hit_dma);
 
-logic cs_pic_m_n;
-logic rd_pic_m_n;
-logic wr_pic_m_n;
+logic cs_pic_m_n = !(vld & hit_pic_m);
+logic rd_pic_m_n = !(vld & !chip_io_we & hit_pic_m);
+logic wr_pic_m_n = !(vld &  chip_io_we & hit_pic_m);
 
-logic cs_pic_s_n;
-logic rd_pic_s_n;
-logic wr_pic_s_n;
+logic cs_pic_s_n = !(vld & hit_pic_s);
+logic rd_pic_s_n = !(vld & !chip_io_we & hit_pic_s);
+logic wr_pic_s_n = !(vld &  chip_io_we & hit_pic_s);
 
-logic cs_pit_n;
-logic rd_pit_n;
-logic wr_pit_n;
+logic cs_pit_n = !(vld & hit_pit);
+logic rd_pit_n = !(vld & !chip_io_we & hit_pit);
+logic wr_pit_n = !(vld &  chip_io_we & hit_pit);
 
-logic cs_ps2_n;
-logic rd_ps2_n;
-logic wr_ps2_n;
+logic cs_ps2_n = !(vld & hit_ps2);
+logic rd_ps2_n = !(vld & !chip_io_we & hit_ps2);
+logic wr_ps2_n = !(vld &  chip_io_we & hit_ps2);
 
-logic cs_rtc_n;
-logic rd_rtc_n;
-logic wr_rtc_n;
+logic cs_rtc_n = !(vld & hit_rtc);
+logic rd_rtc_n = !(vld & !chip_io_we & hit_rtc);
+logic wr_rtc_n = !(vld &  chip_io_we & hit_rtc);
 
-logic cs_com_n;
-logic rd_com_n;
-logic wr_com_n;
+logic cs_com_n = !(vld & hit_com);
+logic rd_com_n = !(vld & !chip_io_we & hit_com);
+logic wr_com_n = !(vld &  chip_io_we & hit_com);
 
-logic cs_lpt_n;
-logic rd_lpt_n;
-logic wr_lpt_n;
+logic cs_lpt_n = !(vld & hit_lpt);
+logic rd_lpt_n = !(vld & !chip_io_we & hit_lpt);
+logic wr_lpt_n = !(vld &  chip_io_we & hit_lpt);
 
-logic cs_ide_n;
-logic rd_ide_n;
-logic wr_ide_n;
+logic cs_ide_n = !(vld & hit_ide);
+logic rd_ide_n = !(vld & !chip_io_we & hit_ide);
+logic wr_ide_n = !(vld &  chip_io_we & hit_ide);
 
 logic       pit_out0;
 logic       intr_m, intr_s;
@@ -279,70 +271,26 @@ logic [ 7: 0] ir_m;
 logic       rtc_irq;
 logic       ps2_kbd_irq;
 logic       ps2_aux_irq;
-logic [ 7: 0] pic_slave_ir_merged;
+logic [ 7: 0] pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
 
-assign chip_io_addr = i_bus_address[15: 0];
-assign chip_io_vld  = is_chipset_io && i_bus_valid;
-assign chip_io_we   = i_bus_write_enable;
 
-assign hit_dma   = (chip_io_addr <= 16'h000F)
-                | ((chip_io_addr >= 16'h0080) & (chip_io_addr <= 16'h008F))
-                | ((chip_io_addr >= 16'h00C0) & (chip_io_addr <= 16'h00DF));
-assign hit_pic_m = (chip_io_addr >= 16'h0020) & (chip_io_addr <= 16'h0021);
-assign hit_pic_s = (chip_io_addr >= 16'h00A0) & (chip_io_addr <= 16'h00A1);
-assign hit_pit   = (chip_io_addr >= 16'h0040) & (chip_io_addr <= 16'h0043);
-assign hit_ps2   = (chip_io_addr == 16'h0060) | (chip_io_addr == 16'h0064);
-assign hit_rtc   = (chip_io_addr == 16'h0070) | (chip_io_addr == 16'h0071);
-assign hit_com   = (chip_io_addr >= 16'h03F8) & (chip_io_addr <= 16'h03FF);
-assign hit_lpt   = (chip_io_addr >= 16'h0378) & (chip_io_addr <= 16'h037F);
-assign hit_ide   = ((chip_io_addr >= 16'h01F0) & (chip_io_addr <= 16'h01F7)) | (chip_io_addr == 16'h03F6);
 
-assign vld = chip_io_vld;
 
-assign cs_dma_n   = !(vld & hit_dma);
-assign rd_dma_n   = !(vld & !chip_io_we & hit_dma);
-assign wr_dma_n   = !(vld &  chip_io_we & hit_dma);
 
-assign cs_pic_m_n = !(vld & hit_pic_m);
-assign rd_pic_m_n = !(vld & !chip_io_we & hit_pic_m);
-assign wr_pic_m_n = !(vld &  chip_io_we & hit_pic_m);
 
-assign cs_pic_s_n = !(vld & hit_pic_s);
-assign rd_pic_s_n = !(vld & !chip_io_we & hit_pic_s);
-assign wr_pic_s_n = !(vld &  chip_io_we & hit_pic_s);
 
-assign cs_pit_n   = !(vld & hit_pit);
-assign rd_pit_n   = !(vld & !chip_io_we & hit_pit);
-assign wr_pit_n   = !(vld &  chip_io_we & hit_pit);
 
-assign cs_ps2_n   = !(vld & hit_ps2);
-assign rd_ps2_n   = !(vld & !chip_io_we & hit_ps2);
-assign wr_ps2_n   = !(vld &  chip_io_we & hit_ps2);
 
-assign cs_rtc_n   = !(vld & hit_rtc);
-assign rd_rtc_n   = !(vld & !chip_io_we & hit_rtc);
-assign wr_rtc_n   = !(vld &  chip_io_we & hit_rtc);
 
-assign cs_com_n   = !(vld & hit_com);
-assign rd_com_n   = !(vld & !chip_io_we & hit_com);
-assign wr_com_n   = !(vld &  chip_io_we & hit_com);
 
-assign cs_lpt_n   = !(vld & hit_lpt);
-assign rd_lpt_n   = !(vld & !chip_io_we & hit_lpt);
-assign wr_lpt_n   = !(vld &  chip_io_we & hit_lpt);
 
-assign cs_ide_n   = !(vld & hit_ide);
-assign rd_ide_n   = !(vld & !chip_io_we & hit_ide);
-assign wr_ide_n   = !(vld &  chip_io_we & hit_ide);
 
-assign pic_slave_ir_merged = { 3'b0, ps2_aux_irq, 3'b0, rtc_irq };
 
 assign ir_m[0]    = pit_out0;
 assign ir_m[1]    = ps2_kbd_irq;
 assign ir_m[2]    = intr_s;
 assign ir_m[ 7:  3]  = 5'b0;
 
-assign chipset_io_hit = chip_io_vld & (hit_dma | hit_pic_m | hit_pic_s | hit_pit | hit_ps2 | hit_rtc | hit_com | hit_lpt | hit_ide);
 
 chip_8237_dma u_chip_dma (
     .clock    ( clock ),
@@ -554,17 +502,12 @@ assign o_vga_io_data_w = i_bus_data_write[ 7: 0];  // I/O 端口通常是 8 位�
 // VRAM 数据（8 位扩展到 32 位）
 // 注意：VGA VRAM 是只写的，不支持CPU读操作
 // 如果CPU尝试读VRAM，返回0（或者可以返回未定义值）
-assign vram_data_selected = 32'h0;  // VRAM不支持读操作
 
 // BIOS 数据
-assign bios_data_selected = is_sys_bios_access ? i_bios_rdata : 32'h0;
-assign ext_bios_data_selected = is_ext_bios_access ? i_ext_bios_rdata : 32'h0;
 
 // I/O 数据（8 位扩展到 32 位）
-logic [ 7: 0] io_byte_data;
-assign io_byte_data = is_vga_io_access ? i_vga_io_data_r :
+logic [ 7: 0] io_byte_data = is_vga_io_access ? i_vga_io_data_r :
                       (chipset_io_hit ? chipset_io_rdata : 8'hFF);
-assign io_data_selected = is_io_access ? {24'h0, io_byte_data} : 32'h0;
 
 // 最终数据输出
 always_comb begin
@@ -590,15 +533,10 @@ end
 // ============================================================================
 
 // 各外设的就绪信号
-assign vram_ready_internal = o_vga_mem_en_w ? 1'b1 : 1'b0;  // VGA 写操作假设立即完成
 
 // BIOS ROM是同步的，假设立即完成
-assign bios_ready_internal = is_sys_bios_access ? 1'b1 : 1'b0;
-assign ext_bios_ready_internal = is_ext_bios_access ? 1'b1 : 1'b0;
 
-assign sdram_ready_internal = (is_ram_access || is_sdram_access) ? i_sdram_ready : 1'b0;
 
-assign io_ready_internal = (o_vga_io_en_w || o_vga_io_en_r || is_other_io_access) ? 1'b1 : 1'b0;  // I/O 操作假设立即完成
 
 // 总线就绪信号
 always_comb begin

@@ -29,20 +29,20 @@ module bus_chipset_integration_tb;
     logic        vga_io_en_r;
     logic [15: 0] vga_io_addr;
     logic [ 7: 0]  vga_io_data_w;
-    logic [ 7: 0]  vga_io_data_r;
+    logic [ 7: 0]  vga_io_data_r = 8'hFF;
 
     logic        o_sdram_en;
     logic        o_sdram_we;
     logic [23: 0] o_sdram_addr_off;
     logic [31: 0] o_sdram_wdata;
-    logic [31: 0] i_sdram_rdata;
-    logic        i_sdram_ready;
-    logic        i_sdram_busy;
+    logic [31: 0] i_sdram_rdata = 32'h0;
+    logic        i_sdram_ready = 1'b0;
+    logic        i_sdram_busy = 1'b0;
 
     logic [15: 0] bios_addr;
-    logic [31: 0] bios_rdata;
+    logic [31: 0] bios_rdata = 32'h0;
     logic [16: 0] ext_bios_addr;
-    logic [31: 0] ext_bios_rdata;
+    logic [31: 0] ext_bios_rdata = 32'h0;
 
     bus_controller u_bus_controller (
         .i_bus_valid        ( bus_valid ),
@@ -96,12 +96,6 @@ module bus_chipset_integration_tb;
         .reset_n          ( reset_n )
     );
 
-    assign i_sdram_rdata = 32'h0;
-    assign i_sdram_ready = 1'b0;
-    assign i_sdram_busy  = 1'b0;
-    assign bios_rdata = 32'h0;
-    assign ext_bios_rdata = 32'h0;
-    assign vga_io_data_r = 8'hFF;
 
     always #5 clock = ~clock;
 

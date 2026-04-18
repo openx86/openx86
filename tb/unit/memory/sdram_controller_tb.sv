@@ -34,12 +34,11 @@ module sdram_controller_tb;
     logic [ 1: 0] o_sdram_dqm;
     logic [15: 0] o_sdram_dq_out;
     logic        o_sdram_dq_oe;
-    logic [15: 0] i_sdram_dq_in;
+    logic [15: 0] i_sdram_dq_in = o_sdram_dq_oe ? o_sdram_dq_out : (stub_oe ? stub_dq : 16'hZZZZ);
 
     logic [15: 0] stub_dq;
     logic        stub_oe;
 
-    assign i_sdram_dq_in = o_sdram_dq_oe ? o_sdram_dq_out : (stub_oe ? stub_dq : 16'hZZZZ);
 
     sdram_controller dut (
         .clk            ( clk ),

@@ -19,7 +19,7 @@ module stage_3_exe_address_generation_unit (
 );
 
     logic [63: 0] scaled;
-    logic [63: 0] sum;
+    logic [63: 0] sum = {32'h0, i_base} + scaled + {{32{i_disp[31]}}, i_disp};
 
     always_comb begin
         unique case (i_scale)
@@ -30,7 +30,6 @@ module stage_3_exe_address_generation_unit (
         endcase
     end
 
-    assign sum = {32'h0, i_base} + scaled + {{32{i_disp[31]}}, i_disp};
     assign o_effective_address = sum[31: 0];
 
 endmodule

@@ -80,8 +80,8 @@ module w686_register_files (
     input  logic          reset_n
 );
 
-    logic gdtr_write_enable;
-    logic idtr_write_enable;
+    logic gdtr_write_enable = 1'b0;
+    logic idtr_write_enable = 1'b0;
 
     rf_general_purpose_register general_purpose_register (
         .write_enable ( wb_write_enable ),
@@ -190,7 +190,5 @@ module w686_register_files (
         .reset_n ( reset_n )
     );
 
-    assign gdtr_write_enable = 1'b0;
-    assign idtr_write_enable = 1'b0;
 
 endmodule

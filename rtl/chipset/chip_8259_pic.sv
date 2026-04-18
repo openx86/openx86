@@ -66,8 +66,8 @@ module chip_8259_pic (
     logic [ 7: 0]        isr, isr_n;
     logic [ 7: 0]        ir_prev, ir_prev_n;
 
-    logic                wr;
-    logic                rd;
+    logic                wr = !i_cs_n && !i_wr_n;
+    logic                rd = !i_cs_n && !i_rd_n;
     logic [ 7: 0]        masked_irr, masked_irr_n;
     logic                pending_valid, pending_valid_n;
     logic [ 2: 0]        pending_idx, pending_idx_n;
@@ -75,8 +75,6 @@ module chip_8259_pic (
     logic [ 2: 0]        isr_idx, isr_idx_n;
     logic                irq_eligible, irq_eligible_n;
 
-    assign wr = !i_cs_n && !i_wr_n;
-    assign rd = !i_cs_n && !i_rd_n;
 
     always_comb begin
         masked_irr    = irr & ~imr;

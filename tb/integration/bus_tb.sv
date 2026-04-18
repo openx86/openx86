@@ -50,11 +50,10 @@ module bus_tb;
     logic        i_sdram_ready;
     logic        i_sdram_busy;
 
-    logic [15: 0] sdr_dq_in;
+    logic [15: 0] sdr_dq_in = sdr_dq_oe ? sdr_dq_out : (stub_oe ? stub_dq : 16'hZZZZ);
     logic [15: 0] stub_dq;
     logic        stub_oe;
 
-    assign sdr_dq_in = sdr_dq_oe ? sdr_dq_out : (stub_oe ? stub_dq : 16'hZZZZ);
 
     logic        sdr_cs_n, sdr_ras_n, sdr_cas_n, sdr_we_n;
     logic [ 1: 0]  sdr_ba;

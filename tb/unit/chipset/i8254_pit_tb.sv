@@ -19,19 +19,15 @@ module i8254_pit_tb;
     logic [ 7: 0] rdata;
     logic        out0, out1, out2;
 
-    logic hit;
-    logic cs_n;
-    logic wr_n;
-    logic rd_n;
+    logic hit = (addr >= 16'h0040) && (addr <= 16'h0043);
+    logic cs_n = !(valid && hit);
+    logic wr_n = !(valid && we && hit);
+    logic rd_n = !(valid && !we && hit);
 
     int fail_cnt;
     int high_len;
     int low_len;
 
-    assign hit  = (addr >= 16'h0040) && (addr <= 16'h0043);
-    assign cs_n = !(valid && hit);
-    assign wr_n = !(valid && we && hit);
-    assign rd_n = !(valid && !we && hit);
 
     chip_8254_pit dut (
         .clock      ( clock ),

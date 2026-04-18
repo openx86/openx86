@@ -131,8 +131,7 @@ module sdram_controller #(
     // ------------------------------------------------------------------------
     // Address mapping helpers
     // ------------------------------------------------------------------------
-    logic [22: 0] halfword_addr; // 16-bit addressed (byte_off >> 1)
-    assign halfword_addr = i_addr_off[23:  1];
+    logic [22: 0] halfword_addr = i_addr_off[23:  1]; // 16-bit addressed (byte_off >> 1)
 
     logic [12: 0] row  = halfword_addr[22: 10];
     logic [ 1: 0]  bank = halfword_addr[ 9:  8];
@@ -197,7 +196,7 @@ module sdram_controller #(
     logic        lat_we;
     logic [31: 0] lat_wdata;
 
-    logic refresh_due;
+    logic refresh_due = (refresh_ctr >= REFRESH_CYCLES-1);
     int unsigned refresh_ctr;
 
     // dq output for writes
@@ -251,7 +250,6 @@ module sdram_controller #(
             end
         end
     end
-    assign refresh_due = (refresh_ctr >= REFRESH_CYCLES-1);
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin

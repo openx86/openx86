@@ -172,38 +172,32 @@ module w686_core (
 
     // --- Core-side memory request channels (BIU is instantiated in w686_cpu) ---
     logic        mmu_bus_vaild;
-    logic        mmu_bus_ready;
+    logic        mmu_bus_ready = i_mmu_ready;
     logic [31: 0] mmu_bus_addr;
-    logic [31: 0] mmu_bus_rdata;
+    logic [31: 0] mmu_bus_rdata = i_mmu_data_read;
 
     logic        code_vaild;
-    logic        code_ready;
+    logic        code_ready = i_code_ready;
     logic [31: 0] code_address;
-    logic [31: 0] code_data_read;
+    logic [31: 0] code_data_read = i_code_data_read;
 
-    logic        data_vaild;
-    logic        data_ready;
-    logic        data_write_enable;
-    logic [31: 0] data_address;
-    logic [31: 0] data_data_read;
-    logic [31: 0] data_data_write;
+    logic        data_vaild = wb_mem_valid;
+    logic        data_ready = i_data_ready;
+    logic        data_write_enable = wb_mem_write_enable;
+    logic [31: 0] data_address = wb_mem_address;
+    logic [31: 0] data_data_read = i_data_data_read;
+    logic [31: 0] data_data_write = wb_mem_write_data;
 
     assign o_mmu_vaild    = mmu_bus_vaild;
-    assign mmu_bus_ready  = i_mmu_ready;
     assign o_mmu_address  = mmu_bus_addr;
-    assign mmu_bus_rdata  = i_mmu_data_read;
 
     assign o_code_vaild   = code_vaild;
-    assign code_ready     = i_code_ready;
     assign o_code_address = code_address;
-    assign code_data_read = i_code_data_read;
 
     assign o_data_vaild        = data_vaild;
-    assign data_ready          = i_data_ready;
     assign o_data_write_enable = data_write_enable;
     assign o_data_io_access    = 1'b0;
     assign o_data_address      = data_address;
-    assign data_data_read      = i_data_data_read;
     assign o_data_data_write   = data_data_write;
 
     // --- 取指 ---
@@ -305,10 +299,8 @@ module w686_core (
     );
 
     // --- EU/AM：EU 负责计算，AM 负责访存握手 ---
-    logic [31: 0] br_rel32;
-    logic signed [ 7: 0] br_rel8;
-    assign br_rel32 = o_immediate;
-    assign br_rel8  = o_immediate[ 7: 0];
+    logic [31: 0] br_rel32 = o_immediate;
+    logic signed [ 7: 0] br_rel8 = o_immediate[ 7: 0];
 
     logic modrm_is_reg = ( o_dbg_modrm_mod == 2'b11 );
     logic [ 2: 0] modrm_reg_field = instruction[1][ 5:  3];
@@ -1098,10 +1090,6 @@ module w686_core (
         .o_mem_write_data ( wb_mem_write_data )
     );
 
-    assign data_vaild        = wb_mem_valid;
-    assign data_write_enable = wb_mem_write_enable;
-    assign data_address      = wb_mem_address;
-    assign data_data_write   = wb_mem_write_data;
 
     stage_3_exe_execute_unit u_eu (
         .clk ( clock ),

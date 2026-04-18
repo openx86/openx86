@@ -54,6 +54,9 @@ module example_module (
 - Use `logic` for all internal signals.
 - Do NOT use `wire` or `reg` in project RTL/TB coding style.
 - Use `typedef enum logic [...]` for FSM states.
+- For any standalone internal signal driven only by a same-name continuous assignment, MUST merge into a single declaration initializer form:
+  - Preferred: `logic wr = (!i_cs_n) && (!i_wr_n);`
+  - Forbidden split form: `logic wr;` then `assign wr = (!i_cs_n) && (!i_wr_n);`
 
 ## 3) Synthesizability Rules for rtl/**/*.sv
 - RTL under `rtl/` MUST be synthesizable.

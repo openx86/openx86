@@ -67,10 +67,9 @@ module vga_graphics_adapter (
     logic [ 7: 0]                 vram_rd_data;
 
     // CPU 写地址（截断到VRAM地址宽度内）
-    logic [VRAM_ADDR_WIDTH-1: 0] vram_wr_addr;
+    logic [VRAM_ADDR_WIDTH-1: 0] vram_wr_addr = mem_addr[VRAM_ADDR_WIDTH-1:0];
 
     // 地址截断逻辑
-    assign vram_wr_addr = mem_addr[VRAM_ADDR_WIDTH-1:0];
 
     // 简单双口RAM实例：写端口给CPU，读端口给VGA
     simple_dual_port_ram #(
@@ -112,16 +111,14 @@ module vga_graphics_adapter (
     
     // 文本模式 VRAM 接口
     logic [12: 0] text_vram_addr;
-    logic [ 7: 0]  text_vram_char_data;
-    logic [ 7: 0]  text_vram_attr_data;
+    logic [ 7: 0]  text_vram_char_data = text_vram_char_data_reg;
+    logic [ 7: 0]  text_vram_attr_data = text_vram_attr_data_reg;
     
     // 文本模式 VRAM 地址映射（文本模式使用 VRAM 的前 4000 字节）
-    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_char;
-    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_attr;
+    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_char = text_vram_addr[12:  1];  // 字符码地址（偶数地址）
+    logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_attr = text_vram_addr[12:  1] + 1;  // 属性地址（奇数地址）
     
     // 文本模式 VRAM 读取地址选择
-    assign text_vram_rd_addr_char = text_vram_addr[12:  1];  // 字符码地址（偶数地址）
-    assign text_vram_rd_addr_attr = text_vram_addr[12:  1] + 1;  // 属性地址（奇数地址）
     
     // 文本模式 VRAM 数据（需要两次读取，使用流水线）
     logic [ 7: 0] text_vram_char_data_reg;
@@ -141,8 +138,6 @@ module vga_graphics_adapter (
         end
     end
     
-    assign text_vram_char_data = text_vram_char_data_reg;
-    assign text_vram_attr_data = text_vram_attr_data_reg;
     
     // 字符生成器接口
     logic [ 7: 0] font_char_code;

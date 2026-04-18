@@ -21,8 +21,8 @@ module ide_sd_native_disk_tb;
     logic ide_wr_n = !(io_valid && io_we && ide_hit);
     logic ide_rd_n = !(io_valid && !io_we && ide_hit);
 
-    logic        sd_cmd;
-    logic [ 3: 0] sd_dat;
+    logic        sd_cmd = dut.o_sdio_cmd_oe ? dut.o_sdio_cmd_out : (card_cmd_oe ? card_cmd_o : 1'b1);
+    logic [ 3: 0] sd_dat = dut.o_sdio_dat_oe ? dut.o_sdio_dat_out : (card_dat_oe ? card_dat_o : 4'hF);
 
     logic        card_cmd_oe;
     logic        card_cmd_o;
@@ -33,8 +33,6 @@ module ide_sd_native_disk_tb;
 
     always #5 clock = ~clock;
 
-    assign sd_cmd = dut.o_sdio_cmd_oe ? dut.o_sdio_cmd_out : (card_cmd_oe ? card_cmd_o : 1'b1);
-    assign sd_dat = dut.o_sdio_dat_oe ? dut.o_sdio_dat_out : (card_dat_oe ? card_dat_o : 4'hF);
 
     ide_controller #(
         .P_SECTOR_BYTES  ( 512 ),

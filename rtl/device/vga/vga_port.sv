@@ -70,8 +70,8 @@ module vga_port (
 
     // h_count 和 v_count 现在是输出端口
 
-    logic h_visible;
-    logic v_visible;
+    logic h_visible = (h_count < H_VISIBLE);
+    logic v_visible = (v_count < V_VISIBLE);
 
     // 像素/行/帧计数
     always_ff @(posedge clock or negedge reset_n) begin
@@ -93,8 +93,6 @@ module vga_port (
     end
 
     // 可见区域
-    assign h_visible    = (h_count < H_VISIBLE);
-    assign v_visible    = (v_count < V_VISIBLE);
     assign video_active = (reset_n) && h_visible && v_visible;
 
     // 同步信号（VGA 标准为负极性）

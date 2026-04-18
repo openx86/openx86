@@ -105,7 +105,7 @@ module openx86_soc_top #(
     logic [15: 0] sdram_phy_dq_out;
     logic        sdram_phy_dq_oe;
     logic        sdram_phy_clk, sdram_phy_cke;
-    logic [15: 0] sdram_phy_dq_in;
+    logic [15: 0] sdram_phy_dq_in = io_sdram_dq;
 
     logic        pic_intr;
 
@@ -132,7 +132,6 @@ module openx86_soc_top #(
 
     // SDRAM DQ bus (temporary: only driven by controller when sdram_phy_dq_oe=1)
     assign io_sdram_dq = sdram_phy_dq_oe ? sdram_phy_dq_out : 16'hZZZZ;
-    assign sdram_phy_dq_in = io_sdram_dq;
 
     // Export SDRAM command/address pins to board
     assign o_sdram_clk   = sdram_phy_clk;

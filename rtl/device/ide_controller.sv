@@ -50,10 +50,10 @@ module ide_controller #(
     logic [31: 0] mem_off;
     logic         rd_data_d;
 
-    logic [31: 0] disk_raddr;
+    logic [31: 0] disk_raddr = byte_addr;
     logic [ 7: 0] disk_rdata;
     logic         disk_sector_ready;
-    logic         disk_sector_req;
+    logic         disk_sector_req = async_on && (state == ST_WAIT_SECTOR);
 
     localparam logic [ 7: 0] LP_ST_RDY = 8'h40;
     localparam logic [ 7: 0] LP_ST_DRQ  = 8'h08;
@@ -61,20 +61,14 @@ module ide_controller #(
 
     localparam int LP_DISK_BYTES = P_SECTOR_BYTES * P_SECTOR_COUNT;
 
-    logic async_on;
-    logic [31: 0] mem_bytes;
-    logic [31: 0] byte_addr;
+    logic async_on = P_USE_SDIO_DISK;
+    logic [31: 0] mem_bytes = P_SECTOR_BYTES * P_SECTOR_COUNT;
+    logic [31: 0] byte_addr = mem_off * 32'(P_SECTOR_BYTES) + { 23'h0, buf_ptr };
 
-    assign async_on  = P_USE_SDIO_DISK;
-    assign mem_bytes = P_SECTOR_BYTES * P_SECTOR_COUNT;
-    assign byte_addr = mem_off * 32'(P_SECTOR_BYTES) + { 23'h0, buf_ptr };
-    assign disk_raddr = byte_addr;
 
-    logic wr;
-    logic rd;
+    logic wr = !i_cs_n && !i_wr_n;
+    logic rd = !i_cs_n && !i_rd_n;
 
-    assign wr = !i_cs_n && !i_wr_n;
-    assign rd = !i_cs_n && !i_rd_n;
 
     sdcard_controller #(
         .P_BYTE_DEPTH    ( LP_DISK_BYTES ),
@@ -149,7 +143,6 @@ module ide_controller #(
         rd_data_d <= (rd && (i_addr == 16'h01F0) && (state == ST_DRQ));
     end
 
-    assign disk_sector_req = async_on && (state == ST_WAIT_SECTOR);
 
     always_comb begin
         o_rdata = 8'hFF;

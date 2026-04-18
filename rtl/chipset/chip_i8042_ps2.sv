@@ -74,21 +74,21 @@ module chip_i8042_ps2 #(
 
     logic        kbd_tx_req;
     logic [ 7: 0]  kbd_tx_byte;
-    logic        kbd_tx_busy;
-    logic        kbd_rx_str;
-    logic [ 7: 0]  kbd_rx_dat;
-    logic        kbd_rx_err;
-    logic        kbd_tx_done;
-    logic        kbd_tx_err;
+    logic        kbd_tx_busy = 1'b0;
+    logic        kbd_rx_str = 1'b0;
+    logic [ 7: 0]  kbd_rx_dat = '0;
+    logic        kbd_rx_err = 1'b0;
+    logic        kbd_tx_done = 1'b0;
+    logic        kbd_tx_err = 1'b0;
 
     logic        aux_tx_req;
     logic [ 7: 0]  aux_tx_byte;
-    logic        aux_tx_busy;
-    logic        aux_rx_str;
-    logic [ 7: 0]  aux_rx_dat;
-    logic        aux_rx_err;
-    logic        aux_tx_done;
-    logic        aux_tx_err;
+    logic        aux_tx_busy = 1'b0;
+    logic        aux_rx_str = 1'b0;
+    logic [ 7: 0]  aux_rx_dat = '0;
+    logic        aux_rx_err = 1'b0;
+    logic        aux_tx_done = 1'b0;
+    logic        aux_tx_err = 1'b0;
 
     logic        kbd_tx_pending;
     logic [ 7: 0]  kbd_tx_hold;
@@ -160,18 +160,6 @@ module chip_i8042_ps2 #(
                 .o_rx_err      ( aux_rx_err )
             );
         end else begin : g_no_phy
-            assign kbd_tx_busy = 1'b0;
-            assign kbd_tx_done = 1'b0;
-            assign kbd_tx_err  = 1'b0;
-            assign kbd_rx_str  = 1'b0;
-            assign kbd_rx_dat  = '0;
-            assign kbd_rx_err  = 1'b0;
-            assign aux_tx_busy = 1'b0;
-            assign aux_tx_done = 1'b0;
-            assign aux_tx_err  = 1'b0;
-            assign aux_rx_str  = 1'b0;
-            assign aux_rx_dat  = '0;
-            assign aux_rx_err  = 1'b0;
             assign o_ps2_kbd_clk_out = 1'b1;
             assign o_ps2_kbd_clk_oe  = 1'b0;
             assign o_ps2_kbd_dat_out = 1'b1;

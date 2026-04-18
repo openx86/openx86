@@ -25,7 +25,7 @@ module stage_3_exe_execute_branch_unit (
 );
 
     logic signed [31: 0] offset_s;
-    logic [31: 0]        offset_u;
+    logic [31: 0]        offset_u = 32'(offset_s);
 
     always_comb begin
         if (i_use_rel8)
@@ -34,7 +34,6 @@ module stage_3_exe_execute_branch_unit (
             offset_s = 32'(signed'(i_rel32));
     end
 
-    assign offset_u = 32'(offset_s);
 
     always_comb begin
         if (!i_is_jcc) begin

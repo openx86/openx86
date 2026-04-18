@@ -41,14 +41,13 @@ module stage_1_isc_if_instruction_fetch (
     input  logic          clock, reset_n
 );
 
-logic        i_vaild;
+logic        i_vaild = i_IP_vaild;
 logic        o_ready;
 logic        if_mmu_bus_we;
 logic [31: 0] if_mmu_bus_wdata;
 logic        if_seg_fault;
 
 // 请求段转换：在 IP 有效时根据当前 EIP 计算物理取指地址
-assign i_vaild = i_IP_vaild;
 
 stage_1_isc_mmu_memory_management_unit #(
     .read_from_fetch ( 1'b1 )

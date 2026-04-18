@@ -22,8 +22,8 @@ module vga_text_color_tb;
     logic [ 3: 0]            vga_r;
     logic [ 3: 0]            vga_g;
     logic [ 3: 0]            vga_b;
-    logic [$clog2(800)-1: 0] h_count;
-    logic [$clog2(525)-1: 0] v_count;
+    logic [$clog2(800)-1: 0] h_count = h_cnt[$clog2(800)-1:0];
+    logic [$clog2(525)-1: 0] v_count = v_cnt[$clog2(525)-1:0];
     logic                    video_active;
 
     // 模拟文本VRAM（80x25 = 2000字符 = 4000字节）
@@ -98,8 +98,6 @@ module vga_text_color_tb;
         end
     end
     
-    assign h_count = h_cnt[$clog2(800)-1:0];
-    assign v_count = v_cnt[$clog2(525)-1:0];
 
     vga_text_color dut (
         .vram_rd_addr  ( vram_rd_addr  ),
