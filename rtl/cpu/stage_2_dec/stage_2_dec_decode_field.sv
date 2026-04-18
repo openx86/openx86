@@ -261,6 +261,9 @@ module stage_2_dec_decode_field (
 
 // 字段译码：按命中指令把 tttn/reg/ModRM 位置、立即数/位移尺寸等展开为下游控制
 // 以下组合逻辑：按“哪条指令命中”选择字段取自第几字节、以及是否需要 ModRM/立即数/位移
+// 当前无独立字段错误；占位 0 供上游 OR 聚合（避免 UNDRIVEN）
+assign o_error = 1'b0;
+
 logic tttn_at_1_3_0;
 assign tttn_at_1_3_0 =
 i_opcode_x86_SETcc_byte_set_on_condition |
@@ -286,9 +289,9 @@ sreg2_at_0_4_3 |
 // 段寄存器域：2 位或 3 位编码在不同 opcode 布局
 always_comb begin
     case (1'b1)
-        sreg3_at_1_5_3: o_seg_reg_index <= i_instruction[1][ 5:  3];
-        sreg2_at_0_4_3: o_seg_reg_index <= {1'b0, i_instruction[0][ 4:  3]};
-        default       : o_seg_reg_index <= 3'b0;
+        sreg3_at_1_5_3: o_seg_reg_index = i_instruction[1][ 5:  3];
+        sreg2_at_0_4_3: o_seg_reg_index = {1'b0, i_instruction[0][ 4:  3]};
+        default       : o_seg_reg_index = 3'b0;
     endcase
 end
 
@@ -343,11 +346,11 @@ reg_1_at_2_2_0 |
 // 通用寄存器编号：可能位于 opcode 不同字节位段
 always_comb begin
     unique case (1'b1)
-        reg_1_at_0_2_0 : o_gen_reg_index <= i_instruction[0][ 2: 0];
-        reg_1_at_1_5_3 : o_gen_reg_index <= i_instruction[1][ 5:  3];
-        reg_1_at_1_2_0 : o_gen_reg_index <= i_instruction[1][ 2: 0];
-        reg_1_at_2_2_0 : o_gen_reg_index <= i_instruction[2][ 2: 0];
-        default        : o_gen_reg_index <= 3'b000;
+        reg_1_at_0_2_0 : o_gen_reg_index = i_instruction[0][ 2: 0];
+        reg_1_at_1_5_3 : o_gen_reg_index = i_instruction[1][ 5:  3];
+        reg_1_at_1_2_0 : o_gen_reg_index = i_instruction[1][ 2: 0];
+        reg_1_at_2_2_0 : o_gen_reg_index = i_instruction[2][ 2: 0];
+        default        : o_gen_reg_index = 3'b000;
     endcase
 end
 
@@ -453,10 +456,10 @@ w_at_1_0 |
 // W 位：操作数宽度提示（存在时取自不同字节）
 always_comb begin
     case (1'b1)
-        w_at_0_0: o_w <= i_instruction[0][0];
-        w_at_0_3: o_w <= i_instruction[0][3];
-        w_at_1_0: o_w <= i_instruction[1][0];
-        default : o_w <= 1'b0;
+        w_at_0_0: o_w = i_instruction[0][0];
+        w_at_0_3: o_w = i_instruction[0][3];
+        w_at_1_0: o_w = i_instruction[1][0];
+        default : o_w = 1'b0;
     endcase
 end
 
@@ -479,8 +482,8 @@ s_at_0_1 |
 // S 位：立即数符号扩展控制（存在时取自 opcode 字节）
 always_comb begin
     case (1'b1)
-        s_at_0_1: o_s <= i_instruction[0][1];
-        default : o_s <= 1'b0;
+        s_at_0_1: o_s = i_instruction[0][1];
+        default : o_s = 1'b0;
     endcase
 end
 
@@ -611,10 +614,10 @@ assign { o_mod, o_rm } = { mod_rm_instruction[ 7:  6], mod_rm_instruction[ 2: 0]
 // ModR/M 原始字节：随主 opcode 为 1/2/3 字节指令而相对位移
 always_comb begin
     case (1'b1)
-        o_primary_opcode_byte_1: mod_rm_instruction <= i_instruction[1];
-        o_primary_opcode_byte_2: mod_rm_instruction <= i_instruction[2];
-        o_primary_opcode_byte_3: mod_rm_instruction <= i_instruction[3];
-        default                : mod_rm_instruction <= 8'b0;
+        o_primary_opcode_byte_1: mod_rm_instruction = i_instruction[1];
+        o_primary_opcode_byte_2: mod_rm_instruction = i_instruction[2];
+        o_primary_opcode_byte_3: mod_rm_instruction = i_instruction[3];
+        default                : mod_rm_instruction = 8'b0;
     endcase
 end
 

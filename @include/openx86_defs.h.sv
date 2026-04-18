@@ -147,10 +147,10 @@ description: This SystemVerilog source file provides shared definitions for open
 `define info_reg_seg__GS (6'b1 << 5)
 
 // bit width of general propose register
-`define bit_width_gpr__0 (2'b00)
-`define bit_width_gpr__8 (2'b01)
-`define bit_width_gpr_16 (2'b10)
-`define bit_width_gpr_32 (2'b11)
+`define bit_width_gpr__0 (3'b000)
+`define bit_width_gpr__8 (3'b001)
+`define bit_width_gpr_16 (3'b010)
+`define bit_width_gpr_32 (3'b011)
 
 // index of general propose register
 `define index_reg_gpr__AL (3'b000)

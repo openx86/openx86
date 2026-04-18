@@ -11,7 +11,8 @@ module vga_port_tb;
 
     logic                    clock;
     logic                    reset;
-    logic [ 7: 0]            vram_rd_addr;
+    localparam int P_VRAM_AW = 8;
+    logic [P_VRAM_AW-1: 0]   vram_rd_addr;
     logic [ 7: 0]            vram_rd_data;
     logic                    vga_hsync;
     logic                    vga_vsync;
@@ -45,7 +46,9 @@ module vga_port_tb;
         end
     end
 
-    vga_port dut (
+    vga_port #(
+        .P_VRAM_ADDR_WIDTH ( P_VRAM_AW )
+    ) dut (
         .vram_rd_addr ( vram_rd_addr ),
         .vram_rd_data ( vram_rd_data ),
         .vga_hsync    ( vga_hsync    ),

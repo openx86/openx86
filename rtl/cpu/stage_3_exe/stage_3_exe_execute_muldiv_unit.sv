@@ -73,8 +73,8 @@ module stage_3_exe_execute_muldiv_unit (
                 if (i_src == 32'h0) begin
                     o_div0 = 1'b1;
                 end else begin
-                    squot = (sdividend / sdivisor);
-                    srem  = (sdividend % sdivisor);
+                    squot = (sdividend / 64'($signed(i_src)));
+                    srem  = (sdividend % 64'($signed(i_src)));
                     o_lo  = squot[31: 0];
                     o_hi  = srem[31: 0];
                 end

@@ -32,10 +32,10 @@ module vga_graphics_adapter (
     input  logic          clock       // 像素域主时钟
 );
 
-    // VGA VRAM 容量：307 KB = 314,368 字节
-    localparam int VRAM_SIZE_BYTES = 640 * 480;  // 307,200 字节
-    localparam int VRAM_ADDR_WIDTH = 8;          // 地址宽度
-    localparam int VRAM_DEPTH      = VRAM_SIZE_BYTES;  // 实际深度：307,200
+    // VGA VRAM：一帧 640×480 字节线性缓冲（与 vga_port 线性读地址一致）
+    localparam int VRAM_SIZE_BYTES = 640 * 480;
+    localparam int VRAM_ADDR_WIDTH = $clog2(VRAM_SIZE_BYTES);
+    localparam int VRAM_DEPTH      = VRAM_SIZE_BYTES;
 
     // 简化的 I/O 端口定义（参考 IBM VGA 端口，但只实现子集）
     // 我们实现几个常用寄存器示意：
@@ -111,26 +111,34 @@ module vga_graphics_adapter (
     logic [ 3: 0] vga_g_text;
     logic [ 3: 0] vga_b_text;
     
-    // 文本子模块给出的 VRAM 字地址与回读数据
+    // 文本子模块给出的 VRAM 字地址与回读数据（彩色/高亮两路分别计算，再按模式 mux，避免多驱动）
+    logic [12: 0] text_vram_addr_color;
+    logic [12: 0] text_vram_addr_intense;
     logic [12: 0] text_vram_addr;
     logic [ 7: 0] text_vram_char_data;
     logic [ 7: 0] text_vram_attr_data;
+    logic [ 7: 0] text_vram_char_data_reg;
+    logic [ 7: 0] text_vram_attr_data_reg;
 
     assign text_vram_char_data = text_vram_char_data_reg;
     assign text_vram_attr_data = text_vram_attr_data_reg;
+
+    always_comb begin
+        unique case (vga_mode)
+            MODE_TEXT_COLOR:   text_vram_addr = text_vram_addr_color;
+            MODE_TEXT_INTENSE: text_vram_addr = text_vram_addr_intense;
+            default:            text_vram_addr = '0;
+        endcase
+    end
     
     // 文本模式 VRAM 地址映射（文本模式使用 VRAM 的前 4000 字节）
     logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_char;  // 字符码字节在 VRAM 中的索引
     logic [VRAM_ADDR_WIDTH-1: 0] text_vram_rd_addr_attr;  // 属性字节索引（+1 相对字符）
 
-    assign text_vram_rd_addr_char = text_vram_addr[12:  1];
-    assign text_vram_rd_addr_attr = text_vram_addr[12:  1] + 1;
+    assign text_vram_rd_addr_char = VRAM_ADDR_WIDTH'(text_vram_addr[12:  1]);
+    assign text_vram_rd_addr_attr = VRAM_ADDR_WIDTH'(text_vram_addr[12:  1]) + VRAM_ADDR_WIDTH'(1'b1);
     
     // 文本模式 VRAM 读取地址选择
-    
-    // 文本模式 VRAM 数据（需要两次读取，使用流水线）
-    logic [ 7: 0] text_vram_char_data_reg;
-    logic [ 7: 0] text_vram_attr_data_reg;
     
     // 文本模式：将两次 VRAM 读流水对齐到字符/属性（与 vram_rd_data 对齐）
     always_ff @(posedge clock) begin
@@ -147,13 +155,36 @@ module vga_graphics_adapter (
     end
     
     
-    // 字符生成器接口（文本子模块驱动 char/row，font_rom 输出点阵）
+    // 字符生成器接口（文本子模块分别驱动，再按模式 mux）
+    logic [ 7: 0] font_char_code_color;
+    logic [ 7: 0] font_char_code_intense;
     logic [ 7: 0] font_char_code;
+    logic [ 3: 0] font_row_index_color;
+    logic [ 3: 0] font_row_index_intense;
     logic [ 3: 0] font_row_index;
     logic [ 7: 0] font_data;
+
+    always_comb begin
+        unique case (vga_mode)
+            MODE_TEXT_COLOR: begin
+                font_char_code   = font_char_code_color;
+                font_row_index   = font_row_index_color;
+            end
+            MODE_TEXT_INTENSE: begin
+                font_char_code   = font_char_code_intense;
+                font_row_index   = font_row_index_intense;
+            end
+            default: begin
+                font_char_code   = '0;
+                font_row_index   = '0;
+            end
+        endcase
+    end
     
     // VGA 端口（图形模式）
-    vga_port vga_port_inst (
+    vga_port #(
+        .P_VRAM_ADDR_WIDTH ( VRAM_ADDR_WIDTH )
+    ) vga_port_inst (
         .vram_rd_addr ( vram_rd_addr ),
         .vram_rd_data ( vram_rd_data ),
         .vga_hsync    ( vga_hsync    ),
@@ -187,11 +218,11 @@ module vga_graphics_adapter (
     
     // 彩色文本模式
     vga_text_color text_color_inst (
-        .vram_rd_addr  ( text_vram_addr      ),
+        .vram_rd_addr  ( text_vram_addr_color ),
         .vram_char_data( text_vram_char_data ),
         .vram_attr_data( text_vram_attr_data ),
-        .font_char_code( font_char_code      ),
-        .font_row_index( font_row_index      ),
+        .font_char_code( font_char_code_color ),
+        .font_row_index( font_row_index_color ),
         .font_data    ( font_data            ),
         .vga_r        ( vga_r_text_color     ),
         .vga_g        ( vga_g_text_color     ),
@@ -205,11 +236,11 @@ module vga_graphics_adapter (
     
     // 淡色文本模式
     vga_text_intense text_intense_inst (
-        .vram_rd_addr  ( text_vram_addr      ),
+        .vram_rd_addr  ( text_vram_addr_intense ),
         .vram_char_data( text_vram_char_data ),
         .vram_attr_data( text_vram_attr_data ),
-        .font_char_code( font_char_code      ),
-        .font_row_index( font_row_index      ),
+        .font_char_code( font_char_code_intense ),
+        .font_row_index( font_row_index_intense ),
         .font_data    ( font_data            ),
         .vga_r        ( vga_r_text_intense   ),
         .vga_g        ( vga_g_text_intense   ),

@@ -8,7 +8,6 @@ description: w686_core — 80486 级 CPU 核：取指/译码/执行单元与 LSU
 // w686_core — 80486 级取指/译码/执行闭环（core-side pipeline）
 // ============================================================================
 `include "openx86_defs.h.sv"
-`include "w686_decode_outputs_decl.svh"
 
 module w686_core (
     // MMU 通道：向 BIU/MMU 发起线性地址翻译或取数
@@ -35,6 +34,8 @@ module w686_core (
     input  logic          reset_n,          // 异步低有效复位
     input  logic          clock             // 核心时钟
 );
+    // 译码子模块 .* 互连线：必须放在模块内，避免在编译单元顶层声明而与子模块端口同名（VARHIDDEN）
+`include "w686_decode_outputs_decl.svh"
 
     import stage_3_exe_execute_unit_pkg::*;
     import stage_2_dec_decode_x87_pkg::*;
@@ -354,7 +355,7 @@ module w686_core (
 
     stage_3_exe_w686_core_execute_i486 u_exec486 (
         .clk ( clock ),
-        .rst ( reset_n ),
+        .rst ( ~reset_n ),
         .insn_fire ( insn_fire ),
         .op_cpuid ( o_opcode_x86_CPUID_CPU_identification ),
         .gpr_eax ( GPR_read_32[0] ),
@@ -971,12 +972,12 @@ module w686_core (
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_MOVSX;
             eu_int_a      = GPR_read_32[modrm_rm_field];
-            eu_int_count  = { 30'd0, o_gen_reg_bit_width_from_mod_rm };
+            eu_int_count  = { 29'd0, o_gen_reg_bit_width_from_mod_rm };
         end else if (o_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_MOVZX;
             eu_int_a      = GPR_read_32[modrm_rm_field];
-            eu_int_count  = { 30'd0, o_gen_reg_bit_width_from_mod_rm };
+            eu_int_count  = { 29'd0, o_gen_reg_bit_width_from_mod_rm };
         end else if (o_opcode_x86_XCHG_reg_mem_with_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
             eu_int_op_sel = INT_XCHG;
@@ -2713,7 +2714,8 @@ module w686_core (
                         o_opcode_x86_SAR_reg_mem_by_1 | o_opcode_x86_SAR_reg_mem_by_CL | o_opcode_x86_SAR_reg_mem_by_imm
                     ) && modrm_is_reg
                 ) begin
-                    // 位移量：_by_1 →1；_by_CL→ECX 低 5 位；否则 imm8 低 5 位
+                    /* verilator lint_off BLKSEQ */
+                    // 位移量：_by_1 →1；_by_CL→ECX 低 5 位；否则 imm8 低 5 位（块内用阻塞赋值串行推导本拍中间量）
                     if (
                         o_opcode_x86_ROL_reg_mem_by_1 | o_opcode_x86_ROR_reg_mem_by_1 | o_opcode_x86_RCL_reg_mem_by_1 |
                         o_opcode_x86_RCR_reg_mem_by_1 | o_opcode_x86_SHL_reg_mem_by_1 | o_opcode_x86_SHR_reg_mem_by_1 |
@@ -2820,6 +2822,7 @@ module w686_core (
 
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
+                    /* verilator lint_on BLKSEQ */
                 end else if (o_opcode_x86_BSF_bit_scan_forward && modrm2_is_reg) begin
                     // BSF：源为 0 则 ZF=1 不写 dst；否则写位位置并清 ZF
                     if (eu_int_zf_out) begin

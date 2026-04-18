@@ -104,7 +104,12 @@ assign is_read = ~i_write_enable;
 assign is_write = i_write_enable;
 assign is_granularity_byte = date_or_code_granularity;
 assign is_granularity_page = ~date_or_code_granularity;
-assign exception_limit = (is_granularity_byte & i_effective_address >= limit) | (is_granularity_page & i_effective_address >= (limit << 4));
+logic [31: 0] limit_ext;
+logic [31: 0] limit_page_shifted;
+assign limit_ext          = {12'h0, limit};
+assign limit_page_shifted = limit_ext << 4;
+assign exception_limit    = (is_granularity_byte & (i_effective_address >= limit_ext)) |
+    (is_granularity_page & (i_effective_address >= limit_page_shifted));
 assign exception_privilege_level = i_current_privilege_level >= date_or_code_privilege_level;
 assign exception_read = is_read & ~read_from_fetch & ~code_readable;
 assign exception_write = (is_write & is_index_CS) | (is_write & is_data_segment & ~data_writeable);

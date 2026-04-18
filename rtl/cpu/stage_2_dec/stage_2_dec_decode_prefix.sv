@@ -75,13 +75,13 @@ assign o_is_present = o_group_1_is_present | o_group_2_is_present | o_group_3_is
 // 段覆盖前缀命中多种编码时，按 unique case 固定优先级映射到段寄存器索引
 always_comb begin
     unique case (1'b1)
-        segment_override_CS: o_segment_override_index <= `index_reg_seg__CS;
-        segment_override_DS: o_segment_override_index <= `index_reg_seg__DS;
-        segment_override_ES: o_segment_override_index <= `index_reg_seg__ES;
-        segment_override_FS: o_segment_override_index <= `index_reg_seg__FS;
-        segment_override_GS: o_segment_override_index <= `index_reg_seg__GS;
-        segment_override_SS: o_segment_override_index <= `index_reg_seg__SS;
-        default            : o_segment_override_index <= 3'b0;
+        segment_override_CS: o_segment_override_index = `index_reg_seg__CS;
+        segment_override_DS: o_segment_override_index = `index_reg_seg__DS;
+        segment_override_ES: o_segment_override_index = `index_reg_seg__ES;
+        segment_override_FS: o_segment_override_index = `index_reg_seg__FS;
+        segment_override_GS: o_segment_override_index = `index_reg_seg__GS;
+        segment_override_SS: o_segment_override_index = `index_reg_seg__SS;
+        default            : o_segment_override_index = 3'b0;
     endcase
 end
 

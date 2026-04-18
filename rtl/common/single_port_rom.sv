@@ -29,8 +29,10 @@ module single_port_rom #(
     input  logic                   reset_n   // 低有效：复位时 rdata 清零，ROM 内容不变
 );
 
-    // 只读内容阵列（仿真/综合由外部或 IP 装载）
+    // 只读内容阵列（仿真/综合由外部或 IP 装载；TB 可层次化写入）
+    /* verilator lint_off UNDRIVEN */
     logic [DATA_WIDTH-1: 0] rom [0:DEPTH-1];
+    /* verilator lint_on UNDRIVEN */
 
     // 同步读：无效地址仍组合取数，由上层保证；复位清零输出
     always_ff @(posedge clock) begin

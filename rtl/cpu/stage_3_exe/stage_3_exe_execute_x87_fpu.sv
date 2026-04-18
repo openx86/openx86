@@ -32,7 +32,6 @@ module stage_3_exe_execute_x87_fpu (
     logic        zf_r;
     logic        pf_r;
     logic        cf_r;
-    logic [63: 0] swap_tmp;
 
     // 物理索引：p0=栈顶，p1=次栈顶，px=操作数 STi
     logic [ 2: 0] p0;
@@ -131,9 +130,8 @@ module stage_3_exe_execute_x87_fpu (
                     phys[p0] <= ($signed(phys[p0]) < 64'sd0) ? -$signed(phys[p0]) : phys[p0];
                 end
                 X87_FXCH: begin
-                    swap_tmp = phys[p0];
                     phys[p0] <= phys[px];
-                    phys[px] <= swap_tmp;
+                    phys[px] <= phys[p0];
                 end
                 X87_FFREE: begin
                     phys[px] <= 64'h0;

@@ -72,9 +72,9 @@ logic [31: 0] page_frame_address_offset; // 页表项内容：页帧物理基（
 assign page_directory_index = i_linear_address[31: 22];
 assign page_table_index = i_linear_address[21: 12];
 assign page_frame_offset = i_linear_address[11: 0];
-assign page_directory_offset = i_page_directory_base + (page_directory_index << 12);
-assign page_table_address_offset = page_table_base + (page_table_index << 12);
-assign o_physical_address = page_frame_address_offset + page_frame_offset;
+assign page_directory_offset = i_page_directory_base + (32'(page_directory_index) << 12);
+assign page_table_address_offset = page_table_base + (32'(page_table_index) << 12);
+assign o_physical_address = page_frame_address_offset + 32'(page_frame_offset);
 
 // 两级页表读 FSM：PDE → PTE → 拼物理地址
 enum logic [ 1: 0] {
@@ -87,7 +87,12 @@ always_ff @(posedge clock or negedge reset_n) begin
     if (~reset_n) begin
         state <= STATE_WAIT_FOR_VAILD;
         o_ready <= 0;
+        o_bus_write_enable <= 1'b0;
+        o_bus_data_write   <= '0;
     end else begin
+        // 取指侧分页翻译仅发起读事务；写通道保持无效以免 UNDRIVEN
+        o_bus_write_enable <= 1'b0;
+        o_bus_data_write   <= '0;
         unique case (state)
             STATE_WAIT_FOR_VAILD: begin
                 o_ready <= 0;

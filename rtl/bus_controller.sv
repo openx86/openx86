@@ -150,7 +150,7 @@ logic is_chipset_io;
 // - i_bus_io_access = 1: I/O 端口访问（地址的低16位是I/O端口地址）
 
 assign is_memory_access   = !i_bus_io_access;
-assign is_ram_access      = is_memory_access && (i_bus_address >= MEM_BASE_RAM) && (i_bus_address <= MEM_END_RAM);
+assign is_ram_access      = is_memory_access && (i_bus_address <= MEM_END_RAM);
 assign is_vram_access     = is_memory_access && (i_bus_address >= MEM_BASE_VRAM) && (i_bus_address <= MEM_END_VRAM);
 assign is_ext_bios_access = is_memory_access && (i_bus_address >= MEM_BASE_EXT_BIOS) && (i_bus_address <= MEM_END_EXT_BIOS);
 assign is_sys_bios_access = is_memory_access && (i_bus_address >= MEM_BASE_SYS_BIOS) && (i_bus_address <= MEM_END_SYS_BIOS);
@@ -161,7 +161,7 @@ assign is_vga_io_access   = is_io_access && (i_bus_address[15: 0] >= IO_BASE_VGA
 assign is_other_io_access = is_io_access && !is_vga_io_access;
 
 assign is_chipset_io = is_other_io_access && (
-    ((i_bus_address[15: 0] >= 16'h0000) && (i_bus_address[15: 0] <= 16'h000F)) ||
+    (i_bus_address[15: 0] <= 16'h000F) ||
     ((i_bus_address[15: 0] >= 16'h0080) && (i_bus_address[15: 0] <= 16'h008F)) ||
     ((i_bus_address[15: 0] >= 16'h00C0) && (i_bus_address[15: 0] <= 16'h00DF)) ||
     ((i_bus_address[15: 0] >= 16'h0020) && (i_bus_address[15: 0] <= 16'h0021)) ||

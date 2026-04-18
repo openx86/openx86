@@ -48,7 +48,7 @@ module stage_3_exe_w686_core_execute_i486 (
     localparam logic [31: 0] V_ECX = 32'h6c65746e;
 
     function automatic logic [31: 0] cpuid_leaf1_edx();
-        return {
+        return 32'({
             `cpuid_feature_pbe,
             `cpuid_feature_ia64,
             `cpuid_feature_tm,
@@ -79,7 +79,7 @@ module stage_3_exe_w686_core_execute_i486 (
             `cpuid_feature_de,
             `cpuid_feature_vme,
             `cpuid_feature_fpu
-        };
+        });
     endfunction
 
     // 时序逻辑：寄存器更新

@@ -50,7 +50,7 @@ module vga_text_color (
 
     assign char_col = h_count[ 9:  3];
     assign char_row = v_count[ 8:  4];
-    assign char_pixel_x = h_count[ 2: 0];
+    assign char_pixel_x = {1'b0, h_count[ 2: 0]};
     assign char_pixel_y = v_count[ 3: 0];
 
     // 字符和属性寄存器

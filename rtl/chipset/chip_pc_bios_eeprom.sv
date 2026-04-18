@@ -11,8 +11,10 @@ module chip_pc_bios_eeprom (
 	input  logic [16: 0] i_ext_bios_byte_off,  // 扩展 ROM 区（128KB）内字节偏移
 	output logic [31: 0] o_sys_bios_rdata,       // 系统 BIOS 字读取（小端四字节）
 	output logic [31: 0] o_ext_bios_rdata,       // 扩展 ROM 字读取（小端四字节）
-	input  logic         reset_n,                // 异步低有效复位
+	/* verilator lint_off UNUSEDSIGNAL */
+	input  logic         reset_n,                // 异步低有效复位（保留接口）
 	input  logic         clock                 // 系统时钟（本模型组合读，寄存器未用）
+	/* verilator lint_on UNUSEDSIGNAL */
 );
 
 	// EEPROM 物理深度与扩展 ROM 线性尺寸（镜像用）
@@ -42,9 +44,10 @@ module chip_pc_bios_eeprom (
 	endfunction
 
 	// 组合读：两路端口独立译码，系统区在逻辑上接在扩展区之后做取模。
+	// 显式扩展到 int unsigned，避免与 32 位地址/算术混用时的位宽告警
 	always_comb begin
-		o_ext_bios_rdata = read_word(i_ext_bios_byte_off);
-		o_sys_bios_rdata = read_word(EXT_BIOS_BYTES + i_sys_bios_byte_off);
+		o_ext_bios_rdata = read_word(int unsigned'(i_ext_bios_byte_off));
+		o_sys_bios_rdata = read_word(EXT_BIOS_BYTES + int unsigned'(i_sys_bios_byte_off));
 	end
 
 	integer i;

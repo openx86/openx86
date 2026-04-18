@@ -313,11 +313,11 @@ stage_2_dec_decode_prefix_all deocde_decode_prefix_all (
 logic [ 3: 0] offset_opcode;
 always_comb begin
     unique case (1'b1)
-        prefix_o_consume_bytes_prefix_1: offset_opcode <= 4'h1;
-        prefix_o_consume_bytes_prefix_2: offset_opcode <= 4'h2;
-        prefix_o_consume_bytes_prefix_3: offset_opcode <= 4'h3;
-        prefix_o_consume_bytes_prefix_4: offset_opcode <= 4'h4;
-        default                        : offset_opcode <= 4'h0;
+        prefix_o_consume_bytes_prefix_1: offset_opcode = 4'h1;
+        prefix_o_consume_bytes_prefix_2: offset_opcode = 4'h2;
+        prefix_o_consume_bytes_prefix_3: offset_opcode = 4'h3;
+        prefix_o_consume_bytes_prefix_4: offset_opcode = 4'h4;
+        default                        : offset_opcode = 4'h0;
     endcase
 end
 
@@ -325,11 +325,11 @@ end
 logic [ 7: 0] opcode_instruction [ 0:  3];
 always_comb begin
     unique case (1'b1)
-        prefix_o_consume_bytes_prefix_1: opcode_instruction <= i_instruction[1:1+3];
-        prefix_o_consume_bytes_prefix_2: opcode_instruction <= i_instruction[2:2+3];
-        prefix_o_consume_bytes_prefix_3: opcode_instruction <= i_instruction[3:3+3];
-        prefix_o_consume_bytes_prefix_4: opcode_instruction <= i_instruction[4:4+3];
-        default                        : opcode_instruction <= i_instruction[0:0+3];
+        prefix_o_consume_bytes_prefix_1: opcode_instruction = i_instruction[1:1+3];
+        prefix_o_consume_bytes_prefix_2: opcode_instruction = i_instruction[2:2+3];
+        prefix_o_consume_bytes_prefix_3: opcode_instruction = i_instruction[3:3+3];
+        prefix_o_consume_bytes_prefix_4: opcode_instruction = i_instruction[4:4+3];
+        default                        : opcode_instruction = i_instruction[0:0+3];
     endcase
 end
 
@@ -850,10 +850,10 @@ stage_2_dec_decode_field deocde_decode_field (
 logic [ 3: 0] offset_mod_rm;
 always_comb begin
     unique case (1'b1)
-        field_o_primary_opcode_byte_1: offset_mod_rm <= offset_opcode + 4'h1;
-        field_o_primary_opcode_byte_2: offset_mod_rm <= offset_opcode + 4'h2;
-        field_o_primary_opcode_byte_3: offset_mod_rm <= offset_opcode + 4'h3;
-        default                      : offset_mod_rm <= offset_opcode + 4'h0;
+        field_o_primary_opcode_byte_1: offset_mod_rm = offset_opcode + 4'h1;
+        field_o_primary_opcode_byte_2: offset_mod_rm = offset_opcode + 4'h2;
+        field_o_primary_opcode_byte_3: offset_mod_rm = offset_opcode + 4'h3;
+        default                      : offset_mod_rm = offset_opcode + 4'h0;
     endcase
 end
 
@@ -907,7 +907,7 @@ stage_2_dec_decode_mod_rm deocde_decode_mod_rm (
 // SIB 紧跟 ModRM 后一字节
 logic [ 3: 0] offset_sib;
 always_comb begin
-    offset_sib <= offset_mod_rm + 4'h1;
+    offset_sib = offset_mod_rm + 4'h1;
 end
 
 logic [ 7: 0] sib_i_sib;
@@ -926,13 +926,13 @@ assign sib_i_sib = i_instruction[offset_sib];
 assign sib_i_mod = mod_rm_i_mod;
 
 //     unique case (offset_sib)
-//         4'h2: sib_i_sib <= i_instruction[2];
-//         4'h3: sib_i_sib <= i_instruction[3];
-//         4'h4: sib_i_sib <= i_instruction[4];
-//         4'h5: sib_i_sib <= i_instruction[5];
-//         4'h6: sib_i_sib <= i_instruction[6];
-//         4'h7: sib_i_sib <= i_instruction[7];
-//         4'h8: sib_i_sib <= i_instruction[8];
+//         4'h2: sib_i_sib = i_instruction[2];
+//         4'h3: sib_i_sib = i_instruction[3];
+//         4'h4: sib_i_sib = i_instruction[4];
+//         4'h5: sib_i_sib = i_instruction[5];
+//         4'h6: sib_i_sib = i_instruction[6];
+//         4'h7: sib_i_sib = i_instruction[7];
+//         4'h8: sib_i_sib = i_instruction[8];
 //     endcase
 // SIB：scale/index/base 与 disp8/disp32 特例（mod=00,base=101）
 stage_2_dec_decode_sib deocde_decode_sib (

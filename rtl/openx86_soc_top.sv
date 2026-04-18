@@ -106,7 +106,9 @@ module openx86_soc_top #(
     logic        sdram_phy_dq_oe;    // DQ 输出使能
     logic        sdram_phy_clk, sdram_phy_cke;
 
-    logic        pic_intr;       // 主 PIC INTR → CPU
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic        pic_intr;       // 主 PIC INTR → CPU（待接 CPU 中断输入）
+    /* verilator lint_on UNUSEDSIGNAL */
 
     logic        b_sd_nat_clk;   // ide→native 主机时钟
     logic        b_sd_cmd_o;

@@ -128,7 +128,7 @@ module ide_controller #(
                     16'h01F6: drv_head <= i_wdata;  // 设备/磁头
                     16'h01F7: begin // 命令寄存器
                         if (i_wdata == 8'h20) begin // READ SECTORS 简化入口
-                            mem_off <= { lba_hi, lba_mid, lba_lo };
+                            mem_off <= {8'b0, lba_hi, lba_mid, lba_lo};
                             buf_ptr <= '0;
                             if (async_on) begin // SDIO：先发 BSY，等扇区
                                 state    <= ST_WAIT_SECTOR;

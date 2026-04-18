@@ -41,21 +41,21 @@ logic [ 7: 0] instruction_for_immediate [ 0: 3]; // 立即数字节相对位移�
 // 先根据位移宽度截取位移并调整立即数字节起点
 always_comb begin
     case (1'b1)
-        i_displacement_size_1: begin instruction_for_immediate <= i_instruction[1:1+3]; o_displacement <= {24'b0, i_instruction[0][ 7: 0]}; end
-        i_displacement_size_2: begin instruction_for_immediate <= i_instruction[2:2+3]; o_displacement <= {16'b0, i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]}; end
-        i_displacement_size_4: begin instruction_for_immediate <= i_instruction[4:4+3]; o_displacement <= {       i_instruction[3][ 7: 0], i_instruction[2][ 7: 0], i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]}; end
-        default              : begin instruction_for_immediate <= i_instruction[0:0+3]; o_displacement <= 32'b0; end
+        i_displacement_size_1: begin instruction_for_immediate = i_instruction[1:1+3]; o_displacement = {24'b0, i_instruction[0][ 7: 0]}; end
+        i_displacement_size_2: begin instruction_for_immediate = i_instruction[2:2+3]; o_displacement = {16'b0, i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]}; end
+        i_displacement_size_4: begin instruction_for_immediate = i_instruction[4:4+3]; o_displacement = {       i_instruction[3][ 7: 0], i_instruction[2][ 7: 0], i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]}; end
+        default              : begin instruction_for_immediate = i_instruction[0:0+3]; o_displacement = 32'b0; end
     endcase
 end
 
 // 立即数：1/2/4 字节零扩或拼 32b（full 模式同 4B）
 always_comb begin
     case (1'b1)
-        i_immediate_size_1: o_immediate <= {24'b0, instruction_for_immediate[0][ 7: 0]};
-        i_immediate_size_2: o_immediate <= {16'b0, instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
-        i_immediate_size_4: o_immediate <= {       instruction_for_immediate[3][ 7: 0], instruction_for_immediate[2][ 7: 0], instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
-        i_immediate_size_f: o_immediate <= {       instruction_for_immediate[3][ 7: 0], instruction_for_immediate[2][ 7: 0], instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
-        default:               o_immediate <= 32'b0;
+        i_immediate_size_1: o_immediate = {24'b0, instruction_for_immediate[0][ 7: 0]};
+        i_immediate_size_2: o_immediate = {16'b0, instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
+        i_immediate_size_4: o_immediate = {       instruction_for_immediate[3][ 7: 0], instruction_for_immediate[2][ 7: 0], instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
+        i_immediate_size_f: o_immediate = {       instruction_for_immediate[3][ 7: 0], instruction_for_immediate[2][ 7: 0], instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
+        default:               o_immediate = 32'b0;
     endcase
 end
 
@@ -63,11 +63,11 @@ logic [ 3: 0] displacement_bytes;
 // 统计位移占用字节数
 always_comb begin
     case (1'b1)
-        i_displacement_size_1: displacement_bytes <= 4'h1;
-        i_displacement_size_2: displacement_bytes <= 4'h2;
-        i_displacement_size_4: displacement_bytes <= 4'h4;
-        // i_displacement_size_full: displacement_bytes <= 4'h4;
-        default              : displacement_bytes <= 4'h0;
+        i_displacement_size_1: displacement_bytes = 4'h1;
+        i_displacement_size_2: displacement_bytes = 4'h2;
+        i_displacement_size_4: displacement_bytes = 4'h4;
+        // i_displacement_size_full: displacement_bytes = 4'h4;
+        default              : displacement_bytes = 4'h0;
     endcase
 end
 
@@ -75,14 +75,16 @@ logic [ 3: 0] immediate_bytes;
 // 统计立即数占用字节数
 always_comb begin
     case (1'b1)
-        i_immediate_size_1: immediate_bytes <= 4'h1;
-        i_immediate_size_2: immediate_bytes <= 4'h2;
-        i_immediate_size_4: immediate_bytes <= 4'h4;
-        i_immediate_size_f: immediate_bytes <= 4'h4;
-        default           : immediate_bytes <= 4'h0;
+        i_immediate_size_1: immediate_bytes = 4'h1;
+        i_immediate_size_2: immediate_bytes = 4'h2;
+        i_immediate_size_4: immediate_bytes = 4'h4;
+        i_immediate_size_f: immediate_bytes = 4'h4;
+        default           : immediate_bytes = 4'h0;
     endcase
 end
 
 assign o_consume_bytes = displacement_bytes + immediate_bytes;
+// 当前位移/立即数切片路径不产生独立错误码；占位为 0 供上游 OR 聚合
+assign o_error          = 1'b0;
 
 endmodule

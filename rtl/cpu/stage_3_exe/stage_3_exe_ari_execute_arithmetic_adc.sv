@@ -24,6 +24,6 @@ module stage_3_exe_ari_execute_arithmetic_adc #(
 );
 
 // 组合逻辑：连续赋值
-assign result = operand_1 + operand_2 + carry_flag;
+assign result = operand_1 + operand_2 + BIT_WIDTH'(carry_flag);
 
 endmodule

@@ -78,8 +78,8 @@ logic [15: 0] o_base_15__0;
 logic [ 7: 0] o_base_23_16;
 logic [ 7: 0] o_base_31_24;
 
-logic [ 7: 0] o_limit_15__0;
-logic [ 7: 0] o_limit_19_16;
+logic [15: 0] o_limit_15__0;
+logic [ 3: 0] o_limit_19_16;
 
 assign o_base_15__0 = i_descriptor[63: 48];
 assign o_base_23_16 = i_descriptor[ 7: 0];

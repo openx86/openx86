@@ -22,10 +22,12 @@ description: This module implements vga_port.
 //   上板时需要与目标显示模式匹配。
 // ============================================================================
 
-module vga_port (
+module vga_port #(
+    parameter int P_VRAM_ADDR_WIDTH = 19
+) (
     // VRAM 读接口
-    output logic [ 7: 0]           vram_rd_addr, // 当前像素对应的 VRAM 字节地址（截断宽度）
-    input  logic [ 7: 0]            vram_rd_data, // VRAM 同步读回数据
+    output logic [P_VRAM_ADDR_WIDTH-1: 0] vram_rd_addr, // 当前像素对应的 VRAM 字节线性地址
+    input  logic [ 7: 0]                   vram_rd_data, // VRAM 同步读回数据
 
     
     // VGA 物理信号输出
@@ -64,6 +66,9 @@ module vga_port (
     localparam int V_BACK_POR  = 33;
     localparam int V_TOTAL     = V_VISIBLE + V_FRONT_POR + V_SYNC + V_BACK_POR; // 525
 
+    localparam int W_H_CNT     = $clog2(H_TOTAL);
+    localparam int W_V_CNT     = $clog2(V_TOTAL);
+
     // ------------------------------------------------------------------------
     // VGA 时序发生器（640x480@60Hz）
     // ------------------------------------------------------------------------
@@ -74,8 +79,8 @@ module vga_port (
     logic h_visible;
     logic v_visible;
 
-    assign h_visible = (h_count < H_VISIBLE);
-    assign v_visible = (v_count < V_VISIBLE);
+    assign h_visible = (h_count < W_H_CNT'(H_VISIBLE));
+    assign v_visible = (v_count < W_V_CNT'(V_VISIBLE));
 
     // 像素/行/帧计数：800x525 扫描计数器
     always_ff @(posedge clock or negedge reset_n) begin
@@ -83,9 +88,9 @@ module vga_port (
             h_count <= '0;
             v_count <= '0;
         end else begin
-            if (h_count == H_TOTAL - 1) begin
+            if (h_count == W_H_CNT'(H_TOTAL - 1)) begin
                 h_count <= '0;
-                if (v_count == V_TOTAL - 1) begin
+                if (v_count == W_V_CNT'(V_TOTAL - 1)) begin
                     v_count <= '0;
                 end else begin
                     v_count <= v_count + 1;
@@ -106,16 +111,16 @@ module vga_port (
             vga_vsync <= 1'b1;
         end else begin
             // HSYNC：在可见区之后，前沿 + 同步 + 后沿 中的同步区为 0
-            if (h_count >= (H_VISIBLE + H_FRONT_POR) &&
-                h_count <  (H_VISIBLE + H_FRONT_POR + H_SYNC)) begin
+            if (h_count >= W_H_CNT'(H_VISIBLE + H_FRONT_POR) &&
+                h_count <  W_H_CNT'(H_VISIBLE + H_FRONT_POR + H_SYNC)) begin
                 vga_hsync <= 1'b0;
             end else begin
                 vga_hsync <= 1'b1;
             end
 
             // VSYNC：在可见区之后，前沿 + 同步 + 后沿 中的同步区为 0
-            if (v_count >= (V_VISIBLE + V_FRONT_POR) &&
-                v_count <  (V_VISIBLE + V_FRONT_POR + V_SYNC)) begin
+            if (v_count >= W_V_CNT'(V_VISIBLE + V_FRONT_POR) &&
+                v_count <  W_V_CNT'(V_VISIBLE + V_FRONT_POR + V_SYNC)) begin
                 vga_vsync <= 1'b0;
             end else begin
                 vga_vsync <= 1'b1;

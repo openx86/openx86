@@ -167,9 +167,9 @@ assign segment_reg_index_SS = (default_operation_size_16 & SS_16_bit) | (default
 // 默认段：多数寻址用 DS；BP 基址栈帧用 SS
 always_comb begin
     unique case (1'b1)
-        segment_reg_index_DS: o_segment_reg_index <= `index_reg_seg__DS;
-        segment_reg_index_SS: o_segment_reg_index <= `index_reg_seg__SS;
-        default             : o_segment_reg_index <= 3'b0;
+        segment_reg_index_DS: o_segment_reg_index = `index_reg_seg__DS;
+        segment_reg_index_SS: o_segment_reg_index = `index_reg_seg__SS;
+        default             : o_segment_reg_index = 3'b0;
     endcase
 end
 
@@ -197,9 +197,9 @@ assign base_16_BP = base_mod_00_BP | base_mod_01_BP | base_mod_10_BP;
 // 16 位寻址：基址寄存器为 BX 或 BP
 always_comb begin
     unique case (1'b1)
-        base_16_BX: o_base_reg_index <= `index_reg_gpr__BX;
-        base_16_BP: o_base_reg_index <= `index_reg_gpr__BP;
-        default   : o_base_reg_index <= 3'b0;
+        base_16_BX: o_base_reg_index = `index_reg_gpr__BX;
+        base_16_BP: o_base_reg_index = `index_reg_gpr__BP;
+        default   : o_base_reg_index = 3'b0;
     endcase
 end
 
@@ -238,17 +238,17 @@ assign index_mod_xx_EDI = default_operation_size_32 & ~mod_11 & rm_111;
 // 16/32 位寻址：索引分量（SI/DI 或 EAX..EDI 子集）
 always_comb begin
     unique case (1'b1)
-        index_mod_xx__SI: o_index_reg_index <= `index_reg_gpr__SI;
-        index_mod_xx__DI: o_index_reg_index <= `index_reg_gpr__DI;
-        index_mod_xx_EAX: o_index_reg_index <= `index_reg_gpr_EAX;
-        index_mod_xx_ECX: o_index_reg_index <= `index_reg_gpr_ECX;
-        index_mod_xx_EDX: o_index_reg_index <= `index_reg_gpr_EDX;
-        index_mod_xx_EBX: o_index_reg_index <= `index_reg_gpr_EBX;
-        index_mod_xx_ESP: o_index_reg_index <= `index_reg_gpr_ESP;
-        index_mod_xx_EBP: o_index_reg_index <= `index_reg_gpr_EBP;
-        index_mod_xx_ESI: o_index_reg_index <= `index_reg_gpr_ESI;
-        index_mod_xx_EDI: o_index_reg_index <= `index_reg_gpr_EDI;
-        default         : o_index_reg_index <= 3'b0;
+        index_mod_xx__SI: o_index_reg_index = `index_reg_gpr__SI;
+        index_mod_xx__DI: o_index_reg_index = `index_reg_gpr__DI;
+        index_mod_xx_EAX: o_index_reg_index = `index_reg_gpr_EAX;
+        index_mod_xx_ECX: o_index_reg_index = `index_reg_gpr_ECX;
+        index_mod_xx_EDX: o_index_reg_index = `index_reg_gpr_EDX;
+        index_mod_xx_EBX: o_index_reg_index = `index_reg_gpr_EBX;
+        index_mod_xx_ESP: o_index_reg_index = `index_reg_gpr_ESP;
+        index_mod_xx_EBP: o_index_reg_index = `index_reg_gpr_EBP;
+        index_mod_xx_ESI: o_index_reg_index = `index_reg_gpr_ESI;
+        index_mod_xx_EDI: o_index_reg_index = `index_reg_gpr_EDI;
+        default         : o_index_reg_index = 3'b0;
     endcase
 end
 
@@ -276,9 +276,9 @@ assign o_displacement_size_32 = default_operation_size_32 & ((mod_00 & rm_101) |
 assign o_displacement_is_present = o_displacement_size_8 | o_displacement_size_16 | o_displacement_size_32;
 
 //     unique case (1'b1)
-//         displacement_length__8: displacement_length <= `length_displacement__8;
-//         displacement_length_16: displacement_length <= `length_displacement_16;
-//         displacement_length_32: displacement_length <= `length_displacement_32;
+//         displacement_length__8: displacement_length = `length_displacement__8;
+//         displacement_length_16: displacement_length = `length_displacement_16;
+//         displacement_length_32: displacement_length = `length_displacement_32;
 //     endcase
 
 // general propose register
@@ -300,10 +300,10 @@ assign gpr_reg_bit_width_32 = i_w_is_present ? (i_w & default_operation_size_32)
 // mod=11：r/m 字段直接编码通用寄存器及其位宽
 always_comb begin
     unique case (1'b1)
-        gpr_reg_bit_width__8: o_gen_reg_bit_width <= `bit_width_gpr__8;
-        gpr_reg_bit_width_16: o_gen_reg_bit_width <= `bit_width_gpr_16;
-        gpr_reg_bit_width_32: o_gen_reg_bit_width <= `bit_width_gpr_32;
-        default             : o_gen_reg_bit_width <= `bit_width_gpr__0;
+        gpr_reg_bit_width__8: o_gen_reg_bit_width = `bit_width_gpr__8;
+        gpr_reg_bit_width_16: o_gen_reg_bit_width = `bit_width_gpr_16;
+        gpr_reg_bit_width_32: o_gen_reg_bit_width = `bit_width_gpr_32;
+        default             : o_gen_reg_bit_width = `bit_width_gpr__0;
     endcase
 end
 
