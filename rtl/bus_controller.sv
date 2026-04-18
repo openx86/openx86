@@ -179,7 +179,6 @@ logic [ 7: 0] chipset_io_rdata;  // 片选 I/O 字节读 MUX 结果
 logic         chipset_io_hit;  // 当前事务命中某片内 chipset 从设备
 
 // 数据选择信号
-logic [31: 0] vram_data_selected;  // VRAM不支持读操作
 logic [31: 0] bios_data_selected;
 logic [31: 0] ext_bios_data_selected;
 logic [31: 0] io_data_selected;
@@ -192,7 +191,6 @@ logic sdram_ready_internal;
 logic io_ready_internal;
 
 assign chipset_io_hit = chip_io_vld & (hit_dma | hit_pic_m | hit_pic_s | hit_pit | hit_ps2 | hit_rtc | hit_com | hit_lpt | hit_ide);
-assign vram_data_selected = 32'h0;
 assign bios_data_selected = is_sys_bios_access ? i_bios_rdata : 32'h0;
 assign ext_bios_data_selected = is_ext_bios_access ? i_ext_bios_rdata : 32'h0;
 assign io_data_selected = is_io_access ? {24'h0, io_byte_data} : 32'h0;
