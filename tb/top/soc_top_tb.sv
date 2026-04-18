@@ -10,8 +10,8 @@ description: This module implements soc_top_tb.
 
 module soc_top_tb;
 
-    logic clock;
-    logic reset_n;
+    logic clk;
+    logic rst_n;
     logic        o_vga_hsync;
     logic        o_vga_vsync;
     logic [ 3: 0] o_vga_r;
@@ -25,8 +25,8 @@ module soc_top_tb;
     openx86_soc_top #(
         .USE_SDIO_DISK ( 1'b0 )
     ) dut (
-        .clock   ( clock ),
-        .reset_n   ( reset_n ),
+        .clk   ( clk ),
+        .rst_n   ( rst_n ),
         .o_vga_hsync ( o_vga_hsync ),
         .o_vga_vsync ( o_vga_vsync ),
         .o_vga_r     ( o_vga_r     ),
@@ -132,19 +132,19 @@ module soc_top_tb;
     end
 
     initial begin
-        clock = 1'b0;
-        forever #5 clock = ~clock;
+        clk = 1'b0;
+        forever #5 clk = ~clk;
     end
 
     initial begin
         $display("=== soc_top_tb ===");
-        reset_n = 1'b0;
+        rst_n = 1'b0;
         #25;
-        reset_n = 1'b1;
+        rst_n = 1'b1;
 
         c = 0;
         while (c < 5000) begin
-            @(posedge clock);
+            @(posedge clk);
             c++;
         end
 

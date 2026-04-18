@@ -30,8 +30,8 @@ module chip_8237_dma (
     input  logic [15: 0] i_addr,      // I/O 地址（16 位）
     input  logic [ 7: 0] i_d,         // 写数据
     output logic [ 7: 0] o_d,         // 读数据
-    input  logic         clock,       // 系统时钟
-    input  logic         reset_n      // 异步低有效复位
+    input  logic         clk,       // 系统时钟
+    input  logic         rst_n      // 异步低有效复位
 );
 
     localparam logic [ 3: 0] LP_REG_COMMAND   = 4'h8;
@@ -94,8 +94,8 @@ module chip_8237_dma (
     end
 
     // 寄存器与通道数组：写路径、主清除、先/后字节翻转。
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             for (int i = 0; i < 4; i++) begin
                 ch_base_addr[i]  <= 16'h0000;
                 ch_curr_addr[i]  <= 16'h0000;

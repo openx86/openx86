@@ -20,8 +20,8 @@ module chip_ns16550_com (
     output logic [ 7: 0] o_d,          // 读数据
     input  logic         i_rx_push,    // 仿真/注入：推入一字节到接收缓冲
     input  logic [ 7: 0] i_rx_data,    // 注入数据
-    input  logic         reset_n,      // 异步低有效复位
-    input  logic         clock         // 系统时钟
+    input  logic         rst_n,      // 异步低有效复位
+    input  logic         clk         // 系统时钟
 );
 
     localparam logic [ 3: 0] LP_IIR_NONE = 4'b0001;
@@ -106,8 +106,8 @@ module chip_ns16550_com (
 
 
     // 寄存器与简化发送/接收路径、MSR 边沿与读清逻辑。
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             rbr       <= 8'h0;
             rbr_valid <= 1'b0;
             ier       <= 8'h0;

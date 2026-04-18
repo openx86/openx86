@@ -10,8 +10,8 @@ description: This module implements i8254_pit_tb.
 `timescale 1ns/1ps
 module i8254_pit_tb;
 
-    logic        clock = 0;
-    logic        reset_n;
+    logic        clk = 0;
+    logic        rst_n;
     logic        valid;
     logic        we;
     logic [15: 0] addr;
@@ -30,8 +30,8 @@ module i8254_pit_tb;
 
 
     chip_8254_pit dut (
-        .clock      ( clock ),
-        .reset_n    ( reset_n ),
+        .clk      ( clk ),
+        .rst_n    ( rst_n ),
         .i_cs_n     ( cs_n ),
         .i_rd_n     ( rd_n ),
         .i_wr_n     ( wr_n ),
@@ -43,24 +43,24 @@ module i8254_pit_tb;
         .o_out2     ( out2 )
     );
 
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         valid = 1;
         we    = 1;
         addr  = a;
         wdata = d;
-        @(posedge clock);
+        @(posedge clk);
         valid = 0;
     endtask
 
     task automatic rd(input logic [15: 0] a, output logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         valid = 1;
         we    = 0;
         addr  = a;
-        @(posedge clock);
+        @(posedge clk);
         d     = rdata;
         valid = 0;
     endtask
@@ -96,12 +96,12 @@ module i8254_pit_tb;
         o_low_len  = 0;
 
         while ((out0 === 1'b1) && (o_high_len < 64)) begin
-            @(posedge clock);
+            @(posedge clk);
             o_high_len++;
         end
 
         while ((out0 === 1'b0) && (o_low_len < 64)) begin
-            @(posedge clock);
+            @(posedge clk);
             o_low_len++;
         end
     endtask
@@ -114,31 +114,31 @@ module i8254_pit_tb;
                 seen_low = 1'b1;
                 break;
             end
-            @(posedge clock);
+            @(posedge clk);
         end
     endtask
 
     logic seen_low;
 
     initial begin
-        reset_n = 1'b0;
+        rst_n = 1'b0;
         valid = 0;
         we    = 0;
         addr  = '0;
         wdata = '0;
         fail_cnt = 0;
 
-        repeat (3) @(posedge clock);
-        reset_n = 1'b1;
-        repeat (2) @(posedge clock);
+        repeat (3) @(posedge clk);
+        rst_n = 1'b1;
+        repeat (2) @(posedge clk);
 
         // Mode 0, RW=LSB/MSB, count=3:
         // OUT low after programming, high at terminal count (N+1 clocks from write).
         program_ch0(8'h30, 16'd3);
         check(out0 === 1'b0, "mode0: OUT low immediately after programming");
-        repeat (3) @(posedge clock);
+        repeat (3) @(posedge clk);
         check(out0 === 1'b0, "mode0: OUT still low before terminal count");
-        @(posedge clock);
+        @(posedge clk);
         check(out0 === 1'b1, "mode0: OUT high on terminal count");
 
         // Mode 2, RW=LSB/MSB, count=4:
@@ -149,21 +149,21 @@ module i8254_pit_tb;
         check(seen_low, "mode2: low pulse observed");
         if (seen_low) begin
             check(out0 === 1'b0, "mode2: low pulse asserted");
-            @(posedge clock);
+            @(posedge clk);
             check(out0 === 1'b1, "mode2: low pulse width is one clock");
         end
 
         // Mode 3 odd count=5:
         // High phase=(N+1)/2=3, low phase=(N-1)/2=2.
         program_ch0(8'h36, 16'd5);
-        @(posedge clock);
+        @(posedge clk);
         measure_phase_lengths(high_len, low_len);
         check(high_len == 3, "mode3 odd: high width should be 3 clocks");
         check(low_len == 2, "mode3 odd: low width should be 2 clocks");
 
         // Mode alias check: M2:M1:M0=111 should alias Mode 3.
         program_ch0(8'h3E, 16'd4);
-        @(posedge clock);
+        @(posedge clk);
         measure_phase_lengths(high_len, low_len);
         check(high_len == 2, "mode alias 111: high width should be 2 clocks");
         check(low_len == 2, "mode alias 111: low width should be 2 clocks");
@@ -171,9 +171,9 @@ module i8254_pit_tb;
         // RW format check: LSB-only should load count with MSB=0.
         program_ch0(8'h10, 16'd3);
         check(out0 === 1'b0, "rw lsb-only: mode0 OUT low after write");
-        repeat (3) @(posedge clock);
+        repeat (3) @(posedge clk);
         check(out0 === 1'b0, "rw lsb-only: still low before terminal count");
-        @(posedge clock);
+        @(posedge clk);
         check(out0 === 1'b1, "rw lsb-only: OUT high on terminal count");
 
         if (fail_cnt == 0) begin

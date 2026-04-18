@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -15,8 +15,8 @@ module dual_port_rom_tb;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
-    logic                   clock;
-    logic                   reset;
+    logic                   clk;
+    logic rst_n;
     
     // 端口A
     logic [ADDR_WIDTH-1: 0] addra;
@@ -53,8 +53,8 @@ module dual_port_rom_tb;
         .rdataa ( rdataa ),
         .addrb  ( addrb  ),
         .rdatab ( rdatab ),
-        .clock  ( clock  ),
-        .reset_n  ( reset  )
+        .clk  ( clk  ),
+        .rst_n  ( rst_n )
     );
 
     // 手动初始化ROM数据（用于测试）
@@ -68,17 +68,17 @@ module dual_port_rom_tb;
     end
 
     // 时钟生成
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     initial begin
-        clock  = 0;
-        reset  = 1;
+        clk  = 0;
+        rst_n  = 1;
         addra  = '0;
         addrb  = '0;
 
         // 复位
         #20;
-        reset = 0;
+        rst_n = 0;
         #10;
 
         $display("=== Dual-port ROM test start ===");
@@ -149,7 +149,7 @@ module dual_port_rom_tb;
 
         // Test 7: Reset test
         $display("\nTest 7: Reset test");
-        reset = 1;
+        rst_n = 1;
         addra = 10'h000;
         addrb = 10'h001;
         #10;
@@ -159,7 +159,7 @@ module dual_port_rom_tb;
         if (rdataa != 8'h00) $error("  error: port A read must be 0 during reset!");
         if (rdatab != 8'h00) $error("  error: port B read must be 0 during reset!");
 
-        reset = 0;
+        rst_n = 0;
         #10;
         $display("  Read after reset release:");
         $display("    Port A: addr=0x%03h, data=0x%02h (expected: 0xAA)", addra, rdataa);
@@ -173,3 +173,4 @@ module dual_port_rom_tb;
     end
 
 endmodule
+

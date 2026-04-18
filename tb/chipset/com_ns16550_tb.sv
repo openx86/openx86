@@ -11,8 +11,8 @@ description: This module implements com_ns16550_tb.
 
 module com_ns16550_tb;
 
-    logic        clock;
-    logic        reset_n;
+    logic        clk;
+    logic        rst_n;
     logic        io_valid, io_we;
     logic [15: 0] io_addr;
     logic [ 7: 0] io_wdata, io_rdata;
@@ -26,8 +26,8 @@ module com_ns16550_tb;
 
 
     chip_ns16550_com dut (
-        .clock    ( clock ),
-        .reset_n  ( reset_n ),
+        .clk    ( clk ),
+        .rst_n  ( rst_n ),
         .i_cs_n     ( cs_n ),
         .i_rd_n     ( rd_n ),
         .i_wr_n     ( wr_n ),
@@ -38,24 +38,24 @@ module com_ns16550_tb;
         .i_rx_data  ( rx_data )
     );
 
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 1;
         io_we    = 1;
         io_addr  = a;
         io_wdata = d;
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 0;
     endtask
 
     task automatic rd(input logic [15: 0] a, output logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 1;
         io_we    = 0;
         io_addr  = a;
-        @(posedge clock);
+        @(posedge clk);
         d = io_rdata;
         io_valid = 0;
     endtask
@@ -88,23 +88,23 @@ module com_ns16550_tb;
     endtask
 
     task automatic inject_rx(input logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         rx_data = d;
         rx_push = 1'b1;
-        @(posedge clock);
+        @(posedge clk);
         rx_push = 1'b0;
     endtask
 
     logic [ 7: 0] rb;
     initial begin
-        clock    = 0;
+        clk    = 0;
         rx_push  = 0;
         rx_data  = 0;
-        reset_n  = 0;
+        rst_n  = 0;
         io_valid = 0;
-        repeat (4) @(posedge clock);
-        reset_n = 1;
-        repeat (2) @(posedge clock);
+        repeat (4) @(posedge clk);
+        rst_n = 1;
+        repeat (2) @(posedge clk);
 
         // reset defaults: LSR bit5/bit6 set, DR cleared
         rd(16'h03FD, rb);

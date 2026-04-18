@@ -10,8 +10,8 @@ description: ide_controller (SDIO) + sd_mmc_card_model_native — read LBA0 via 
 
 module ide_sd_native_disk_tb;
 
-    logic        clock = 0;
-    logic        reset_n;
+    logic        clk = 0;
+    logic        rst_n;
     logic        io_valid, io_we;
     logic [15: 0] io_addr;
     logic [ 7: 0] io_wdata, io_rdata;
@@ -31,7 +31,7 @@ module ide_sd_native_disk_tb;
 
     logic        host_sd_clk;
 
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
 
     ide_controller #(
@@ -52,13 +52,13 @@ module ide_sd_native_disk_tb;
         .o_sdio_dat_out ( ),
         .o_sdio_dat_oe  ( ),
         .i_sdio_dat_in  ( sd_dat ),
-        .clock          ( clock ),
-        .reset_n        ( reset_n )
+        .clk          ( clk ),
+        .rst_n        ( rst_n )
     );
 
     sd_mmc_card_model_native u_card (
         .i_sd_clk      ( host_sd_clk ),
-        .reset_n       ( reset_n ),
+        .rst_n       ( rst_n ),
         .i_host_cmd_oe ( dut.o_sdio_cmd_oe ),
         .i_host_cmd_o  ( dut.o_sdio_cmd_out ),
         .i_sd_cmd_bus  ( sd_cmd ),
@@ -71,21 +71,21 @@ module ide_sd_native_disk_tb;
     );
 
     task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 1;
         io_we    = 1;
         io_addr  = a;
         io_wdata = d;
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 0;
     endtask
 
     task automatic rd(input logic [15: 0] a, output logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 1;
         io_we    = 0;
         io_addr  = a;
-        @(posedge clock);
+        @(posedge clk);
         d = io_rdata;
         io_valid = 0;
     endtask
@@ -94,11 +94,11 @@ module ide_sd_native_disk_tb;
     int unsigned wait_cycles;
 
     initial begin
-        reset_n  = 0;
+        rst_n  = 0;
         io_valid = 0;
-        repeat (5) @(posedge clock);
-        reset_n = 1;
-        repeat (5) @(posedge clock);
+        repeat (5) @(posedge clk);
+        rst_n = 1;
+        repeat (5) @(posedge clk);
 
         wr(16'h01F2, 8'h01);
         wr(16'h01F3, 8'h00);
@@ -109,7 +109,7 @@ module ide_sd_native_disk_tb;
 
         wait_cycles = 0;
         while (wait_cycles < 400000) begin
-            @(posedge clock);
+            @(posedge clk);
             wait_cycles = wait_cycles + 1;
         end
 

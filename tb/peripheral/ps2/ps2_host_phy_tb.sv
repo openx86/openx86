@@ -18,7 +18,7 @@ module ps2_host_phy_tb;
     localparam int PS2_HALF_CYCLES = 40;    // 缩短仿真用半周期（时钟块周期数）
 
     logic clk;
-    logic rst;
+    logic rst_n;
 
     logic        tx_req;
     logic [ 7: 0]  tx_byte;
@@ -44,8 +44,8 @@ module ps2_host_phy_tb;
     ps2_host_phy #(
         .CLK_HZ ( CLK_HZ )
     ) dut (
-        .clock       ( clk ),
-        .reset_n       ( rst ),
+        .clk       ( clk ),
+        .rst_n     ( rst_n ),
         .i_ps2_clk_in  ( pin_clk_in ),
         .i_ps2_dat_in  ( pin_dat_in ),
         .o_ps2_clk_out ( host_clk_out ),
@@ -69,8 +69,8 @@ module ps2_host_phy_tb;
     logic        cap_tx_err;
     logic        cap_rx_err;
 
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
             cap_rx_stb   <= 1'b0;
             cap_rx_data  <= '0;
             cap_tx_done  <= 1'b0;
@@ -147,7 +147,7 @@ module ps2_host_phy_tb;
     endtask
 
     initial begin
-        rst            = 1'b1;
+        rst_n          = 1'b0;
         tx_req         = 1'b0;
         tx_byte        = 8'h00;
         use_logic_model = 1'b0;
@@ -156,7 +156,7 @@ module ps2_host_phy_tb;
         manual_clk     = 1'b1;
         manual_dat     = 1'b1;
         repeat (8) @(posedge clk);
-        rst = 1'b0;
+        rst_n = 1'b1;
         @(posedge clk);
 
         // --- TB1：设备 → 主机 0x5A ---
@@ -169,9 +169,9 @@ module ps2_host_phy_tb;
         repeat (100) @(posedge clk);
 
         // --- TB2：停止位非法，应产生 rx_err ---
-        rst = 1'b1;
+        rst_n = 1'b0;
         repeat (3) @(posedge clk);
-        rst = 1'b0;
+        rst_n = 1'b1;
         repeat (8) @(posedge clk);
         begin
             automatic logic [ 7: 0]  p   = 8'h01;
@@ -203,9 +203,9 @@ module ps2_host_phy_tb;
         repeat (200) @(posedge clk);
 
         // --- TB3：主机 → 设备（复位 DUT 以清状态）---
-        rst = 1'b1;
+        rst_n = 1'b0;
         repeat (4) @(posedge clk);
-        rst = 1'b0;
+        rst_n = 1'b1;
         cap_tx_done = 1'b0;
         cap_tx_err  = 1'b0;
         use_logic_model = 1'b1;

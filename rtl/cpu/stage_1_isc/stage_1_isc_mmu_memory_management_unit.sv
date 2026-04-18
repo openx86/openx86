@@ -50,8 +50,8 @@ module stage_1_isc_mmu_memory_management_unit #(
     // ------------------------------------------------------------------------
     // Clock / reset
     // ------------------------------------------------------------------------
-    input  logic          clock,
-    input  logic          reset_n
+    input  logic          clk,
+    input  logic          rst_n
 );
 
 logic [31: 0] linear_address;   // 段单元输出线性地址
@@ -73,8 +73,8 @@ stage_1_isc_mmu_seg_segmentation_unit #(
     .i_write_enable ( i_write_enable ),
     .o_linear_address ( linear_address ),
     .o_segment_privilege_error ( seg_priv_err ),
-    .clock ( clock ),
-    .reset_n ( reset_n )
+    .clk ( clk ),
+    .rst_n ( rst_n )
 );
 
 assign o_segment_fault = seg_priv_err;
@@ -91,8 +91,8 @@ stage_1_isc_mmu_pg_paging_unit mmu_paging_unit (
     .o_bus_address ( o_bus_address ),
     .i_bus_data_read ( i_bus_data_read ),
     .o_bus_data_write ( o_bus_data_write ),
-    .clock ( clock ),
-    .reset_n ( reset_n )
+    .clk ( clk ),
+    .rst_n ( rst_n )
 );
 
 
@@ -104,8 +104,8 @@ enum logic [ 1: 0] {
 } state;
 
 // 顺序控制：分页关闭时一拍完成；开启时委托 paging_unit
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin
         state <= STATE_WAIT_FOR_VAILD;
         o_ready <= 0;
     end else begin

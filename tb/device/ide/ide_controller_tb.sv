@@ -10,8 +10,8 @@ description: Testbench for ide_controller (BRAM disk, PIO read sector).
 
 module ide_controller_tb;
 
-    logic        clock = 0;
-    logic        reset_n;
+    logic        clk = 0;
+    logic        rst_n;
     logic        io_valid;
     logic        io_we;
     logic [15: 0] io_addr;
@@ -23,7 +23,7 @@ module ide_controller_tb;
     logic wr_n    = !(io_valid && io_we && ide_hit);
     logic rd_n    = !(io_valid && !io_we && ide_hit);
 
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     ide_controller #(
         .P_SECTOR_BYTES  ( 512 ),
@@ -43,37 +43,37 @@ module ide_controller_tb;
         .o_sdio_dat_out ( ),
         .o_sdio_dat_oe  ( ),
         .i_sdio_dat_in  ( 4'hF ),
-        .clock          ( clock ),
-        .reset_n        ( reset_n )
+        .clk          ( clk ),
+        .rst_n        ( rst_n )
     );
 
     task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 1;
         io_we    = 1;
         io_addr  = a;
         io_wdata = d;
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 0;
     endtask
 
     task automatic rd(input logic [15: 0] a, output logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 1;
         io_we    = 0;
         io_addr  = a;
-        @(posedge clock);
+        @(posedge clk);
         d = io_rdata;
         io_valid = 0;
     endtask
 
     logic [ 7: 0] rb;
     initial begin
-        reset_n  = 0;
+        rst_n  = 0;
         io_valid = 0;
-        repeat (3) @(posedge clock);
-        reset_n = 1;
-        repeat (2) @(posedge clock);
+        repeat (3) @(posedge clk);
+        rst_n = 1;
+        repeat (2) @(posedge clk);
 
         wr(16'h01F2, 8'h01);
         wr(16'h01F3, 8'h00);
@@ -81,7 +81,7 @@ module ide_controller_tb;
         wr(16'h01F5, 8'h00);
         wr(16'h01F6, 8'hE0);
         wr(16'h01F7, 8'h20);
-        repeat (2) @(posedge clock);
+        repeat (2) @(posedge clk);
         rd(16'h01F0, rb);
         if (rb !== 8'hA5)
             $display("FAIL ide_controller first byte %h", rb);

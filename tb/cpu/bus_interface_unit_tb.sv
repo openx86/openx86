@@ -11,8 +11,8 @@ module bus_interface_unit_tb #(
 ) (
     // ports
 );
-logic clock, reset_n;
-always #(clock_period/2) clock = ~clock;
+logic clk, rst_n;
+always #(clock_period/2) clk = ~clk;
 
 logic        i_mmu_vaild;
 logic        o_mmu_ready;
@@ -38,10 +38,10 @@ logic [31: 0] i_bus_data_read;
 logic [31: 0] o_bus_data_write;
 
 initial begin
-    clock = 1;
-    reset = 1;
+    clk = 1;
+    rst_n = 1;
     #(clock_period * 2);
-    reset = 0;
+    rst_n = 0;
 
     i_mmu_vaild = 0;
     i_mmu_address = 0;
@@ -160,8 +160,8 @@ stage_4_mem_bus_interface_unit tb_bus_interface_unit (
     .o_bus_address       ( o_bus_address ),
     .i_bus_data_read     ( i_bus_data_read ),
     .o_bus_data_write    ( o_bus_data_write ),
-    .clock             ( clock ),
-    .reset_n             ( reset_n )
+    .clk             ( clk ),
+    .rst_n             ( rst_n )
 );
 
 endmodule

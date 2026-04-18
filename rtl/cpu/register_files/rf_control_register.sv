@@ -17,13 +17,13 @@ module rf_control_register (
     output logic         R,                  // CR0[4]
     output logic         PG,                 // CR0.31 分页使能
     output logic [19: 0] page_directory_base, // CR3 页目录物理基址（高 20 位域）
-    input  logic         clock,
-    input  logic         reset_n
+    input  logic         clk,
+    input  logic         rst_n
 );
 
 // 复位清零全部 CR；使能时按索引写入（MOV CR 等）
-always_ff @(posedge clock or negedge reset_n) begin : ff_control_register
-    if (~reset_n) begin  // 复位：所有控制寄存器清零
+always_ff @(posedge clk or negedge rst_n) begin : ff_control_register
+    if (~rst_n) begin  // 复位：所有控制寄存器清零
         CR[0] <= 32'b0;
         CR[1] <= 32'b0;
         CR[2] <= 32'b0;

@@ -14,7 +14,7 @@ description: This module implements sdram_controller_tb.
 module sdram_controller_tb;
 
     logic        clk;
-    logic        rst;
+    logic        rst_n;
     logic        i_en;
     logic        i_we;
     logic [23: 0] i_addr_off;
@@ -42,7 +42,7 @@ module sdram_controller_tb;
 
     sdram_controller dut (
         .clk            ( clk ),
-        .rst            ( rst ),
+        .rst_n          ( rst_n ),
         .i_en           ( i_en ),
         .i_we           ( i_we ),
         .i_addr_off     ( i_addr_off ),
@@ -98,13 +98,13 @@ module sdram_controller_tb;
 
     initial begin
         clk         = 1'b0;
-        rst         = 1'b1;
+        rst_n       = 1'b0;
         i_en        = 1'b0;
         i_we        = 1'b0;
         i_addr_off  = '0;
         i_wdata     = '0;
         repeat (8) @(posedge clk);
-        rst = 1'b0;
+        rst_n = 1'b1;
         wait_init();
 
         @(posedge clk);

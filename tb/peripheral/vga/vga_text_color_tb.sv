@@ -11,8 +11,8 @@ description: This module implements vga_text_color_tb.
 
 module vga_text_color_tb;
 
-    logic                    clock;
-    logic                    reset;
+    logic                    clk;
+    logic                    rst_n;
     logic [12: 0]            vram_rd_addr;
     logic [ 7: 0]            vram_char_data;
     logic [ 7: 0]            vram_attr_data;
@@ -46,8 +46,8 @@ module vga_text_color_tb;
     end
 
     // VRAM读取模拟（需要根据地址返回字符或属性）
-    always_ff @(posedge clock) begin
-        if (!reset) begin
+    always_ff @(posedge clk) begin
+        if (!rst_n) begin
             if (vram_rd_addr < 4000) begin
                 if (vram_rd_addr[0] == 1'b0) begin
                     // 偶数地址：字符码
@@ -64,8 +64,8 @@ module vga_text_color_tb;
     end
 
     // 模拟字体ROM（简化：返回字符码作为测试数据）
-    always_ff @(posedge clock) begin
-        if (!reset) begin
+    always_ff @(posedge clk) begin
+        if (!rst_n) begin
             // 简化：返回字符码的低8位作为字体数据（仅用于测试）
             font_data <= font_char_code;
         end else begin
@@ -77,8 +77,8 @@ module vga_text_color_tb;
     logic [ 9: 0] h_cnt;
     logic [ 9: 0] v_cnt;
     
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             h_cnt <= '0;
             v_cnt <= '0;
             video_active <= 0;
@@ -112,20 +112,20 @@ module vga_text_color_tb;
         .h_count      ( h_count        ),
         .v_count      ( v_count        ),
         .video_active ( video_active   ),
-        .clock        ( clock          ),
-        .reset_n        ( reset          )
+        .clk        ( clk          ),
+        .rst_n        ( rst_n          )
     );
 
     // 时钟生成（25.175MHz，VGA标准像素时钟）
-    always #19.86 clock = ~clock;
+    always #19.86 clk = ~clk;
 
     initial begin
-        clock = 0;
-        reset = 1;
+        clk = 0;
+        rst_n = 1;
 
         // 复位
         #100;
-        reset = 0;
+        rst_n = 0;
         #100;
 
         $display("=== VGA text color test start ===");
@@ -190,13 +190,13 @@ module vga_text_color_tb;
         
         // Test 7: Reset test
         $display("\nTest 7: Reset test");
-        reset = 1;
+        rst_n = 1'b0;
         #100;
         $display("  During reset: RGB=(%1d,%1d,%1d) (expected: 0,0,0)", vga_r, vga_g, vga_b);
         if (vga_r != 0 || vga_g != 0 || vga_b != 0) 
             $error("  error: RGB must be 0 during reset!");
 
-        reset = 0;
+        rst_n = 1'b1;
         #100;
 
         // Test 8: Blanking region

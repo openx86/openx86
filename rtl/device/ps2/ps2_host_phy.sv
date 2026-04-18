@@ -33,8 +33,8 @@ module ps2_host_phy #(
     output logic [ 7: 0] o_rx_byte,     // 接收数据
     // 设备 → 主机
     output logic         o_rx_err,      // 接收帧校验失败
-    input  logic          clock,        // 主机逻辑时钟
-    input  logic          reset_n       // 异步低有效复位
+    input  logic          clk,        // 主机逻辑时钟
+    input  logic          rst_n       // 异步低有效复位
 );
 
     // --- 时间常量（与 CLK_HZ 成比例）-----------------------------------------
@@ -50,8 +50,8 @@ module ps2_host_phy #(
     logic clk_prev;                        // 上一拍同步后的 CLK，用于下降沿检测
 
     // 双拍同步 PS/2 时钟与数据，降低亚稳
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             clk_s1 <= 1'b1;
             clk_s2 <= 1'b1;
             dat_s1 <= 1'b1;
@@ -65,8 +65,8 @@ module ps2_host_phy #(
     end
 
     // 延迟一拍同步 CLK，供边沿检测
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n)
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n)
             clk_prev <= 1'b1;
         else
             clk_prev <= clk_s2;
@@ -102,8 +102,8 @@ module ps2_host_phy #(
     assign o_tx_busy = (state != S_IDLE);
 
     // 主 FSM：主机发送与设备接收帧处理
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             state           <= S_IDLE;
             cnt_inhibit     <= '0;
             bit_index       <= '0;

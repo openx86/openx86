@@ -13,8 +13,8 @@ module rtc_mc146818_tb;
 
     localparam int RTC_HZ = 256;
 
-    logic        clock = 0;
-    logic        reset_n;
+    logic        clk = 0;
+    logic        rst_n;
     logic        io_valid;
     logic        io_we;
     logic [15: 0] io_addr;
@@ -27,13 +27,13 @@ module rtc_mc146818_tb;
     logic wr_n    = !(io_valid && io_we && rtc_hit);
     logic rd_n    = !(io_valid && !io_we && rtc_hit);
 
-    always #1 clock = ~clock;
+    always #1 clk = ~clk;
 
     chip_mc146818_rtc #(
         .CLK_HZ ( RTC_HZ )
     ) dut (
-        .clock    ( clock ),
-        .reset_n    ( reset_n ),
+        .clk    ( clk ),
+        .rst_n    ( rst_n ),
         .i_cs_n     ( cs_n ),
         .i_rd_n     ( rd_n ),
         .i_wr_n     ( wr_n ),
@@ -48,19 +48,19 @@ module rtc_mc146818_tb;
         io_we    = 1;
         io_addr  = a;
         io_wdata = d;
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 0;
-        @(posedge clock);
+        @(posedge clk);
     endtask
 
     task automatic io_read(input logic [15: 0] a, output logic [ 7: 0] d);
         io_valid = 1;
         io_we    = 0;
         io_addr  = a;
-        @(posedge clock);
+        @(posedge clk);
         d = io_rdata;
         io_valid = 0;
-        @(posedge clock);
+        @(posedge clk);
     endtask
 
     task automatic set_index(input logic [ 6: 0] idx);
@@ -73,12 +73,12 @@ module rtc_mc146818_tb;
 
     initial begin
         logic [ 7: 0] v;
-        reset_n  = 0;
+        rst_n  = 0;
         io_valid = 0;
         io_we    = 0;
-        repeat (4) @(posedge clock);
-        reset_n = 1;
-        @(posedge clock);
+        repeat (4) @(posedge clk);
+        rst_n = 1;
+        @(posedge clk);
 
         set_index(7'h00);
         read_data(v);
@@ -95,7 +95,7 @@ module rtc_mc146818_tb;
         if (v !== 8'h19)
             $fatal(1, "FAIL century got %h", v);
 
-        repeat (RTC_HZ + 20) @(posedge clock);
+        repeat (RTC_HZ + 20) @(posedge clk);
         set_index(7'h00);
         read_data(v);
         if (v !== 8'h01)
@@ -103,7 +103,7 @@ module rtc_mc146818_tb;
 
         io_write(16'h0070, 8'h8B);
         io_write(16'h0071, 8'h82);
-        repeat (RTC_HZ + 20) @(posedge clock);
+        repeat (RTC_HZ + 20) @(posedge clk);
         set_index(7'h00);
         read_data(v);
         if (v !== 8'h01)
@@ -111,7 +111,7 @@ module rtc_mc146818_tb;
 
         io_write(16'h0070, 8'h0B);
         io_write(16'h0071, 8'h02);
-        repeat (RTC_HZ + 20) @(posedge clock);
+        repeat (RTC_HZ + 20) @(posedge clk);
         set_index(7'h00);
         read_data(v);
         if (v !== 8'h02)
@@ -119,7 +119,7 @@ module rtc_mc146818_tb;
 
         io_write(16'h0070, 8'h0B);
         io_write(16'h0071, 8'h12);
-        repeat (RTC_HZ + 20) @(posedge clock);
+        repeat (RTC_HZ + 20) @(posedge clk);
         if (!rtc_irq)
             $fatal(1, "FAIL o_rtc_irq after UIE tick");
 

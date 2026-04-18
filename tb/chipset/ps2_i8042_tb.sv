@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -10,8 +10,8 @@ description: This module implements ps2_i8042_tb.
 
 module ps2_i8042_tb;
 
-    logic        clock = 0;
-    logic        reset;
+    logic        clk = 0;
+    logic rst_n;
     logic        io_valid;
     logic        io_we;
     logic [15: 0] io_addr;
@@ -28,8 +28,8 @@ module ps2_i8042_tb;
     chip_i8042_ps2 #(
         .USE_REAL_PS2 ( 1'b0 )
     ) dut (
-        .clock     ( clock ),
-        .reset_n     ( reset_n ),
+        .clk     ( clk ),
+        .rst_n     ( rst_n ),
         .i_cs_n      ( cs_n ),
         .i_rd_n      ( rd_n ),
         .i_wr_n      ( wr_n ),
@@ -56,26 +56,26 @@ module ps2_i8042_tb;
         .i_ps2_aux_dat_in  ( 1'b1 )
     );
 
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     initial begin
         kbd_push = 0;
-        reset    = 1;
+        rst_n    = 1;
         io_valid = 0;
-        repeat (3) @(posedge clock);
-        reset = 0;
-        @(posedge clock);
+        repeat (3) @(posedge clk);
+        rst_n = 0;
+        @(posedge clk);
 
         kbd_data = 8'h5A;
         kbd_push = 1;
-        @(posedge clock);
+        @(posedge clk);
         kbd_push = 0;
-        @(posedge clock);
+        @(posedge clk);
 
         io_valid = 1;
         io_we    = 0;
         io_addr  = 16'h0060;
-        @(posedge clock);
+        @(posedge clk);
         if (io_rdata !== 8'h5A)
             $display("FAIL ps2 data read");
         else
@@ -85,3 +85,4 @@ module ps2_i8042_tb;
     end
 
 endmodule
+

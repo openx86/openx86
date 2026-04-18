@@ -28,13 +28,13 @@ module stage_4_mem (
     input  logic [31: 0] i_mem_rdata,       // 从内存子系统读回
     input  logic          i_mem_ready,      // 内存子系统就绪/完成握手
     input  logic          clk,
-    input  logic          rst
+    input  logic          rst_n
 );
 
     // 委托 LSU 时序与下游 mem 接口细节
     stage_4_mem_access_memory u_am_access_memory (
         .clk         ( clk ),
-        .rst         ( rst ),
+        .rst_n       ( rst_n ),
         .i_start     ( i_start ),
         .i_is_store  ( i_is_store ),
         .i_addr      ( i_addr ),

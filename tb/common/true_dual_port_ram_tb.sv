@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -15,8 +15,8 @@ module true_dual_port_ram_tb;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
-    logic                    clock;
-    logic                    reset;
+    logic                    clk;
+    logic rst_n;
     
     // 端口A
     logic                    wea;
@@ -35,8 +35,8 @@ module true_dual_port_ram_tb;
         .ADDR_WIDTH ( ADDR_WIDTH ),
         .DEPTH      ( DEPTH      )
     ) dut (
-        .clock  ( clock  ),
-        .reset_n  ( reset  ),
+        .clk  ( clk  ),
+        .rst_n  ( rst_n ),
         .wea    ( wea    ),
         .addra  ( addra  ),
         .wdataa ( wdataa ),
@@ -48,11 +48,11 @@ module true_dual_port_ram_tb;
     );
 
     // 时钟生成
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     initial begin
-        clock  = 0;
-        reset  = 1;
+        clk  = 0;
+        rst_n  = 1;
         wea    = 0;
         addra  = '0;
         wdataa = '0;
@@ -62,7 +62,7 @@ module true_dual_port_ram_tb;
 
         // 复位
         #20;
-        reset = 0;
+        rst_n = 0;
         #10;
 
         $display("=== True dual-port RAM test start ===");
@@ -169,3 +169,4 @@ module true_dual_port_ram_tb;
     end
 
 endmodule
+

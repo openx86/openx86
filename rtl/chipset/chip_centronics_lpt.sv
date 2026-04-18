@@ -17,8 +17,8 @@ module chip_centronics_lpt (
     input  logic [ 2: 0] i_a,         // 寄存器偏移（相对 0x378）
     input  logic [ 7: 0] i_d,         // 写数据
     output logic [ 7: 0] o_d,         // 读数据
-    input  logic         reset_n,     // 异步低有效复位
-    input  logic         clock        // 系统时钟
+    input  logic         rst_n,     // 异步低有效复位
+    input  logic         clk        // 系统时钟
 );
 
     logic [ 2: 0] off;  // 与 i_a 相同的寄存器索引
@@ -33,8 +33,8 @@ module chip_centronics_lpt (
     assign wr = !i_cs_n && !i_wr_n;
 
     // 仅数据/控制寄存器可写；其余偏移忽略写。
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             data_reg <= 8'h0;
             ctrl_reg <= 8'h0C;
         end else if (wr) begin

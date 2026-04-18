@@ -20,7 +20,7 @@ module stage_3_exe_execute_x87_fpu (
     output logic         o_pf,  // PF 输出
     output logic         o_cf,  // CF 输出
     input  logic          clk,  // 时钟
-    input  logic          rst  // 复位（高有效）
+    input  logic          rst_n  // 异步低有效复位
 );
 
     import stage_3_exe_execute_unit_pkg::*;
@@ -45,7 +45,7 @@ module stage_3_exe_execute_x87_fpu (
 
     // 时序逻辑：寄存器更新
     always_ff @(posedge clk) begin
-        if (rst) begin
+        if (!rst_n) begin
             top <= 3'd0;
             zf_r <= 1'b0;
             pf_r <= 1'b0;

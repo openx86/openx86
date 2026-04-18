@@ -39,8 +39,8 @@ module stage_4_mem_bus_interface_unit (
     input  logic [31: 0] i_bus_data_read,     // 总线读数据输入
     output logic [31: 0] o_bus_data_write,    // 总线写数据输出
 
-    input  logic          clock,
-    input  logic          reset_n
+    input  logic          clk,
+    input  logic          rst_n
 );
 
 // 三主端口共享同一读数据总线（当前实现为直连广播）
@@ -58,8 +58,8 @@ typedef enum logic [ 2: 0] {
 biu_state_e state;  // BIU 仲裁/握手状态
 
 // 固定优先级仲裁 + 单事务握手：完成返回各通道 ready
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin  // 异步复位：状态空闲，总线与各 ready 无效
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin  // 异步复位：状态空闲，总线与各 ready 无效
         state <= S_IDLE;
         o_bus_vaild <= 1'b0;
         o_bus_write_enable <= 1'b0;

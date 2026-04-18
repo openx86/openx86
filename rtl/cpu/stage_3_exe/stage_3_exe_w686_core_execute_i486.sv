@@ -27,7 +27,7 @@ module stage_3_exe_w686_core_execute_i486 (
     output logic         invlpg_pulse,  // TLB 失效脉冲
     output logic [31: 0] invlpg_linear_addr,  // 失效线性地址输出
     input  logic          clk,  // 时钟
-    input  logic          rst  // 复位（高有效）
+    input  logic          rst_n  // 异步低有效复位
 );
 
     typedef enum logic [ 2: 0] {
@@ -83,8 +83,8 @@ module stage_3_exe_w686_core_execute_i486 (
     endfunction
 
     // 时序逻辑：寄存器更新
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
             cpuid_st <= CS_IDLE;
             gpr_wr_en <= 1'b0;
             gpr_wr_idx <= '0;

@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -15,8 +15,8 @@ module simple_dual_port_ram_tb;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
-    logic                    clock;
-    logic                    reset;
+    logic                    clk;
+    logic rst_n;
     
     // 写端口
     logic                    we;
@@ -39,16 +39,16 @@ module simple_dual_port_ram_tb;
         .re    ( re    ),
         .raddr ( raddr ),
         .rdata ( rdata ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     // 时钟生成
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     initial begin
-        clock  = 0;
-        reset  = 1;
+        clk  = 0;
+        rst_n  = 1;
         we     = 0;
         waddr  = '0;
         wdata  = '0;
@@ -57,7 +57,7 @@ module simple_dual_port_ram_tb;
 
         // 复位
         #20;
-        reset = 0;
+        rst_n = 0;
         #10;
 
         $display("=== Simple dual-port RAM test start ===");
@@ -227,3 +227,4 @@ module simple_dual_port_ram_tb;
     end
 
 endmodule
+

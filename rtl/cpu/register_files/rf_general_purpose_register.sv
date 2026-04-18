@@ -12,15 +12,15 @@ module rf_general_purpose_register (
     output logic [31: 0] read__8 [ 0:  7],   // 8 位读视图（零扩展到 32）
     output logic [31: 0] read_16 [ 0:  7],   // 16 位读视图（零扩展到 32）
     output logic [31: 0] read_32 [ 0:  7],   // 32 位读视图
-    input  logic         reset_n,
-    input  logic         clock
+    input  logic         rst_n,
+    input  logic         clk
 );
 
 logic [31: 0] general_register [ 0:  7];  // 8 个 32 位通用寄存器存储
 
 // 单写口：复位清零；使能时写入选中寄存器
-always_ff @(posedge clock or negedge reset_n) begin : ff_basic_register
-    if (~reset_n) begin  // 复位：GPR 全 0
+always_ff @(posedge clk or negedge rst_n) begin : ff_basic_register
+    if (~rst_n) begin  // 复位：GPR 全 0
         for (int i = 0; i < 8; i++) begin
             general_register[i] <= 32'h0;
         end

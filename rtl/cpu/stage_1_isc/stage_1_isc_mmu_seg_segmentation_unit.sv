@@ -36,8 +36,8 @@ module stage_1_isc_mmu_seg_segmentation_unit #(
     // ------------------------------------------------------------------------
     // Clock / reset
     // ------------------------------------------------------------------------
-    input  logic          clock,
-    input  logic          reset_n
+    input  logic          clk,
+    input  logic          rst_n
 );
 
 logic  [63: 0] segment_descriptor; // 当前段描述符（按 index 选取）

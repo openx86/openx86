@@ -41,8 +41,8 @@ module chip_i8042_ps2 #(
     output logic         o_ps2_aux_dat_out,
     output logic         o_ps2_aux_dat_oe,
     input  logic         i_ps2_aux_dat_in, // 鼠标数据总线回读
-    input  logic         clock,            // 系统时钟
-    input  logic         reset_n           // 异步低有效复位
+    input  logic         clk,            // 系统时钟
+    input  logic         rst_n           // 异步低有效复位
 );
 
     logic wr;
@@ -139,8 +139,8 @@ module chip_i8042_ps2 #(
             ps2_host_phy #(
                 .CLK_HZ ( CLK_HZ )
             ) u_kbd_phy (
-                .clock       ( clock ),
-                .reset_n       ( reset_n ),
+                .clk       ( clk ),
+                .rst_n       ( rst_n ),
                 .i_ps2_clk_in  ( i_ps2_kbd_clk_in ),
                 .i_ps2_dat_in  ( i_ps2_kbd_dat_in ),
                 .o_ps2_clk_out ( o_ps2_kbd_clk_out ),
@@ -160,8 +160,8 @@ module chip_i8042_ps2 #(
             ps2_host_phy #(
                 .CLK_HZ ( CLK_HZ )
             ) u_aux_phy (
-                .clock       ( clock ),
-                .reset_n       ( reset_n ),
+                .clk       ( clk ),
+                .rst_n       ( rst_n ),
                 .i_ps2_clk_in  ( i_ps2_aux_clk_in ),
                 .i_ps2_dat_in  ( i_ps2_aux_dat_in ),
                 .o_ps2_clk_out ( o_ps2_aux_clk_out ),
@@ -202,8 +202,8 @@ module chip_i8042_ps2 #(
     endgenerate
 
     // 8042 命令/数据口、FIFO、PHY 收发与读后弹出时序。
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             kbd_wptr       <= '0;
             kbd_rptr       <= '0;
             kbd_count      <= '0;

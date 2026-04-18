@@ -31,8 +31,8 @@ module vga_text_color (
     input  logic                   video_active,
 
     // 时钟和复位
-    input  logic                   reset_n,
-    input  logic                   clock
+    input  logic                   rst_n,
+    input  logic                   clk
 );
 
     // 文本模式参数
@@ -88,8 +88,8 @@ module vga_text_color (
     logic [ 7: 0] attr_next;
 
     // 第一级流水：锁存字符码与属性
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             char_code_reg <= '0;
             attr_reg <= '0;
         end else begin
@@ -104,8 +104,8 @@ module vga_text_color (
     end
 
     // 第二级流水：锁存点阵行
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             font_data_reg <= '0;
         end else begin
             if (video_active) begin
@@ -115,8 +115,8 @@ module vga_text_color (
     end
 
     // 16 色前景 + 8 色背景查表输出
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             vga_r <= 4'h0;
             vga_g <= 4'h0;
             vga_b <= 4'h0;

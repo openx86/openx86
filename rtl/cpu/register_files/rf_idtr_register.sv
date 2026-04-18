@@ -11,13 +11,13 @@ module rf_idtr_register (
     input  logic [31: 0] idtr_write_data_base,    // 写入：IDT 线性基址
     output logic [15: 0] idtr_limit,              // 当前 IDT 限长
     output logic [31: 0] idtr_base,               // 当前 IDT 基址
-    input  logic         clock,
-    input  logic         reset_n
+    input  logic         clk,
+    input  logic         rst_n
 );
 
 // SIDT 读出 / LIDT 写入的架构寄存器快照
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin  // 复位：基址与限长清零
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin  // 复位：基址与限长清零
         idtr_limit <= 16'b0;
         idtr_base <= 32'b0;
     end else if (idtr_write_enable) begin  // 加载 IDTR（通常来自 LIDT）

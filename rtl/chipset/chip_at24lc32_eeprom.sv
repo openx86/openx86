@@ -38,8 +38,8 @@ module chip_at24lc32_eeprom #(
     // ------------------------------------------------------------------------
     // 仿真/集成用系统时钟与复位
     // ------------------------------------------------------------------------
-    input  logic clock,    // 模块采样时钟
-    input  logic reset_n   // 异步低有效复位
+    input  logic clk,    // 模块采样时钟
+    input  logic rst_n   // 异步低有效复位
 );
 
     localparam int AW = $clog2(NUM_BYTES);
@@ -50,8 +50,8 @@ module chip_at24lc32_eeprom #(
 
     logic scl_q, sda_q;  // SCL/SDA 输入同步寄存
     // 同步 I2C 输入，滤毛刺意图由外部保证。
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             scl_q <= 1'b1;
             sda_q <= 1'b1;
         end else begin
@@ -110,8 +110,8 @@ module chip_at24lc32_eeprom #(
     // 5.032：unpacked mem[] 在 NBA 中勿用函数返回值作下标；索引用 word_addr[AW-1:0]。
 
     // I2C 位/字节状态机：起停、ACK、读写与开漏 SDA 驱动。
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             o_sda_oe    <= 1'b0;
             state       <= ST_IDLE;
             shreg       <= 8'h00;

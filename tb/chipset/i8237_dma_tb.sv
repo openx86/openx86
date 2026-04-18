@@ -10,8 +10,8 @@ description: Unit testbench for chip_8237_dma register-level behavior.
 `timescale 1ns/1ps
 module i8237_dma_tb;
 
-    logic         clock = 0;
-    logic         reset_n;
+    logic         clk = 0;
+    logic         rst_n;
     logic         valid;
     logic         we;
     logic [15: 0] addr;
@@ -45,32 +45,32 @@ module i8237_dma_tb;
         .i_addr  ( addr ),
         .i_d     ( wdata ),
         .o_d     ( rdata ),
-        .clock   ( clock ),
-        .reset_n ( reset_n )
+        .clk   ( clk ),
+        .rst_n ( rst_n )
     );
 
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     task automatic io_write(input logic [15: 0] i_a, input logic [ 7: 0] i_d);
-        @(negedge clock);
+        @(negedge clk);
         valid = 1'b1;
         we    = 1'b1;
         addr  = i_a;
         wdata = i_d;
-        @(posedge clock);
-        @(negedge clock);
+        @(posedge clk);
+        @(negedge clk);
         valid = 1'b0;
         we    = 1'b0;
     endtask
 
     task automatic io_read(input logic [15: 0] i_a, output logic [ 7: 0] o_q);
-        @(negedge clock);
+        @(negedge clk);
         valid = 1'b1;
         we    = 1'b0;
         addr  = i_a;
-        @(posedge clock);
+        @(posedge clk);
         o_q = rdata;
-        @(negedge clock);
+        @(negedge clk);
         valid = 1'b0;
     endtask
 
@@ -91,15 +91,15 @@ module i8237_dma_tb;
 
     initial begin
         fail_count = 0;
-        reset_n    = 1'b0;
+        rst_n    = 1'b0;
         valid      = 1'b0;
         we         = 1'b0;
         addr       = 16'h0000;
         wdata      = 8'h00;
 
-        repeat (3) @(posedge clock);
-        reset_n = 1'b1;
-        repeat (2) @(posedge clock);
+        repeat (3) @(posedge clk);
+        rst_n = 1'b1;
+        repeat (2) @(posedge clk);
 
         io_read(16'h000A, rb);
         expect_eq("reset mask", rb, 8'h0F);

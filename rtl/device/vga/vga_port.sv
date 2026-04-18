@@ -43,8 +43,8 @@ module vga_port #(
     output logic                   video_active, // 可见像素窗口内为 1
     
     // 时钟和复位（放在末尾）
-    input  logic                    reset_n,     // 异步低有效复位
-    input  logic                    clock        // 像素时钟
+    input  logic                    rst_n,     // 异步低有效复位
+    input  logic                    clk        // 像素时钟
 );
 
     // ------------------------------------------------------------------------
@@ -83,8 +83,8 @@ module vga_port #(
     assign v_visible = (v_count < W_V_CNT'(V_VISIBLE));
 
     // 像素/行/帧计数：800x525 扫描计数器
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             h_count <= '0;
             v_count <= '0;
         end else begin
@@ -102,11 +102,11 @@ module vga_port #(
     end
 
     // 可见区域
-    assign video_active = (reset_n) && h_visible && v_visible;
+    assign video_active = (rst_n) && h_visible && v_visible;
 
     // 产生负极性 HSYNC/VSYNC 脉冲窗口
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             vga_hsync <= 1'b1;
             vga_vsync <= 1'b1;
         end else begin
@@ -133,8 +133,8 @@ module vga_port #(
     // ------------------------------------------------------------------------
 
     // 可见区内线性递增 vram_rd_addr；帧起点复位
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             vram_rd_addr <= '0;
         end else begin
             if (video_active) begin
@@ -161,8 +161,8 @@ module vga_port #(
     // 对应扩展到 4bit VGA R/G/B 输出。
 
     // 将 RRRGGGBB 展开为 4:4:4 RGB；消隐区输出黑
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             vga_r <= 4'h0;
             vga_g <= 4'h0;
             vga_b <= 4'h0;

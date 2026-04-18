@@ -39,7 +39,7 @@ module sdram_controller #(
     parameter int REFRESH_CYCLES = 390
 ) (
     input  logic          clk,            // 控制器与 SDRAM 同频系统时钟
-    input  logic          rst,            // 高有效复位：初始化 FSM 与输出
+    input  logic          rst_n,          // 异步低有效复位：初始化 FSM 与输出
 
     // Host (SoC 中仅由 bus_controller 的 o_sdram_* 驱动；CPU 经 bus_controller 访问)
     input  logic          i_en,           // 主机请求：与握手配合发起一次 32b 访问
@@ -65,7 +65,7 @@ module sdram_controller #(
     input  logic [15: 0] i_sdram_dq_in   // 从 DQ 总线采样（读数据）
 );
 
-    // SDRAM clock is the same as system clock for bring-up
+    // SDRAM clk is the same as system clk for bring-up
     assign o_sdram_clk = clk;
     assign o_sdram_cke = 1'b1;
     assign o_sdram_dqm = 2'b00;
@@ -249,8 +249,8 @@ module sdram_controller #(
     end
 
     // 仅在空闲态累加刷新间隔计数，到阈值由主 FSM 取走刷新
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
             refresh_ctr <= 0;
         end else begin
             if (st == ST_IDLE) begin
@@ -263,8 +263,8 @@ module sdram_controller #(
     end
 
     // 主 FSM：上电初始化、周期刷新、主机读写突发（BL=2）与握手
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
             st       <= ST_INIT_WAIT;
             ctr      <= 0;
             cmd      <= CMD_NOP;
@@ -283,7 +283,7 @@ module sdram_controller #(
             unique case (st)
                 // ----------------------------------------------------------------
                 // Init: wait >= 200us after power-up before first command.
-                // For reset-based bring-up, treat rst deassert as "power stable".
+                // For reset-based bring-up, treat rst_n deassert (1) as "power stable".
                 // ----------------------------------------------------------------
                 ST_INIT_WAIT: begin
                     if (ctr >= (CLK_HZ / 5_000)) begin // 200us

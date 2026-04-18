@@ -12,7 +12,7 @@ description: This module implements w686_execute_i486_cpuid_tb.
 module w686_execute_i486_cpuid_tb;
 
     logic clk;
-    logic rst;
+    logic rst_n;
     logic insn_fire;
     logic op_cpuid;
     logic [31: 0] gpr_eax;
@@ -37,7 +37,7 @@ module w686_execute_i486_cpuid_tb;
 
     stage_3_exe_w686_core_execute_i486 u_dut (
         .clk ( clk ),
-        .rst ( rst ),
+        .rst_n ( rst_n ),
         .insn_fire ( insn_fire ),
         .op_cpuid ( op_cpuid ),
         .gpr_eax ( gpr_eax ),
@@ -57,7 +57,7 @@ module w686_execute_i486_cpuid_tb;
     );
 
     initial begin
-        rst = 1'b1;
+        rst_n = 1'b0;
         insn_fire = 1'b0;
         op_cpuid = 1'b0;
         gpr_eax = 32'd0;
@@ -66,7 +66,7 @@ module w686_execute_i486_cpuid_tb;
         op_wbinvd = 1'b0;
         op_invlpg = 1'b0;
         invlpg_ea = 32'h0;
-        #22 rst = 1'b0;
+        #22 rst_n = 1'b1;
 
         @(posedge clk);
         gpr_eax = 32'd0;

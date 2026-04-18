@@ -27,8 +27,8 @@ module sdcard_controller #(
     output logic [ 3: 0] o_sdcard_controller_phy_dat_out, // DAT[3:0] 驱动
     output logic         o_sdcard_controller_phy_dat_oe,   // DAT 输出使能
     input  logic [ 3: 0] i_sdcard_controller_phy_dat_in,   // DAT 总线回读
-    input  logic         clock,             // 控制器时钟
-    input  logic         reset_n            // 异步低有效复位
+    input  logic         clk,             // 控制器时钟
+    input  logic         rst_n            // 异步低有效复位
 );
 
     localparam int LP_AW = $clog2(P_BYTE_DEPTH);
@@ -37,8 +37,8 @@ module sdcard_controller #(
     logic [ 7: 0] image [0:P_BYTE_DEPTH-1];
 
     // 上电写魔术数到映像首字节（便于仿真可见）
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             image[0] <= 8'hA5;
             image[1] <= 8'h5A;
         end
@@ -75,8 +75,8 @@ module sdcard_controller #(
             logic          sector_ready_hold; // 与上层 req 握手的 ready 锁存
 
             // SDIO 路径：调度 CMD17 填 sector_buf，并维护与 IDE 的扇区握手
-            always_ff @(posedge clock or negedge reset_n) begin
-                if (~reset_n) begin
+            always_ff @(posedge clk or negedge rst_n) begin
+                if (~rst_n) begin
                     sector_loaded        <= 1'b0;
                     hold_lba             <= '0;
                     sd_start             <= 1'b0;
@@ -139,8 +139,8 @@ module sdcard_controller #(
                 .o_sdcard_native_host_4bit_phy_dat_out   ( o_sdcard_controller_phy_dat_out ),
                 .o_sdcard_native_host_4bit_phy_dat_oe    ( o_sdcard_controller_phy_dat_oe ),
                 .i_sdcard_native_host_4bit_phy_dat_in    ( i_sdcard_controller_phy_dat_in ),
-                .clock          ( clock ),
-                .reset_n        ( reset_n )
+                .clk          ( clk ),
+                .rst_n        ( rst_n )
             );
         end
     endgenerate

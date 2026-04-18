@@ -11,7 +11,7 @@ description: This module implements single_port_rom.
 //
 // - **内容初始化**：不在本模块内装载；仿真时由 testbench 通过层次化引用
 //   写入内部阵列，或使用厂商 ROM IP / 工程脚本做上板初始化。
-// - **读时序**：posedge clock 更新 `rdata`（同步读）。
+// - **读时序**：posedge clk 更新 `rdata`（同步读）。
 // - **复位**：将 `rdata` 清零（ROM 内容不变）。
 // ============================================================================
 
@@ -25,8 +25,8 @@ module single_port_rom #(
     output logic [DATA_WIDTH-1: 0] rdata, // 同步读数据输出
 
     // 时钟和复位
-    input  logic                   clock,   // 读数据在此时钟沿更新
-    input  logic                   reset_n   // 低有效：复位时 rdata 清零，ROM 内容不变
+    input  logic                   clk,   // 读数据在此时钟沿更新
+    input  logic                   rst_n   // 低有效：复位时 rdata 清零，ROM 内容不变
 );
 
     // 只读内容阵列（仿真/综合由外部或 IP 装载；TB 可层次化写入）
@@ -35,8 +35,8 @@ module single_port_rom #(
     /* verilator lint_on UNDRIVEN */
 
     // 同步读：无效地址仍组合取数，由上层保证；复位清零输出
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             rdata <= '0;
         end else begin
             rdata <= rom[addr];

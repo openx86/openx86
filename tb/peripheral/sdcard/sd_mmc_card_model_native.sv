@@ -19,7 +19,7 @@ module sd_mmc_card_model_native (
     input  logic [ 3: 0] i_host_dat_o,
     output logic         o_card_dat_oe,
     output logic [ 3: 0] o_card_dat_o,
-    input  logic         reset_n
+    input  logic         rst_n
 );
 
     logic [47: 0] cmd_sr;
@@ -56,8 +56,8 @@ module sd_mmc_card_model_native (
         sector[1] = 8'h5A;
     end
 
-    always_ff @(posedge i_sd_clk or negedge reset_n) begin
-        if (~reset_n)
+    always_ff @(posedge i_sd_clk or negedge rst_n) begin
+        if (~rst_n)
             host_oe_d <= 1'b0;
         else
             host_oe_d <= i_host_cmd_oe;
@@ -65,8 +65,8 @@ module sd_mmc_card_model_native (
 
     logic host_cmd_fall = host_oe_d & ~i_host_cmd_oe;
 
-    always_ff @(posedge i_sd_clk or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge i_sd_clk or negedge rst_n) begin
+        if (~rst_n) begin
             cst            <= C_IDLE;
             cmd_sr         <= '0;
             cmd_bc         <= '0;

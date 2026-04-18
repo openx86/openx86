@@ -9,7 +9,7 @@ description: This module implements true_dual_port_ram.
 // ----------------------------------------------------------------------------
 // 真双口 RAM（2x read/write port），常用于“CPU 写入 + VGA/外设并行读取”等场景。
 //
-// - 端口 A/B 均支持同步写、同步读（posedge clock）。
+// - 端口 A/B 均支持同步写、同步读（posedge clk）。
 // - 复位：清零读数据输出（不清 RAM 内容）。
 //
 // 冲突说明：
@@ -38,16 +38,16 @@ module true_dual_port_ram #(
 
     
     // 时钟和复位
-    input  logic                   clock,   // 双口共享单时钟
-    input  logic                   reset_n  // 低有效：清零两路读输出，不清阵列
+    input  logic                   clk,   // 双口共享单时钟
+    input  logic                   rst_n  // 低有效：清零两路读输出，不清阵列
 );
 
     // 共享存储体（双口冲突行为依赖器件/综合）
     logic [DATA_WIDTH-1: 0] mem [0:DEPTH-1];
 
     // A 口写：同步写入 addra；复位不刷阵列
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             // 复位时可以选择清零，也可以保持（取决于应用需求）
         end else begin
             if (wea) begin
@@ -57,8 +57,8 @@ module true_dual_port_ram #(
     end
 
     // A 口读：一拍同步读 addra
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             rdataa <= '0;
         end else begin
             rdataa <= mem[addra];
@@ -66,8 +66,8 @@ module true_dual_port_ram #(
     end
 
     // B 口写：同步写入 addrb
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             // 复位时可以选择清零，也可以保持
         end else begin
             if (web) begin
@@ -77,8 +77,8 @@ module true_dual_port_ram #(
     end
 
     // B 口读：一拍同步读 addrb
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             rdatab <= '0;
         end else begin
             rdatab <= mem[addrb];

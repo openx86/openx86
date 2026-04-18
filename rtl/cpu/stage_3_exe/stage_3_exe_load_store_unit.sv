@@ -27,7 +27,7 @@ module stage_3_exe_load_store_unit (
     input  logic [31: 0] i_mem_rdata,  // 存储器读数据
     input  logic          i_mem_ready,  // 存储器就绪
     input  logic          clk,  // 时钟
-    input  logic          rst  // 复位（高有效）
+    input  logic          rst_n  // 异步低有效复位
 );
 
     typedef enum logic [ 1: 0] {
@@ -42,7 +42,7 @@ module stage_3_exe_load_store_unit (
 
     // 时序逻辑：寄存器更新
     always_ff @(posedge clk) begin
-        if (rst) begin
+        if (!rst_n) begin
             state     <= S_IDLE;
             o_done    <= 1'b0;
             o_rdata   <= 32'h0;

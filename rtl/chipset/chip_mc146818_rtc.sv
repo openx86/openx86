@@ -26,8 +26,8 @@ module chip_mc146818_rtc #(
     input  logic [ 7: 0] i_d,         // 写数据
     output logic [ 7: 0] o_d,         // 读数据
     output logic         o_rtc_irq,   // 寄存器 C 中 IRQF 聚合输出
-    input  logic         clock,       // 系统时钟
-    input  logic         reset_n      // 异步低有效复位
+    input  logic         clk,       // 系统时钟
+    input  logic         rst_n      // 异步低有效复位
 );
 
     localparam int UIP_CYC = ((CLK_HZ * 244) / 1_000_000) > 0 ? ((CLK_HZ * 244) / 1_000_000) : 1;
@@ -79,7 +79,7 @@ module chip_mc146818_rtc #(
     logic rstn_i;        // 复位同步/整形（兼容 X）
 
     assign read_c_pulse = rd && i_a0 && (index_reg[ 6: 0] == 7'h0C);
-    assign rstn_i = (reset_n === 1'b0) ? 1'b0 : 1'b1;
+    assign rstn_i = (rst_n === 1'b0) ? 1'b0 : 1'b1;
 
     // Power-up defaults mirror reset defaults for deterministic startup behavior.
     initial begin
@@ -342,7 +342,7 @@ module chip_mc146818_rtc #(
     assign o_rtc_irq = reg_c_irqf;
 
     // CMOS 写、日历推进、UIP、PIE/AIE/UIE 与读 C 清标志。
-    always_ff @(posedge clock or negedge rstn_i) begin
+    always_ff @(posedge clk or negedge rstn_i) begin
         if (!rstn_i) begin
             index_reg <= '0;
             for (int i = 0; i < 128; i++)

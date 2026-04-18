@@ -31,8 +31,8 @@ module w686_core (
     input  logic [31: 0] i_data_data_read,    // load 读回数据
     output logic [31: 0] o_data_data_write,   // store 写出数据
 
-    input  logic          reset_n,          // 异步低有效复位
-    input  logic          clock             // 核心时钟
+    input  logic          rst_n,          // 异步低有效复位
+    input  logic          clk             // 核心时钟
 );
     // 译码子模块 .* 互连线：必须放在模块内，避免在编译单元顶层声明而与子模块端口同名（VARHIDDEN）
 `include "w686_decode_outputs_decl.svh"
@@ -121,8 +121,8 @@ module w686_core (
         .read__8 ( GPR_read__8 ),
         .read_16 ( GPR_read_16 ),
         .read_32 ( GPR_read_32 ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     rf_segment_register u_rf_sreg (
@@ -132,8 +132,8 @@ module w686_core (
         .write_descriptor ( wb_SREG_write_descriptor ),
         .segment_selector ( segment_selector ),
         .descriptor_cache ( descriptor_cache ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     rf_flags_register u_rf_flags (
@@ -154,8 +154,8 @@ module w686_core (
         .VM ( VM ),
         .EFLAGS ( EFLAGS ),
         .FLAGS ( FLAGS ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     rf_instruction_pointer_register u_rf_ip (
@@ -163,8 +163,8 @@ module w686_core (
         .write_data ( wb_IP_write_data ),
         .IP ( IP ),
         .EIP ( EIP ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     rf_control_register u_rf_cr (
@@ -179,8 +179,8 @@ module w686_core (
         .R ( R ),
         .PG ( PG ),
         .page_directory_base ( page_directory_base ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     rf_debug_register u_rf_dr (
@@ -188,8 +188,8 @@ module w686_core (
         .write_index ( wb_DR_write_index ),
         .write_data ( wb_DR_write_data ),
         .DR ( DR ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     rf_test_register u_rf_tr (
@@ -197,8 +197,8 @@ module w686_core (
         .write_index ( wb_TR_write_index ),
         .write_data ( wb_TR_write_data ),
         .TR ( TR ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     rf_gdtr_register u_rf_gdtr (
@@ -207,8 +207,8 @@ module w686_core (
         .gdtr_write_data_base ( 32'd0 ),
         .gdtr_limit ( GDTR_limit ),
         .gdtr_base ( GDTR_base ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     rf_idtr_register u_rf_idtr (
@@ -217,8 +217,8 @@ module w686_core (
         .idtr_write_data_base ( 32'd0 ),
         .idtr_limit ( IDTR_limit ),
         .idtr_base ( IDTR_base ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     // CPL = CS.RPL
@@ -300,8 +300,8 @@ module w686_core (
         .o_instruction_ready ( instruction_ready ),
         .o_segment_fault ( if_segment_fault ),
         .EIP ( EIP ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     // --- 译码（.* 连接 w686_decode_outputs_decl 中声明的同名线网）---
@@ -349,13 +349,13 @@ module w686_core (
         .i_instruction_ready ( instruction_ready ),
         .o_stage_valid ( stage2_valid ),
         .o_insn_fire ( insn_fire ),
-        .clock ( clock ),
-        .reset_n ( reset_n )
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
     stage_3_exe_w686_core_execute_i486 u_exec486 (
-        .clk ( clock ),
-        .rst ( ~reset_n ),
+        .clk ( clk ),
+        .rst_n ( rst_n ),
         .insn_fire ( insn_fire ),
         .op_cpuid ( o_opcode_x86_CPUID_CPU_identification ),
         .gpr_eax ( GPR_read_32[0] ),
@@ -1216,8 +1216,8 @@ module w686_core (
 
 
     stage_3_exe_execute_unit u_eu (
-        .clk ( clock ),
-        .rst ( ~reset_n ),
+        .clk ( clk ),
+        .rst_n ( rst_n ),
         .i_agu_base ( agu_base_w ),
         .i_agu_index ( agu_index_w ),
         .i_agu_scale ( o_sib_scale_factor ),
@@ -1271,8 +1271,8 @@ module w686_core (
     stage_4_mem u_stage_4_mem (
         .i_stage3_valid ( stage3_valid ),
         .o_stage_valid ( stage4_valid ),
-        .clk ( clock ),
-        .rst ( ~reset_n ),
+        .clk ( clk ),
+        .rst_n ( rst_n ),
         .i_start ( am_lsu_start_w ),
         .i_is_store ( lsu_is_store_w ),
         .i_addr ( lsu_addr_req_w ),
@@ -1289,8 +1289,8 @@ module w686_core (
     );
 
     // 时序：打拍 LSU done，用于检测上升沿（与写回 EIP/GPR 对齐）
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (!reset_n)
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
             lsu_done_d1 <= 1'b0;
         else
             lsu_done_d1 <= am_lsu_done;
@@ -1300,16 +1300,16 @@ module w686_core (
     assign lsu_done_rise = am_lsu_done & ~lsu_done_d1;
 
     // 时序：记录最近一次启动的 LSU 事务是否为 store（done 上升沿时选 EIP 或读数据写回）
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (!reset_n)
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
             lsu_last_was_store_r <= 1'b0;
         else if ( am_lsu_start_w )
             lsu_last_was_store_r <= lsu_is_store_w;
     end
 
     // 时序：load 完成时目标 GPR 索引（MOV 累加器形式固定写 EAX）
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (!reset_n)
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
             lsu_ld_dst_reg <= 3'd0;
         else if ( am_lsu_start_w & ~lsu_is_store_w ) begin
             if (mov_ld_acc_mem_e)
@@ -1545,8 +1545,8 @@ module w686_core (
     endfunction
 
     // 时序：指令写回仲裁 — 复位初始化；否则默认关闭各写口，再按异常/多周期/LSU/发射指令分派
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             write_enable <= 1'b0;
             IP_write_enable <= 1'b0;
             IP_write_data <= 32'h0;

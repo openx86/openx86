@@ -66,7 +66,7 @@ module stage_3_exe_execute_unit (
     output logic               o_x87_pf,  // 输出：x87 pf
     output logic               o_x87_cf,  // 输出：x87 cf
     input  logic                clk,  // 时钟
-    input  logic                rst  // 复位（高有效）
+    input  logic                rst_n  // 异步低有效复位
 );
 
     import stage_3_exe_execute_unit_pkg::*;
@@ -776,7 +776,7 @@ module stage_3_exe_execute_unit (
 
     stage_3_exe_execute_x87_fpu u_x87 (
         .clk         ( clk ),
-        .rst         ( rst ),
+        .rst_n       ( rst_n ),
         .i_valid     ( i_x87_valid ),
         .i_op        ( i_x87_op ),
         .i_push_data ( i_x87_push_data ),

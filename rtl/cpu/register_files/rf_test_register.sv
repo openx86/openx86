@@ -10,13 +10,13 @@ module rf_test_register (
     input  logic [ 2: 0] write_index,      // 目标寄存器索引（0–7）
     input  logic [31: 0] write_data,       // 写入数据
     output logic [31: 0] TR [ 0:  7],      // 测试寄存器组 TR0–TR7
-    input  logic         clock,
-    input  logic         reset_n
+    input  logic         clk,
+    input  logic         rst_n
 );
 
 // 异步复位：清零全部 TR；使能时按索引写入
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin  // 复位：全部清零
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin  // 复位：全部清零
         TR[0] <= 32'b0;
         TR[1] <= 32'b0;
         TR[2] <= 32'b0;

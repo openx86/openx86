@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -11,8 +11,8 @@ description: This module implements vga_graphics_adapter_tb.
 
 module vga_graphics_adapter_tb;
 
-    logic        clock;
-    logic        reset;
+    logic        clk;
+    logic rst_n;
     logic        io_en_w;
     logic        io_en_r;
     logic [15: 0] io_addr;
@@ -42,17 +42,17 @@ module vga_graphics_adapter_tb;
         .vga_r     ( vga_r     ),
         .vga_g     ( vga_g     ),
         .vga_b     ( vga_b     ),
-        .clock     ( clock     ),
-        .reset_n     ( reset     )
+        .clk     ( clk     ),
+        .rst_n     ( rst_n )
     );
 
     // 时钟生成（25.175MHz，VGA标准像素时钟）
-    always #19.86 clock = ~clock;
+    always #19.86 clk = ~clk;
 
     initial begin
         $readmemh("rtl/device/vga/vga_font_8x16.hex", dut.font_rom_inst.font_rom_inst.rom);
-        clock     = 0;
-        reset     = 1;
+        clk     = 0;
+        rst_n     = 1;
         io_en_w   = 0;
         io_en_r   = 0;
         io_addr   = '0;
@@ -63,7 +63,7 @@ module vga_graphics_adapter_tb;
 
         // 复位
         #100;
-        reset = 0;
+        rst_n = 0;
         #100;
 
         $display("=== VGA graphics adapter test start ===");
@@ -171,7 +171,7 @@ module vga_graphics_adapter_tb;
 
         // Test 11: Reset test
         $display("\nTest 11: Reset test");
-        reset = 1;
+        rst_n = 1'b0;
         #100;
         $display("  During reset: RGB=(%1d,%1d,%1d) (expected: 0,0,0)", vga_r, vga_g, vga_b);
         if (vga_r != 0 || vga_g != 0 || vga_b != 0) 
@@ -179,7 +179,7 @@ module vga_graphics_adapter_tb;
 
         // Test 12: Read registers after reset
         $display("\nTest 12: Read registers after reset");
-        reset = 0;
+        rst_n = 1'b1;
         #100;
         io_en_r = 1;
         io_addr = 16'h03C2;
@@ -205,3 +205,4 @@ module vga_graphics_adapter_tb;
     end
 
 endmodule
+

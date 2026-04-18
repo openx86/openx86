@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -11,8 +11,8 @@ description: This module implements vga_font_rom_tb.
 
 module vga_font_rom_tb;
 
-    logic        clock;
-    logic        reset;
+    logic        clk;
+    logic rst_n;
     logic [ 7: 0]  char_code;
     logic [ 3: 0]  row_index;
     logic [ 7: 0]  font_data;
@@ -21,23 +21,23 @@ module vga_font_rom_tb;
         .char_code  ( char_code  ),
         .row_index  ( row_index  ),
         .font_data  ( font_data  ),
-        .clock      ( clock      ),
-        .reset_n      ( reset      )
+        .clk      ( clk      ),
+        .rst_n      ( rst_n )
     );
 
     // 时钟生成（25.175MHz，VGA标准像素时钟）
-    always #19.86 clock = ~clock;
+    always #19.86 clk = ~clk;
 
     initial begin
         $readmemh("rtl/device/vga/vga_font_8x16.hex", dut.font_rom_inst.rom);
-        clock     = 0;
-        reset     = 1;
+        clk     = 0;
+        rst_n     = 1;
         char_code = '0;
         row_index = '0;
 
         // 复位
         #40;
-        reset = 0;
+        rst_n = 0;
         #40;
 
         $display("=== VGA font ROM test start ===");
@@ -104,14 +104,14 @@ module vga_font_rom_tb;
 
         // Test 7: Reset test
         $display("\nTest 7: Reset test");
-        reset = 1;
+        rst_n = 1;
         char_code = 8'h41;
         row_index = 4'h0;
         #40;
         $display("  Read during reset: data=0x%02h (expected: 0x00)", font_data);
         if (font_data != 8'h00) $error("  error: font data must be 0 during reset!");
 
-        reset = 0;
+        rst_n = 0;
         #40;
         $display("  Read after reset release: data=0x%02h", font_data);
 
@@ -132,3 +132,4 @@ module vga_font_rom_tb;
     end
 
 endmodule
+

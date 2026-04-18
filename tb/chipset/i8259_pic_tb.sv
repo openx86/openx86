@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -9,8 +9,8 @@ description: This module implements i8259_pic_tb.
 // ============================================================================
 module i8259_pic_tb;
 
-    logic        clock = 0;
-    logic        reset;
+    logic        clk = 0;
+    logic rst_n;
     logic        valid;
     logic        we;
     logic [15: 0] addr;
@@ -25,8 +25,8 @@ module i8259_pic_tb;
     logic rd_n  = !(valid && !we && hit);
 
     chip_8259_pic dut (
-        .clock    ( clock ),
-        .reset_n    ( reset_n ),
+        .clk    ( clk ),
+        .rst_n    ( rst_n ),
         .i_cs_n     ( cs_n ),
         .i_rd_n     ( rd_n ),
         .i_wr_n     ( wr_n ),
@@ -37,35 +37,35 @@ module i8259_pic_tb;
         .o_intr     ( intr )
     );
 
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         valid = 1;
         we    = 1;
         addr  = a;
         wdata = d;
-        @(posedge clock);
+        @(posedge clk);
         valid = 0;
     endtask
 
     initial begin
         ir    = 8'h0;
-        reset = 1;
+        rst_n = 1;
         valid = 0;
         we    = 0;
         addr  = 16'h0020;
         wdata = '0;
-        repeat (3) @(posedge clock);
-        reset = 0;
-        repeat (2) @(posedge clock);
+        repeat (3) @(posedge clk);
+        rst_n = 0;
+        repeat (2) @(posedge clk);
 
         wr(16'h0020, 8'h13);
         wr(16'h0021, 8'h08);
         wr(16'h0021, 8'h01);
         wr(16'h0021, 8'hFE);
         ir = 8'h01;
-        repeat (2) @(posedge clock);
+        repeat (2) @(posedge clk);
         if (!intr)
             $display("FAIL pic intr");
         else
@@ -76,3 +76,4 @@ module i8259_pic_tb;
     end
 
 endmodule
+

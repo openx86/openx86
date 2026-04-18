@@ -11,7 +11,7 @@ description: This module implements dual_port_rom.
 //
 // - **内容初始化**：不在本模块内装载；仿真由 testbench 层次化写入阵列，
 //   上板请使用 ROM IP 或工程级 memory init。
-// - **时序**：两路读口均为 **同步读**（posedge clock 更新输出）。
+// - **时序**：两路读口均为 **同步读**（posedge clk 更新输出）。
 //
 // Reset 行为：复位时把读数据输出清零（不影响 ROM 内容）。
 // ============================================================================
@@ -30,16 +30,16 @@ module dual_port_rom #(
     output logic [DATA_WIDTH-1: 0] rdatab, // B 口同步读数据
 
     // 时钟和复位
-    input  logic                  clock,   // 两读口共享时钟
-    input  logic                  reset_n  // 低有效：两路输出清零
+    input  logic                  clk,   // 两读口共享时钟
+    input  logic                  rst_n  // 低有效：两路输出清零
 );
 
     // 双读口共享 ROM 体（内容由外部初始化）
     logic [DATA_WIDTH-1: 0] rom [0:DEPTH-1];
 
     // A 口同步读
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             rdataa <= '0;
         end else begin
             rdataa <= rom[addra];
@@ -47,8 +47,8 @@ module dual_port_rom #(
     end
 
     // B 口同步读
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             rdatab <= '0;
         end else begin
             rdatab <= rom[addrb];

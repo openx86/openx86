@@ -95,8 +95,8 @@ module bus_controller #(
     // Chipset（IBM PC/AT I/O：各 chip_* 模块由 bus_controller 直连例化；未命中时读回 0xFF）
 
     // 公共时钟与复位
-    input  logic          clock,         // 系统时钟
-    input  logic          reset_n        // 异步低有效复位
+    input  logic          clk,         // 系统时钟
+    input  logic          rst_n        // 异步低有效复位
 );
 
 // ============================================================================
@@ -323,8 +323,8 @@ assign ir_m[ 7:  3]  = 5'b0;
 
 
 chip_8237_dma u_chip_dma (
-    .clock    ( clock ),
-    .reset_n    ( reset_n ),
+    .clk    ( clk ),
+    .rst_n    ( rst_n ),
     .i_cs_n     ( cs_dma_n ),
     .i_rd_n     ( rd_dma_n ),
     .i_wr_n     ( wr_dma_n ),
@@ -334,8 +334,8 @@ chip_8237_dma u_chip_dma (
 );
 
 chip_8259_pic u_chip_pic_m (
-    .clock    ( clock ),
-    .reset_n    ( reset_n ),
+    .clk    ( clk ),
+    .rst_n    ( rst_n ),
     .i_cs_n     ( cs_pic_m_n ),
     .i_rd_n     ( rd_pic_m_n ),
     .i_wr_n     ( wr_pic_m_n ),
@@ -347,8 +347,8 @@ chip_8259_pic u_chip_pic_m (
 );
 
 chip_8259_pic u_chip_pic_s (
-    .clock    ( clock ),
-    .reset_n    ( reset_n ),
+    .clk    ( clk ),
+    .rst_n    ( rst_n ),
     .i_cs_n     ( cs_pic_s_n ),
     .i_rd_n     ( rd_pic_s_n ),
     .i_wr_n     ( wr_pic_s_n ),
@@ -361,8 +361,8 @@ chip_8259_pic u_chip_pic_s (
 
 logic pit_out1_unused, pit_out2_unused;
 chip_8254_pit u_chip_pit (
-    .clock    ( clock ),
-    .reset_n    ( reset_n ),
+    .clk    ( clk ),
+    .rst_n    ( rst_n ),
     .i_cs_n     ( cs_pit_n ),
     .i_rd_n     ( rd_pit_n ),
     .i_wr_n     ( wr_pit_n ),
@@ -378,8 +378,8 @@ chip_i8042_ps2 #(
     .USE_REAL_PS2 ( USE_REAL_PS2 ),
     .CLK_HZ       ( PS2_CLK_HZ )
 ) u_chip_ps2 (
-    .clock           ( clock ),
-    .reset_n           ( reset_n ),
+    .clk           ( clk ),
+    .rst_n           ( rst_n ),
     .i_cs_n            ( cs_ps2_n ),
     .i_rd_n            ( rd_ps2_n ),
     .i_wr_n            ( wr_ps2_n ),
@@ -407,8 +407,8 @@ chip_i8042_ps2 #(
 );
 
 chip_mc146818_rtc u_chip_rtc (
-    .clock    ( clock ),
-    .reset_n    ( reset_n ),
+    .clk    ( clk ),
+    .rst_n    ( rst_n ),
     .i_cs_n     ( cs_rtc_n ),
     .i_rd_n     ( rd_rtc_n ),
     .i_wr_n     ( wr_rtc_n ),
@@ -419,8 +419,8 @@ chip_mc146818_rtc u_chip_rtc (
 );
 
 chip_ns16550_com u_chip_com1 (
-    .clock    ( clock ),
-    .reset_n    ( reset_n ),
+    .clk    ( clk ),
+    .rst_n    ( rst_n ),
     .i_cs_n     ( cs_com_n ),
     .i_rd_n     ( rd_com_n ),
     .i_wr_n     ( wr_com_n ),
@@ -432,8 +432,8 @@ chip_ns16550_com u_chip_com1 (
 );
 
 chip_centronics_lpt u_chip_lpt1 (
-    .clock    ( clock ),
-    .reset_n    ( reset_n ),
+    .clk    ( clk ),
+    .rst_n    ( rst_n ),
     .i_cs_n     ( cs_lpt_n ),
     .i_rd_n     ( rd_lpt_n ),
     .i_wr_n     ( wr_lpt_n ),
@@ -460,8 +460,8 @@ ide_controller #(
     .o_sdio_dat_out ( o_sdio_dat_o ),
     .o_sdio_dat_oe  ( o_sdio_dat_oe ),
     .i_sdio_dat_in  ( i_sdio_dat_i ),
-    .clock          ( clock ),
-    .reset_n        ( reset_n )
+    .clk          ( clk ),
+    .rst_n        ( rst_n )
 );
 
 // chipset 各从设备读数据优先级 MUX（DMA→…→IDE）。

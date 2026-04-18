@@ -219,8 +219,8 @@ always @(posedge CLOCK_50)
 openx86_soc_top #(
     .USE_SDIO_DISK ( 1'b1 )
 ) u_openx86_soc (
-    .clock              ( CLOCK_50 ),
-    .reset_n            ( KEY[0] ),
+    .clk                ( CLOCK_50 ),
+    .rst_n              ( KEY[0] ),
 
     .o_vga_hsync        ( soc_vga_hs ),
     .o_vga_vsync        ( soc_vga_vs ),

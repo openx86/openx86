@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -11,8 +11,8 @@ description: This module implements lpt_centronics_tb.
 
 module lpt_centronics_tb;
 
-    logic        clock = 0;
-    logic        reset;
+    logic        clk = 0;
+    logic rst_n;
     logic        io_valid, io_we;
     logic [15: 0] io_addr;
     logic [ 7: 0] io_wdata, io_rdata;
@@ -23,8 +23,8 @@ module lpt_centronics_tb;
     logic rd_n    = !(io_valid && !io_we && lpt_hit);
 
     chip_centronics_lpt dut (
-        .clock    ( clock ),
-        .reset_n    ( reset_n ),
+        .clk    ( clk ),
+        .rst_n    ( rst_n ),
         .i_cs_n     ( cs_n ),
         .i_rd_n     ( rd_n ),
         .i_wr_n     ( wr_n ),
@@ -33,35 +33,35 @@ module lpt_centronics_tb;
         .o_d        ( io_rdata )
     );
 
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 1;
         io_we    = 1;
         io_addr  = a;
         io_wdata = d;
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 0;
     endtask
 
     task automatic rd(input logic [15: 0] a, output logic [ 7: 0] d);
-        @(posedge clock);
+        @(posedge clk);
         io_valid = 1;
         io_we    = 0;
         io_addr  = a;
-        @(posedge clock);
+        @(posedge clk);
         d = io_rdata;
         io_valid = 0;
     endtask
 
     logic [ 7: 0] rb;
     initial begin
-        reset = 1;
+        rst_n = 1;
         io_valid = 0;
-        repeat (4) @(posedge clock);
-        reset = 0;
-        repeat (2) @(posedge clock);
+        repeat (4) @(posedge clk);
+        rst_n = 0;
+        repeat (2) @(posedge clk);
 
         wr(16'h0378, 8'hA5);
         rd(16'h0378, rb);
@@ -77,3 +77,4 @@ module lpt_centronics_tb;
     end
 
 endmodule
+

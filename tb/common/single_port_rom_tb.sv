@@ -15,8 +15,8 @@ module single_port_rom_tb;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
-    logic                    clock;
-    logic                    reset;
+    logic                    clk;
+    logic                    rst_n;
     logic [ADDR_WIDTH-1: 0]  addr;
     logic [DATA_WIDTH-1: 0]  rdata;
 
@@ -42,8 +42,8 @@ module single_port_rom_tb;
     ) dut (
         .addr   ( addr   ),
         .rdata  ( rdata  ),
-        .clock  ( clock  ),
-        .reset_n  ( reset  )
+        .clk  ( clk  ),
+        .rst_n  ( rst_n  )
     );
 
     // 手动初始化ROM数据（用于测试）
@@ -59,16 +59,16 @@ module single_port_rom_tb;
     end
 
     // 时钟生成
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     initial begin
-        clock = 0;
-        reset = 1;
+        clk = 0;
+        rst_n = 1;
         addr  = '0;
 
         // 复位
         #20;
-        reset = 0;
+        rst_n = 0;
         #10;
 
         $display("=== Single-port ROM test start ===");
@@ -121,13 +121,13 @@ module single_port_rom_tb;
 
         // Test 5: Reset test
         $display("\nTest 5: Reset test");
-        reset = 1;
+        rst_n = 1;
         addr = 10'h000;
         #10;
         $display("  Read during reset: addr=0x%03h, data=0x%02h (expected: 0x00)", addr, rdata);
         if (rdata != 8'h00) $error("  error: read data must be 0 during reset!");
 
-        reset = 0;
+        rst_n = 0;
         #10;
         $display("  Read after reset release: addr=0x%03h, data=0x%02h (expected: 0xAA)", addr, rdata);
         if (rdata != 8'hAA) $error("  error: read mismatch after reset!");

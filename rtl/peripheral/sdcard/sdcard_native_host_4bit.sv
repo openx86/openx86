@@ -20,15 +20,15 @@ module sdcard_native_host_4bit (
     output logic         o_payload_we,   // 写入扇区缓冲写使能
     output logic [ 8: 0] o_payload_addr, // 扇区缓冲字节地址 0..511
     output logic [ 7: 0] o_payload_data,   // 扇区缓冲写入数据
-    output logic         o_sdcard_native_host_4bit_phy_clk,     // SD 时钟输出（直连本模块 clock）
+    output logic         o_sdcard_native_host_4bit_phy_clk,     // SD 时钟输出（直连本模块 clk）
     output logic         o_sdcard_native_host_4bit_phy_cmd_out, // CMD 线驱动数据（配合 oe）
     output logic         o_sdcard_native_host_4bit_phy_cmd_oe,  // CMD 输出使能（开漏主机模型）
     input  logic         i_sdcard_native_host_4bit_phy_cmd_in,  // CMD 总线回读
     output logic [ 3: 0] o_sdcard_native_host_4bit_phy_dat_out, // DAT[3:0] 驱动
     output logic         o_sdcard_native_host_4bit_phy_dat_oe,   // DAT 输出使能
     input  logic [ 3: 0] i_sdcard_native_host_4bit_phy_dat_in,  // DAT 总线回读
-    input  logic         clock,    // 主机逻辑时钟
-    input  logic         reset_n   // 异步低有效复位
+    input  logic         clk,    // 主机逻辑时钟
+    input  logic         rst_n   // 异步低有效复位
 );
 
     typedef enum logic [ 3: 0] {
@@ -65,19 +65,19 @@ module sdcard_native_host_4bit (
     end
 
     // 对 i_start 打一拍，供组合逻辑产生单周期脉冲
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n)
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n)
             start_d <= 1'b0;
         else
             start_d <= i_start;
     end
 
 
-    assign o_sdcard_native_host_4bit_phy_clk = clock;
+    assign o_sdcard_native_host_4bit_phy_clk = clk;
 
     // 主状态机：CMD17 单块读 → payload 顺序写入
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             state      <= ST_IDLE;
             send_bit_ix <= '0;
             resp_bit_ix <= '0;

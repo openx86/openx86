@@ -12,8 +12,8 @@ module chip_pc_bios_eeprom (
 	output logic [31: 0] o_sys_bios_rdata,       // 系统 BIOS 字读取（小端四字节）
 	output logic [31: 0] o_ext_bios_rdata,       // 扩展 ROM 字读取（小端四字节）
 	/* verilator lint_off UNUSEDSIGNAL */
-	input  logic         reset_n,                // 异步低有效复位（保留接口）
-	input  logic         clock                 // 系统时钟（本模型组合读，寄存器未用）
+	input  logic         rst_n,                // 异步低有效复位（保留接口）
+	input  logic         clk                 // 系统时钟（本模型组合读，寄存器未用）
 	/* verilator lint_on UNUSEDSIGNAL */
 );
 

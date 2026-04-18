@@ -24,7 +24,7 @@ logic         program_counter_valid;
 logic [ 7: 0] instruction [ 0:  9];
 logic [ 7: 0] instruction_full [ 0: 15];
 logic         instruction_ready;
-logic         clock, reset_n;
+logic         clk, rst_n;
 logic [15: 0] segment_selector [ 0:  5];
 logic [63: 0] segment_descriptor [ 0:  5];
 logic         segment_fault_unused;
@@ -51,8 +51,8 @@ stage_1_isc fetch_inst (
     .o_instruction_ready       ( instruction_ready ),
     .o_segment_fault           ( segment_fault_unused ),
     .EIP                       ( program_counter ),
-    .clock                     ( clock ),
-    .reset_n                     ( reset_n )
+    .clk                     ( clk ),
+    .rst_n                     ( rst_n )
 );
 
 always_comb begin
@@ -64,10 +64,10 @@ end
 reg [31: 0] i;
 int unsigned wait_cycles;
 
-always #1 clock = ~clock;
+always #1 clk = ~clk;
 
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin
         bus_read_ready <= 1'b0;
         bus_read_data  <= 32'h0;
     end else begin
@@ -88,10 +88,10 @@ initial begin
     bus_read_data = 0;
     program_counter = 0;
     program_counter_valid = 0;
-    clock = 0;
-    reset = 1;
+    clk = 0;
+    rst_n = 1;
     #2;
-    reset = 0;
+    rst_n = 0;
 
 
     for(i=0;i<4;i=i+1) begin
@@ -100,7 +100,7 @@ initial begin
         $display("%t: test fetch instruction: program_counter=%h", $time, program_counter);
         wait_cycles = 0;
         while (!instruction_ready && (wait_cycles < 400)) begin
-            @(posedge clock);
+            @(posedge clk);
             wait_cycles = wait_cycles + 1;
         end
         if (!instruction_ready) begin

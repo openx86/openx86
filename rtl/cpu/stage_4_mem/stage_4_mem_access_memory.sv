@@ -20,12 +20,12 @@ module stage_4_mem_access_memory (
     input  logic [31: 0] i_mem_rdata,       // 下游 mem 端口：读数据
     input  logic          i_mem_ready,      // 下游 mem 端口：就绪
     input  logic          clk,
-    input  logic          rst
+    input  logic          rst_n
 );
 
     stage_3_exe_load_store_unit u_lsu (
         .clk ( clk ),
-        .rst ( rst ),
+        .rst_n ( rst_n ),
         .i_start ( i_start ),
         .i_is_store ( i_is_store ),
         .i_addr ( i_addr ),

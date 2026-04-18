@@ -23,15 +23,15 @@ module rf_flags_register (
     output logic         VM,              // 虚拟 8086
     output logic [31: 0] EFLAGS,          // 完整 32 位标志
     output logic [15: 0] FLAGS,           // 低 16 位 FLAGS 视图
-    input  logic         clock,
-    input  logic         reset_n
+    input  logic         clk,
+    input  logic         rst_n
 );
 
 logic [31: 0] flags_reg;  // 内部 EFLAGS 存储
 
 // 复位清零；使能时整体装载（各条件码由译码/ALU 侧写回组装）
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin  // 复位：标志清零
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin  // 复位：标志清零
         flags_reg <= 32'b0;
     end else if (write_enable) begin  // 写回 EFLAGS
         flags_reg <= write_data;

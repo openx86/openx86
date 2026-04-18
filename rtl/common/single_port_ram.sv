@@ -9,8 +9,8 @@ description: This module implements single_port_ram.
 // ----------------------------------------------------------------------------
 // 单端口 RAM（读写共用同一地址端口）。
 //
-// - 写：`we` 为 1 时在 posedge clock 写入 `addr`
-// - 读：在 posedge clock 读出 `addr` 对应数据到 `rdata`（同步读）
+// - 写：`we` 为 1 时在 posedge clk 写入 `addr`
+// - 读：在 posedge clk 读出 `addr` 对应数据到 `rdata`（同步读）
 //
 // 注意：
 // - 读写同地址同周期的行为（write-first/read-first/no-change）依赖综合器推断；
@@ -31,16 +31,16 @@ module single_port_ram #(
 
     
     // 时钟和复位
-    input  logic                  clock,   // 单时钟域：写与读均在此沿更新
-    input  logic                  reset_n  // 异步低有效复位：清零 rdata；阵列内容不强制清零
+    input  logic                  clk,   // 单时钟域：写与读均在此沿更新
+    input  logic                  rst_n  // 异步低有效复位：清零 rdata；阵列内容不强制清零
 );
 
     // 存储阵列（综合为 BRAM 时行为由器件/工具决定）
     logic [DATA_WIDTH-1: 0] mem [0:DEPTH-1];
 
     // 写口时序：时钟上升沿采样；复位分支占位，有效时写入当前地址
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             // 复位时可以选择清零，也可以保持（取决于应用需求）
             // 这里不自动清零，由用户控制
         end else begin
@@ -51,8 +51,8 @@ module single_port_ram #(
     end
 
     // 读口时序：同步读一拍；复位将读数据口置 0
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             rdata <= '0;
         end else begin
             rdata <= mem[addr];

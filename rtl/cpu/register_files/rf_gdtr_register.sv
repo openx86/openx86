@@ -11,13 +11,13 @@ module rf_gdtr_register (
     input  logic [31: 0] gdtr_write_data_base,    // 写入：GDT 线性基址
     output logic [15: 0] gdtr_limit,              // 当前 GDT 限长
     output logic [31: 0] gdtr_base,               // 当前 GDT 基址
-    input  logic         clock,
-    input  logic         reset_n
+    input  logic         clk,
+    input  logic         rst_n
 );
 
 // SGDT 读出 / LGDT 写入的架构寄存器快照
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin  // 复位：基址与限长清零
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin  // 复位：基址与限长清零
         gdtr_limit <= 16'b0;
         gdtr_base <= 32'b0;
     end else if (gdtr_write_enable) begin  // 加载 GDTR（通常来自 LGDT）

@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -9,8 +9,8 @@ description: This module implements vga_port_tb.
 
 module vga_port_tb;
 
-    logic                    clock;
-    logic                    reset;
+    logic                    clk;
+    logic rst_n;
     localparam int P_VRAM_AW = 8;
     logic [P_VRAM_AW-1: 0]   vram_rd_addr;
     logic [ 7: 0]            vram_rd_data;
@@ -38,8 +38,8 @@ module vga_port_tb;
     end
 
     // VRAM读取模拟
-    always_ff @(posedge clock) begin
-        if (!reset) begin
+    always_ff @(posedge clk) begin
+        if (!rst_n) begin
             vram_rd_data <= vram_mem[vram_rd_addr];
         end else begin
             vram_rd_data <= 8'h00;
@@ -59,20 +59,20 @@ module vga_port_tb;
         .h_count      ( h_count      ),
         .v_count      ( v_count      ),
         .video_active ( video_active  ),
-        .clock        ( clock        ),
-        .reset_n        ( reset        )
+        .clk        ( clk        ),
+        .rst_n        ( rst_n )
     );
 
     // 时钟生成（25.175MHz，VGA标准像素时钟）
-    always #19.86 clock = ~clock;
+    always #19.86 clk = ~clk;
 
     initial begin
-        clock = 0;
-        reset = 1;
+        clk = 0;
+        rst_n = 1;
 
         // 复位
         #100;
-        reset = 0;
+        rst_n = 0;
         #100;
 
         $display("=== VGA port test start ===");
@@ -121,7 +121,7 @@ module vga_port_tb;
         
         // 统计可见像素
         for (int i = 0; i < 1000; i++) begin
-            @(posedge clock);
+            @(posedge clk);
             if (video_active) begin
                 visible_pixels++;
             end else begin
@@ -143,7 +143,7 @@ module vga_port_tb;
         $display("\nTest 6: Check color output");
         wait(video_active == 1);
         for (int i = 0; i < 10; i++) begin
-            @(posedge clock);
+            @(posedge clk);
             if (video_active) begin
                 $display("  Pixel %d: RGB=(%1d,%1d,%1d), VRAM data=0x%02h", 
                          i, vga_r, vga_g, vga_b, vram_rd_data);
@@ -152,22 +152,22 @@ module vga_port_tb;
 
         // Test 7: Reset test
         $display("\nTest 7: Reset test");
-        reset = 1;
+        rst_n = 1'b0;
         #100;
         $display("  During reset: h_count=%0d, v_count=%0d, video_active=%0d", 
                  h_count, v_count, video_active);
         if (h_count != 0 || v_count != 0) $error("  error: counters must be 0 during reset!");
         if (video_active != 0) $error("  error: video_active must be 0 during reset!");
 
-        reset = 0;
+        rst_n = 1'b1;
         #100;
         $display("  After reset release: h_count=%0d, v_count=%0d", h_count, v_count);
 
         // Test 8: Check full-frame timing
         $display("\nTest 8: Check full-frame timing");
-        reset = 1;
+        rst_n = 1;
         #100;
-        reset = 0;
+        rst_n = 0;
         
         // 等待一帧
         wait(v_count == 0 && h_count == 0);
@@ -191,3 +191,4 @@ module vga_port_tb;
     end
 
 endmodule
+

@@ -37,8 +37,8 @@ module stage_1_isc_if_instruction_fetch (
     output logic         o_segment_fault,
     // 指令指针
     input  logic [31: 0]  EIP,
-    input  logic          clock,
-    input  logic          reset_n
+    input  logic          clk,
+    input  logic          rst_n
 );
 
 logic        i_vaild;           // MMU 请求门控（与 IP 有效对齐）
@@ -73,8 +73,8 @@ stage_1_isc_mmu_memory_management_unit #(
     .o_bus_address ( o_mmu_bus_addr ),
     .i_bus_data_read ( i_mmu_bus_rdata ),
     .o_bus_data_write ( if_mmu_bus_wdata ),
-    .clock ( clock ),
-    .reset_n ( reset_n )
+    .clk ( clk ),
+    .rst_n ( rst_n )
 );
 
 assign o_segment_fault = if_seg_fault;
@@ -86,8 +86,8 @@ enum logic {
 } state;
 
 // 状态转移：与 bytes_index 配合完成 4 次 32b 读
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin
         state <= STATE_WAIT_FOR_IP_VALID;
     end else begin
         unique case (state)
@@ -115,8 +115,8 @@ end
 logic [ 1: 0] bytes_index; // 当前正在接收第几个 32b 槽（0..3）
 
 // 输出握手与缓冲装载：按槽把 big-endian 32b 拆入 o_instruction
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin
         o_code_vaild <= 0;
         bytes_index <= 0;
     end else begin

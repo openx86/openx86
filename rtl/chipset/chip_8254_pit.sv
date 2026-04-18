@@ -9,7 +9,7 @@ description: This module implements chip_8254_pit.
 // - Implements control-word decode, RW formats (LSB/MSB/LSB->MSB), and counter
 //   latch command.
 // - Aligns Mode 0 / Mode 2 / Mode 3 output behavior with datasheet timing.
-// - Keeps the existing project bus interface (single clock domain, no GATE pins).
+// - Keeps the existing project bus interface (single clk domain, no GATE pins).
 // ============================================================================
 
 module chip_8254_pit (
@@ -22,8 +22,8 @@ module chip_8254_pit (
     output logic         o_out0,      // 通道 0 OUT（常用接 IRQ0）
     output logic         o_out1,      // 通道 1 OUT
     output logic         o_out2,      // 通道 2 OUT
-    input  logic         reset_n,     // 异步低有效复位
-    input  logic         clock         // 系统时钟（计数在此域递减）
+    input  logic         rst_n,     // 异步低有效复位
+    input  logic         clk         // 系统时钟（计数在此域递减）
 );
 
     localparam logic [ 2: 0] LP_MODE0 = 3'd0;
@@ -165,14 +165,14 @@ module chip_8254_pit (
     endfunction
 
     // 控制字/通道数据写、锁存命令、各方式计数与 OUT 波形更新；以及读相位。
-    always_ff @(posedge clock or negedge reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
         logic [ 1: 0] ch;
         logic [ 1: 0] cw_rw;
         logic [ 2: 0] cw_mode;
         logic [15: 0] raw_count;
         logic [16: 0] new_reload;
 
-        if (~reset_n) begin
+        if (~rst_n) begin
             for (int ri = 0; ri < 3; ri = ri + 1) begin
                 reload[ri]           <= 17'd65536;
                 count[ri]            <= 17'd65536;

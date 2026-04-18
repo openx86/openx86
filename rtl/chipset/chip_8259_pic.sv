@@ -24,8 +24,8 @@ module chip_8259_pic (
     output logic [ 7: 0] o_d,         // 读数据
     input  logic [ 7: 0] i_ir,        // 中断请求输入 IR7..IR0
     output logic         o_intr,      // 向 CPU 输出的中断请求
-    input  logic         reset_n,     // 异步低有效复位
-    input  logic         clock        // 系统时钟
+    input  logic         rst_n,     // 异步低有效复位
+    input  logic         clk        // 系统时钟
 );
 
     typedef enum logic [ 2: 0] {
@@ -197,8 +197,8 @@ module chip_8259_pic (
     end
 
     // 寄存器采样次态（IRR/ISR 等由组合块计算）。
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             state      <= ST_RESET;
             need_icw3  <= 1'b0;
             need_icw4  <= 1'b0;

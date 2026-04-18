@@ -29,8 +29,8 @@ module ide_controller #(
     output logic [ 3: 0] o_sdio_dat_out,
     output logic         o_sdio_dat_oe,
     input  logic [ 3: 0] i_sdio_dat_in,
-    input  logic         clock,      // 控制器时钟
-    input  logic         reset_n     // 异步低有效复位
+    input  logic         clk,      // 控制器时钟
+    input  logic         rst_n     // 异步低有效复位
 );
 
     typedef enum logic [ 2: 0] {
@@ -96,13 +96,13 @@ module ide_controller #(
         .o_sdcard_controller_phy_dat_out   ( o_sdio_dat_out ),
         .o_sdcard_controller_phy_dat_oe    ( o_sdio_dat_oe ),
         .i_sdcard_controller_phy_dat_in    ( i_sdio_dat_in ),
-        .clock                ( clock ),
-        .reset_n              ( reset_n )
+        .clk                ( clk ),
+        .rst_n              ( rst_n )
     );
 
     // 寄存器与 ATA 状态：写口更新 LBA/命令；读数据口时推进缓冲指针；SDIO 等待扇区就绪
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             state      <= ST_IDLE;
             sector_cnt <= 8'h01;
             lba_lo     <= '0;

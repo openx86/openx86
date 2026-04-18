@@ -1,4 +1,4 @@
-/*
+﻿/*
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
@@ -15,8 +15,8 @@ module single_port_ram_tb;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
-    logic                    clock;
-    logic                    reset;
+    logic                    clk;
+    logic rst_n;
     logic                    we;
     logic [ADDR_WIDTH-1: 0]  addr;
     logic [DATA_WIDTH-1: 0]  wdata;
@@ -27,8 +27,8 @@ module single_port_ram_tb;
         .ADDR_WIDTH ( ADDR_WIDTH ),
         .DEPTH      ( DEPTH      )
     ) dut (
-        .clock  ( clock  ),
-        .reset_n  ( reset  ),
+        .clk  ( clk  ),
+        .rst_n  ( rst_n ),
         .we     ( we     ),
         .addr   ( addr   ),
         .wdata  ( wdata  ),
@@ -36,18 +36,18 @@ module single_port_ram_tb;
     );
 
     // 时钟生成
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     initial begin
-        clock = 0;
-        reset = 1;
+        clk = 0;
+        rst_n = 1;
         we    = 0;
         addr  = '0;
         wdata = '0;
 
         // 复位
         #20;
-        reset = 0;
+        rst_n = 0;
         #10;
 
         $display("=== Single-port RAM test start ===");
@@ -132,3 +132,4 @@ module single_port_ram_tb;
     end
 
 endmodule
+

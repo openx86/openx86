@@ -10,7 +10,7 @@ description: This module implements at24lc32_tb.
 
 module at24lc32_tb;
     logic clk;
-    logic rst;
+    logic rst_n;
 
     // I2C lines (pull-up modeled by driving '1' when released)
     logic scl_drv;
@@ -31,8 +31,8 @@ module at24lc32_tb;
     chip_at24lc32_eeprom #(
         .A_PINS ( 3'b000 )
     ) dut (
-        .clock ( clk ),
-        .reset_n ( rst ),
+        .clk ( clk ),
+        .rst_n ( rst_n ),
         .i_scl   ( scl ),
         .i_sda   ( sda ),
         .o_sda_oe( dut_sda_oe )
@@ -70,7 +70,7 @@ module at24lc32_tb;
     // I2C master primitives (mode 0-like: data stable when SCL high)
     // ----------------------------------------------------------------------------
     task automatic i2c_delay();
-        // clock domain is unrelated; just consume some sim time
+        // clk domain is unrelated; just consume some sim time
         #5;
     endtask
 
@@ -191,10 +191,10 @@ module at24lc32_tb;
     // ----------------------------------------------------------------------------
     initial begin
         $display("=== at24lc32_tb ===");
-        rst = 1'b1;
+        rst_n = 1'b1;
         i2c_release();
         #20;
-        rst = 1'b0;
+        rst_n = 1'b0;
 
         w1 = new[1];
         r1 = new[1];

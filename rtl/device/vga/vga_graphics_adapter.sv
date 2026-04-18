@@ -28,8 +28,8 @@ module vga_graphics_adapter (
     output logic [ 3: 0] vga_b,
 
     // common
-    input  logic          reset_n,    // 异步低有效复位
-    input  logic          clock       // 像素域主时钟
+    input  logic          rst_n,    // 异步低有效复位
+    input  logic          clk       // 像素域主时钟
 );
 
     // VGA VRAM：一帧 640×480 字节线性缓冲（与 vga_port 线性读地址一致）
@@ -88,8 +88,8 @@ module vga_graphics_adapter (
         .raddr ( vram_rd_addr    ),
         .rdata ( vram_rd_data    ),
         // 时钟与复位
-        .clock ( clock           ),
-        .reset_n ( reset_n         )
+        .clk ( clk           ),
+        .rst_n ( rst_n         )
     );
 
     // ------------------------------------------------------------------------
@@ -141,7 +141,7 @@ module vga_graphics_adapter (
     // 文本模式 VRAM 读取地址选择
     
     // 文本模式：将两次 VRAM 读流水对齐到字符/属性（与 vram_rd_data 对齐）
-    always_ff @(posedge clock) begin
+    always_ff @(posedge clk) begin
         if (vga_mode != MODE_GRAPHICS) begin
             // 第一级：读取字符码
             if (text_vram_rd_addr_char < 4000) begin
@@ -195,8 +195,8 @@ module vga_graphics_adapter (
         .h_count      ( h_count       ),
         .v_count      ( v_count       ),
         .video_active ( video_active  ),
-        .clock        ( clock         ),
-        .reset_n        ( reset_n       )
+        .clk        ( clk         ),
+        .rst_n        ( rst_n       )
     );
     
     // 字符生成器
@@ -204,8 +204,8 @@ module vga_graphics_adapter (
         .char_code  ( font_char_code ),
         .row_index  ( font_row_index ),
         .font_data  ( font_data       ),
-        .clock      ( clock           ),
-        .reset_n      ( reset_n         )
+        .clk      ( clk           ),
+        .rst_n      ( rst_n         )
     );
     
     // 文本模式模块（根据模式选择）
@@ -230,8 +230,8 @@ module vga_graphics_adapter (
         .h_count      ( h_count              ),
         .v_count      ( v_count              ),
         .video_active ( video_active         ),
-        .clock        ( clock                ),
-        .reset_n        ( reset_n              )
+        .clk        ( clk                ),
+        .rst_n        ( rst_n              )
     );
     
     // 淡色文本模式
@@ -248,8 +248,8 @@ module vga_graphics_adapter (
         .h_count      ( h_count              ),
         .v_count      ( v_count              ),
         .video_active ( video_active         ),
-        .clock        ( clock                ),
-        .reset_n        ( reset_n              )
+        .clk        ( clk                ),
+        .rst_n        ( rst_n              )
     );
     
     // 按 vga_mode 在图形与两种文本流水线输出间切换
@@ -283,8 +283,8 @@ module vga_graphics_adapter (
     // ------------------------------------------------------------------------
 
     // 锁存 MISC/模式等可写寄存器
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             misc_out_reg <= 8'h01; // 默认启用显示、选择合适极性等（具体含义参考 VGA 标准）
             vga_mode <= MODE_GRAPHICS; // 默认图形模式
         end else begin

@@ -13,7 +13,6 @@ description: This module implements execute_unit_tb.
 module execute_unit_tb;
 
     logic clk;
-    logic rst;
 
     logic [31: 0] eff;
     logic [31: 0] br_tgt;
@@ -61,8 +60,6 @@ module execute_unit_tb;
     );
 
     initial begin
-        rst = 1'b1;
-        #20 rst = 1'b0;
         #1;
         if (eff !== 32'h1004) begin
             $display("FAIL AGU eff=%h", eff);

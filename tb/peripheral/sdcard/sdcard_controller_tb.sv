@@ -10,14 +10,14 @@ description: Testbench for sdcard_controller BRAM mode byte read.
 
 module sdcard_controller_tb;
 
-    logic        clock = 0;
-    logic        reset_n;
+    logic        clk = 0;
+    logic        rst_n;
     logic [31: 0] raddr;
     logic [ 7: 0] rdata;
     logic         sector_req;
     logic         sector_ready;
 
-    always #5 clock = ~clock;
+    always #5 clk = ~clk;
 
     sdcard_controller #(
         .P_BYTE_DEPTH    ( 512 * 16 ),
@@ -34,19 +34,19 @@ module sdcard_controller_tb;
         .o_sdcard_controller_phy_dat_out ( ),
         .o_sdcard_controller_phy_dat_oe  ( ),
         .i_sdcard_controller_phy_dat_in  ( 4'hF ),
-        .clock               ( clock ),
-        .reset_n             ( reset_n )
+        .clk               ( clk ),
+        .rst_n             ( rst_n )
     );
 
     initial begin
-        reset_n     = 0;
+        rst_n     = 0;
         raddr       = 0;
         sector_req  = 0;
-        repeat (3) @(posedge clock);
-        reset_n = 1;
-        repeat (2) @(posedge clock);
+        repeat (3) @(posedge clk);
+        rst_n = 1;
+        repeat (2) @(posedge clk);
         raddr = 0;
-        @(posedge clock);
+        @(posedge clk);
         if (rdata !== 8'hA5)
             $display("FAIL sdcard_controller byte0 %h", rdata);
         else

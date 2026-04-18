@@ -56,8 +56,8 @@ module stage_1_isc_mmu_pg_paging_unit (
     output logic [31: 0] o_bus_address,
     input  logic [31: 0] i_bus_data_read,
     output logic [31: 0] o_bus_data_write,
-    input  logic          clock,
-    input  logic          reset_n
+    input  logic          clk,
+    input  logic          rst_n
 );
 
 logic  [ 9: 0] page_directory_index; // 线性地址 [31:22]
@@ -83,8 +83,8 @@ enum logic [ 1: 0] {
     STATE_WAIT_FOR_VAILD = 2'h0                 // 空闲
 } state;
 
-always_ff @(posedge clock or negedge reset_n) begin
-    if (~reset_n) begin
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin
         state <= STATE_WAIT_FOR_VAILD;
         o_ready <= 0;
         o_bus_write_enable <= 1'b0;

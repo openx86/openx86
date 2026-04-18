@@ -12,8 +12,8 @@ description: This module implements bus_tb.
 module bus_tb;
 
     // 时钟和复位
-    logic clock;
-    logic reset;
+    logic clk;
+    logic rst_n;
 
     // CPU 总线接口
     logic        bus_valid;
@@ -121,13 +121,13 @@ module bus_tb;
 
         .o_pic_intr ( ),
 
-        .clock            (clock),
-        .reset_n            (reset_n)
+        .clk            (clk),
+        .rst_n            (rst_n)
     );
 
     sdram_controller u_sdram (
-        .clk            ( clock ),
-        .rst            ( reset_n ),
+        .clk            ( clk ),
+        .rst_n          ( rst_n ),
         .i_en           ( o_sdram_en ),
         .i_we           ( o_sdram_we ),
         .i_addr_off     ( o_sdram_addr_off ),
@@ -153,7 +153,7 @@ module bus_tb;
         .CAS_LATENCY       ( 2 ),
         .MEM_HALFWORDS_LG2 ( 21 )
     ) u_sdram_stub (
-        .clk          ( clock ),
+        .clk          ( clk ),
         .cs_n         ( sdr_cs_n ),
         .ras_n        ( sdr_ras_n ),
         .cas_n        ( sdr_cas_n ),
@@ -178,8 +178,8 @@ module bus_tb;
         bios_mem[0] = 32'hEA00_00F0;  // JMP F000:0000 (示例)
     end
 
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             bios_rdata <= 32'h0;
         end else begin
             bios_rdata <= bios_mem[bios_addr];
@@ -195,8 +195,8 @@ module bus_tb;
         end
     end
 
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             ext_bios_rdata <= 32'h0;
         end else begin
             ext_bios_rdata <= ext_bios_mem[ext_bios_addr];
@@ -207,8 +207,8 @@ module bus_tb;
     logic [ 7: 0] vga_misc_reg;
     logic [ 7: 0] vga_status_reg;
 
-    always_ff @(posedge clock) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk) begin
+        if (~rst_n) begin
             vga_misc_reg <= 8'h01;
             vga_status_reg <= 8'h00;
         end else begin
@@ -238,8 +238,8 @@ module bus_tb;
 
     // 时钟生成
     initial begin
-        clock = 0;
-        forever #5 clock = ~clock;  // 100MHz时钟
+        clk = 0;
+        forever #5 clk = ~clk;  // 100MHz时钟
     end
 
     // 测试序列
@@ -249,7 +249,7 @@ module bus_tb;
         $display("========================================");
 
         // 复位
-        reset = 1;
+        rst_n = 1;
         bus_valid = 0;
         bus_write_enable = 0;
         bus_io_access = 0;
@@ -257,9 +257,9 @@ module bus_tb;
         bus_data_write = 32'h0;
 
         #20;
-        reset = 0;
+        rst_n = 0;
         // SDRAM 上电初始化（200us + 命令序列）
-        repeat (20000) @(posedge clock);
+        repeat (20000) @(posedge clk);
 
         // 测试1: 写入常规内存 (地址 0x00000000，经 SDRAM)
         $display("\n[Test 1] Write RAM at 0x00000000");

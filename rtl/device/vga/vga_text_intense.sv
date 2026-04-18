@@ -32,8 +32,8 @@ module vga_text_intense (
     input  logic                   video_active,  // 可见窗口
 
     // 时钟和复位
-    input  logic                   reset_n,
-    input  logic                   clock
+    input  logic                   rst_n,
+    input  logic                   clk
 );
 
     // 文本模式参数
@@ -83,8 +83,8 @@ module vga_text_intense (
     // 像素判断：从字体数据中提取当前像素
 
     // 第一级流水：在 video_active 下根据 vram_rd_addr 奇偶锁存字符或属性
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             char_code_reg <= '0;
             attr_reg <= '0;
         end else begin
@@ -99,8 +99,8 @@ module vga_text_intense (
     end
 
     // 第二级流水：锁存字体 ROM 输出供像素着色
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             font_data_reg <= '0;
         end else begin
             if (video_active) begin
@@ -110,8 +110,8 @@ module vga_text_intense (
     end
 
     // 按 pixel_on 在前景/背景间选色（淡色前景调色）
-    always_ff @(posedge clock or negedge reset_n) begin
-        if (~reset_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
             vga_r <= 4'h0;
             vga_g <= 4'h0;
             vga_b <= 4'h0;

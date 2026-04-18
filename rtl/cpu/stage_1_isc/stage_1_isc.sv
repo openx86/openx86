@@ -49,8 +49,8 @@ module stage_1_isc (
     // Clock / reset（时钟与复位；EIP 为取指指针输入）
     // ------------------------------------------------------------------------
     input  logic [31: 0]  EIP,                     // 指令指针（线性/有效地址侧由 MMU 前级使用）
-    input  logic          reset_n,
-    input  logic          clock
+    input  logic          rst_n,
+    input  logic          clk
 );
 
     // 取指 + 段/分页翻译封装
@@ -74,8 +74,8 @@ module stage_1_isc (
         .o_instruction_ready       ( o_instruction_ready ),
         .o_segment_fault           ( o_segment_fault ),
         .EIP                       ( EIP ),
-        .clock                     ( clock ),
-        .reset_n                     ( reset_n )
+        .clk                     ( clk ),
+        .rst_n                     ( rst_n )
     );
 
 endmodule

@@ -41,8 +41,8 @@ module w686_cpu (
     output logic [31: 0] bus_address,        // 地址
     input  logic [31: 0]  bus_read_data,     // 读数据
     output logic [31: 0] bus_write_data,     // 写数据
-    input  logic          reset_n,
-    input  logic          clock
+    input  logic          rst_n,
+    input  logic          clk
 );
 
 // core → BIU：MMU（页表遍历）端口
@@ -83,8 +83,8 @@ w686_core core_0 (
     .o_data_address     ( data_address ),
     .i_data_data_read   ( data_data_read ),
     .o_data_data_write  ( data_data_write ),
-    .clock              ( clock ),
-    .reset_n              ( reset_n )
+    .clk              ( clk ),
+    .rst_n              ( rst_n )
 );
 
 // 总线接口单元：仲裁并折叠到单一 valid/ready SoC 总线
@@ -112,8 +112,8 @@ stage_4_mem_bus_interface_unit biu_0 (
     .o_bus_address      ( bus_address ),
     .i_bus_data_read    ( bus_read_data ),
     .o_bus_data_write   ( bus_write_data ),
-    .clock            ( clock ),
-    .reset_n            ( reset_n )
+    .clk            ( clk ),
+    .rst_n            ( rst_n )
 );
 
 // TODO: shared cache

@@ -61,10 +61,10 @@ module openx86_soc_top #(
     // ------------------------------------------------------------------------
     // 板级时钟与复位
     // ------------------------------------------------------------------------
-    // clock：外部 50MHz 振荡器
-    // reset_n：低有效复位（按键/POR）
-    input  logic          clock,         // 系统时钟
-    input  logic          reset_n        // 异步低有效复位
+    // clk：外部 50MHz 振荡器
+    // rst_n：低有效复位（按键/POR）
+    input  logic          clk,         // 系统时钟
+    input  logic          rst_n        // 异步低有效复位
 );
 
     logic        bus_valid;      // CPU 总线事务有效
@@ -134,8 +134,8 @@ module openx86_soc_top #(
         .bus_address      ( bus_addr ),
         .bus_read_data    ( bus_rdata ),
         .bus_write_data   ( bus_wdata ),
-        .clock            ( clock ),
-        .reset_n            ( reset_n )
+        .clk            ( clk ),
+        .rst_n            ( rst_n )
     );
 
     // SDRAM DQ：仅当控制器 OE 时驱动，否则高阻。
@@ -208,8 +208,8 @@ module openx86_soc_top #(
         .o_sdio_dat_oe ( b_sd_dat_oe ),
         .i_sdio_dat_i  ( b_nat_dat_i ),
         .o_pic_intr         ( pic_intr ),
-        .clock            ( clock ),
-        .reset_n            ( reset_n )
+        .clk            ( clk ),
+        .rst_n            ( rst_n )
     );
 
     sdcard_4bit_phy u_sdio_phy (
@@ -239,8 +239,8 @@ module openx86_soc_top #(
         .CAS             ( 2 ),
         .REFRESH_CYCLES  ( 390 )
     ) u_sdram (
-        .clk            ( clock ),
-        .rst            ( reset_n ),
+        .clk            ( clk ),
+        .rst_n          ( rst_n ),
         .i_en           ( o_sdram_en ),
         .i_we           ( o_sdram_we ),
         .i_addr_off     ( o_sdram_addr_off ),
@@ -277,15 +277,15 @@ module openx86_soc_top #(
         .vga_r        ( o_vga_r          ),
         .vga_g        ( o_vga_g          ),
         .vga_b        ( o_vga_b          ),
-        .clock        ( clock            ),
-        .reset_n      ( reset_n          )
+        .clk        ( clk            ),
+        .rst_n      ( rst_n          )
     );
 
     // 系统 BIOS 0xF0000–0xFFFFF + 扩展 ROM 0xC0000–0xDFFFF → 后端 EEPROM（镜像：128KB 扩展 + 64KB 系统）
     // 使用 24LC32（4KiB）做后端：地址在 192KiB 线性镜像上取模映射到 4KiB
     chip_pc_bios_eeprom u_bios_24lc32 (
-        .clock               ( clock ),
-        .reset_n               ( reset_n ),
+        .clk               ( clk ),
+        .rst_n               ( rst_n ),
         .i_sys_bios_byte_off ( bios_addr ),
         .i_ext_bios_byte_off ( ext_bios_addr ),
         .o_sys_bios_rdata    ( bios_rdata ),
