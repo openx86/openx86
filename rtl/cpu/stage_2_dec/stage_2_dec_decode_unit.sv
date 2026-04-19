@@ -605,7 +605,6 @@ stage_2_dec_decode_opcode_x86 deocde_decode_opcode_x86 (
 );
 
 // 依据 opcode one-hot 选择寄存器/ModRM/立即数/位移等字段规则
-logic [ 7: 0] field_instruction [ 0:  3];
 logic [ 3: 0] field_o_tttn;
 logic        field_o_gen_reg_index_is_present;
 logic [ 2: 0] field_o_gen_reg_index;
@@ -630,9 +629,8 @@ logic        field_o_primary_opcode_byte_1;
 logic        field_o_primary_opcode_byte_2;
 logic        field_o_primary_opcode_byte_3;
 logic        field_o_error;
-assign field_instruction = opcode_instruction;
 stage_2_dec_decode_field deocde_decode_field (
-    .i_instruction ( field_instruction ),
+    .i_instruction ( opcode_instruction ),
     .i_opcode_x86_AAA_ASCII_adjust_after_add ( o_opcode_x86_AAA_ASCII_adjust_after_add ),
     .i_opcode_x86_AAD_ASCII_AX_before_div ( o_opcode_x86_AAD_ASCII_AX_before_div ),
     .i_opcode_x86_AAM_ASCII_AX_after_mul ( o_opcode_x86_AAM_ASCII_AX_after_mul ),
