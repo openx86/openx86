@@ -29,6 +29,17 @@ module w686_execute_i486_cpuid_tb;
     logic cache_flush_pulse;
     logic invlpg_pulse;
     logic [31: 0] invlpg_linear_addr;
+    logic load_eax;
+    logic [31: 0] load_eax_data;
+
+    logic [ 2: 0] wr_idx_hist [ 0: 3];
+    logic [31: 0] wr_data_hist [ 0: 3];
+    int wr_hist_count;
+    logic done_seen;
+
+    localparam logic [31: 0] V_EBX = 32'h756e6547;
+    localparam logic [31: 0] V_EDX = 32'h49656e69;
+    localparam logic [31: 0] V_ECX = 32'h6c65746e;
 
     initial begin
         clk = 0;
@@ -56,31 +67,100 @@ module w686_execute_i486_cpuid_tb;
         .invlpg_linear_addr ( invlpg_linear_addr )
     );
 
+    // 模拟 core 中 EAX 在 CPUID 写回后的可见行为，避免测试与真实流水线脱节。
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            gpr_eax <= 32'h0;
+        end else if (load_eax) begin
+            gpr_eax <= load_eax_data;
+        end else if (gpr_wr_en && (gpr_wr_idx == 3'd0)) begin
+            gpr_eax <= gpr_wr_data;
+        end
+    end
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            wr_hist_count <= 0;
+            done_seen <= 1'b0;
+        end else begin
+            if (gpr_wr_en) begin
+                if (wr_hist_count < 4) begin
+                    wr_idx_hist[wr_hist_count] <= gpr_wr_idx;
+                    wr_data_hist[wr_hist_count] <= gpr_wr_data;
+                end
+                wr_hist_count <= wr_hist_count + 1;
+            end
+            if (cpuid_done_pulse) begin
+                done_seen <= 1'b1;
+            end
+        end
+    end
+
+    task automatic launch_cpuid(input logic [31: 0] leaf);
+        begin
+            @(posedge clk);
+            load_eax = 1'b1;
+            load_eax_data = leaf;
+            op_cpuid = 1'b1;
+            insn_fire = 1'b1;
+
+            @(posedge clk);
+            load_eax = 1'b0;
+            op_cpuid = 1'b0;
+            insn_fire = 1'b0;
+        end
+    endtask
+
     initial begin
+        int unsigned wait_cycles;
+
         rst_n = 1'b0;
         insn_fire = 1'b0;
         op_cpuid = 1'b0;
-        gpr_eax = 32'd0;
         gpr_ecx = 32'h0;
         op_invd = 1'b0;
         op_wbinvd = 1'b0;
         op_invlpg = 1'b0;
         invlpg_ea = 32'h0;
+        load_eax = 1'b0;
+        load_eax_data = 32'h0;
         #22 rst_n = 1'b1;
 
-        @(posedge clk);
-        gpr_eax = 32'd0;
-        op_cpuid = 1'b1;
-        insn_fire = 1'b1;
-        @(posedge clk);
-        insn_fire = 1'b0;
+        launch_cpuid(32'd0);
 
-        repeat (10) @(posedge clk);
+        wait_cycles = 0;
+        while (!done_seen && (wait_cycles < 20)) begin
+            @(posedge clk);
+            wait_cycles = wait_cycles + 1;
+        end
 
-        if (!cpuid_done_pulse) begin
-            $display("FAIL: cpuid_done_pulse");
+        if (!done_seen) begin
+            $display("FAIL: cpuid_done_pulse timeout");
             $finish(1);
         end
+
+        if (wr_hist_count != 4) begin
+            $display("FAIL: CPUID write count expected=4 actual=%0d", wr_hist_count);
+            $finish(1);
+        end
+
+        if ((wr_idx_hist[0] !== 3'd0) || (wr_data_hist[0] !== 32'd1)) begin
+            $display("FAIL: CPUID write0 expected EAX=1, got idx=%0d data=%h", wr_idx_hist[0], wr_data_hist[0]);
+            $finish(1);
+        end
+        if ((wr_idx_hist[1] !== 3'd3) || (wr_data_hist[1] !== V_EBX)) begin
+            $display("FAIL: CPUID write1 expected EBX=%h, got idx=%0d data=%h", V_EBX, wr_idx_hist[1], wr_data_hist[1]);
+            $finish(1);
+        end
+        if ((wr_idx_hist[2] !== 3'd2) || (wr_data_hist[2] !== V_EDX)) begin
+            $display("FAIL: CPUID write2 expected EDX=%h, got idx=%0d data=%h", V_EDX, wr_idx_hist[2], wr_data_hist[2]);
+            $finish(1);
+        end
+        if ((wr_idx_hist[3] !== 3'd1) || (wr_data_hist[3] !== V_ECX)) begin
+            $display("FAIL: CPUID write3 expected ECX=%h, got idx=%0d data=%h", V_ECX, wr_idx_hist[3], wr_data_hist[3]);
+            $finish(1);
+        end
+
         $display("w686_execute_i486_cpuid_tb PASS");
         $finish;
     end

@@ -544,8 +544,8 @@ assign o_opcode_x86_TEST_imm_and_reg_mem                                        
 assign o_opcode_x86_TEST_imm_and_acc                                            = (i_instruction[0][ 7:  1] == 7'b1010_100 );
 
 assign o_opcode_x86_UD0_undefined_instruction                                   = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b1111_1111);
-assign o_opcode_x86_UD1_undefined_instruction                                   = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b1111_1011);
-assign o_opcode_x86_UD2_undefined_instruction                                   = (i_instruction[0][ 7: 0] == 8'b0000_xxxx) & (i_instruction[1][ 7: 0] == 8'b1111_1011);
+assign o_opcode_x86_UD1_undefined_instruction                                   = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b1011_1001);
+assign o_opcode_x86_UD2_undefined_instruction                                   = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b0000_1011);
 
 assign o_opcode_x86_VERR_verify_a_segment_for_reading                           = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b0000_0000) & (i_instruction[2][ 5:  3] == 3'b100);
 assign o_opcode_x86_VERW_verify_a_segment_for_writing                           = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b0000_0000) & (i_instruction[2][ 5:  3] == 3'b101);

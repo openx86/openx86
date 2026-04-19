@@ -741,9 +741,52 @@ module decode_opcode_x86_tb;
             $display("[FAIL] CPUID: expected=1, actual=%b", o_opcode_x86_CPUID_CPU_identification);
             fail_count++;
         end
+
+        // ============================================
+        // 测试用例16: UD2 (0x0F 0x0B)
+        // 汇编: ud2
+        // ============================================
+        set_instruction(8'h0F, 8'h0B);
+        test_count++;
+        if ((o_opcode_x86_UD2_undefined_instruction === 1'b1) &&
+            (o_opcode_x86_UD1_undefined_instruction === 1'b0)) begin
+            $display("[PASS] UD2: decode OK");
+            pass_count++;
+        end else begin
+            $display("[FAIL] UD2: expected UD2=1 UD1=0, actual UD2=%b UD1=%b", o_opcode_x86_UD2_undefined_instruction, o_opcode_x86_UD1_undefined_instruction);
+            fail_count++;
+        end
+
+        // ============================================
+        // 测试用例17: UD1 (0x0F 0xB9 /r)
+        // 汇编: ud1 eax, eax
+        // ============================================
+        set_instruction(8'h0F, 8'hB9, 8'hC0);
+        test_count++;
+        if ((o_opcode_x86_UD1_undefined_instruction === 1'b1) &&
+            (o_opcode_x86_UD2_undefined_instruction === 1'b0)) begin
+            $display("[PASS] UD1: decode OK");
+            pass_count++;
+        end else begin
+            $display("[FAIL] UD1: expected UD1=1 UD2=0, actual UD1=%b UD2=%b", o_opcode_x86_UD1_undefined_instruction, o_opcode_x86_UD2_undefined_instruction);
+            fail_count++;
+        end
+
+        // ============================================
+        // 测试用例18: UD0 (0x0F 0xFF)
+        // ============================================
+        set_instruction(8'h0F, 8'hFF);
+        test_count++;
+        if (o_opcode_x86_UD0_undefined_instruction === 1'b1) begin
+            $display("[PASS] UD0: decode OK");
+            pass_count++;
+        end else begin
+            $display("[FAIL] UD0: expected=1, actual=%b", o_opcode_x86_UD0_undefined_instruction);
+            fail_count++;
+        end
         
         // ============================================
-        // 测试用例16: INC reg (0x40 + reg)
+        // 测试用例19: INC reg (0x40 + reg)
         // 汇编: inc eax
         // ============================================
         set_instruction(8'h40);
@@ -757,7 +800,7 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例17: DEC reg (0x48 + reg)
+        // 测试用例20: DEC reg (0x48 + reg)
         // 汇编: dec eax
         // ============================================
         set_instruction(8'h48);
@@ -771,7 +814,7 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例18: XOR reg, reg (0x31)
+        // 测试用例21: XOR reg, reg (0x31)
         // 汇编: xor eax, ebx
         // ============================================
         set_instruction(8'h31, 8'hD8);
@@ -785,7 +828,7 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例19: TEST reg, reg (0x85)
+        // 测试用例22: TEST reg, reg (0x85)
         // 汇编: test eax, ebx
         // ============================================
         set_instruction(8'h85, 8'hD8);
@@ -799,7 +842,7 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例20: INT 3 (0xCC)
+        // 测试用例23: INT 3 (0xCC)
         // 汇编: int 3
         // ============================================
         set_instruction(8'hCC);

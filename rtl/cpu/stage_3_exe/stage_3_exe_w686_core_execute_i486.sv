@@ -33,12 +33,13 @@ module stage_3_exe_w686_core_execute_i486 (
     typedef enum logic [ 2: 0] {
         CS_IDLE,  // 空闲
         CS_W1,  // 写 EAX
-        CS_W2,  // 写 EDX
-        CS_W3,  // 写 ECX
-        CS_W4   // 写 EBX 并结束
+        CS_W2,  // 写 EBX
+        CS_W3,  // 写 EDX
+        CS_W4   // 写 ECX 并结束
     } cpuid_seq_e;
 
     cpuid_seq_e cpuid_st;  // CPUID 多周期状态
+    logic [31: 0] cpuid_leaf_latch;  // 锁存发射时 EAX 叶号，避免后续被 EAX 写回覆盖
 
     // 组合逻辑：连续赋值
     assign cpuid_busy = (cpuid_st != CS_IDLE);
@@ -86,6 +87,7 @@ module stage_3_exe_w686_core_execute_i486 (
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             cpuid_st <= CS_IDLE;
+            cpuid_leaf_latch <= 32'h0;
             gpr_wr_en <= 1'b0;
             gpr_wr_idx <= '0;
             gpr_wr_data <= '0;
@@ -114,6 +116,7 @@ module stage_3_exe_w686_core_execute_i486 (
             unique case (cpuid_st)
                 CS_IDLE: begin
                     if (insn_fire && op_cpuid) begin
+                        cpuid_leaf_latch <= gpr_eax;
                         cpuid_st <= CS_W1;
                     end
                 end
@@ -121,7 +124,7 @@ module stage_3_exe_w686_core_execute_i486 (
                     gpr_wr_en <= 1'b1;
                     gpr_wr_idx <= 3'd0;
                     // 叶 0/1：返回最大叶号或 family/model/stepping
-                    unique case (gpr_eax)
+                    unique case (cpuid_leaf_latch)
                         32'd0: gpr_wr_data <= 32'd1;
                         32'd1: gpr_wr_data <= {
                             `cpuid_extended_family_id,
@@ -133,7 +136,7 @@ module stage_3_exe_w686_core_execute_i486 (
                             `cpuid_model_id,
                             `cpuid_stepping_id
                         };
-                        default: gpr_wr_data <= gpr_eax;
+                        default: gpr_wr_data <= cpuid_leaf_latch;
                     endcase
                     cpuid_st <= CS_W2;
                 end
@@ -141,9 +144,9 @@ module stage_3_exe_w686_core_execute_i486 (
                     gpr_wr_en <= 1'b1;
                     gpr_wr_idx <= 3'd3;
                     // 叶 0：厂商串 EBX；其余写 0
-                    if (gpr_eax == 32'd0) begin
+                    if (cpuid_leaf_latch == 32'd0) begin
                         gpr_wr_data <= V_EBX;
-                    end else if (gpr_eax == 32'd1) begin
+                    end else if (cpuid_leaf_latch == 32'd1) begin
                         gpr_wr_data <= 32'h0;
                     end else begin
                         gpr_wr_data <= 32'h0;
@@ -154,9 +157,9 @@ module stage_3_exe_w686_core_execute_i486 (
                     gpr_wr_en <= 1'b1;
                     gpr_wr_idx <= 3'd2;
                     // 叶 0：厂商串 EDX；叶 1：特征位 EDX
-                    if (gpr_eax == 32'd0) begin
+                    if (cpuid_leaf_latch == 32'd0) begin
                         gpr_wr_data <= V_EDX;
-                    end else if (gpr_eax == 32'd1) begin
+                    end else if (cpuid_leaf_latch == 32'd1) begin
                         gpr_wr_data <= cpuid_leaf1_edx();
                     end else begin
                         gpr_wr_data <= 32'h0;
@@ -167,7 +170,7 @@ module stage_3_exe_w686_core_execute_i486 (
                     gpr_wr_en <= 1'b1;
                     gpr_wr_idx <= 3'd1;
                     // 叶 0：厂商串 ECX；其余写 0
-                    if (gpr_eax == 32'd0) begin
+                    if (cpuid_leaf_latch == 32'd0) begin
                         gpr_wr_data <= V_ECX;
                     end else begin
                         gpr_wr_data <= 32'h0;
