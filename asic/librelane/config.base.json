@@ -1,0 +1,16 @@
+{
+  "DESIGN_NAME": "openx86_soc_top",
+  "PDK": "sky130A",
+  "STD_CELL_LIBRARY": "sky130_fd_sc_hd",
+  "RUN_LINTER": false,
+  "CLOCK_PORT": "clk",
+  "CLOCK_PERIOD": 20,
+  "pdk::sky130A": {
+    "MAX_FANOUT_CONSTRAINT": 50,
+    "FP_CORE_UTIL": 30,
+    "PL_TARGET_DENSITY_PCT": "expr::($FP_CORE_UTIL + 10.0)"
+  },
+  "scl::sky130_fd_sc_hd": {
+    "CLOCK_PERIOD": 20
+  }
+}

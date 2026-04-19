@@ -1,0 +1,86 @@
+# Manual RTL-to-GDSII using LibreLane in dockerized mode (orchestrator on host Python).
+# See: https://librelane.readthedocs.io/en/latest/installation/docker_installation/installation_ubuntu.html
+#
+# Notes:
+# - First runs download sky130 PDK via Ciel into PDK_ROOT (cached under .pdk/).
+# - Full-chip Classic flow can exceed runner time or fail at Yosys/SV elaboration; artifacts still help triage.
+
+name: LibreLane GDSII (Classic, dockerized)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_smoke_test:
+        description: Run "python3 -m librelane --dockerized --smoke-test" before the Classic flow
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  librelane-classic:
+    name: LibreLane Classic (openx86_soc_top)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      PDK_ROOT: ${{ github.workspace }}/.pdk
+      LIBRELANE_VERSION: "3.0.2"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache open PDK root (Ciel downloads)
+        uses: actions/cache@v4
+        with:
+          path: .pdk
+          key: librelane-${{ env.LIBRELANE_VERSION }}-pdk-${{ runner.os }}-${{ runner.arch }}
+          restore-keys: |
+            librelane-${{ env.LIBRELANE_VERSION }}-pdk-${{ runner.os }}-
+
+      - name: Install LibreLane (host orchestrator)
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "librelane==${LIBRELANE_VERSION}"
+
+      - name: Show versions
+        run: |
+          python3 --version
+          python3 -m pip show librelane | sed -n '1,12p'
+          docker version
+
+      - name: LibreLane dockerized smoke test
+        if: ${{ inputs.run_smoke_test }}
+        run: |
+          python3 -m librelane --dockerized --docker-no-tty --pdk-root "${PDK_ROOT}" --smoke-test
+
+      - name: Generate LibreLane design config
+        run: |
+          mkdir -p "${PDK_ROOT}"
+          python3 scripts/gen_librelane_config.py --repo-root "${GITHUB_WORKSPACE}"
+
+      - name: Run LibreLane Classic flow
+        run: |
+          set -euxo pipefail
+          python3 -m librelane --dockerized --docker-no-tty \
+            --pdk-root "${PDK_ROOT}" \
+            --flow Classic \
+            --design-dir asic/librelane \
+            asic/librelane/generated.config.json
+
+      - name: Upload LibreLane runs + generated config
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: librelane-openx86-soc-top
+          path: |
+            asic/librelane/runs
+            asic/librelane/generated.config.json
+          if-no-files-found: ignore
+          retention-days: 14
