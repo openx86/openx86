@@ -9,7 +9,7 @@ module rf_control_register (
     input  logic         write_enable,       // CR 写使能
     input  logic [ 2: 0] write_index,       // CR 编号（0–7）
     input  logic [31: 0] write_data,         // 写入数据
-    output logic [31: 0] CR [ 0:  7],       // 控制寄存器 CR0–CR7
+    output logic [ 7: 0][31: 0] CR,       // 控制寄存器 CR0–CR7
     output logic         PE,                 // CR0.0 保护模式使能
     output logic         MP,                 // CR0.1 监视协处理器
     output logic         EM,                 // CR0.2 仿真

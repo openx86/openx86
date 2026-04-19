@@ -49,38 +49,40 @@ module stage_3_exe_w686_core_execute_i486 (
     localparam logic [31: 0] V_ECX = 32'h6c65746e;
 
     function automatic logic [31: 0] cpuid_leaf1_edx();
-        return 32'({
-            `cpuid_feature_pbe,
-            `cpuid_feature_ia64,
-            `cpuid_feature_tm,
-            `cpuid_feature_htt,
-            `cpuid_feature_ss,
-            `cpuid_feature_sse2,
-            `cpuid_feature_sse,
-            `cpuid_feature_fxsr,
-            `cpuid_feature_mmx,
-            `cpuid_feature_acpi,
-            `cpuid_feature_ds,
-            `cpuid_feature_clfsh,
-            `cpuid_feature_psn,
-            `cpuid_feature_pse36,
-            `cpuid_feature_pat,
-            `cpuid_feature_cmov,
-            `cpuid_feature_mca,
-            `cpuid_feature_peg,
-            `cpuid_feature_mtrr,
-            `cpuid_feature_sep,
-            `cpuid_feature_apic,
-            `cpuid_feature_cx8,
-            `cpuid_feature_mce,
-            `cpuid_feature_pae,
-            `cpuid_feature_msr,
-            `cpuid_feature_tsc,
-            `cpuid_feature_pse,
-            `cpuid_feature_de,
-            `cpuid_feature_vme,
-            `cpuid_feature_fpu
-        });
+        begin
+            cpuid_leaf1_edx = 32'({
+                `cpuid_feature_pbe,
+                `cpuid_feature_ia64,
+                `cpuid_feature_tm,
+                `cpuid_feature_htt,
+                `cpuid_feature_ss,
+                `cpuid_feature_sse2,
+                `cpuid_feature_sse,
+                `cpuid_feature_fxsr,
+                `cpuid_feature_mmx,
+                `cpuid_feature_acpi,
+                `cpuid_feature_ds,
+                `cpuid_feature_clfsh,
+                `cpuid_feature_psn,
+                `cpuid_feature_pse36,
+                `cpuid_feature_pat,
+                `cpuid_feature_cmov,
+                `cpuid_feature_mca,
+                `cpuid_feature_peg,
+                `cpuid_feature_mtrr,
+                `cpuid_feature_sep,
+                `cpuid_feature_apic,
+                `cpuid_feature_cx8,
+                `cpuid_feature_mce,
+                `cpuid_feature_pae,
+                `cpuid_feature_msr,
+                `cpuid_feature_tsc,
+                `cpuid_feature_pse,
+                `cpuid_feature_de,
+                `cpuid_feature_vme,
+                `cpuid_feature_fpu
+            });
+        end
     endfunction
 
     // 时序逻辑：寄存器更新

@@ -20,8 +20,8 @@ module stage_1_isc_mmu_seg_segmentation_unit #(
     // Segmentation context inputs（段式地址：选择子 + 描述符 + 偏移）
     // ------------------------------------------------------------------------
     input  logic          i_protected_mode,                              // CR0.PE
-    input  logic [15: 0] i_segment_selector [ 0: 5],                      // 段寄存器侧选择子
-    input  logic [63: 0] i_segment_descriptor [ 0: 5],                    // 描述符缓存（与选择子对应）
+    input  logic [ 5: 0][15: 0] i_segment_selector,                      // 段寄存器侧选择子
+    input  logic [ 5: 0][63: 0] i_segment_descriptor,                    // 描述符缓存（与选择子对应）
     input  logic [ 2: 0] i_segment_index,                               // 本次访问使用哪一段
     input  logic [ 1: 0] i_current_privilege_level,                     // CPL
     input  logic [31: 0] i_effective_address,                           // 段内有效地址

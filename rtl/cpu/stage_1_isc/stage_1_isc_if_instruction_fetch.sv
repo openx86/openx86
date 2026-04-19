@@ -24,15 +24,15 @@ module stage_1_isc_if_instruction_fetch (
     input  logic [31: 0] i_mmu_bus_rdata,
     // 段/分页上下文（来自 CPU 寄存器侧）
     input  logic          i_protected_mode,
-    input  logic [15: 0] i_segment_selector [ 0:  5],
-    input  logic [63: 0] i_segment_descriptor [ 0:  5],
+    input  logic [ 5: 0][15: 0] i_segment_selector,
+    input  logic [ 5: 0][63: 0] i_segment_descriptor,
     input  logic [ 1: 0]   i_current_privilege_level,
     input  logic          i_paging_enable,
     input  logic [31: 0] i_page_directory_base,
     // 执行单元：IP 更新完成后再取下一批
     input  logic          i_IP_vaild,
     // 输出到译码：16B 指令缓冲
-    output logic [ 7: 0] o_instruction [ 0: 15],
+    output logic [15: 0][ 7: 0] o_instruction,
     output logic         o_instruction_ready,
     output logic         o_segment_fault,
     // 指令指针
@@ -136,36 +136,28 @@ always_ff @(posedge clk or negedge rst_n) begin
                         // 每个 i_code_ready 周期写入一个 32b 小端槽到 16B 缓冲
                         unique case (bytes_index)
                             2'h0: begin
-                                o_instruction[0*4:0*4+3] <= '{
-                                    i_code_data_read[31: 24],
-                                    i_code_data_read[23: 16],
-                                    i_code_data_read[15: 8],
-                                    i_code_data_read[ 7: 0]
-                                };
+                                o_instruction[0] <= i_code_data_read[31: 24];
+                                o_instruction[1] <= i_code_data_read[23: 16];
+                                o_instruction[2] <= i_code_data_read[15: 8];
+                                o_instruction[3] <= i_code_data_read[ 7: 0];
                             end
                             2'h1: begin
-                                o_instruction[1*4:1*4+3] <= '{
-                                    i_code_data_read[31: 24],
-                                    i_code_data_read[23: 16],
-                                    i_code_data_read[15: 8],
-                                    i_code_data_read[ 7: 0]
-                                };
+                                o_instruction[4] <= i_code_data_read[31: 24];
+                                o_instruction[5] <= i_code_data_read[23: 16];
+                                o_instruction[6] <= i_code_data_read[15: 8];
+                                o_instruction[7] <= i_code_data_read[ 7: 0];
                             end
                             2'h2: begin
-                                o_instruction[2*4:2*4+3] <= '{
-                                    i_code_data_read[31: 24],
-                                    i_code_data_read[23: 16],
-                                    i_code_data_read[15: 8],
-                                    i_code_data_read[ 7: 0]
-                                };
+                                o_instruction[ 8] <= i_code_data_read[31: 24];
+                                o_instruction[ 9] <= i_code_data_read[23: 16];
+                                o_instruction[10] <= i_code_data_read[15: 8];
+                                o_instruction[11] <= i_code_data_read[ 7: 0];
                             end
                             2'h3: begin
-                                o_instruction[3*4:3*4+3] <= '{
-                                    i_code_data_read[31: 24],
-                                    i_code_data_read[23: 16],
-                                    i_code_data_read[15: 8],
-                                    i_code_data_read[ 7: 0]
-                                };
+                                o_instruction[12] <= i_code_data_read[31: 24];
+                                o_instruction[13] <= i_code_data_read[23: 16];
+                                o_instruction[14] <= i_code_data_read[15: 8];
+                                o_instruction[15] <= i_code_data_read[ 7: 0];
                             end
                         endcase
                         // o_instruction[bytes_index*4:bytes_index*4+3] <= '{

@@ -12,8 +12,6 @@ description: This module implements decode_x87_tb.
 
 module decode_x87_tb;
 
-    import stage_2_dec_decode_x87_pkg::*;
-
     logic [ 7: 0] b0, b1;
     logic esc;
     logic [31: 0] mask;
@@ -35,7 +33,7 @@ module decode_x87_tb;
         b0 = 8'hD8;
         b1 = 8'hC1;
         #1;
-        if (!esc || !mask[M_FADD_ST0_STI]) begin
+        if (!esc || !mask[stage_2_dec_decode_x87_pkg::M_FADD_ST0_STI]) begin
             $display("FAIL D8 C1");
             $finish(1);
         end

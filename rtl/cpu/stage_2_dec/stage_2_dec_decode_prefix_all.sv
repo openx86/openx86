@@ -57,7 +57,7 @@ Kevin McGrath and Dave Christie, "The AMD x86-64 Architecture: Extending the x86
 `include "openx86_defs.h.sv"
 // 连续前缀扫描：最多 4 字节，检测每组前缀重复非法并折叠输出
 module stage_2_dec_decode_prefix_all (
-    input  logic [ 7: 0] i_instruction [ 0:  3],
+    input  logic [ 3: 0][ 7: 0] i_instruction,
     output logic        o_group_1_lock_bus,
     output logic        o_group_1_repeat_not_equal,
     output logic        o_group_1_repeat_equal,

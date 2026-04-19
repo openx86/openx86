@@ -17,7 +17,7 @@ description: decode unit (模块名与文件名 stage_2_dec_decode_unit 一致)
 
 // 顶层译码单元：前缀解析 → 主操作码 one-hot → 域提取 → ModRM/SIB → 位移/立即数 → 字节消耗
 module stage_2_dec_decode_unit (
-    input  logic [ 7: 0]   i_instruction [ 0: 15], // 16B 指令滑窗（低字节为首字节）
+    input  logic [15: 0][ 7: 0] i_instruction, // 16B 指令滑窗（低字节为首字节）
     input  logic          i_default_operand_size,  // 默认操作数宽度（16/32）
     output logic         o_opcode_x86_AAA_ASCII_adjust_after_add,
     output logic         o_opcode_x86_AAD_ASCII_AX_before_div,
@@ -265,7 +265,7 @@ module stage_2_dec_decode_unit (
 );
 
 // 前缀字节窗口（最多 4 个前缀槽）
-logic [ 7: 0] prefix_instruction [ 0:  3];
+logic [ 3: 0][ 7: 0] prefix_instruction;
 logic        prefix_o_group_1_lock_bus;
 logic        prefix_o_group_1_repeat_not_equal;
 logic        prefix_o_group_1_repeat_equal;
@@ -285,7 +285,10 @@ logic        prefix_o_consume_bytes_prefix_2;
 logic        prefix_o_consume_bytes_prefix_3;
 logic        prefix_o_consume_bytes_prefix_4;
 logic        prefix_o_error;
-assign prefix_instruction = i_instruction[ 0:  3];
+assign prefix_instruction[0] = i_instruction[0];
+assign prefix_instruction[1] = i_instruction[1];
+assign prefix_instruction[2] = i_instruction[2];
+assign prefix_instruction[3] = i_instruction[3];
 // 解析四组前缀并给出消费字节数/错误（非法重复前缀）
 stage_2_dec_decode_prefix_all deocde_decode_prefix_all (
     .i_instruction ( prefix_instruction ),
@@ -322,14 +325,39 @@ always_comb begin
 end
 
 // 对齐到主 opcode 起始位置的 4B 窗口，供 opcode/域译码使用
-logic [ 7: 0] opcode_instruction [ 0:  3];
+logic [ 3: 0][ 7: 0] opcode_instruction;
 always_comb begin
     unique case (1'b1)
-        prefix_o_consume_bytes_prefix_1: opcode_instruction = i_instruction[1:1+3];
-        prefix_o_consume_bytes_prefix_2: opcode_instruction = i_instruction[2:2+3];
-        prefix_o_consume_bytes_prefix_3: opcode_instruction = i_instruction[3:3+3];
-        prefix_o_consume_bytes_prefix_4: opcode_instruction = i_instruction[4:4+3];
-        default                        : opcode_instruction = i_instruction[0:0+3];
+        prefix_o_consume_bytes_prefix_1: begin
+            opcode_instruction[0] = i_instruction[1];
+            opcode_instruction[1] = i_instruction[2];
+            opcode_instruction[2] = i_instruction[3];
+            opcode_instruction[3] = i_instruction[4];
+        end
+        prefix_o_consume_bytes_prefix_2: begin
+            opcode_instruction[0] = i_instruction[2];
+            opcode_instruction[1] = i_instruction[3];
+            opcode_instruction[2] = i_instruction[4];
+            opcode_instruction[3] = i_instruction[5];
+        end
+        prefix_o_consume_bytes_prefix_3: begin
+            opcode_instruction[0] = i_instruction[3];
+            opcode_instruction[1] = i_instruction[4];
+            opcode_instruction[2] = i_instruction[5];
+            opcode_instruction[3] = i_instruction[6];
+        end
+        prefix_o_consume_bytes_prefix_4: begin
+            opcode_instruction[0] = i_instruction[4];
+            opcode_instruction[1] = i_instruction[5];
+            opcode_instruction[2] = i_instruction[6];
+            opcode_instruction[3] = i_instruction[7];
+        end
+        default: begin
+            opcode_instruction[0] = i_instruction[0];
+            opcode_instruction[1] = i_instruction[1];
+            opcode_instruction[2] = i_instruction[2];
+            opcode_instruction[3] = i_instruction[3];
+        end
     endcase
 end
 
@@ -963,7 +991,7 @@ always_comb begin
     end
 end
 
-logic [ 7: 0] disp_imm_i_instruction [ 0:  7];
+logic [ 7: 0][ 7: 0] disp_imm_i_instruction;
 logic        disp_imm_i_displacement_size_1;
 logic        disp_imm_i_displacement_size_2;
 logic        disp_imm_i_displacement_size_4;
@@ -984,16 +1012,16 @@ assign disp_imm_i_immediate_size_2 = field_o_immediate_size_16;
 assign disp_imm_i_immediate_size_4 = field_o_immediate_size_full;
 assign disp_imm_i_immediate_size_f = field_o_immediate_size_full;
 
-assign disp_imm_i_instruction = '{
-    i_instruction[offset_disp_imm + 0],
-    i_instruction[offset_disp_imm + 1],
-    i_instruction[offset_disp_imm + 2],
-    i_instruction[offset_disp_imm + 3],
-    i_instruction[offset_disp_imm + 4],
-    i_instruction[offset_disp_imm + 5],
-    i_instruction[offset_disp_imm + 6],
-    i_instruction[offset_disp_imm + 7]
-};
+always_comb begin
+    disp_imm_i_instruction[0] = i_instruction[offset_disp_imm + 0];
+    disp_imm_i_instruction[1] = i_instruction[offset_disp_imm + 1];
+    disp_imm_i_instruction[2] = i_instruction[offset_disp_imm + 2];
+    disp_imm_i_instruction[3] = i_instruction[offset_disp_imm + 3];
+    disp_imm_i_instruction[4] = i_instruction[offset_disp_imm + 4];
+    disp_imm_i_instruction[5] = i_instruction[offset_disp_imm + 5];
+    disp_imm_i_instruction[6] = i_instruction[offset_disp_imm + 6];
+    disp_imm_i_instruction[7] = i_instruction[offset_disp_imm + 7];
+end
 // 从位移/立即数起点顺序拼接变长字段
 stage_2_dec_decode_disp_imm deocde_decode_disp_imm (
     .i_instruction ( disp_imm_i_instruction ),

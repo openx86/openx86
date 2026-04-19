@@ -22,7 +22,7 @@ Intel386(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 module stage_2_dec_decode_disp_imm (
     // 从位移起点开始的连续字节窗口（最多 8B，覆盖 disp+imm 组合）
-    input  logic [ 7: 0]   i_instruction [ 0:  7],
+    input  logic [ 7: 0][ 7: 0] i_instruction,
     input  logic          i_displacement_size_1,
     input  logic          i_displacement_size_2,
     input  logic          i_displacement_size_4,
@@ -41,10 +41,34 @@ logic [ 7: 0] instruction_for_immediate [ 0: 3]; // 立即数字节相对位移�
 // 先根据位移宽度截取位移并调整立即数字节起点
 always_comb begin
     case (1'b1)
-        i_displacement_size_1: begin instruction_for_immediate = i_instruction[1:1+3]; o_displacement = {24'b0, i_instruction[0][ 7: 0]}; end
-        i_displacement_size_2: begin instruction_for_immediate = i_instruction[2:2+3]; o_displacement = {16'b0, i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]}; end
-        i_displacement_size_4: begin instruction_for_immediate = i_instruction[4:4+3]; o_displacement = {       i_instruction[3][ 7: 0], i_instruction[2][ 7: 0], i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]}; end
-        default              : begin instruction_for_immediate = i_instruction[0:0+3]; o_displacement = 32'b0; end
+        i_displacement_size_1: begin
+            instruction_for_immediate[0] = i_instruction[1];
+            instruction_for_immediate[1] = i_instruction[2];
+            instruction_for_immediate[2] = i_instruction[3];
+            instruction_for_immediate[3] = i_instruction[4];
+            o_displacement = {24'b0, i_instruction[0][ 7: 0]};
+        end
+        i_displacement_size_2: begin
+            instruction_for_immediate[0] = i_instruction[2];
+            instruction_for_immediate[1] = i_instruction[3];
+            instruction_for_immediate[2] = i_instruction[4];
+            instruction_for_immediate[3] = i_instruction[5];
+            o_displacement = {16'b0, i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]};
+        end
+        i_displacement_size_4: begin
+            instruction_for_immediate[0] = i_instruction[4];
+            instruction_for_immediate[1] = i_instruction[5];
+            instruction_for_immediate[2] = i_instruction[6];
+            instruction_for_immediate[3] = i_instruction[7];
+            o_displacement = {i_instruction[3][ 7: 0], i_instruction[2][ 7: 0], i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]};
+        end
+        default: begin
+            instruction_for_immediate[0] = i_instruction[0];
+            instruction_for_immediate[1] = i_instruction[1];
+            instruction_for_immediate[2] = i_instruction[2];
+            instruction_for_immediate[3] = i_instruction[3];
+            o_displacement = 32'b0;
+        end
     endcase
 end
 

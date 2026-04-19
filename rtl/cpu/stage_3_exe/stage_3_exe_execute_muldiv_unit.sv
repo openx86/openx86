@@ -17,9 +17,6 @@ module stage_3_exe_execute_muldiv_unit (
     output logic [31: 0] o_hi,  // 结果高半 / 余
     output logic         o_div0  // 除数为 0
 );
-
-    import stage_3_exe_execute_unit_pkg::*;
-
     // 64 位中间量：乘积、扩展被除数、商余（有/无符号）
     logic [63: 0] umul;
     logic signed [63: 0] smul;
@@ -49,15 +46,15 @@ module stage_3_exe_execute_muldiv_unit (
 
         // MUL/IMUL/DIV/IDIV 数据通路选择
         unique case (i_op)
-            MD_MULU32: begin
+            stage_3_exe_execute_unit_pkg::MD_MULU32: begin
                 o_lo = umul[31: 0];
                 o_hi = umul[63: 32];
             end
-            MD_IMUL32: begin
+            stage_3_exe_execute_unit_pkg::MD_IMUL32: begin
                 o_lo = smul[31: 0];
                 o_hi = smul[63: 32];
             end
-            MD_DIVU32: begin
+            stage_3_exe_execute_unit_pkg::MD_DIVU32: begin
                 // 除数为 0：置 div0，不写商余
                 if (i_src == 32'h0) begin
                     o_div0 = 1'b1;
@@ -68,7 +65,7 @@ module stage_3_exe_execute_muldiv_unit (
                     o_hi  = urem[31: 0];
                 end
             end
-            MD_IDIV32: begin
+            stage_3_exe_execute_unit_pkg::MD_IDIV32: begin
                 // 除数为 0：置 div0，不写商余
                 if (i_src == 32'h0) begin
                     o_div0 = 1'b1;

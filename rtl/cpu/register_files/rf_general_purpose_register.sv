@@ -9,9 +9,9 @@ module rf_general_purpose_register (
     input  logic         write_enable,       // GPR 写使能
     input  logic [ 2: 0] write_index,       // 目标 GPR 编号（0–7）
     input  logic [31: 0] write_data,         // 写入数据（32 位）
-    output logic [31: 0] read__8 [ 0:  7],   // 8 位读视图（零扩展到 32）
-    output logic [31: 0] read_16 [ 0:  7],   // 16 位读视图（零扩展到 32）
-    output logic [31: 0] read_32 [ 0:  7],   // 32 位读视图
+    output logic [ 7: 0][31: 0] read__8,   // 8 位读视图（零扩展到 32）
+    output logic [ 7: 0][31: 0] read_16,   // 16 位读视图（零扩展到 32）
+    output logic [ 7: 0][31: 0] read_32,   // 32 位读视图
     input  logic         rst_n,
     input  logic         clk
 );

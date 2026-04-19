@@ -7,7 +7,6 @@ description: This module implements eu_misc_flag_status_tb.
 `timescale 1ns/1ns
 
 module eu_misc_flag_status_tb;
-    import stage_3_exe_execute_unit_pkg::*;
 
     logic [31: 0] flags_in;
     logic [ 5: 0] op;
@@ -22,21 +21,21 @@ module eu_misc_flag_status_tb;
     initial begin
         flags_in = 32'h0000_0001;
 
-        op = INT_CLC;
+        op = stage_3_exe_execute_unit_pkg::INT_CLC;
         #1;
         if (flags_out[0] !== 1'b0) begin
             $display("FAIL stage_3_exe_misc_flag_status CLC");
             $finish(1);
         end
 
-        op = INT_STC;
+        op = stage_3_exe_execute_unit_pkg::INT_STC;
         #1;
         if (flags_out[0] !== 1'b1) begin
             $display("FAIL stage_3_exe_misc_flag_status STC");
             $finish(1);
         end
 
-        op = INT_CMC;
+        op = stage_3_exe_execute_unit_pkg::INT_CMC;
         #1;
         if (flags_out[0] !== 1'b0) begin
             $display("FAIL stage_3_exe_misc_flag_status CMC");
@@ -44,7 +43,7 @@ module eu_misc_flag_status_tb;
         end
 
         flags_in = 32'h0000_0000;
-        op = INT_STI;
+        op = stage_3_exe_execute_unit_pkg::INT_STI;
         #1;
         if (flags_out[9] !== 1'b1) begin
             $display("FAIL stage_3_exe_misc_flag_status STI");
@@ -52,7 +51,7 @@ module eu_misc_flag_status_tb;
         end
 
         flags_in = 32'h0000_0200;
-        op = INT_CLI;
+        op = stage_3_exe_execute_unit_pkg::INT_CLI;
         #1;
         if (flags_out[9] !== 1'b0) begin
             $display("FAIL stage_3_exe_misc_flag_status CLI");
@@ -60,7 +59,7 @@ module eu_misc_flag_status_tb;
         end
 
         flags_in = 32'h0000_0400;
-        op = INT_CLD;
+        op = stage_3_exe_execute_unit_pkg::INT_CLD;
         #1;
         if (flags_out[10] !== 1'b0) begin
             $display("FAIL stage_3_exe_misc_flag_status CLD");
@@ -68,7 +67,7 @@ module eu_misc_flag_status_tb;
         end
 
         flags_in = 32'h0000_0000;
-        op = INT_STD;
+        op = stage_3_exe_execute_unit_pkg::INT_STD;
         #1;
         if (flags_out[10] !== 1'b1) begin
             $display("FAIL stage_3_exe_misc_flag_status STD");

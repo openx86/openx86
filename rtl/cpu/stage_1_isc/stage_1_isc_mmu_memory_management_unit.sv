@@ -26,8 +26,8 @@ module stage_1_isc_mmu_memory_management_unit #(
     // Address translation context（段 + 分页输入）
     // ------------------------------------------------------------------------
     input  logic          i_protected_mode,                              // CR0.PE
-    input  logic [15: 0] i_segment_selector [ 0: 5],                      // 段选择子
-    input  logic [63: 0] i_segment_descriptor [ 0: 5],                    // 段描述符缓存
+    input  logic [ 5: 0][15: 0] i_segment_selector,                      // 段选择子
+    input  logic [ 5: 0][63: 0] i_segment_descriptor,                    // 段描述符缓存
     input  logic [ 1: 0] i_current_privilege_level,                     // CPL
     input  logic [ 2: 0] i_segment_index,                               // 访问哪个段（CS/DS/...）
     input  logic [31: 0] i_effective_address,                           // 段内有效地址/偏移

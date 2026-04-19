@@ -10,8 +10,8 @@ module rf_segment_register (
     input  logic [ 2: 0] write_index,       // 段寄存器索引（CS/SS/…）
     input  logic [15: 0] write_selector,   // 段选择子（可见部分）
     input  logic [63: 0] write_descriptor,   // 段描述符缓存（隐藏寄存器）
-    output logic [15: 0] segment_selector [ 0:  5], // 各段选择子输出
-    output logic [63: 0] descriptor_cache [ 0:  5], // 各段描述符缓存输出
+    output logic [ 5: 0][15: 0] segment_selector, // 各段选择子输出
+    output logic [ 5: 0][63: 0] descriptor_cache, // 各段描述符缓存输出
     input  logic         clk,
     input  logic         rst_n
 );

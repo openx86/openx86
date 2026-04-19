@@ -11,10 +11,10 @@ description: stage_1_2_isc_dec — combinational bridge from IF (stage_1) to dec
 // ============================================================================
 
 module stage_1_2_isc_dec (
-    input  logic [ 7: 0]  i_instruction [ 0: 15],
+    input  logic [15: 0][ 7: 0] i_instruction,
     input  logic          i_instruction_ready,
     input  logic          i_segment_fault,
-    output logic [ 7: 0] o_instruction [ 0: 15],
+    output logic [15: 0][ 7: 0] o_instruction,
     output logic         o_instruction_ready,
     output logic         o_segment_fault,
     input  logic          clk,

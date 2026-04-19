@@ -31,8 +31,8 @@ module stage_1_isc (
     // CPU execution context inputs（段/分页/特权等执行上下文）
     // ------------------------------------------------------------------------
     input  logic          i_protected_mode,         // 保护模式（CR0.PE）
-    input  logic [15: 0] i_segment_selector [ 0: 5], // 段选择子（CS 等）
-    input  logic [63: 0] i_segment_descriptor [ 0: 5], // 段描述符缓存
+    input  logic [ 5: 0][15: 0] i_segment_selector, // 段选择子（CS 等）
+    input  logic [ 5: 0][63: 0] i_segment_descriptor, // 段描述符缓存
     input  logic [ 1: 0] i_current_privilege_level, // 当前 CPL
     input  logic          i_paging_enable,          // 分页使能（CR0.PG）
     input  logic [31: 0] i_page_directory_base,     // 页目录基址（CR3）
@@ -41,7 +41,7 @@ module stage_1_isc (
     // ------------------------------------------------------------------------
     // Decoded instruction stream outputs（输出到译码级的指令缓冲）
     // ------------------------------------------------------------------------
-    output logic [ 7: 0] o_instruction [ 0:15],      // 已组装的指令字节窗口
+    output logic [15: 0][ 7: 0] o_instruction,      // 已组装的指令字节窗口
     output logic         o_instruction_ready,       // 本窗口有效且已填满
     output logic         o_segment_fault,           // 段保护/越界等 fault
 

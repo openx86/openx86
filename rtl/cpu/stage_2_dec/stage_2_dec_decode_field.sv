@@ -17,7 +17,7 @@ description: decode fileds include w, s, reg, mod_r/m, imm, disp
 
 module stage_2_dec_decode_field (
     // 4B 指令切片（已与前缀偏移对齐）；配合各 i_opcode_x86_* 命中选择字段布局
-    input  logic [ 7: 0] i_instruction [ 0:  3],
+    input  logic [ 3: 0][ 7: 0] i_instruction,
     input  logic         i_opcode_x86_AAA_ASCII_adjust_after_add,
     input  logic         i_opcode_x86_AAD_ASCII_AX_before_div,
     input  logic         i_opcode_x86_AAM_ASCII_AX_after_mul,
