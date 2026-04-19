@@ -33,7 +33,6 @@ set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/ch
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/chipset/chip_mc146818_rtc.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/chipset/chip_ns16550_com.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/chipset/chip_pc_bios_eeprom.sv"
-set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/chipset/chip_pkg.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/common/dual_port_rom.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/common/edge_detect.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/common/simple_dual_port_ram.sv"

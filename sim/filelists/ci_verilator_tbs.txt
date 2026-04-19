@@ -17,7 +17,9 @@ tb/chipset/com_ns16550_tb.sv
 tb/device/ide/ide_controller_tb.sv
 tb/cpu/stage_1_isc/instruction_fetch_tb.sv
 tb/cpu/stage_2_dec/decode_tb.sv
+tb/cpu/stage_2_dec/decode_opcode_x86_tb.sv
 tb/cpu/stage_3_exe/execute_unit_tb.sv
+tb/cpu/stage_3_exe/w686_execute_i486_cpuid_tb.sv
 tb/cpu/stage_3_exe/instructions/eu_log_and_tb.sv
 tb/cpu/stage_3_exe/instructions/eu_ari_add_tb.sv
 tb/cpu/bus_interface_unit_tb.sv

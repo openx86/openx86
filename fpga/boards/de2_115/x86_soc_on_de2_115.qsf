@@ -1220,7 +1220,6 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/chip_i8042_p
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/chip_mc146818_rtc.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/chip_ns16550_com.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/chip_pc_bios_eeprom.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/chipset/chip_pkg.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/dual_port_rom.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/edge_detect.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/simple_dual_port_ram.sv
@@ -1358,4 +1357,8 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/r
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_instruction_pointer_register.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_segment_register.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_files/rf_test_register.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_1_2_isc_dec/stage_1_2_isc_dec.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_2_3_dec_exe/stage_2_3_dec_exe.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_3_4_exe_mem/stage_3_4_exe_mem.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_4_5_mem_wrb/stage_4_5_mem_wrb.sv
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

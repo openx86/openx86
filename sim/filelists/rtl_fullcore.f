@@ -13,7 +13,6 @@ rtl/chipset/chip_i8042_ps2.sv
 rtl/chipset/chip_mc146818_rtc.sv
 rtl/chipset/chip_ns16550_com.sv
 rtl/chipset/chip_pc_bios_eeprom.sv
-rtl/chipset/chip_pkg.sv
 rtl/common/dual_port_rom.sv
 rtl/common/edge_detect.sv
 rtl/common/simple_dual_port_ram.sv
@@ -22,7 +21,10 @@ rtl/common/single_port_rom.sv
 rtl/common/true_dual_port_ram.sv
 rtl/cpu/stage_2_dec/stage_2_dec_decode_x87_pkg.sv
 rtl/cpu/stage_3_exe/stage_3_exe_execute_unit_pkg.sv
-rtl/cpu/register_files/w686_register_files.sv
+rtl/cpu/stage_1_2_isc_dec/stage_1_2_isc_dec.sv
+rtl/cpu/stage_2_3_dec_exe/stage_2_3_dec_exe.sv
+rtl/cpu/stage_3_4_exe_mem/stage_3_4_exe_mem.sv
+rtl/cpu/stage_4_5_mem_wrb/stage_4_5_mem_wrb.sv
 rtl/cpu/w686_core.sv
 rtl/cpu/w686_cpu.sv
 rtl/cpu/stage_1_isc/stage_1_isc.sv

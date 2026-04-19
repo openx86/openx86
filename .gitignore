@@ -70,3 +70,7 @@ fpga/**/simulation/
 fpga/**/output_files/
 fpga/**/.flock
 fpga/**/*.done
+
+# LibreLane generated design config + run trees
+asic/librelane/generated.config.json
+asic/librelane/runs/
