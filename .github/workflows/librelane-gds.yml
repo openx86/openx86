@@ -63,7 +63,7 @@ jobs:
       - name: Generate LibreLane design config
         run: |
           mkdir -p "${PDK_ROOT}"
-          python3 scripts/gen_librelane_config.py --repo-root "${GITHUB_WORKSPACE}"
+          python3 asic/librelane/scripts/gen_librelane_config.py --repo-root "${GITHUB_WORKSPACE}"
 
       - name: Run LibreLane Classic flow
         run: |

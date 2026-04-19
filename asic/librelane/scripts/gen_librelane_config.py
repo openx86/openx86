@@ -14,6 +14,11 @@ import sys
 from pathlib import Path
 
 
+def default_repo_root() -> Path:
+    """openx86 repo root: this file lives at asic/librelane/scripts/gen_librelane_config.py."""
+    return Path(__file__).resolve().parents[3]
+
+
 def parse_rtl_filelist(repo_root: Path, filelist_path: Path) -> tuple[list[str], list[str]]:
     incdirs: list[str] = []
     verilog: list[str] = []
@@ -46,8 +51,8 @@ def main() -> int:
     ap.add_argument(
         "--repo-root",
         type=Path,
-        default=Path.cwd(),
-        help="Repository root (contains rtl/ and sim/).",
+        default=default_repo_root(),
+        help="Repository root (contains rtl/ and sim/). Defaults to repo inferred from this script path.",
     )
     ap.add_argument(
         "--filelist",

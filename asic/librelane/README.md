@@ -10,7 +10,8 @@ This directory holds a **LibreLane** configuration for `openx86_soc_top`.
 ```bash
 export PDK_ROOT="$HOME/openx86-pdk"
 python3 -m pip install "librelane==3.0.2"
-python3 scripts/gen_librelane_config.py
+python3 asic/librelane/scripts/gen_librelane_config.py --repo-root "$(pwd)"
+# Or from anywhere: sh asic/librelane/scripts/run.sh
 python3 -m librelane --dockerized --docker-no-tty --pdk-root "$PDK_ROOT" --flow Classic --design-dir asic/librelane asic/librelane/generated.config.json
 ```
 
