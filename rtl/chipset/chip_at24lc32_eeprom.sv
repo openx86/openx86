@@ -103,8 +103,10 @@ module chip_at24lc32_eeprom #(
 
     function automatic logic is_ctrl_match(input logic [ 7: 0] ctrl);
         logic [ 6: 0] a7;
-        a7 = ctrl[ 7:  1];
-        return (a7[ 6:  3] == DEV_TYPE) && (a7[ 2: 0] == A_PINS);
+        begin
+            a7 = ctrl[ 7:  1];
+            is_ctrl_match = (a7[ 6:  3] == DEV_TYPE) && (a7[ 2: 0] == A_PINS);
+        end
     endfunction
 
     // 5.032：unpacked mem[] 在 NBA 中勿用函数返回值作下标；索引用 word_addr[AW-1:0]。

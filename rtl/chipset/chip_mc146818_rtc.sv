@@ -167,7 +167,7 @@ module chip_mc146818_rtc #(
     endfunction
 
     function automatic logic leap_y(input int y);
-        return (y % 4 == 0) && ((y % 100 != 0) || (y % 400 == 0));
+        leap_y = (y % 4 == 0) && ((y % 100 != 0) || (y % 400 == 0));
     endfunction
 
     function automatic int dim(input int m, input int y);
