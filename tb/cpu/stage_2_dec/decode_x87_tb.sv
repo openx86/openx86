@@ -10,6 +10,8 @@ description: This module implements decode_x87_tb.
 
 `timescale 1ns/1ns
 
+`include "openx86_defs.h.sv"
+
 module decode_x87_tb;
 
     logic [ 7: 0] b0, b1;
@@ -33,7 +35,7 @@ module decode_x87_tb;
         b0 = 8'hD8;
         b1 = 8'hC1;
         #1;
-        if (!esc || !mask[stage_2_dec_decode_x87_pkg::M_FADD_ST0_STI]) begin
+        if (!esc || !mask[`X87_MASK_M_FADD_ST0_STI]) begin
             $display("FAIL D8 C1");
             $finish(1);
         end

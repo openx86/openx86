@@ -8,6 +8,8 @@ description: This module implements stage_2_dec_decode_x87_esc.
 // X87 FPU — ESC D8h–DFh 译码（第二字节通常为 ModR/M）
 // ============================================================================
 
+`include "openx86_defs.h.sv"
+
 module stage_2_dec_decode_x87_esc (
     input  logic [ 7: 0]   i_b0,
     input  logic [ 7: 0]   i_b1,
@@ -42,108 +44,108 @@ module stage_2_dec_decode_x87_esc (
             ;
         end else if (o_mod != 2'b11) begin
             unique case (esc)
-                8'hD8: o_opmask[stage_2_dec_decode_x87_pkg::M_FADD_ST0_STI] = 1'b1;
-                8'hD9: o_opmask[stage_2_dec_decode_x87_pkg::M_FLD_M32]      = 1'b1;
-                8'hDA: o_opmask[stage_2_dec_decode_x87_pkg::M_FILD_M32]     = 1'b1;
-                8'hDB: o_opmask[stage_2_dec_decode_x87_pkg::M_FILD_M32]     = 1'b1;
-                8'hDC: o_opmask[stage_2_dec_decode_x87_pkg::M_FADD_ST0_STI] = 1'b1;
-                8'hDD: o_opmask[stage_2_dec_decode_x87_pkg::M_FSTP_M32]     = 1'b1;
-                8'hDE: o_opmask[stage_2_dec_decode_x87_pkg::M_FADDP_STI_ST0]= 1'b1;
-                8'hDF: o_opmask[stage_2_dec_decode_x87_pkg::M_FILD_M32]     = 1'b1;
-                default: o_opmask[stage_2_dec_decode_x87_pkg::M_RESERVED]   = 1'b1;
+                8'hD8: o_opmask[`X87_MASK_M_FADD_ST0_STI] = 1'b1;
+                8'hD9: o_opmask[`X87_MASK_M_FLD_M32]      = 1'b1;
+                8'hDA: o_opmask[`X87_MASK_M_FILD_M32]     = 1'b1;
+                8'hDB: o_opmask[`X87_MASK_M_FILD_M32]     = 1'b1;
+                8'hDC: o_opmask[`X87_MASK_M_FADD_ST0_STI] = 1'b1;
+                8'hDD: o_opmask[`X87_MASK_M_FSTP_M32]     = 1'b1;
+                8'hDE: o_opmask[`X87_MASK_M_FADDP_STI_ST0]= 1'b1;
+                8'hDF: o_opmask[`X87_MASK_M_FILD_M32]     = 1'b1;
+                default: o_opmask[`X87_MASK_M_RESERVED]   = 1'b1;
             endcase
         end else begin
             unique case (esc)
                 8'hD8: begin
                     unique case (o_reg)
-                        3'b000: o_opmask[stage_2_dec_decode_x87_pkg::M_FADD_ST0_STI]   = 1'b1;
-                        3'b001: o_opmask[stage_2_dec_decode_x87_pkg::M_FMUL_ST0_STI]   = 1'b1;
-                        3'b010: o_opmask[stage_2_dec_decode_x87_pkg::M_FCOM_STI]      = 1'b1;
-                        3'b011: o_opmask[stage_2_dec_decode_x87_pkg::M_FCOMP_STI]     = 1'b1;
-                        3'b100: o_opmask[stage_2_dec_decode_x87_pkg::M_FSUB_ST0_STI]  = 1'b1;
-                        3'b101: o_opmask[stage_2_dec_decode_x87_pkg::M_FSUBR_ST0_STI] = 1'b1;
-                        3'b110: o_opmask[stage_2_dec_decode_x87_pkg::M_FDIV_ST0_STI]  = 1'b1;
-                        default: o_opmask[stage_2_dec_decode_x87_pkg::M_FDIVR_ST0_STI] = 1'b1;
+                        3'b000: o_opmask[`X87_MASK_M_FADD_ST0_STI]   = 1'b1;
+                        3'b001: o_opmask[`X87_MASK_M_FMUL_ST0_STI]   = 1'b1;
+                        3'b010: o_opmask[`X87_MASK_M_FCOM_STI]      = 1'b1;
+                        3'b011: o_opmask[`X87_MASK_M_FCOMP_STI]     = 1'b1;
+                        3'b100: o_opmask[`X87_MASK_M_FSUB_ST0_STI]  = 1'b1;
+                        3'b101: o_opmask[`X87_MASK_M_FSUBR_ST0_STI] = 1'b1;
+                        3'b110: o_opmask[`X87_MASK_M_FDIV_ST0_STI]  = 1'b1;
+                        default: o_opmask[`X87_MASK_M_FDIVR_ST0_STI] = 1'b1;
                     endcase
                 end
                 8'hD9: begin
                     if (mr == 8'hD0)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FNOP] = 1'b1;
+                        o_opmask[`X87_MASK_M_FNOP] = 1'b1;
                     else if (mr == 8'hE0)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FCHS] = 1'b1;
+                        o_opmask[`X87_MASK_M_FCHS] = 1'b1;
                     else if (mr == 8'hE1)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FABS] = 1'b1;
+                        o_opmask[`X87_MASK_M_FABS] = 1'b1;
                     else if (mr == 8'hE4)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FTST] = 1'b1;
+                        o_opmask[`X87_MASK_M_FTST] = 1'b1;
                     else if (mr == 8'hE8)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FLD1] = 1'b1;
+                        o_opmask[`X87_MASK_M_FLD1] = 1'b1;
                     else if (mr == 8'hEE)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FLDZ] = 1'b1;
+                        o_opmask[`X87_MASK_M_FLDZ] = 1'b1;
                     else if (o_reg == 3'b000)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FLD_STI] = 1'b1;
+                        o_opmask[`X87_MASK_M_FLD_STI] = 1'b1;
                     else if (o_reg == 3'b001)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FXCH_STI] = 1'b1;
+                        o_opmask[`X87_MASK_M_FXCH_STI] = 1'b1;
                     else if (o_reg == 3'b010)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FST_STI] = 1'b1;
+                        o_opmask[`X87_MASK_M_FST_STI] = 1'b1;
                     else if (o_reg == 3'b011)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FSTP_STI] = 1'b1;
+                        o_opmask[`X87_MASK_M_FSTP_STI] = 1'b1;
                     else if (o_reg == 3'b100)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FFREE_STI] = 1'b1;
+                        o_opmask[`X87_MASK_M_FFREE_STI] = 1'b1;
                     else
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_RESERVED] = 1'b1;
+                        o_opmask[`X87_MASK_M_RESERVED] = 1'b1;
                 end
                 8'hDA: begin
-                    o_opmask[stage_2_dec_decode_x87_pkg::M_RESERVED] = 1'b1;
+                    o_opmask[`X87_MASK_M_RESERVED] = 1'b1;
                 end
                 8'hDB: begin
                     if (o_reg == 3'b111)
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FCOMIP_STI] = 1'b1;
+                        o_opmask[`X87_MASK_M_FCOMIP_STI] = 1'b1;
                     else
-                        o_opmask[stage_2_dec_decode_x87_pkg::M_FILD_M32] = 1'b1;
+                        o_opmask[`X87_MASK_M_FILD_M32] = 1'b1;
                 end
                 8'hDC: begin
                     unique case (o_reg)
-                        3'b000: o_opmask[stage_2_dec_decode_x87_pkg::M_FADD_ST0_STI]   = 1'b1;
-                        3'b001: o_opmask[stage_2_dec_decode_x87_pkg::M_FMUL_ST0_STI]   = 1'b1;
-                        3'b010: o_opmask[stage_2_dec_decode_x87_pkg::M_FCOM_STI]      = 1'b1;
-                        3'b011: o_opmask[stage_2_dec_decode_x87_pkg::M_FCOMP_STI]     = 1'b1;
-                        3'b100: o_opmask[stage_2_dec_decode_x87_pkg::M_FSUB_ST0_STI]  = 1'b1;
-                        3'b101: o_opmask[stage_2_dec_decode_x87_pkg::M_FSUBR_ST0_STI] = 1'b1;
-                        3'b110: o_opmask[stage_2_dec_decode_x87_pkg::M_FDIV_ST0_STI]  = 1'b1;
-                        default: o_opmask[stage_2_dec_decode_x87_pkg::M_FDIVR_ST0_STI] = 1'b1;
+                        3'b000: o_opmask[`X87_MASK_M_FADD_ST0_STI]   = 1'b1;
+                        3'b001: o_opmask[`X87_MASK_M_FMUL_ST0_STI]   = 1'b1;
+                        3'b010: o_opmask[`X87_MASK_M_FCOM_STI]      = 1'b1;
+                        3'b011: o_opmask[`X87_MASK_M_FCOMP_STI]     = 1'b1;
+                        3'b100: o_opmask[`X87_MASK_M_FSUB_ST0_STI]  = 1'b1;
+                        3'b101: o_opmask[`X87_MASK_M_FSUBR_ST0_STI] = 1'b1;
+                        3'b110: o_opmask[`X87_MASK_M_FDIV_ST0_STI]  = 1'b1;
+                        default: o_opmask[`X87_MASK_M_FDIVR_ST0_STI] = 1'b1;
                     endcase
                 end
                 8'hDD: begin
                     unique case (o_reg)
-                        3'b000: o_opmask[stage_2_dec_decode_x87_pkg::M_FLD_STI]  = 1'b1;
-                        3'b001: o_opmask[stage_2_dec_decode_x87_pkg::M_FXCH_STI] = 1'b1;
-                        3'b010: o_opmask[stage_2_dec_decode_x87_pkg::M_FST_STI]  = 1'b1;
-                        3'b011: o_opmask[stage_2_dec_decode_x87_pkg::M_FSTP_STI] = 1'b1;
-                        3'b100: o_opmask[stage_2_dec_decode_x87_pkg::M_FFREE_STI]= 1'b1;
-                        3'b110: o_opmask[stage_2_dec_decode_x87_pkg::M_FCOMIP_STI]= 1'b1;
-                        default: o_opmask[stage_2_dec_decode_x87_pkg::M_RESERVED] = 1'b1;
+                        3'b000: o_opmask[`X87_MASK_M_FLD_STI]  = 1'b1;
+                        3'b001: o_opmask[`X87_MASK_M_FXCH_STI] = 1'b1;
+                        3'b010: o_opmask[`X87_MASK_M_FST_STI]  = 1'b1;
+                        3'b011: o_opmask[`X87_MASK_M_FSTP_STI] = 1'b1;
+                        3'b100: o_opmask[`X87_MASK_M_FFREE_STI]= 1'b1;
+                        3'b110: o_opmask[`X87_MASK_M_FCOMIP_STI]= 1'b1;
+                        default: o_opmask[`X87_MASK_M_RESERVED] = 1'b1;
                     endcase
                 end
                 8'hDE: begin
                     unique case (o_reg)
-                        3'b000: o_opmask[stage_2_dec_decode_x87_pkg::M_FADDP_STI_ST0]  = 1'b1;
-                        3'b001: o_opmask[stage_2_dec_decode_x87_pkg::M_FMULP_STI_ST0]  = 1'b1;
-                        3'b010: o_opmask[stage_2_dec_decode_x87_pkg::M_FCOMP_STI]     = 1'b1;
-                        3'b011: o_opmask[stage_2_dec_decode_x87_pkg::M_FCOMIP_STI]    = 1'b1;
-                        3'b100: o_opmask[stage_2_dec_decode_x87_pkg::M_FSUBP_STI_ST0] = 1'b1;
-                        3'b101: o_opmask[stage_2_dec_decode_x87_pkg::M_FSUBRP_STI_ST0]= 1'b1;
-                        3'b110: o_opmask[stage_2_dec_decode_x87_pkg::M_FDIVP_STI_ST0] = 1'b1;
-                        default: o_opmask[stage_2_dec_decode_x87_pkg::M_FDIVRP_STI_ST0]= 1'b1;
+                        3'b000: o_opmask[`X87_MASK_M_FADDP_STI_ST0]  = 1'b1;
+                        3'b001: o_opmask[`X87_MASK_M_FMULP_STI_ST0]  = 1'b1;
+                        3'b010: o_opmask[`X87_MASK_M_FCOMP_STI]     = 1'b1;
+                        3'b011: o_opmask[`X87_MASK_M_FCOMIP_STI]    = 1'b1;
+                        3'b100: o_opmask[`X87_MASK_M_FSUBP_STI_ST0] = 1'b1;
+                        3'b101: o_opmask[`X87_MASK_M_FSUBRP_STI_ST0]= 1'b1;
+                        3'b110: o_opmask[`X87_MASK_M_FDIVP_STI_ST0] = 1'b1;
+                        default: o_opmask[`X87_MASK_M_FDIVRP_STI_ST0]= 1'b1;
                     endcase
                 end
                 8'hDF: begin
                     unique case (o_reg)
-                        3'b000: o_opmask[stage_2_dec_decode_x87_pkg::M_FILD_M32]  = 1'b1;
-                        3'b001: o_opmask[stage_2_dec_decode_x87_pkg::M_FISTP_M32] = 1'b1;
-                        default: o_opmask[stage_2_dec_decode_x87_pkg::M_RESERVED] = 1'b1;
+                        3'b000: o_opmask[`X87_MASK_M_FILD_M32]  = 1'b1;
+                        3'b001: o_opmask[`X87_MASK_M_FISTP_M32] = 1'b1;
+                        default: o_opmask[`X87_MASK_M_RESERVED] = 1'b1;
                     endcase
                 end
-                default: o_opmask[stage_2_dec_decode_x87_pkg::M_RESERVED] = 1'b1;
+                default: o_opmask[`X87_MASK_M_RESERVED] = 1'b1;
             endcase
         end
     end

@@ -9,6 +9,8 @@ description: This module implements stage_3_exe_execute_unit.
 // 译码/微码侧通过选择信号驱动各簇；此处为直连端口便于 SoC 集成
 // ============================================================================
 
+`include "openx86_defs.h.sv"
+
 module stage_3_exe_execute_unit (
 
     // --- AGU ---
@@ -579,190 +581,190 @@ module stage_3_exe_execute_unit (
         if (i_int_valid) begin
             // 主分派：按 int_op 选通各子模块输出并计算 CF/AF/ZF
             unique case (i_int_op)
-                stage_3_exe_execute_unit_pkg::INT_ADD: begin
+                `EXE_INT_ADD: begin
                     o_int_result = int_add_res;
                     o_int_cf = add_cf(i_int_a, i_int_b, 1'b0);
                     o_int_af = add_af(i_int_a, i_int_b, 1'b0);
                 end
-                stage_3_exe_execute_unit_pkg::INT_ADC: begin
+                `EXE_INT_ADC: begin
                     o_int_result = int_adc_res;
                     o_int_cf = add_cf(i_int_a, i_int_b, i_int_cf);
                     o_int_af = add_af(i_int_a, i_int_b, i_int_cf);
                 end
-                stage_3_exe_execute_unit_pkg::INT_SUB: begin
+                `EXE_INT_SUB: begin
                     o_int_result = int_sub_res;
                     o_int_cf = sub_cf(i_int_a, i_int_b, 1'b0);
                     o_int_af = sub_af(i_int_a, i_int_b, 1'b0);
                 end
-                stage_3_exe_execute_unit_pkg::INT_SBB: begin
+                `EXE_INT_SBB: begin
                     o_int_result = int_sbb_res;
                     o_int_cf = sub_cf(i_int_a, i_int_b, i_int_cf);
                     o_int_af = sub_af(i_int_a, i_int_b, i_int_cf);
                 end
-                stage_3_exe_execute_unit_pkg::INT_AND: begin
+                `EXE_INT_AND: begin
                     o_int_result = int_and_res;
                     o_int_cf = 1'b0;
                     o_int_af = 1'b0;
                 end
-                stage_3_exe_execute_unit_pkg::INT_OR:  begin
+                `EXE_INT_OR:  begin
                     o_int_result = int_or_res;
                     o_int_cf = 1'b0;
                     o_int_af = 1'b0;
                 end
-                stage_3_exe_execute_unit_pkg::INT_XOR: begin
+                `EXE_INT_XOR: begin
                     o_int_result = int_xor_res;
                     o_int_cf = 1'b0;
                     o_int_af = 1'b0;
                 end
-                stage_3_exe_execute_unit_pkg::INT_NOT: o_int_result = int_not_res;
-                stage_3_exe_execute_unit_pkg::INT_NEG: begin
+                `EXE_INT_NOT: o_int_result = int_not_res;
+                `EXE_INT_NEG: begin
                     o_int_result = int_neg_res;
                     o_int_cf = (i_int_a != 32'd0);
                     o_int_af = sub_af(32'd0, i_int_a, 1'b0);
                 end
-                stage_3_exe_execute_unit_pkg::INT_INC: begin
+                `EXE_INT_INC: begin
                     o_int_result = int_inc_res;
                     o_int_af = add_af(i_int_a, 32'd1, 1'b0);
                 end
-                stage_3_exe_execute_unit_pkg::INT_DEC: begin
+                `EXE_INT_DEC: begin
                     o_int_result = int_dec_res;
                     o_int_af = sub_af(i_int_a, 32'd1, 1'b0);
                 end
-                stage_3_exe_execute_unit_pkg::INT_SHL: begin
+                `EXE_INT_SHL: begin
                     o_int_result = int_shl_res;
                     if (i_int_count[ 4: 0] != 5'd0)
                         o_int_cf = i_int_a[32 - i_int_count[ 4: 0]];
                 end
-                stage_3_exe_execute_unit_pkg::INT_SHR: begin
+                `EXE_INT_SHR: begin
                     o_int_result = int_shr_res;
                     if (i_int_count[ 4: 0] != 5'd0)
                         o_int_cf = i_int_a[i_int_count[ 4: 0] - 5'd1];
                 end
-                stage_3_exe_execute_unit_pkg::INT_SAR: begin
+                `EXE_INT_SAR: begin
                     o_int_result = int_sar_res;
                     if (i_int_count[ 4: 0] != 5'd0)
                         o_int_cf = i_int_a[i_int_count[ 4: 0] - 5'd1];
                 end
-                stage_3_exe_execute_unit_pkg::INT_SHLD: begin
+                `EXE_INT_SHLD: begin
                     o_int_result = int_shld_res;
                     if (i_int_count[ 4: 0] != 5'd0)
                         o_int_cf = i_int_a[32 - i_int_count[ 4: 0]];
                 end
-                stage_3_exe_execute_unit_pkg::INT_SHRD: begin
+                `EXE_INT_SHRD: begin
                     o_int_result = int_shrd_res;
                     if (i_int_count[ 4: 0] != 5'd0)
                         o_int_cf = i_int_a[i_int_count[ 4: 0] - 5'd1];
                 end
-                stage_3_exe_execute_unit_pkg::INT_ROL: begin
+                `EXE_INT_ROL: begin
                     o_int_result = int_rol_res;
                     if (i_int_count[ 4: 0] != 5'd0)
                         o_int_cf = int_rol_res[0];
                 end
-                stage_3_exe_execute_unit_pkg::INT_ROR: begin
+                `EXE_INT_ROR: begin
                     o_int_result = int_ror_res;
                     if (i_int_count[ 4: 0] != 5'd0)
                         o_int_cf = int_ror_res[31];
                 end
-                stage_3_exe_execute_unit_pkg::INT_RCL: begin
+                `EXE_INT_RCL: begin
                     o_int_result = int_rcl_res;
                     o_int_cf = int_rcl_cf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_RCR: begin
+                `EXE_INT_RCR: begin
                     o_int_result = int_rcr_res;
                     o_int_cf = int_rcr_cf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_BSF: begin
+                `EXE_INT_BSF: begin
                     o_int_result = int_bsf_res;
                     o_int_zf = int_bsf_zf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_BSR: begin
+                `EXE_INT_BSR: begin
                     o_int_result = int_bsr_res;
                     o_int_zf = int_bsr_zf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_BT: begin
+                `EXE_INT_BT: begin
                     o_int_result = int_bt_res;
                     o_int_cf = int_bt_cf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_BTS: begin
+                `EXE_INT_BTS: begin
                     o_int_result = int_bts_res;
                     o_int_cf = int_bts_cf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_BTR: begin
+                `EXE_INT_BTR: begin
                     o_int_result = int_btr_res;
                     o_int_cf = int_btr_cf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_BTC: begin
+                `EXE_INT_BTC: begin
                     o_int_result = int_btc_res;
                     o_int_cf = int_btc_cf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_BSWAP: o_int_result = int_bswap_res;
-                stage_3_exe_execute_unit_pkg::INT_AAA: begin
+                `EXE_INT_BSWAP: o_int_result = int_bswap_res;
+                `EXE_INT_AAA: begin
                     o_int_result = int_aaa_res;
                     o_int_cf = int_aaa_cf;
                     o_int_af = int_aaa_af;
                 end
-                stage_3_exe_execute_unit_pkg::INT_AAS: begin
+                `EXE_INT_AAS: begin
                     o_int_result = int_aas_res;
                     o_int_cf = int_aas_cf;
                     o_int_af = int_aas_af;
                 end
-                stage_3_exe_execute_unit_pkg::INT_DAA: begin
+                `EXE_INT_DAA: begin
                     o_int_result = int_daa_res;
                     o_int_cf = int_daa_cf;
                     o_int_af = int_daa_af;
                 end
-                stage_3_exe_execute_unit_pkg::INT_DAS: begin
+                `EXE_INT_DAS: begin
                     o_int_result = int_das_res;
                     o_int_cf = int_das_cf;
                     o_int_af = int_das_af;
                 end
-                stage_3_exe_execute_unit_pkg::INT_AAD: o_int_result = int_aad_res;
-                stage_3_exe_execute_unit_pkg::INT_AAM: o_int_result = int_aam_res;
-                stage_3_exe_execute_unit_pkg::INT_CBW: o_int_result = int_cbw_res;
-                stage_3_exe_execute_unit_pkg::INT_CDQ: o_int_result = int_cdq_res;
-                stage_3_exe_execute_unit_pkg::INT_MOVSX: o_int_result = int_movsx_res;
-                stage_3_exe_execute_unit_pkg::INT_MOVZX: o_int_result = int_movzx_res;
-                stage_3_exe_execute_unit_pkg::INT_CLC: o_int_result = int_flag_status_res;
-                stage_3_exe_execute_unit_pkg::INT_STC: o_int_result = int_flag_status_res;
-                stage_3_exe_execute_unit_pkg::INT_CMC: o_int_result = int_flag_status_res;
-                stage_3_exe_execute_unit_pkg::INT_CLD: o_int_result = int_flag_status_res;
-                stage_3_exe_execute_unit_pkg::INT_STD: o_int_result = int_flag_status_res;
-                stage_3_exe_execute_unit_pkg::INT_CLI: o_int_result = int_flag_status_res;
-                stage_3_exe_execute_unit_pkg::INT_STI: o_int_result = int_flag_status_res;
-                stage_3_exe_execute_unit_pkg::INT_LAHF: o_int_result = int_lahf_res;
-                stage_3_exe_execute_unit_pkg::INT_SAHF: o_int_result = int_sahf_res;
-                stage_3_exe_execute_unit_pkg::INT_XCHG: o_int_result = int_xchg_res;
-                stage_3_exe_execute_unit_pkg::INT_XADD: o_int_result = int_xadd_res;
-                stage_3_exe_execute_unit_pkg::INT_CMPXCHG: begin
+                `EXE_INT_AAD: o_int_result = int_aad_res;
+                `EXE_INT_AAM: o_int_result = int_aam_res;
+                `EXE_INT_CBW: o_int_result = int_cbw_res;
+                `EXE_INT_CDQ: o_int_result = int_cdq_res;
+                `EXE_INT_MOVSX: o_int_result = int_movsx_res;
+                `EXE_INT_MOVZX: o_int_result = int_movzx_res;
+                `EXE_INT_CLC: o_int_result = int_flag_status_res;
+                `EXE_INT_STC: o_int_result = int_flag_status_res;
+                `EXE_INT_CMC: o_int_result = int_flag_status_res;
+                `EXE_INT_CLD: o_int_result = int_flag_status_res;
+                `EXE_INT_STD: o_int_result = int_flag_status_res;
+                `EXE_INT_CLI: o_int_result = int_flag_status_res;
+                `EXE_INT_STI: o_int_result = int_flag_status_res;
+                `EXE_INT_LAHF: o_int_result = int_lahf_res;
+                `EXE_INT_SAHF: o_int_result = int_sahf_res;
+                `EXE_INT_XCHG: o_int_result = int_xchg_res;
+                `EXE_INT_XADD: o_int_result = int_xadd_res;
+                `EXE_INT_CMPXCHG: begin
                     o_int_result = int_cmpxchg_res;
                     o_int_zf = int_cmpxchg_zf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_SETCC: o_int_result = int_setcc_res;
-                stage_3_exe_execute_unit_pkg::INT_ARPL: begin
+                `EXE_INT_SETCC: o_int_result = int_setcc_res;
+                `EXE_INT_ARPL: begin
                     o_int_result = int_arpl_res;
                     o_int_zf = int_arpl_zf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_LAR: begin
+                `EXE_INT_LAR: begin
                     o_int_result = int_lar_res;
                     o_int_zf = int_lar_zf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_LSL: begin
+                `EXE_INT_LSL: begin
                     o_int_result = int_lsl_res;
                     o_int_zf = int_lsl_zf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_VERR: begin
+                `EXE_INT_VERR: begin
                     o_int_result = 32'd0;
                     o_int_zf = int_verr_zf;
                 end
-                stage_3_exe_execute_unit_pkg::INT_STRIDX_STEP: o_int_result = int_stridx_step_res;
-                stage_3_exe_execute_unit_pkg::INT_IMUL_IMM: begin
+                `EXE_INT_STRIDX_STEP: o_int_result = int_stridx_step_res;
+                `EXE_INT_IMUL_IMM: begin
                     o_int_result = int_imul_imm_res;
                     o_int_cf = int_imul_imm_overflow;
                 end
-                stage_3_exe_execute_unit_pkg::INT_CLTS: o_int_result = int_clts_res;
-                stage_3_exe_execute_unit_pkg::INT_LMSW: o_int_result = int_lmsw_res;
-                stage_3_exe_execute_unit_pkg::INT_SMSW: o_int_result = int_smsw_res;
-                stage_3_exe_execute_unit_pkg::INT_LOOP_CTRL: begin
+                `EXE_INT_CLTS: o_int_result = int_clts_res;
+                `EXE_INT_LMSW: o_int_result = int_lmsw_res;
+                `EXE_INT_SMSW: o_int_result = int_smsw_res;
+                `EXE_INT_LOOP_CTRL: begin
                     o_int_result = int_loop_ctrl_res;
                     o_int_zf = int_loop_ctrl_taken;
                 end

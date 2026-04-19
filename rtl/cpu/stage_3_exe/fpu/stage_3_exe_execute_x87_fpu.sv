@@ -9,6 +9,8 @@ description: This module implements stage_3_exe_execute_x87_fpu.
 // 数值为 64 位有符号整数路径（可综合）；后续可替换为 IEEE754 软浮点
 // ============================================================================
 
+`include "openx86_defs.h.sv"
+
 module stage_3_exe_execute_x87_fpu (
     input  logic          i_valid,  // 操作有效
     input  logic [ 4: 0]   i_op,  // 乘除操作类型
@@ -51,115 +53,115 @@ module stage_3_exe_execute_x87_fpu (
         end else if (i_valid) begin
             // X87 子操作：更新物理寄存器堆与栈顶指针
             unique case (i_op)
-                stage_3_exe_execute_unit_pkg::X87_FLD: begin
+                `EXE_X87_FLD: begin
                     phys[top - 3'd1] <= i_push_data;
                     top <= top - 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FLD_STI: begin
+                `EXE_X87_FLD_STI: begin
                     phys[top - 3'd1] <= phys[px];
                     top <= top - 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FLD1: begin
+                `EXE_X87_FLD1: begin
                     phys[top - 3'd1] <= i_push_data;
                     top <= top - 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FLDZ: begin
+                `EXE_X87_FLDZ: begin
                     phys[top - 3'd1] <= i_push_data;
                     top <= top - 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FST: begin
+                `EXE_X87_FST: begin
                     phys[px] <= phys[p0];
                 end
-                stage_3_exe_execute_unit_pkg::X87_FSTP: begin
+                `EXE_X87_FSTP: begin
                     phys[px] <= phys[p0];
                     top <= top + 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FADD: begin
+                `EXE_X87_FADD: begin
                     phys[p0] <= phys[p0] + phys[px];
                 end
-                stage_3_exe_execute_unit_pkg::X87_FADDP: begin
+                `EXE_X87_FADDP: begin
                     phys[px] <= phys[px] + phys[p0];
                     top <= top + 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FSUB: begin
+                `EXE_X87_FSUB: begin
                     phys[p0] <= phys[p0] - phys[px];
                 end
-                stage_3_exe_execute_unit_pkg::X87_FSUBR: begin
+                `EXE_X87_FSUBR: begin
                     phys[p0] <= phys[px] - phys[p0];
                 end
-                stage_3_exe_execute_unit_pkg::X87_FSUBP: begin
+                `EXE_X87_FSUBP: begin
                     phys[px] <= phys[px] - phys[p0];
                     top <= top + 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FSUBRP: begin
+                `EXE_X87_FSUBRP: begin
                     phys[px] <= phys[p0] - phys[px];
                     top <= top + 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FMUL: begin
+                `EXE_X87_FMUL: begin
                     phys[p0] <= phys[p0] * phys[px];
                 end
-                stage_3_exe_execute_unit_pkg::X87_FMULP: begin
+                `EXE_X87_FMULP: begin
                     phys[px] <= phys[px] * phys[p0];
                     top <= top + 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FDIV: begin
+                `EXE_X87_FDIV: begin
                     if (phys[px] != 64'h0)
                         phys[p0] <= phys[p0] / phys[px];
                 end
-                stage_3_exe_execute_unit_pkg::X87_FDIVR: begin
+                `EXE_X87_FDIVR: begin
                     if (phys[p0] != 64'h0)
                         phys[p0] <= phys[px] / phys[p0];
                 end
-                stage_3_exe_execute_unit_pkg::X87_FDIVP: begin
+                `EXE_X87_FDIVP: begin
                     if (phys[p0] != 64'h0)
                         phys[px] <= phys[px] / phys[p0];
                     top <= top + 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FDIVRP: begin
+                `EXE_X87_FDIVRP: begin
                     if (phys[px] != 64'h0)
                         phys[px] <= phys[p0] / phys[px];
                     top <= top + 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FCHS: begin
+                `EXE_X87_FCHS: begin
                     phys[p0] <= -$signed(phys[p0]);
                 end
-                stage_3_exe_execute_unit_pkg::X87_FABS: begin
+                `EXE_X87_FABS: begin
                     phys[p0] <= ($signed(phys[p0]) < 64'sd0) ? -$signed(phys[p0]) : phys[p0];
                 end
-                stage_3_exe_execute_unit_pkg::X87_FXCH: begin
+                `EXE_X87_FXCH: begin
                     phys[p0] <= phys[px];
                     phys[px] <= phys[p0];
                 end
-                stage_3_exe_execute_unit_pkg::X87_FFREE: begin
+                `EXE_X87_FFREE: begin
                     phys[px] <= 64'h0;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FCOM: begin
+                `EXE_X87_FCOM: begin
                     zf_r <= (phys[p0] == phys[px]);
                     pf_r <= 1'b0;
                     cf_r <= ($signed(phys[p0]) < $signed(phys[px]));
                 end
-                stage_3_exe_execute_unit_pkg::X87_FCOMP: begin
-                    zf_r <= (phys[p0] == phys[px]);
-                    pf_r <= 1'b0;
-                    cf_r <= ($signed(phys[p0]) < $signed(phys[px]));
-                    top <= top + 3'd1;
-                end
-                stage_3_exe_execute_unit_pkg::X87_FCOMIP,
-                stage_3_exe_execute_unit_pkg::X87_FUCOMIP: begin
+                `EXE_X87_FCOMP: begin
                     zf_r <= (phys[p0] == phys[px]);
                     pf_r <= 1'b0;
                     cf_r <= ($signed(phys[p0]) < $signed(phys[px]));
                     top <= top + 3'd1;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FTST: begin
+                `EXE_X87_FCOMIP,
+                `EXE_X87_FUCOMIP: begin
+                    zf_r <= (phys[p0] == phys[px]);
+                    pf_r <= 1'b0;
+                    cf_r <= ($signed(phys[p0]) < $signed(phys[px]));
+                    top <= top + 3'd1;
+                end
+                `EXE_X87_FTST: begin
                     zf_r <= (phys[p0] == 64'h0);
                     pf_r <= 1'b0;
                     cf_r <= ($signed(phys[p0]) < 64'sd0);
                 end
-                stage_3_exe_execute_unit_pkg::X87_FNOP: begin
+                `EXE_X87_FNOP: begin
                     ;
                 end
-                stage_3_exe_execute_unit_pkg::X87_FCOMI: begin
+                `EXE_X87_FCOMI: begin
                     zf_r <= (phys[p0] == phys[px]);
                     pf_r <= 1'b0;
                     cf_r <= ($signed(phys[p0]) < $signed(phys[px]));

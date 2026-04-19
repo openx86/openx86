@@ -451,7 +451,7 @@ module w686_core (
     logic [31: 0] eu_md_out_lo;
     logic [31: 0] eu_md_out_hi;
     logic        eu_md_div0;
-    stage_3_exe_execute_unit_pkg::int_op_e     eu_int_op_sel;
+    logic [ 5: 0]     eu_int_op_sel;
     logic        eu_int_valid;
     logic [31: 0] eu_int_a;
     logic [31: 0] eu_int_b;
@@ -465,27 +465,27 @@ module w686_core (
 
     // 组合逻辑：按译码 one-hot 选择乘除单元操作（仅寄存器型 ModR/M=11）
     always_comb begin
-        eu_md_op  = stage_3_exe_execute_unit_pkg::MD_NOP;
+        eu_md_op  = `EXE_MD_NOP;
         eu_md_lo  = GPR_read_32[0];
         eu_md_hi  = GPR_read_32[2];
         eu_md_src = GPR_read_32[modrm_rm_field];
         if ( o_opcode_x86_MUL_acc_with_reg_mem && modrm_is_reg )
-            eu_md_op = stage_3_exe_execute_unit_pkg::MD_MULU32;
+            eu_md_op = `EXE_MD_MULU32;
         else if ( o_opcode_x86_IMUL_acc_with_reg_mem && modrm_is_reg )
-            eu_md_op = stage_3_exe_execute_unit_pkg::MD_IMUL32;
+            eu_md_op = `EXE_MD_IMUL32;
         else if ( o_opcode_x86_IMUL_reg_with_reg_mem && modrm2_is_reg ) begin
-            eu_md_op  = stage_3_exe_execute_unit_pkg::MD_IMUL32;
+            eu_md_op  = `EXE_MD_IMUL32;
             eu_md_lo  = GPR_read_32[cx_r_idx];
             eu_md_src = GPR_read_32[cx_rm_idx];
         end else if ( o_opcode_x86_DIV_acc_by_reg_mem && modrm_is_reg )
-            eu_md_op = stage_3_exe_execute_unit_pkg::MD_DIVU32;
+            eu_md_op = `EXE_MD_DIVU32;
         else if ( o_opcode_x86_IDIV_acc_by_reg_mem && modrm_is_reg )
-            eu_md_op = stage_3_exe_execute_unit_pkg::MD_IDIV32;
+            eu_md_op = `EXE_MD_IDIV32;
     end
 
     // 组合逻辑：译码 one-hot → 整数 EU 操作/源操作数/移位次数（供 stage_3_exe_execute_unit）
     always_comb begin
-        eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_NOP;
+        eu_int_op_sel = `EXE_INT_NOP;
         eu_int_valid  = 1'b0;
         eu_int_a      = 32'd0;
         eu_int_b      = 32'd0;
@@ -496,206 +496,206 @@ module w686_core (
         // 长链 if：每条为译码 one-hot +（多数 ALU 指令要求 ModR/M 寄存器模式 mod==11）
         if (o_opcode_x86_ADD_reg_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ADD;
+            eu_int_op_sel = `EXE_INT_ADD;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_ADD_reg_mem_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ADD;
+            eu_int_op_sel = `EXE_INT_ADD;
             eu_int_a      = GPR_read_32[modrm_reg_field];
             eu_int_b      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_ADD_imm_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ADD;
+            eu_int_op_sel = `EXE_INT_ADD;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_ADD_imm_to_acc) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ADD;
+            eu_int_op_sel = `EXE_INT_ADD;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_ADC_reg_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ADC;
+            eu_int_op_sel = `EXE_INT_ADC;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_ADC_reg_mem_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ADC;
+            eu_int_op_sel = `EXE_INT_ADC;
             eu_int_a      = GPR_read_32[modrm_reg_field];
             eu_int_b      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_ADC_imm_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ADC;
+            eu_int_op_sel = `EXE_INT_ADC;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_ADC_imm_to_acc) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ADC;
+            eu_int_op_sel = `EXE_INT_ADC;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_SUB_reg_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SUB;
+            eu_int_op_sel = `EXE_INT_SUB;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_SUB_reg_mem_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SUB;
+            eu_int_op_sel = `EXE_INT_SUB;
             eu_int_a      = GPR_read_32[modrm_reg_field];
             eu_int_b      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_SUB_imm_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SUB;
+            eu_int_op_sel = `EXE_INT_SUB;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_SUB_imm_to_acc) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SUB;
+            eu_int_op_sel = `EXE_INT_SUB;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_SBB_reg_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SBB;
+            eu_int_op_sel = `EXE_INT_SBB;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_SBB_reg_mem_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SBB;
+            eu_int_op_sel = `EXE_INT_SBB;
             eu_int_a      = GPR_read_32[modrm_reg_field];
             eu_int_b      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_SBB_imm_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SBB;
+            eu_int_op_sel = `EXE_INT_SBB;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_SBB_imm_to_acc) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SBB;
+            eu_int_op_sel = `EXE_INT_SBB;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_AND_reg_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AND;
+            eu_int_op_sel = `EXE_INT_AND;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_AND_reg_mem_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AND;
+            eu_int_op_sel = `EXE_INT_AND;
             eu_int_a      = GPR_read_32[modrm_reg_field];
             eu_int_b      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_AND_imm_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AND;
+            eu_int_op_sel = `EXE_INT_AND;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_AND_imm_to_acc) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AND;
+            eu_int_op_sel = `EXE_INT_AND;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_OR_reg_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_OR;
+            eu_int_op_sel = `EXE_INT_OR;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_OR_reg_mem_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_OR;
+            eu_int_op_sel = `EXE_INT_OR;
             eu_int_a      = GPR_read_32[modrm_reg_field];
             eu_int_b      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_OR_imm_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_OR;
+            eu_int_op_sel = `EXE_INT_OR;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_OR_imm_to_acc) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_OR;
+            eu_int_op_sel = `EXE_INT_OR;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_XOR_reg_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_XOR;
+            eu_int_op_sel = `EXE_INT_XOR;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_XOR_reg_mem_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_XOR;
+            eu_int_op_sel = `EXE_INT_XOR;
             eu_int_a      = GPR_read_32[modrm_reg_field];
             eu_int_b      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_XOR_imm_to_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_XOR;
+            eu_int_op_sel = `EXE_INT_XOR;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_XOR_imm_to_acc) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_XOR;
+            eu_int_op_sel = `EXE_INT_XOR;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_CMP_mem_with_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SUB;
+            eu_int_op_sel = `EXE_INT_SUB;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_CMP_reg_with_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SUB;
+            eu_int_op_sel = `EXE_INT_SUB;
             eu_int_a      = GPR_read_32[modrm_reg_field];
             eu_int_b      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_CMP_imm_with_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SUB;
+            eu_int_op_sel = `EXE_INT_SUB;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_CMP_imm_with_acc) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SUB;
+            eu_int_op_sel = `EXE_INT_SUB;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_TEST_reg_mem_and_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AND;
+            eu_int_op_sel = `EXE_INT_AND;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_TEST_imm_and_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AND;
+            eu_int_op_sel = `EXE_INT_AND;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_TEST_imm_and_acc) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AND;
+            eu_int_op_sel = `EXE_INT_AND;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_NOT_one_s_complement_negation && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_NOT;
+            eu_int_op_sel = `EXE_INT_NOT;
             eu_int_a      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_NEG_two_s_complement_negation && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_NEG;
+            eu_int_op_sel = `EXE_INT_NEG;
             eu_int_a      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_INC_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_INC;
+            eu_int_op_sel = `EXE_INT_INC;
             eu_int_a      = GPR_read_32[short_reg_idx];
         end else if (o_opcode_x86_DEC_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_DEC;
+            eu_int_op_sel = `EXE_INT_DEC;
             eu_int_a      = GPR_read_32[short_reg_idx];
         end else if (o_opcode_x86_INC_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_INC;
+            eu_int_op_sel = `EXE_INT_INC;
             eu_int_a      = GPR_read_32[modrm_rm_field];
         end else if (o_opcode_x86_DEC_reg_mem && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_DEC;
+            eu_int_op_sel = `EXE_INT_DEC;
             eu_int_a      = GPR_read_32[modrm_rm_field];
         end else if ((o_opcode_x86_RCL_reg_mem_by_1 || o_opcode_x86_RCL_reg_mem_by_CL || o_opcode_x86_RCL_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_RCL;
+            eu_int_op_sel = `EXE_INT_RCL;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             // 移位次数：单步为 1；否则取 CL 低 5 位或立即数字段低 5 位（下同 RCR/ROL/…）
             if (o_opcode_x86_RCL_reg_mem_by_1)
@@ -706,7 +706,7 @@ module w686_core (
                 eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_RCR_reg_mem_by_1 || o_opcode_x86_RCR_reg_mem_by_CL || o_opcode_x86_RCR_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_RCR;
+            eu_int_op_sel = `EXE_INT_RCR;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             if (o_opcode_x86_RCR_reg_mem_by_1)
                 eu_int_count = 32'd1;
@@ -716,7 +716,7 @@ module w686_core (
                 eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_ROL_reg_mem_by_1 || o_opcode_x86_ROL_reg_mem_by_CL || o_opcode_x86_ROL_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ROL;
+            eu_int_op_sel = `EXE_INT_ROL;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             if (o_opcode_x86_ROL_reg_mem_by_1)
                 eu_int_count = 32'd1;
@@ -726,7 +726,7 @@ module w686_core (
                 eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_ROR_reg_mem_by_1 || o_opcode_x86_ROR_reg_mem_by_CL || o_opcode_x86_ROR_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ROR;
+            eu_int_op_sel = `EXE_INT_ROR;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             if (o_opcode_x86_ROR_reg_mem_by_1)
                 eu_int_count = 32'd1;
@@ -736,7 +736,7 @@ module w686_core (
                 eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SHL_reg_mem_by_1 || o_opcode_x86_SHL_reg_mem_by_CL || o_opcode_x86_SHL_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SHL;
+            eu_int_op_sel = `EXE_INT_SHL;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             if (o_opcode_x86_SHL_reg_mem_by_1)
                 eu_int_count = 32'd1;
@@ -746,7 +746,7 @@ module w686_core (
                 eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SHR_reg_mem_by_1 || o_opcode_x86_SHR_reg_mem_by_CL || o_opcode_x86_SHR_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SHR;
+            eu_int_op_sel = `EXE_INT_SHR;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             if (o_opcode_x86_SHR_reg_mem_by_1)
                 eu_int_count = 32'd1;
@@ -756,7 +756,7 @@ module w686_core (
                 eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SAR_reg_mem_by_1 || o_opcode_x86_SAR_reg_mem_by_CL || o_opcode_x86_SAR_reg_mem_by_imm) && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SAR;
+            eu_int_op_sel = `EXE_INT_SAR;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             if (o_opcode_x86_SAR_reg_mem_by_1)
                 eu_int_count = 32'd1;
@@ -766,7 +766,7 @@ module w686_core (
                 eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SHLD_reg_mem_by_imm || o_opcode_x86_SHLD_reg_mem_by_CL) && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SHLD;
+            eu_int_op_sel = `EXE_INT_SHLD;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = GPR_read_32[modrm2_reg_field];
             if (o_opcode_x86_SHLD_reg_mem_by_CL)
@@ -775,7 +775,7 @@ module w686_core (
                 eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if ((o_opcode_x86_SHRD_reg_mem_by_imm || o_opcode_x86_SHRD_reg_mem_by_CL) && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SHRD;
+            eu_int_op_sel = `EXE_INT_SHRD;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = GPR_read_32[modrm2_reg_field];
             if (o_opcode_x86_SHRD_reg_mem_by_CL)
@@ -784,324 +784,324 @@ module w686_core (
                 eu_int_count = { 27'd0, o_immediate[ 4: 0] };
         end else if (o_opcode_x86_BSF_bit_scan_forward && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BSF;
+            eu_int_op_sel = `EXE_INT_BSF;
             eu_int_a      = GPR_read_32[cx_rm_idx];
         end else if (o_opcode_x86_BSR_bit_scan_reverse && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BSR;
+            eu_int_op_sel = `EXE_INT_BSR;
             eu_int_a      = GPR_read_32[cx_rm_idx];
         end else if (o_opcode_x86_BT_reg_mem_with_reg && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BT;
+            eu_int_op_sel = `EXE_INT_BT;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = GPR_read_32[modrm2_reg_field];
         end else if (o_opcode_x86_BT_reg_mem_with_imm && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BT;
+            eu_int_op_sel = `EXE_INT_BT;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_BTC_reg_mem_with_reg && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BTC;
+            eu_int_op_sel = `EXE_INT_BTC;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = GPR_read_32[modrm2_reg_field];
         end else if (o_opcode_x86_BTC_reg_mem_with_imm && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BTC;
+            eu_int_op_sel = `EXE_INT_BTC;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_BTR_reg_mem_with_reg && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BTR;
+            eu_int_op_sel = `EXE_INT_BTR;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = GPR_read_32[modrm2_reg_field];
         end else if (o_opcode_x86_BTR_reg_mem_with_imm && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BTR;
+            eu_int_op_sel = `EXE_INT_BTR;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_BTS_reg_mem_with_reg && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BTS;
+            eu_int_op_sel = `EXE_INT_BTS;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = GPR_read_32[modrm2_reg_field];
         end else if (o_opcode_x86_BTS_reg_mem_with_imm && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BTS;
+            eu_int_op_sel = `EXE_INT_BTS;
             eu_int_a      = GPR_read_32[modrm2_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_AAA_ASCII_adjust_after_add) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AAA;
+            eu_int_op_sel = `EXE_INT_AAA;
             eu_int_a      = GPR_read_32[0];
         end else if (o_opcode_x86_AAS_ASCII_adjust_after_sub) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AAS;
+            eu_int_op_sel = `EXE_INT_AAS;
             eu_int_a      = GPR_read_32[0];
         end else if (o_opcode_x86_DAA_decimal_adjust_AL_after_add) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_DAA;
+            eu_int_op_sel = `EXE_INT_DAA;
             eu_int_a      = GPR_read_32[0];
         end else if (o_opcode_x86_DAS_decimal_adjust_AL_after_sub) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_DAS;
+            eu_int_op_sel = `EXE_INT_DAS;
             eu_int_a      = GPR_read_32[0];
         end else if (o_opcode_x86_CLC_clear_carry_flag) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_CLC;
+            eu_int_op_sel = `EXE_INT_CLC;
             eu_int_a      = EFLAGS;
         end else if (o_opcode_x86_STC_set_carry_flag) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STC;
+            eu_int_op_sel = `EXE_INT_STC;
             eu_int_a      = EFLAGS;
         end else if (o_opcode_x86_CMC_complement_carry_flag) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_CMC;
+            eu_int_op_sel = `EXE_INT_CMC;
             eu_int_a      = EFLAGS;
         end else if (o_opcode_x86_CLD_clear_direction_flag) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_CLD;
+            eu_int_op_sel = `EXE_INT_CLD;
             eu_int_a      = EFLAGS;
         end else if (o_opcode_x86_STD_set_direction_flag) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STD;
+            eu_int_op_sel = `EXE_INT_STD;
             eu_int_a      = EFLAGS;
         end else if (o_opcode_x86_CLI_clear_interrupt_enable_flag) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_CLI;
+            eu_int_op_sel = `EXE_INT_CLI;
             eu_int_a      = EFLAGS;
         end else if (o_opcode_x86_STI_set_interrupt_enable_flag) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STI;
+            eu_int_op_sel = `EXE_INT_STI;
             eu_int_a      = EFLAGS;
         end else if (o_opcode_x86_CLTS_clear_task_switched_flag) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_CLTS;
+            eu_int_op_sel = `EXE_INT_CLTS;
             eu_int_a      = CR[0];
         end else if (o_opcode_x86_LAHF_load_FLAG_into_AH) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_LAHF;
+            eu_int_op_sel = `EXE_INT_LAHF;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = EFLAGS;
         end else if (o_opcode_x86_SAHF_store_AH_into_flags) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SAHF;
+            eu_int_op_sel = `EXE_INT_SAHF;
             eu_int_a      = EFLAGS;
             eu_int_b      = GPR_read_32[0];
         end else if (o_opcode_x86_AAD_ASCII_AX_before_div) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AAD;
+            eu_int_op_sel = `EXE_INT_AAD;
             eu_int_a      = GPR_read_32[0];
         end else if (o_opcode_x86_AAM_ASCII_AX_after_mul) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_AAM;
+            eu_int_op_sel = `EXE_INT_AAM;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_CBW_convert_byte_to_word || o_opcode_x86_CWDE_convert_word_to_double) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_CBW;
+            eu_int_op_sel = `EXE_INT_CBW;
             eu_int_a      = GPR_read_32[0];
         end else if (o_opcode_x86_CWD_convert_word_to_double || o_opcode_x86_CDQ_convert_double_word_to_quad_word) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_CDQ;
+            eu_int_op_sel = `EXE_INT_CDQ;
             eu_int_a      = GPR_read_32[0];
         end else if (o_opcode_x86_LODS_load_string_operand) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STRIDX_STEP;
+            eu_int_op_sel = `EXE_INT_STRIDX_STEP;
             eu_int_a      = GPR_read_32[6];
             eu_int_count  = { 31'd0, DF };
         end else if (o_opcode_x86_STOS_store_string_data) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STRIDX_STEP;
+            eu_int_op_sel = `EXE_INT_STRIDX_STEP;
             eu_int_a      = GPR_read_32[7];
             eu_int_count  = { 31'd0, DF };
         end else if (o_opcode_x86_MOVS_move_data_from_string_to_string) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STRIDX_STEP;
+            eu_int_op_sel = `EXE_INT_STRIDX_STEP;
             eu_int_a      = GPR_read_32[6];
             eu_int_count  = { 31'd0, DF };
         end else if (o_opcode_x86_CMPS_compare_string_operands) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STRIDX_STEP;
+            eu_int_op_sel = `EXE_INT_STRIDX_STEP;
             eu_int_a      = GPR_read_32[6];
             eu_int_count  = { 31'd0, DF };
         end else if (o_opcode_x86_SCAS_scan_string) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STRIDX_STEP;
+            eu_int_op_sel = `EXE_INT_STRIDX_STEP;
             eu_int_a      = GPR_read_32[7];
             eu_int_count  = { 31'd0, DF };
         end else if (o_opcode_x86_INS_input_from_DX_port) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STRIDX_STEP;
+            eu_int_op_sel = `EXE_INT_STRIDX_STEP;
             eu_int_a      = GPR_read_32[7];
             eu_int_count  = { 31'd0, DF };
         end else if (o_opcode_x86_OUTS_output_string) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_STRIDX_STEP;
+            eu_int_op_sel = `EXE_INT_STRIDX_STEP;
             eu_int_a      = GPR_read_32[6];
             eu_int_count  = { 31'd0, DF };
         end else if (o_opcode_x86_JCXZ_jump_on_CX_zero) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_LOOP_CTRL;
+            eu_int_op_sel = `EXE_INT_LOOP_CTRL;
             eu_int_a      = GPR_read_32[1];
             eu_int_b      = { 31'd0, ZF };
             eu_int_count  = { 30'd0, 2'b11 };
         end else if (o_opcode_x86_LOOP_count) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_LOOP_CTRL;
+            eu_int_op_sel = `EXE_INT_LOOP_CTRL;
             eu_int_a      = GPR_read_32[1];
             eu_int_b      = { 31'd0, ZF };
             eu_int_count  = { 30'd0, 2'b00 };
         end else if (o_opcode_x86_LOOPZ_count_while_zero) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_LOOP_CTRL;
+            eu_int_op_sel = `EXE_INT_LOOP_CTRL;
             eu_int_a      = GPR_read_32[1];
             eu_int_b      = { 31'd0, ZF };
             eu_int_count  = { 30'd0, 2'b01 };
         end else if (o_opcode_x86_LOOPNZ_count_while_not_zero) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_LOOP_CTRL;
+            eu_int_op_sel = `EXE_INT_LOOP_CTRL;
             eu_int_a      = GPR_read_32[1];
             eu_int_b      = { 31'd0, ZF };
             eu_int_count  = { 30'd0, 2'b10 };
         end else if (o_opcode_x86_IMUL_reg_mem_with_imm_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_IMUL_IMM;
+            eu_int_op_sel = `EXE_INT_IMUL_IMM;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = o_immediate;
         end else if (o_opcode_x86_LMSW_load_status_word && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_LMSW;
+            eu_int_op_sel = `EXE_INT_LMSW;
             eu_int_a      = CR[0];
             eu_int_b      = GPR_read_32[cx_rm_idx];
         end else if (o_opcode_x86_SMSW_store_machine_status_word && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SMSW;
+            eu_int_op_sel = `EXE_INT_SMSW;
             eu_int_a      = CR[0];
         end else if (o_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_MOVSX;
+            eu_int_op_sel = `EXE_INT_MOVSX;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_count  = { 29'd0, o_gen_reg_bit_width_from_mod_rm };
         end else if (o_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_MOVZX;
+            eu_int_op_sel = `EXE_INT_MOVZX;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_count  = { 29'd0, o_gen_reg_bit_width_from_mod_rm };
         end else if (o_opcode_x86_XCHG_reg_mem_with_reg && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_XCHG;
+            eu_int_op_sel = `EXE_INT_XCHG;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_XCHG_reg_with_acc_short && (short_reg_idx != 3'd0)) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_XCHG;
+            eu_int_op_sel = `EXE_INT_XCHG;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = GPR_read_32[short_reg_idx];
         end else if (o_opcode_x86_XADD_exchange_and_add && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_XADD;
+            eu_int_op_sel = `EXE_INT_XADD;
             eu_int_a      = GPR_read_32[cx_rm_idx];
             eu_int_b      = GPR_read_32[cx_r_idx];
         end else if (o_opcode_x86_CMPXCHG_compare_and_exchange && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_CMPXCHG;
+            eu_int_op_sel = `EXE_INT_CMPXCHG;
             eu_int_a      = GPR_read_32[0];
             eu_int_b      = GPR_read_32[cx_rm_idx];
             eu_int_count  = GPR_read_32[cx_r_idx];
         end else if (o_opcode_x86_SETcc_byte_set_on_condition && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_SETCC;
+            eu_int_op_sel = `EXE_INT_SETCC;
             eu_int_a      = EFLAGS;
             eu_int_count  = { 28'd0, o_tttn };
         end else if (o_opcode_x86_ARPL_adjust_RPL_field_of_selector && modrm_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_ARPL;
+            eu_int_op_sel = `EXE_INT_ARPL;
             eu_int_a      = GPR_read_32[modrm_rm_field];
             eu_int_b      = GPR_read_32[modrm_reg_field];
         end else if (o_opcode_x86_LAR_load_access_rights_byte && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_LAR;
+            eu_int_op_sel = `EXE_INT_LAR;
             eu_int_a      = GPR_read_32[cx_rm_idx];
         end else if (o_opcode_x86_LSL_load_segment_limit && modrm2_is_reg) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_LSL;
+            eu_int_op_sel = `EXE_INT_LSL;
             eu_int_a      = GPR_read_32[cx_rm_idx];
         end else if (o_opcode_x86_VERR_verify_a_segment_for_reading || o_opcode_x86_VERW_verify_a_segment_for_writing) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_VERR;
+            eu_int_op_sel = `EXE_INT_VERR;
             eu_int_a      = GPR_read_32[cx_rm_idx];
         end else if (o_opcode_x86_BSWAP_byte_swap) begin
             eu_int_valid  = 1'b1;
-            eu_int_op_sel = stage_3_exe_execute_unit_pkg::INT_BSWAP;
+            eu_int_op_sel = `EXE_INT_BSWAP;
             eu_int_a      = GPR_read_32[bswap_rd_n];
         end
     end
 
-    stage_3_exe_execute_unit_pkg::x87_op_e eu_x87_op_sel;
+    logic [ 4: 0] eu_x87_op_sel;
     // 组合逻辑：ESC 与 o_x87_opmask 译出具体 x87 微操作（送入 EU x87 通道）
     always_comb begin
-        eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_NOP;
+        eu_x87_op_sel = `EXE_X87_NOP;
         // 按译码生成的掩码优先级链式命中（先匹配的助记生效）
         if ( o_x87_is_esc ) begin
-            if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FADD_ST0_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FADD;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FMUL_ST0_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FMUL;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FSUB_ST0_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FSUB;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FSUBR_ST0_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FSUBR;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FDIV_ST0_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FDIV;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FDIVR_ST0_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FDIVR;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FXCH_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FXCH;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FLD_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FLD_STI;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FLD1] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FLD1;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FLDZ] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FLDZ;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FST_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FST;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FSTP_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FSTP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FFREE_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FFREE;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FCHS] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FCHS;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FABS] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FABS;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FCOM_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FCOM;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FCOMP_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FCOMP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FTST] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FTST;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FNOP] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FNOP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FADDP_STI_ST0] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FADDP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FMULP_STI_ST0] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FMULP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FSUBP_STI_ST0] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FSUBP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FSUBRP_STI_ST0] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FSUBRP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FDIVP_STI_ST0] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FDIVP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FDIVRP_STI_ST0] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FDIVRP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FCOMIP_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FCOMIP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FUCOMIP_STI] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FUCOMIP;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FLD_M32] || o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FILD_M32] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FLD;
-            else if ( o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FSTP_M32] || o_x87_opmask[stage_2_dec_decode_x87_pkg::M_FISTP_M32] )
-                eu_x87_op_sel = stage_3_exe_execute_unit_pkg::X87_FSTP;
+            if ( o_x87_opmask[`X87_MASK_M_FADD_ST0_STI] )
+                eu_x87_op_sel = `EXE_X87_FADD;
+            else if ( o_x87_opmask[`X87_MASK_M_FMUL_ST0_STI] )
+                eu_x87_op_sel = `EXE_X87_FMUL;
+            else if ( o_x87_opmask[`X87_MASK_M_FSUB_ST0_STI] )
+                eu_x87_op_sel = `EXE_X87_FSUB;
+            else if ( o_x87_opmask[`X87_MASK_M_FSUBR_ST0_STI] )
+                eu_x87_op_sel = `EXE_X87_FSUBR;
+            else if ( o_x87_opmask[`X87_MASK_M_FDIV_ST0_STI] )
+                eu_x87_op_sel = `EXE_X87_FDIV;
+            else if ( o_x87_opmask[`X87_MASK_M_FDIVR_ST0_STI] )
+                eu_x87_op_sel = `EXE_X87_FDIVR;
+            else if ( o_x87_opmask[`X87_MASK_M_FXCH_STI] )
+                eu_x87_op_sel = `EXE_X87_FXCH;
+            else if ( o_x87_opmask[`X87_MASK_M_FLD_STI] )
+                eu_x87_op_sel = `EXE_X87_FLD_STI;
+            else if ( o_x87_opmask[`X87_MASK_M_FLD1] )
+                eu_x87_op_sel = `EXE_X87_FLD1;
+            else if ( o_x87_opmask[`X87_MASK_M_FLDZ] )
+                eu_x87_op_sel = `EXE_X87_FLDZ;
+            else if ( o_x87_opmask[`X87_MASK_M_FST_STI] )
+                eu_x87_op_sel = `EXE_X87_FST;
+            else if ( o_x87_opmask[`X87_MASK_M_FSTP_STI] )
+                eu_x87_op_sel = `EXE_X87_FSTP;
+            else if ( o_x87_opmask[`X87_MASK_M_FFREE_STI] )
+                eu_x87_op_sel = `EXE_X87_FFREE;
+            else if ( o_x87_opmask[`X87_MASK_M_FCHS] )
+                eu_x87_op_sel = `EXE_X87_FCHS;
+            else if ( o_x87_opmask[`X87_MASK_M_FABS] )
+                eu_x87_op_sel = `EXE_X87_FABS;
+            else if ( o_x87_opmask[`X87_MASK_M_FCOM_STI] )
+                eu_x87_op_sel = `EXE_X87_FCOM;
+            else if ( o_x87_opmask[`X87_MASK_M_FCOMP_STI] )
+                eu_x87_op_sel = `EXE_X87_FCOMP;
+            else if ( o_x87_opmask[`X87_MASK_M_FTST] )
+                eu_x87_op_sel = `EXE_X87_FTST;
+            else if ( o_x87_opmask[`X87_MASK_M_FNOP] )
+                eu_x87_op_sel = `EXE_X87_FNOP;
+            else if ( o_x87_opmask[`X87_MASK_M_FADDP_STI_ST0] )
+                eu_x87_op_sel = `EXE_X87_FADDP;
+            else if ( o_x87_opmask[`X87_MASK_M_FMULP_STI_ST0] )
+                eu_x87_op_sel = `EXE_X87_FMULP;
+            else if ( o_x87_opmask[`X87_MASK_M_FSUBP_STI_ST0] )
+                eu_x87_op_sel = `EXE_X87_FSUBP;
+            else if ( o_x87_opmask[`X87_MASK_M_FSUBRP_STI_ST0] )
+                eu_x87_op_sel = `EXE_X87_FSUBRP;
+            else if ( o_x87_opmask[`X87_MASK_M_FDIVP_STI_ST0] )
+                eu_x87_op_sel = `EXE_X87_FDIVP;
+            else if ( o_x87_opmask[`X87_MASK_M_FDIVRP_STI_ST0] )
+                eu_x87_op_sel = `EXE_X87_FDIVRP;
+            else if ( o_x87_opmask[`X87_MASK_M_FCOMIP_STI] )
+                eu_x87_op_sel = `EXE_X87_FCOMIP;
+            else if ( o_x87_opmask[`X87_MASK_M_FUCOMIP_STI] )
+                eu_x87_op_sel = `EXE_X87_FUCOMIP;
+            else if ( o_x87_opmask[`X87_MASK_M_FLD_M32] || o_x87_opmask[`X87_MASK_M_FILD_M32] )
+                eu_x87_op_sel = `EXE_X87_FLD;
+            else if ( o_x87_opmask[`X87_MASK_M_FSTP_M32] || o_x87_opmask[`X87_MASK_M_FISTP_M32] )
+                eu_x87_op_sel = `EXE_X87_FSTP;
         end
     end
 
@@ -1110,8 +1110,8 @@ module w686_core (
     always_comb begin
         eu_x87_push_data = 64'd0;
         unique case (eu_x87_op_sel)
-            stage_3_exe_execute_unit_pkg::X87_FLD1: eu_x87_push_data = 64'd1;   // 常数 1 的整数位型占位（由 EU 解释）
-            stage_3_exe_execute_unit_pkg::X87_FLDZ: eu_x87_push_data = 64'd0;   // 常数 0
+            `EXE_X87_FLD1: eu_x87_push_data = 64'd1;   // 常数 1 的整数位型占位（由 EU 解释）
+            `EXE_X87_FLDZ: eu_x87_push_data = 64'd0;   // 常数 0
             default:  eu_x87_push_data = 64'd0;   // 非压栈常数指令：不关心
         endcase
     end
@@ -1281,7 +1281,7 @@ module w686_core (
         .o_int_af ( eu_int_af_out ),
         .o_int_zf ( eu_int_zf_out ),
         .i_x87_valid (
-            insn_fire & o_x87_is_esc & ( eu_x87_op_sel != stage_3_exe_execute_unit_pkg::X87_NOP ) & ~cpuid_busy & ~in_exception &
+            insn_fire & o_x87_is_esc & ( eu_x87_op_sel != `EXE_X87_NOP ) & ~cpuid_busy & ~in_exception &
             ~o_error & ~post486_illegal
         ),
         .i_x87_op ( eu_x87_op_sel ),
@@ -2031,8 +2031,8 @@ module w686_core (
                     write_data <= { GPR_read_32[0][31:  8], GPR_read_32[0][ 7: 0] };
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
-                end else if (o_x87_is_esc && (eu_x87_op_sel != stage_3_exe_execute_unit_pkg::X87_NOP)) begin
-                    if ((eu_x87_op_sel == stage_3_exe_execute_unit_pkg::X87_FCOMIP) || (eu_x87_op_sel == stage_3_exe_execute_unit_pkg::X87_FUCOMIP)) begin
+                end else if (o_x87_is_esc && (eu_x87_op_sel != `EXE_X87_NOP)) begin
+                    if ((eu_x87_op_sel == `EXE_X87_FCOMIP) || (eu_x87_op_sel == `EXE_X87_FUCOMIP)) begin
                         FLAGS_write_enable <= 1'b1;
                         FLAGS_write_data <= flags_with_cf_pf_zf(EFLAGS, eu_x87_cf, eu_x87_pf, eu_x87_zf);
                     end
