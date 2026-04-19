@@ -2,15 +2,15 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: stage_1_2_isc_dec — combinational bridge from IF (stage_1) to decode inputs.
+description: stage_1_2_ifu_dec — combinational bridge from IF (stage_1) to decode inputs.
 */
 // ============================================================================
-// stage_1_2_isc_dec
+// stage_1_2_ifu_dec
 // ----------------------------------------------------------------------------
-// Passes instruction window, ready, and segment fault from ISC to DEC.
+// Passes instruction window, ready, and segment fault from IFU to DEC.
 // ============================================================================
 
-module stage_1_2_isc_dec (
+module stage_1_2_ifu_dec (
     input  logic [15: 0][ 7: 0] i_instruction,
     input  logic          i_instruction_ready,
     input  logic          i_segment_fault,

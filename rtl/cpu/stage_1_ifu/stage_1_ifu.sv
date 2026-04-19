@@ -2,15 +2,15 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements stage_1_isc.
+description: This module implements stage_1_ifu.
 */
 // ============================================================================
-// stage_1_isc
+// stage_1_ifu
 // ----------------------------------------------------------------------------
-// Stage 1 (ISC / instruction fetch): wraps instruction fetch + MMU translation.
+// Stage 1 (IFU / instruction fetch): wraps instruction fetch + MMU translation.
 // ============================================================================
 
-module stage_1_isc (
+module stage_1_ifu (
     // ------------------------------------------------------------------------
     // Instruction fetch bus interface（取指总线：地址/数据/就绪握手）
     // ------------------------------------------------------------------------
@@ -54,7 +54,7 @@ module stage_1_isc (
 );
 
     // 取指 + 段/分页翻译封装
-    stage_1_isc_if_instruction_fetch u_if_instruction_fetch (
+    stage_1_ifu_if_instruction_fetch u_if_instruction_fetch (
         .o_code_vaild              ( o_code_vaild ),
         .i_code_ready              ( i_code_ready ),
         .o_code_address            ( o_code_address ),

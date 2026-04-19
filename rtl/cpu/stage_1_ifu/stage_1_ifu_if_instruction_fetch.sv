@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements stage_1_isc_if_instruction_fetch.
+description: This module implements stage_1_ifu_if_instruction_fetch.
 */
 // project: w80386dx
 // author: Chang Wei<changwei1006@gmail.com>
@@ -11,7 +11,7 @@ description: This module implements stage_1_isc_if_instruction_fetch.
 // description: instruction fetch module
 
 `include "openx86_defs.h.sv"
-module stage_1_isc_if_instruction_fetch (
+module stage_1_ifu_if_instruction_fetch (
     // 取指总线（对 BIU/存储子系统）
     output logic         o_code_vaild,
     input  logic          i_code_ready,
@@ -51,7 +51,7 @@ assign i_vaild = i_IP_vaild;
 
 // 请求段转换：在 IP 有效时根据当前 EIP 计算物理取指地址
 
-stage_1_isc_mmu_memory_management_unit #(
+mmu_memory_management_unit #(
     .read_from_fetch ( 1'b1 )
 ) instruction_fetch_memory_management_unit (
     .i_vaild ( i_vaild ),

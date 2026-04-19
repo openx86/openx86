@@ -8,7 +8,7 @@ description: This program block defines test behavior for control.
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: stage_1_isc_mmu_seg_gate_segment_descriptor_decode
+module: mmu_seg_gate_segment_descriptor_decode
 create at: 2021-10-23 13:43:22
 description: decode the segment register
 */
@@ -44,7 +44,7 @@ routines. The difference between interrupt gates and
 trap gates is that the interrupt gate disables interrupts (resets the IF bit) while the trap gate does not.
 */
 
-module stage_1_isc_mmu_seg_gate_segment_descriptor_decode (
+module mmu_seg_gate_segment_descriptor_decode (
     // 门描述符：选择子 + 偏移 + 类型/DPL/P 等（调用/中断/陷阱/任务门）
     output logic [15: 0] o_selector,
     output logic [31: 0] o_offset,

@@ -2,15 +2,15 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements stage_1_isc_mmu_pg_paging_unit.
+description: This module implements mmu_pg_paging_unit.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: stage_1_isc_mmu_pg_paging_unit
+module: mmu_pg_paging_unit
 create at: 2022-01-31 02:35:30
-description: stage_1_isc_mmu_pg_paging_unit (分页部件)
+description: mmu_pg_paging_unit (分页部件)
 
 4.5.2 Paging Organization
 4.5.2.1 PAGE MECHANISM
@@ -41,7 +41,7 @@ changes the value of CR0. (See 4.5.4 Translation
 Lookaside Buffer).
 */
 
-module stage_1_isc_mmu_pg_paging_unit (
+module mmu_pg_paging_unit (
     // 与 MMU 上级握手
     input  logic         i_vaild,
     output logic         o_ready,

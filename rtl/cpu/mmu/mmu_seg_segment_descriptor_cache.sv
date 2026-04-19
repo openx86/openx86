@@ -2,20 +2,20 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements stage_1_isc_mmu_seg_segment_descriptor_cache.
+description: This module implements mmu_seg_segment_descriptor_cache.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: stage_1_isc_mmu_seg_segment_descriptor_cache
+module: mmu_seg_segment_descriptor_cache
 create at: 2022-01-27 12:56:29
 description: segment_descriptor_cache
 */
 
 `include "openx86_defs.h.sv"
 
-module stage_1_isc_mmu_seg_segment_descriptor_cache (
+module mmu_seg_segment_descriptor_cache (
     input  logic         protect_enable,       // 1=保护模式：走描述符译码
     input  logic [15: 0] segment_selector,
     input  logic [63: 0] segment_descriptor,
@@ -53,7 +53,7 @@ logic        dec_code_conforming;
 logic        dec_code_readable;
 logic        dec_accessed;
 
-stage_1_isc_mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
+mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .o_base                                     ( dec_base ),
     .o_limit                                    ( dec_limit ),
     .o_date_or_code_present                     ( dec_present ),

@@ -279,7 +279,7 @@ module w686_core (
 
     assign ip_valid_to_fetch = ~exec_stall;
 
-    stage_1_isc u_stage_1_isc (
+    stage_1_ifu u_stage_1_ifu (
         .o_code_vaild ( code_vaild ),
         .i_code_ready ( code_ready ),
         .o_code_address ( code_address ),
@@ -303,7 +303,7 @@ module w686_core (
         .rst_n ( rst_n )
     );
 
-    stage_1_2_isc_dec u_stage_1_2_isc_dec (
+    stage_1_2_ifu_dec u_stage_1_2_ifu_dec (
         .i_instruction ( if_instruction ),
         .i_instruction_ready ( if_instruction_ready ),
         .i_segment_fault ( if_segment_fault_from_if ),

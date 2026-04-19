@@ -15,7 +15,7 @@ tb/chipset/i8254_pit_tb.sv
 tb/chipset/at24lc32_tb.sv
 tb/chipset/com_ns16550_tb.sv
 tb/device/ide/ide_controller_tb.sv
-tb/cpu/stage_1_isc/instruction_fetch_tb.sv
+tb/cpu/stage_1_ifu/instruction_fetch_tb.sv
 tb/cpu/stage_2_dec/decode_tb.sv
 tb/cpu/stage_2_dec/decode_opcode_x86_tb.sv
 tb/cpu/stage_3_exe/execute_unit_tb.sv

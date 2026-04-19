@@ -31,7 +31,7 @@ logic         segment_fault_unused;
 logic         mmu_bus_valid_unused;
 logic [31: 0] mmu_bus_addr_unused;
 
-stage_1_isc fetch_inst (
+stage_1_ifu fetch_inst (
     .o_code_vaild              ( bus_read_vaild ),
     .i_code_ready              ( bus_read_ready ),
     .o_code_address            ( bus_read_address ),

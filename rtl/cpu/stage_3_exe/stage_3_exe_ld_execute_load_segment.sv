@@ -70,7 +70,7 @@ logic        decode_code_conforming;
 logic        decode_code_readable;
 logic        decode_date_or_code_accessed;
 
-stage_1_isc_mmu_seg_segment_descriptor_encode u_segment_descriptor_encode (
+mmu_seg_segment_descriptor_encode u_segment_descriptor_encode (
     .base                                     ( encode_base ),
     .limit                                    ( encode_limit ),
     .present                                  ( encode_present ),
@@ -86,7 +86,7 @@ stage_1_isc_mmu_seg_segment_descriptor_encode u_segment_descriptor_encode (
     .descriptor                               ( encode_descriptor )
 );
 
-stage_1_isc_mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
+mmu_seg_segment_descriptor_decode u_segment_descriptor_decode (
     .o_base                                     ( decode_base ),
     .o_limit                                    ( decode_limit ),
     .o_date_or_code_present                     ( decode_present ),
