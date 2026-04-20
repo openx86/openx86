@@ -20,7 +20,7 @@ description: This module implements chip_at24lc32_eeprom.
 // - This is intended for simulation / simple FPGA integration, not a timing-accurate
 //   silicon model.
 // - External pull-up is expected on SDA/SCL; in TB, drive '1' for released.
-// - mem[] 不在本模块做上电/文件初始化；由 testbench 写入（如擦除态 0xFF）。
+// - memory[] 不在本模块做上电/文件初始化；由 testbench 写入（如擦除态 0xFF）。
 // ============================================================================
 
 module chip_at24lc32_eeprom #(
@@ -31,15 +31,15 @@ module chip_at24lc32_eeprom #(
     // ------------------------------------------------------------------------
     // I2C 总线引脚
     // ------------------------------------------------------------------------
-    input  logic i_scl,      // I2C 串行时钟（输入采样）
-    input  logic i_sda,    // I2C 串行数据
+    input  logic i_scl, // I2C 串行时钟（输入采样）
+    input  logic i_sda, // I2C 串行数据
     output logic o_sda_oe, // 1=开漏拉低 SDA，0=释放由上拉决定
 
     // ------------------------------------------------------------------------
     // 仿真/集成用系统时钟与复位
     // ------------------------------------------------------------------------
-    input  logic clk,    // 模块采样时钟
-    input  logic rst_n   // 异步低有效复位
+    input  logic clk, // 模块采样时钟
+    input  logic rst_n // 异步低有效复位
 );
 
     localparam int AW = $clog2(NUM_BYTES);
@@ -109,7 +109,7 @@ module chip_at24lc32_eeprom #(
         end
     endfunction
 
-    // 5.032：unpacked mem[] 在 NBA 中勿用函数返回值作下标；索引用 word_addr[AW-1:0]。
+    // 5.032：unpacked memory[] 在 NBA 中勿用函数返回值作下标；索引用 word_addr[AW-1:0]。
 
     // I2C 位/字节状态机：起停、ACK、读写与开漏 SDA 驱动。
     always_ff @(posedge clk) begin

@@ -17,32 +17,32 @@ module chip_i8042_ps2 #(
     parameter bit  USE_REAL_PS2 = 1'b0,   // 1：接真实 PS/2 PHY；0：仿真注入/引脚空闲模型
     parameter int CLK_HZ        = 50_000_000  // PHY 位时序参考时钟频率
 ) (
-    input  logic         i_cs_n,             // 低有效片选
-    input  logic         i_rd_n,           // 低有效读
-    input  logic         i_wr_n,           // 低有效写
-    input  logic         i_a0,             // 0=数据口 0x60，1=状态/命令 0x64
-    input  logic [ 7: 0] i_d,              // 写数据
-    output logic [ 7: 0] o_d,              // 读数据
-    input  logic         i_kbd_push,       // 仿真：键盘 FIFO 注入脉冲
-    input  logic [ 7: 0] i_kbd_data,       // 仿真：键盘注入字节
-    input  logic         i_aux_push,       // 仿真：AUX FIFO 注入脉冲
-    input  logic [ 7: 0] i_aux_data,       // 仿真：AUX 注入字节
-    output logic         o_kbd_irq,        // 键盘 OBF 中断请求
-    output logic         o_aux_irq,        // AUX OBF 中断请求
-    output logic         o_ps2_kbd_clk_out,// 键盘时钟线驱动数据（开漏模型）
+    input  logic         i_cs_n, // 低有效片选
+    input  logic         i_rd_n, // 低有效读
+    input  logic         i_wr_n, // 低有效写
+    input  logic         i_a0, // 0=数据口 0x60，1=状态/命令 0x64
+    input  logic [ 7: 0] i_d, // 写数据
+    output logic [ 7: 0] o_d, // 读数据
+    input  logic         i_kbd_push, // 仿真：键盘 FIFO 注入脉冲
+    input  logic [ 7: 0] i_kbd_data, // 仿真：键盘注入字节
+    input  logic         i_aux_push, // 仿真：AUX FIFO 注入脉冲
+    input  logic [ 7: 0] i_aux_data, // 仿真：AUX 注入字节
+    output logic         o_kbd_irq, // 键盘 OBF 中断请求
+    output logic         o_aux_irq, // AUX OBF 中断请求
+    output logic         o_ps2_kbd_clk_out, // 键盘时钟线驱动数据（开漏模型）
     output logic         o_ps2_kbd_clk_oe, // 键盘时钟输出使能（1=拉低驱动）
     input  logic         i_ps2_kbd_clk_in, // 键盘时钟总线回读
-    output logic         o_ps2_kbd_dat_out,// 键盘数据线驱动数据
+    output logic         o_ps2_kbd_dat_out, // 键盘数据线驱动数据
     output logic         o_ps2_kbd_dat_oe, // 键盘数据输出使能
     input  logic         i_ps2_kbd_dat_in, // 键盘数据总线回读
-    output logic         o_ps2_aux_clk_out,// 鼠标时钟线驱动
-    output logic         o_ps2_aux_clk_oe,
-    input  logic         i_ps2_aux_clk_in,
-    output logic         o_ps2_aux_dat_out,
-    output logic         o_ps2_aux_dat_oe,
+    output logic         o_ps2_aux_clk_out, // 鼠标时钟线驱动
+    output logic         o_ps2_aux_clk_oe, // 时钟信号
+    input  logic         i_ps2_aux_clk_in, // 时钟信号
+    output logic         o_ps2_aux_dat_out, // 输出信号
+    output logic         o_ps2_aux_dat_oe, // 输出信号
     input  logic         i_ps2_aux_dat_in, // 鼠标数据总线回读
-    input  logic         clk,            // 系统时钟
-    input  logic         rst_n           // 异步低有效复位
+    input  logic         clk, // 系统时钟
+    input  logic         rst_n // 异步低有效复位
 );
 
     logic wr;

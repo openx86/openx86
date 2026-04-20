@@ -13,17 +13,17 @@ description: This module implements chip_8254_pit.
 // ============================================================================
 
 module chip_8254_pit (
-    input  logic         i_cs_n,      // 低有效片选
-    input  logic         i_rd_n,      // 低有效读
-    input  logic         i_wr_n,      // 低有效写
-    input  logic [ 1: 0] i_a,         // 2'b11=控制字，其它=通道 0..2
-    input  logic [ 7: 0] i_d,         // 写数据
-    output logic [ 7: 0] o_d,         // 读数据
-    output logic         o_out0,      // 通道 0 OUT（常用接 IRQ0）
-    output logic         o_out1,      // 通道 1 OUT
-    output logic         o_out2,      // 通道 2 OUT
-    input  logic         rst_n,     // 异步低有效复位
-    input  logic         clk         // 系统时钟（计数在此域递减）
+    input  logic         i_cs_n, // 低有效片选
+    input  logic         i_rd_n, // 低有效读
+    input  logic         i_wr_n, // 低有效写
+    input  logic [ 1: 0] i_a, // 2'b11=控制字，其它=通道 0..2
+    input  logic [ 7: 0] i_d, // 写数据
+    output logic [ 7: 0] o_d, // 读数据
+    output logic         o_out0, // 通道 0 OUT（常用接 IRQ0）
+    output logic         o_out1, // 通道 1 OUT
+    output logic         o_out2, // 通道 2 OUT
+    input  logic         rst_n, // 异步低有效复位
+    input  logic         clk // 系统时钟（计数在此域递减）
 );
 
     localparam logic [ 2: 0] LP_MODE0 = 3'd0;
