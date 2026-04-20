@@ -19,8 +19,6 @@ rtl/common/simple_dual_port_ram.sv
 rtl/common/single_port_ram.sv
 rtl/common/single_port_rom.sv
 rtl/common/true_dual_port_ram.sv
-rtl/cpu/stage_2_dec/stage_2_dec_decode_x87_pkg.sv
-rtl/cpu/stage_3_exe/ctrl/stage_3_exe_execute_unit_pkg.sv
 rtl/cpu/stage_1_2_ifu_dec/stage_1_2_ifu_dec.sv
 rtl/cpu/stage_2_3_dec_exe/stage_2_3_dec_exe.sv
 rtl/cpu/stage_3_4_exe_mem/stage_3_4_exe_mem.sv
