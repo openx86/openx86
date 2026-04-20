@@ -6,7 +6,7 @@ description: This module implements sdram_x16_stub.
 */
 // ============================================================================
 // 16-bit SDRAM 阵列仿真模型（与 sdram_controller 配套）
-// - 写：根据 ACT 锁存行，在 WR AP 后随 host_dq_oe 两拍写入 {mem[lin], mem[lin+1]}
+// - 写：根据 ACT 锁存行，在 WR AP 后随 host_dq_oe 两拍写入 {memory[lin], memory[lin+1]}
 // - 读：在 RD AP 后经 CAS 延迟在 model_dq 上驱动两拍 16-bit 数据
 // linear_halfword = {row[12: 0], bank[ 1: 0], col[ 7: 0]}
 // ============================================================================
