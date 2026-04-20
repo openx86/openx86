@@ -38,31 +38,31 @@ module sdram_controller #(
     // Refresh period cycles (typical: 7.8us -> 390 cycles @ 50MHz)
     parameter int REFRESH_CYCLES = 390
 ) (
-    input  logic          clk,            // 控制器与 SDRAM 同频系统时钟
-    input  logic          rst_n,          // 异步低有效复位：初始化 FSM 与输出
+    input  logic          clk, // 控制器与 SDRAM 同频系统时钟
+    input  logic          rst_n, // 异步低有效复位：初始化 FSM 与输出
 
     // Host (SoC 中仅由 bus_controller 的 o_sdram_* 驱动；CPU 经 bus_controller 访问)
-    input  logic          i_en,           // 主机请求：与握手配合发起一次 32b 访问
-    input  logic          i_we,           // 1=写，0=读（在 i_en 有效时锁存）
-    input  logic [23: 0] i_addr_off,      // 字节窗口内偏移（映射见文件头；半字地址由高位推导）
-    input  logic [31: 0] i_wdata,         // 写数据（32b，分两拍 16b 下发到 DQ）
-    output logic [31: 0] o_rdata,        // 读回数据（两拍 16b 拼成）
-    output logic         o_ready,        // 单周期完成脉冲：事务结束可接受新请求
-    output logic         o_busy,         // 非空闲：初始化/刷新/传输任一进行中
+    input  logic          i_en, // 主机请求：与握手配合发起一次 32b 访问
+    input  logic          i_we, // 1=写，0=读（在 i_en 有效时锁存）
+    input  logic [23: 0] i_addr_off, // 字节窗口内偏移（映射见文件头；半字地址由高位推导）
+    input  logic [31: 0] i_wdata, // 写数据（32b，分两拍 16b 下发到 DQ）
+    output logic [31: 0] o_rdata, // 读回数据（两拍 16b 拼成）
+    output logic         o_ready, // 单周期完成脉冲：事务结束可接受新请求
+    output logic         o_busy, // 非空闲：初始化/刷新/传输任一进行中
 
     // SDRAM PHY
-    output logic         o_sdram_clk,    // 送至器件的时钟（本实现直连 clk）
-    output logic         o_sdram_cke,    // 时钟使能（常 1）
-    output logic         o_sdram_cs_n,   // 片选#（与 RAS/CAS/WE 组成命令）
-    output logic         o_sdram_ras_n,  // 行地址选通#
-    output logic         o_sdram_cas_n,  // 列地址选通#
-    output logic         o_sdram_we_n,   // 写使能#
-    output logic [ 1: 0] o_sdram_ba,     // Bank 选择
-    output logic [12: 0] o_sdram_a,      // 地址/模式字段（含 A10 自动预充等语义）
-    output logic [ 1: 0] o_sdram_dqm,    // 数据掩码（常 0 表示全字节有效）
+    output logic         o_sdram_clk, // 送至器件的时钟（本实现直连 clk）
+    output logic         o_sdram_cke, // 时钟使能（常 1）
+    output logic         o_sdram_cs_n, // 片选#（与 RAS/CAS/WE 组成命令）
+    output logic         o_sdram_ras_n, // 行地址选通#
+    output logic         o_sdram_cas_n, // 列地址选通#
+    output logic         o_sdram_we_n, // 写使能#
+    output logic [ 1: 0] o_sdram_ba, // Bank 选择
+    output logic [12: 0] o_sdram_a, // 地址/模式字段（含 A10 自动预充等语义）
+    output logic [ 1: 0] o_sdram_dqm, // 数据掩码（常 0 表示全字节有效）
     output logic [15: 0] o_sdram_dq_out, // 写驱动到 DQ 总线的数据
-    output logic         o_sdram_dq_oe,  // DQ 输出使能（写节拍拉高）
-    input  logic [15: 0] i_sdram_dq_in   // 从 DQ 总线采样（读数据）
+    output logic         o_sdram_dq_oe, // DQ 输出使能（写节拍拉高）
+    input  logic [15: 0] i_sdram_dq_in // 从 DQ 总线采样（读数据）
 );
 
     // SDRAM clk is the same as system clk for bring-up
