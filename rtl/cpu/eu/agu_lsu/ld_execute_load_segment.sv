@@ -19,6 +19,8 @@ description: This module implements eu_agu_lsu_ld_execute_load_segment.
 // 可能只覆盖最小可运行路径，未实现全部异常语义。
 // ============================================================================
 
+`include "openx86_defs.h.sv"
+
 module eu_agu_lsu_ld_execute_load_segment (
     input  logic          protected_mode_enable,  // 1=保护模式
     input  logic [15: 0] index_segment_register,  // 目标段寄存器索引
