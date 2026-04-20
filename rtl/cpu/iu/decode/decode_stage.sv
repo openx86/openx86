@@ -19,18 +19,8 @@ module decode_stage (    input  logic i_instruction_ready, // 取指缓冲就绪
     input  logic clk,
     input  logic rst_n
 );
-    logic instruction_ready_d1; // 就绪打一拍，用于边沿检测
-
-    // 打拍：检测 i_instruction_ready 上升沿
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (~rst_n)
-            instruction_ready_d1 <= 1'b0;
-        else
-            instruction_ready_d1 <= i_instruction_ready;
-    end
-
     assign o_stage_ready = i_stage3_ready;
-    assign o_insn_fire   = i_instruction_ready & ~instruction_ready_d1 & i_stage3_ready;
-    assign o_stage_valid = o_insn_fire;
+    assign o_insn_fire   = i_instruction_ready & i_stage3_ready;
+    assign o_stage_valid = i_instruction_ready;
 
 endmodule

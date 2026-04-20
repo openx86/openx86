@@ -76,7 +76,7 @@ module chip_ns16550_com (
     assign irq_thre = ier[1] && thre_irq_pending;
     assign irq_ms = ier[3] && (|msr_delta);
     assign iir_fifo_bits = fcr[0] ? 2'b11 : 2'b00;
-    assign iir = {iir_fifo_bits, 2'b00, iir_code[3:1], iir_code[0]};
+    assign iir = {iir_fifo_bits, 2'b00, iir_code[3: 1], iir_code[0]};
     assign lsr = {1'b0, tx_empty, thr_empty, 1'b0, 1'b0, 1'b0, 1'b0, rbr_valid};
 
 
@@ -84,7 +84,7 @@ module chip_ns16550_com (
     // MSR 高半字节：回环时反映 MCR 位；否则外部调制解调器输入未建模为 0。
     always_comb begin
         if (mcr[4])
-            // loopback mode: MSR[7:4] reflects internal modem outputs
+            // loopback mode: MSR[7: 4] reflects internal modem outputs
             msr_status = {mcr[3], mcr[2], mcr[0], mcr[1]};
         else
             // external modem inputs are not modeled in this chipset bridge
@@ -168,7 +168,7 @@ module chip_ns16550_com (
                         if (dlab)
                             dlm <= i_d;
                         else begin
-                            ier <= {i_d[7:6], 2'b00, i_d[3:0]};
+                            ier <= {i_d[7: 6], 2'b00, i_d[3: 0]};
                             if (!ier[1] && i_d[1] && thr_empty)
                                 thre_irq_pending <= 1'b1;
                         end
@@ -177,7 +177,7 @@ module chip_ns16550_com (
                         // FCR is write-only; bit[0] gates FIFO-specific controls,
                         // bit[4] (DMA-end signaling) remains directly writable.
                         fcr <= {
-                            (i_d[0] ? i_d[7:6] : 2'b00),
+                            (i_d[0] ? i_d[7: 6] : 2'b00),
                             1'b0,
                             i_d[4],
                             (i_d[0] ? i_d[3] : 1'b0),
@@ -195,7 +195,7 @@ module chip_ns16550_com (
                         end
                     end
                     3'd3: lcr <= i_d;
-                    3'd4: mcr <= {3'b000, i_d[4:0]};
+                    3'd4: mcr <= {3'b000, i_d[4: 0]};
                     3'd5: ; // LSR read-only
                     3'd6: ; // MSR
                     3'd7: scr <= i_d;

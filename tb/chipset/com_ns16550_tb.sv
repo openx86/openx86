@@ -130,7 +130,7 @@ module com_ns16550_tb;
         check_eq(rb, 8'h12, "DLM readback");
         wr(16'h03FB, 8'h03);
 
-        // FIFO disabled -> IIR[7:6]=00, no pending interrupt -> bit0=1
+        // FIFO disabled -> IIR[7: 6]=00, no pending interrupt -> bit0=1
         wr(16'h03FA, 8'h00);
         wr(16'h03F9, 8'h00);
         rd(16'h03FA, rb);
@@ -153,7 +153,7 @@ module com_ns16550_tb;
         rd(16'h03FA, rb);
         check_mask_eq(rb, 8'h0F, 8'h01, "IIR cleared after RBR read");
 
-        // Loopback modem mapping: MSR[7:4] follows MCR[3],MCR[2],MCR[0],MCR[1]
+        // Loopback modem mapping: MSR[7: 4] follows MCR[3],MCR[2],MCR[0],MCR[1]
         wr(16'h03FC, 8'h1F);
         rd(16'h03FE, rb);
         check_mask_eq(rb, 8'hF0, 8'hF0, "MSR loopback status high nibble");

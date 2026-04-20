@@ -282,6 +282,10 @@ module i486_cpu_core (
 
     assign ip_valid_to_fetch = s12_ifu_ready;
 
+    // WRB redirect/flush: whenever EIP is committed, kill younger stages.
+    logic pipe_flush;
+    assign pipe_flush = wrb_IP_write_enable;
+
     prefetch_unit u_stage_1_ifu (
         .o_code_vaild ( code_vaild ),
         .i_code_ready ( code_ready ),
@@ -315,6 +319,7 @@ module i486_cpu_core (
         .o_segment_fault ( if_segment_fault ),
         .i_dec_ready ( s12_dec_ready ),
         .o_ifu_ready ( s12_ifu_ready ),
+        .i_flush ( pipe_flush ),
         .clk ( clk ),
         .rst_n ( rst_n )
     );
@@ -366,6 +371,7 @@ module i486_cpu_core (
         .o_dec_ready ( s12_dec_ready ),
         .o_stage_valid ( stage2_valid ),
         .o_insn_fire ( insn_fire ),
+        .i_flush ( pipe_flush ),
         .clk ( clk ),
         .rst_n ( rst_n )
     );
@@ -1310,6 +1316,7 @@ module i486_cpu_core (
         .o_mem_rdata ( s34_mem_rdata ),
         .i_mem_ready ( data_ready ),
         .o_mem_ready ( s34_mem_ready ),
+        .i_flush ( pipe_flush ),
         .clk ( clk ),
         .rst_n ( rst_n )
     );
@@ -1348,6 +1355,7 @@ module i486_cpu_core (
         .o_mem_address ( s45_mem_address ),
         .i_mem_write_data ( am_lsu_mem_wdata ),
         .o_mem_write_data ( s45_mem_write_data ),
+        .i_flush ( pipe_flush ),
         .clk ( clk ),
         .rst_n ( rst_n )
     );

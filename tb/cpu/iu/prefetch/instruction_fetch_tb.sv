@@ -61,7 +61,7 @@ always_comb begin
     end
 end
 
-reg [31: 0] i;
+logic [31: 0] i;
 int unsigned wait_cycles;
 
 always #1 clk = ~clk;

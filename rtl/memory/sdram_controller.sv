@@ -229,7 +229,7 @@ module sdram_controller #(
                 o_sdram_a[10] = 1'b1;
             end
             CMD_LOAD_MODE: begin
-                o_sdram_a  = mode_reg_value(CAS); // 模式字送上 A[12:0]
+                o_sdram_a  = mode_reg_value(CAS); // 模式字送上 A[12: 0]
                 o_sdram_ba = 2'b00;
             end
             CMD_ACTIVE: begin

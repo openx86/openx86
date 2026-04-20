@@ -16,7 +16,7 @@ description: Intel 8237 DMA register-level model (PC/XT oriented).
 //   - CH0-CH3 address/count register access through first/last byte flip-flop
 //   - command, request, mask, mode register write behavior
 //   - clear first/last flip-flop, master clear, clear mask, write-all-mask
-//   - status register read returns {request[3:0], tc[3:0]} and clears tc on read
+//   - status register read returns {request[3: 0], tc[3: 0]} and clears tc on read
 //
 // Not implemented in this phase:
 //   - real DMA transfer execution, DREQ/DACK/HRQ/HLDA handshakes

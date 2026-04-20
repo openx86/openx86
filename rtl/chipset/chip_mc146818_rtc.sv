@@ -259,7 +259,7 @@ module chip_mc146818_rtc #(
             century_bcd_inc = u8_to_bcd(v + 1'b1);
     endfunction
 
-    // RegA 速率选择位 RS[3:0] → 周期中断分频常数。
+    // RegA 速率选择位 RS[3: 0] → 周期中断分频常数。
     always_comb begin
         unique case (cmos_ram[10][ 3: 0])
             4'd0: pie_reload_q = 24'd0;

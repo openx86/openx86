@@ -130,8 +130,8 @@ module bus_chipset_integration_tb;
 
     task automatic expect_eq(
         input string      i_tag,
-        input logic [7:0] i_got,
-        input logic [7:0] i_exp
+        input logic [7: 0] i_got,
+        input logic [7: 0] i_exp
     );
         if (i_got !== i_exp) begin
             fail_count = fail_count + 1;
@@ -141,7 +141,7 @@ module bus_chipset_integration_tb;
         end
     endtask
 
-    logic [7:0] rb;
+    logic [7: 0] rb;
 
     initial begin
         fail_count = 0;

@@ -59,9 +59,9 @@ module paging_unit (    // 与 MMU 上级握手
     input  logic          rst_n
 );
 
-logic  [ 9: 0] page_directory_index; // 线性地址 [31:22]
-logic  [ 9: 0] page_table_index;     // 线性地址 [21:12]
-logic  [11: 0] page_frame_offset;    // 线性地址 [11:0]
+logic  [ 9: 0] page_directory_index; // 线性地址 [31: 22]
+logic  [ 9: 0] page_table_index;     // 线性地址 [21: 12]
+logic  [11: 0] page_frame_offset;    // 线性地址 [11: 0]
 
 logic  [31: 0] page_directory_offset;   // 页目录项地址
 logic [31: 0] page_table_base;           // 页目录项内容：页表物理基

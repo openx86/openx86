@@ -11,27 +11,28 @@ description: This module implements bus_interface_unit.
 // 优先级：MMU > code > data。
 // ============================================================================
 
-module bus_interface_unit (    input  logic          i_mmu_vaild,        // MMU/页表遍历请求有效
+module bus_interface_unit (
+    input  logic         i_mmu_vaild,        // MMU/页表遍历请求有效
     output logic         o_mmu_ready,        // MMU 事务完成握手
     input  logic [31: 0] i_mmu_address,      // MMU 访存地址
     output logic [31: 0] o_mmu_data_read,    // MMU 读回数据（来自总线）
 
-    input  logic          i_code_vaild,       // 取指请求有效
+    input  logic         i_code_vaild,       // 取指请求有效
     output logic         o_code_ready,        // 取指完成握手
     input  logic [31: 0] i_code_address,      // 指令取址
     output logic [31: 0] o_code_data_read,   // 指令读回数据
 
-    input  logic          i_data_vaild,       // 数据访存请求有效
+    input  logic         i_data_vaild,       // 数据访存请求有效
     output logic         o_data_ready,        // 数据事务完成握手
-    input  logic          i_data_write_enable,// 数据写使能（store）
-    input  logic          i_data_io_access,   // I/O 空间访问（与存储器访问区分）
+    input  logic         i_data_write_enable,// 数据写使能（store）
+    input  logic         i_data_io_access,   // I/O 空间访问（与存储器访问区分）
     input  logic [31: 0] i_data_address,      // 数据地址
     output logic [31: 0] o_data_data_read,    // 数据读回
     input  logic [31: 0] i_data_data_write,   // 数据写数据
 
     output logic         o_bus_vaild,         // 对外总线请求有效
-    input  logic          i_bus_ready,        // 总线从设备就绪（完成一拍）
-    input  logic          i_bus_busy,         // 总线忙（与 ready 组合使用）
+    input  logic         i_bus_ready,        // 总线从设备就绪（完成一拍）
+    input  logic         i_bus_busy,         // 总线忙（与 ready 组合使用）
     output logic         o_bus_write_enable, // 总线写使能
     output logic         o_bus_io_access,     // 总线 I/O 访问指示
     output logic [31: 0] o_bus_address,       // 总线地址

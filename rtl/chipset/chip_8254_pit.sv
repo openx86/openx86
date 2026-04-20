@@ -33,26 +33,26 @@ module chip_8254_pit (
     localparam logic [ 2: 0] LP_MODE4 = 3'd4;
     localparam logic [ 2: 0] LP_MODE5 = 3'd5;
 
-    logic [16: 0] reload          [0:2];  // 有效重装载值（含 0→65536）
-    logic [16: 0] count           [0:2];  // 当前计数值
-    logic [16: 0] latch_count     [0:2];  // 锁存读快照
-    logic [ 2: 0] mode            [0:2];  // 工作方式 0..5
-    logic [ 1: 0] rw_fmt          [0:2];  // 读写格式（LSB/MSB/先后）
-    logic          bcd_en         [0:2];  // 1=BCD 计数
-    logic [ 7: 0] pending_lsb     [0:2];  // 16 位写时的低字节暂存
-    logic          write_wait_msb [0:2];  // 尚缺 MSB 的半字写状态
-    logic          load_pending   [0:2];  // 下一拍装入 reload→count
-    logic          run_en         [0:2];  // 计数运行使能
-    logic          out_r          [0:2];  // 通道 OUT 寄存
-    logic          latch_valid    [0:2];  // 锁存读有效
-    logic          read_msb_phase [0:2];  // 先后读时当前为高/低字节相位
+    logic [16: 0] reload          [0: 2];  // 有效重装载值（含 0→65536）
+    logic [16: 0] count           [0: 2];  // 当前计数值
+    logic [16: 0] latch_count     [0: 2];  // 锁存读快照
+    logic [ 2: 0] mode            [0: 2];  // 工作方式 0..5
+    logic [ 1: 0] rw_fmt          [0: 2];  // 读写格式（LSB/MSB/先后）
+    logic          bcd_en         [0: 2];  // 1=BCD 计数
+    logic [ 7: 0] pending_lsb     [0: 2];  // 16 位写时的低字节暂存
+    logic          write_wait_msb [0: 2];  // 尚缺 MSB 的半字写状态
+    logic          load_pending   [0: 2];  // 下一拍装入 reload→count
+    logic          run_en         [0: 2];  // 计数运行使能
+    logic          out_r          [0: 2];  // 通道 OUT 寄存
+    logic          latch_valid    [0: 2];  // 锁存读有效
+    logic          read_msb_phase [0: 2];  // 先后读时当前为高/低字节相位
 
-    logic          mode2_low_pulse [0:2];   // 方式 2 低脉宽相位
-    logic          mode45_low_pulse [0:2];  // 方式 4/5 低脉宽相位
-    logic          mode3_phase_high [0:2];  // 方式 3 方波高半周标志
-    logic [16: 0] mode3_high_ticks [0:2];
-    logic [16: 0] mode3_low_ticks  [0:2];
-    logic [16: 0] mode3_phase_ticks [0:2];
+    logic          mode2_low_pulse [0: 2];   // 方式 2 低脉宽相位
+    logic          mode45_low_pulse [0: 2];  // 方式 4/5 低脉宽相位
+    logic          mode3_phase_high [0: 2];  // 方式 3 方波高半周标志
+    logic [16: 0] mode3_high_ticks [0: 2];
+    logic [16: 0] mode3_low_ticks  [0: 2];
+    logic [16: 0] mode3_phase_ticks [0: 2];
 
     logic wr;  // 写事务
     logic rd;  // 读事务
@@ -88,12 +88,12 @@ module chip_8254_pit (
         d0 = (i_raw[ 3: 0] > 4'd9) ? 32'd0 : 32'(i_raw[ 3: 0]);
         d1 = (i_raw[ 7: 4] > 4'd9) ? 32'd0 : 32'(i_raw[ 7: 4]);
         d2 = (i_raw[11: 8] > 4'd9) ? 32'd0 : 32'(i_raw[11: 8]);
-        d3 = (i_raw[15:12] > 4'd9) ? 32'd0 : 32'(i_raw[15:12]);
+        d3 = (i_raw[15: 12] > 4'd9) ? 32'd0 : 32'(i_raw[15: 12]);
         v  = (d3 * 1000) + (d2 * 100) + (d1 * 10) + d0;
         if (v == 0)
             f_bcd_to_count = 17'd10000;
         else
-            f_bcd_to_count = v[16:0];
+            f_bcd_to_count = v[16: 0];
     endfunction
 
     function automatic logic [16: 0] f_effective_reload(
@@ -136,7 +136,7 @@ module chip_8254_pit (
         v  = v % 100;
         d1 = v / 10;
         d0 = v % 10;
-        f_count_to_bcd = { d3[3:0], d2[3:0], d1[3:0], d0[3:0] };
+        f_count_to_bcd = { d3[3: 0], d2[3: 0], d1[3: 0], d0[3: 0] };
     endfunction
 
     function automatic logic [15: 0] f_count_to_bus(
@@ -148,7 +148,7 @@ module chip_8254_pit (
         else if (i_count == 17'd65536)
             f_count_to_bus = 16'h0000;
         else
-            f_count_to_bus = i_count[15:0];
+            f_count_to_bus = i_count[15: 0];
     endfunction
 
     function automatic logic [ 7: 0] f_pick_read_byte(

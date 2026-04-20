@@ -44,7 +44,7 @@ module chip_8259_pic (
             found              = 1'b0;
             for (i = 0; i < 8; i = i + 1) begin
                 if (!found && i_vec[i]) begin
-                    f_highest_prio_idx = i[2:0];
+                    f_highest_prio_idx = i[2: 0];
                     found              = 1'b1;
                 end
             end
@@ -141,7 +141,7 @@ module chip_8259_pic (
                         // OCW2：EOI 与非特定 EOI
                         if (i_d[5]) begin
                             if (i_d[6]) begin
-                                isr_n[i_d[2:0]] = 1'b0;
+                                isr_n[i_d[2: 0]] = 1'b0;
                             end else if (|isr_n) begin
                                 isr_n[f_highest_prio_idx(isr_n)] = 1'b0;
                             end

@@ -24,7 +24,7 @@ module sdcard_controller #(
     output logic         o_sdcard_controller_phy_cmd_out, // CMD 线驱动数据
     output logic         o_sdcard_controller_phy_cmd_oe,  // CMD 输出使能
     input  logic         i_sdcard_controller_phy_cmd_in,  // CMD 总线回读
-    output logic [ 3: 0] o_sdcard_controller_phy_dat_out, // DAT[3:0] 驱动
+    output logic [ 3: 0] o_sdcard_controller_phy_dat_out, // DAT[3: 0] 驱动
     output logic         o_sdcard_controller_phy_dat_oe,   // DAT 输出使能
     input  logic [ 3: 0] i_sdcard_controller_phy_dat_in,   // DAT 总线回读
     input  logic         clk,             // 控制器时钟
@@ -60,7 +60,7 @@ module sdcard_controller #(
             assign o_sdcard_controller_phy_dat_out = 4'hF;
             assign o_sdcard_controller_phy_dat_oe  = 1'b0;
         end else begin : g_sdio
-            logic [ 7: 0]  sector_buf [0:511]; // 当前扇区 512 字节缓存
+            logic [ 7: 0]  sector_buf [0: 511]; // 当前扇区 512 字节缓存
             logic          sector_loaded;      // 已有一扇区有效数据
             logic [31: 0]  hold_lba;           // 已载入扇区对应的 LBA
             logic          sd_start;           // 脉冲启动 native host

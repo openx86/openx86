@@ -85,7 +85,7 @@ module bus_controller #(
     output logic         o_sdio_cmd_o,  // CMD 线主机驱动数据
     output logic         o_sdio_cmd_oe, // CMD 输出使能
     input  logic         i_sdio_cmd_i,  // CMD 总线回读
-    output logic [ 3: 0] o_sdio_dat_o,  // DAT[3:0] 主机驱动
+    output logic [ 3: 0] o_sdio_dat_o,  // DAT[3: 0] 主机驱动
     output logic         o_sdio_dat_oe, // DAT 输出使能
     input  logic [ 3: 0] i_sdio_dat_i,  // DAT 总线回读
 

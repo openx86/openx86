@@ -42,7 +42,7 @@ module openx86_soc_top #(
     // ------------------------------------------------------------------------
     output logic         o_sdio_clk,     // SD 时钟至卡
     inout  logic         io_sdio_cmd,    // CMD 双向
-    inout  logic [ 3: 0] io_sdio_dat,    // DAT[3:0] 双向
+    inout  logic [ 3: 0] io_sdio_dat,    // DAT[3: 0] 双向
 
     // ------------------------------------------------------------------------
     // SDRAM 物理接口（x16 器件）

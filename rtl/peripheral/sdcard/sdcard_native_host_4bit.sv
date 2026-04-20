@@ -24,7 +24,7 @@ module sdcard_native_host_4bit (
     output logic         o_sdcard_native_host_4bit_phy_cmd_out, // CMD 线驱动数据（配合 oe）
     output logic         o_sdcard_native_host_4bit_phy_cmd_oe,  // CMD 输出使能（开漏主机模型）
     input  logic         i_sdcard_native_host_4bit_phy_cmd_in,  // CMD 总线回读
-    output logic [ 3: 0] o_sdcard_native_host_4bit_phy_dat_out, // DAT[3:0] 驱动
+    output logic [ 3: 0] o_sdcard_native_host_4bit_phy_dat_out, // DAT[3: 0] 驱动
     output logic         o_sdcard_native_host_4bit_phy_dat_oe,   // DAT 输出使能
     input  logic [ 3: 0] i_sdcard_native_host_4bit_phy_dat_in,  // DAT 总线回读
     input  logic         clk,    // 主机逻辑时钟
