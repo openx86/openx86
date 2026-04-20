@@ -201,7 +201,6 @@ module sdram_controller #(
     // 通用等待计数器（各状态复用）
     int unsigned ctr;
 
-    logic [23: 0] lat_addr;   // 锁存的主机字节地址偏移
     logic        lat_we;      // 锁存的读写方向
     logic [31: 0] lat_wdata;  // 锁存的写数据
 
@@ -270,7 +269,6 @@ module sdram_controller #(
             cmd      <= CMD_NOP;
             o_ready  <= 1'b0;
             o_rdata  <= 32'h0;
-            lat_addr <= 24'h0;
             lat_we   <= 1'b0;
             lat_wdata<= 32'h0;
             dq_out_r <= 16'h0;
@@ -346,7 +344,6 @@ module sdram_controller #(
                         st  <= ST_REFRESH;
                         ctr <= 0;
                     end else if (i_en) begin // 主机请求：锁存参数并开行
-                        lat_addr  <= i_addr_off;
                         lat_we    <= i_we;
                         lat_wdata <= i_wdata;
                         st        <= ST_ACTIVATE;

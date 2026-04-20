@@ -267,7 +267,7 @@ assign o_error = 1'b0;
 logic tttn_at_1_3_0;
 assign tttn_at_1_3_0 =
 i_opcode_x86_SETcc_byte_set_on_condition |
-0;
+1'b0;
 assign o_tttn = tttn_at_1_3_0 ? i_instruction[1][ 3: 0] : 4'b0000;
 
 logic sreg3_at_1_5_3;
@@ -276,16 +276,16 @@ i_opcode_x86_MOV_reg_mem_to_sreg |
 i_opcode_x86_MOV_sreg_to_reg_mem |
 i_opcode_x86_POP_sreg_3 |
 i_opcode_x86_PUSH_sreg_3 |
-0;
+1'b0;
 logic sreg2_at_0_4_3;
 assign sreg2_at_0_4_3 =
 i_opcode_x86_POP_sreg_2 |
 i_opcode_x86_PUSH_sreg_2 |
-0;
+1'b0;
 assign o_seg_reg_index_is_present =
 sreg3_at_1_5_3 |
 sreg2_at_0_4_3 |
-0;
+1'b0;
 // 段寄存器域：2 位或 3 位编码在不同 opcode 布局
 always_comb begin
     case (1'b1)
@@ -295,16 +295,16 @@ always_comb begin
     endcase
 end
 
-logic eee_at_2_5_3;
-assign eee_at_2_5_3 =
-i_opcode_x86_MOV_CR_from_reg |
-i_opcode_x86_MOV_reg_from_CR |
-i_opcode_x86_MOV_DR_from_reg |
-i_opcode_x86_MOV_reg_from_DR |
-i_opcode_x86_MOV_TR_from_reg |
-i_opcode_x86_MOV_reg_from_TR |
-0;
-assign o_eee = i_instruction[2][ 5:  3];
+//logic eee_at_2_5_3;
+//assign eee_at_2_5_3 =
+//i_opcode_x86_MOV_CR_from_reg |
+//i_opcode_x86_MOV_reg_from_CR |
+//i_opcode_x86_MOV_DR_from_reg |
+//i_opcode_x86_MOV_reg_from_DR |
+//i_opcode_x86_MOV_TR_from_reg |
+//i_opcode_x86_MOV_reg_from_TR |
+//0;
+//assign o_eee = i_instruction[2][ 5:  3];
 
 logic reg_1_at_0_2_0;
 assign reg_1_at_0_2_0 =
@@ -314,7 +314,7 @@ i_opcode_x86_MOV_imm_to_reg |
 i_opcode_x86_POP_reg |
 i_opcode_x86_PUSH_reg |
 i_opcode_x86_XCHG_reg_with_acc_short |
-0;
+1'b0;
 logic reg_1_at_1_5_3;
 assign reg_1_at_1_5_3 =
 i_opcode_x86_ADC_reg_to_reg_mem |
@@ -323,11 +323,11 @@ i_opcode_x86_ADD_reg_to_reg_mem |
 i_opcode_x86_ADD_reg_mem_to_reg |
 i_opcode_x86_AND_reg_to_reg_mem |
 i_opcode_x86_AND_reg_mem_to_reg |
-0;
+1'b0;
 logic reg_1_at_1_2_0;
 assign reg_1_at_1_2_0 =
 i_opcode_x86_BSWAP_byte_swap |
-0;
+1'b0;
 logic reg_1_at_2_2_0;
 assign reg_1_at_2_2_0 =
 i_opcode_x86_MOV_CR_from_reg |
@@ -336,13 +336,13 @@ i_opcode_x86_MOV_DR_from_reg |
 i_opcode_x86_MOV_reg_from_DR |
 i_opcode_x86_MOV_TR_from_reg |
 i_opcode_x86_MOV_reg_from_TR |
-0;
+1'b0;
 assign o_gen_reg_index_is_present =
 reg_1_at_0_2_0 |
 reg_1_at_1_5_3 |
 reg_1_at_1_2_0 |
 reg_1_at_2_2_0 |
-0;
+1'b0;
 // 通用寄存器编号：可能位于 opcode 不同字节位段
 always_comb begin
     unique case (1'b1)
@@ -436,23 +436,23 @@ i_opcode_x86_XOR_reg_to_reg_mem |
 i_opcode_x86_XOR_reg_mem_to_reg |
 i_opcode_x86_XOR_imm_to_reg_mem |
 i_opcode_x86_XOR_imm_to_acc |
-0;
+1'b0;
 logic w_at_0_3;
 assign w_at_0_3 =
 i_opcode_x86_MOV_imm_to_reg |
-0;
+1'b0;
 logic w_at_1_0;
 assign w_at_1_0 =
 i_opcode_x86_CMPXCHG_compare_and_exchange |
 i_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg |
 i_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg |
 i_opcode_x86_XADD_exchange_and_add |
-0;
+1'b0;
 assign o_w_is_present =
 w_at_0_0 |
 w_at_0_3 |
 w_at_1_0 |
-0;
+1'b0;
 // W 位：操作数宽度提示（存在时取自不同字节）
 always_comb begin
     case (1'b1)
@@ -475,10 +475,10 @@ i_opcode_x86_PUSH_imm |
 i_opcode_x86_SBB_imm_to_reg_mem |
 i_opcode_x86_SUB_imm_to_reg_mem |
 i_opcode_x86_XOR_imm_to_reg_mem |
-0;
+1'b0;
 assign o_s_is_present =
 s_at_0_1 |
-0;
+1'b0;
 // S 位：立即数符号扩展控制（存在时取自 opcode 字节）
 always_comb begin
     case (1'b1)
@@ -608,7 +608,7 @@ i_opcode_x86_XCHG_reg_mem_with_reg |
 i_opcode_x86_XOR_reg_to_reg_mem |
 i_opcode_x86_XOR_reg_mem_to_reg |
 i_opcode_x86_XOR_imm_to_reg_mem |
-0;
+1'b0;
 logic [ 7: 0] mod_rm_instruction;
 assign { o_mod, o_rm } = { mod_rm_instruction[ 7:  6], mod_rm_instruction[ 2: 0] };
 // ModR/M 原始字节：随主 opcode 为 1/2/3 字节指令而相对位移
@@ -625,7 +625,7 @@ logic unsigned_full_offset_selector_is_present;
 assign unsigned_full_offset_selector_is_present =
 i_opcode_x86_CALL_in_other_segment_direct |
 i_opcode_x86_JMP_to_other_segment_direct |
-0;
+1'b0;
 
 assign o_immediate_size_full =
 i_opcode_x86_ADC_imm_to_reg_mem |
@@ -650,12 +650,12 @@ i_opcode_x86_TEST_imm_and_reg_mem |
 i_opcode_x86_TEST_imm_and_acc |
 i_opcode_x86_XOR_imm_to_reg_mem |
 i_opcode_x86_XOR_imm_to_acc |
-0;
+1'b0;
 assign o_immediate_size_16 =
 i_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP |
 i_opcode_x86_RET_return_from_procedure_to_other_segment_adding_imm_to_SP |
 unsigned_full_offset_selector_is_present |
-0;
+1'b0;
 assign o_immediate_size_8 =
 i_opcode_x86_BT_reg_mem_with_imm |
 i_opcode_x86_BTC_reg_mem_with_imm |
@@ -671,12 +671,12 @@ i_opcode_x86_SAR_reg_mem_by_imm |
 i_opcode_x86_SHL_reg_mem_by_imm |
 i_opcode_x86_SHR_reg_mem_by_imm |
 i_opcode_x86_SHRD_reg_mem_by_imm |
-0;
+1'b0;
 assign o_immediate_is_present =
 o_immediate_size_full |
 o_immediate_size_16 |
 o_immediate_size_8 |
-0;
+1'b0;
 
 assign o_displacement_size_full =
 i_opcode_x86_CALL_in_same_segment_direct |
@@ -685,7 +685,7 @@ i_opcode_x86_JMP_to_same_segment_direct |
 i_opcode_x86_MOV_mem_to_acc |
 i_opcode_x86_MOV_acc_to_mem |
 unsigned_full_offset_selector_is_present |
-0;
+1'b0;
 assign o_displacement_size_8 =
 i_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp |
 i_opcode_x86_JCXZ_jump_on_CX_zero |
@@ -694,11 +694,11 @@ i_opcode_x86_LOOP_count |
 i_opcode_x86_LOOPZ_count_while_zero |
 i_opcode_x86_LOOPNZ_count_while_not_zero |
 i_opcode_x86_OUT_port_fixed |
-0;
+1'b0;
 assign o_displacement_is_present =
 o_displacement_size_full |
 o_displacement_size_8 |
-0;
+1'b0;
 
 // i_opcode_x86_ADC_reg_to_reg_mem |
 // i_opcode_x86_ADC_reg_mem_to_reg |
@@ -1056,7 +1056,7 @@ i_opcode_x86_XOR_reg_to_reg_mem |
 i_opcode_x86_XOR_reg_mem_to_reg |
 i_opcode_x86_XOR_imm_to_reg_mem |
 i_opcode_x86_XOR_imm_to_acc |
-0;
+1'b0;
 assign o_primary_opcode_byte_2 =
 i_opcode_x86_AAD_ASCII_AX_before_div |
 i_opcode_x86_AAM_ASCII_AX_after_mul |
@@ -1122,12 +1122,12 @@ i_opcode_x86_VERW_verify_a_segment_for_writing |
 i_opcode_x86_WBINVD_writeback_and_invalidate_data_cache |
 i_opcode_x86_WRMSR_write_to_model_specific_register |
 i_opcode_x86_XADD_exchange_and_add |
-0;
+1'b0;
 assign o_primary_opcode_byte_3 =
 i_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size |
 i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_mem_to_reg |
 i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem |
 i_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id |
-0;
+1'b0;
 
 endmodule

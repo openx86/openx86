@@ -117,21 +117,21 @@ logic [ 1: 0] bytes_index; // 当前正在接收第几个 32b 槽（0..3）
 // 输出握手与缓冲装载：按槽把 big-endian 32b 拆入 o_instruction
 always_ff @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
-        o_code_vaild <= 0;
-        bytes_index <= 0;
+        o_code_vaild <= 1'b0;
+        bytes_index <= 2'b00;
     end else begin
         unique case (state)
             STATE_WAIT_FOR_IP_VALID: begin
-                bytes_index <= 0;
+                bytes_index <= 2'b00;
                 if (i_IP_vaild) begin
                     o_code_vaild <= 1;
                 end else begin
-                    o_code_vaild <= 0;
+                    o_code_vaild <= 1'b0;
                 end
             end
             STATE_WAIT_FOR_CODE_DATA_READY: begin
                 if (i_code_ready) begin
-                    bytes_index <= bytes_index + 1;
+                    bytes_index <= bytes_index + 2'd1;
                     if (bytes_index < 2'h3) begin
                         // 每个 i_code_ready 周期写入一个 32b 小端槽到 16B 缓冲
                         unique case (bytes_index)
@@ -166,12 +166,12 @@ always_ff @(posedge clk or negedge rst_n) begin
                         //     i_code_data_read[15: 8],
                         //     i_code_data_read[ 7: 0]
                         // };
-                        o_instruction_ready <= 0;
+                        o_instruction_ready <= 1'b0;
                     end else begin
                         o_instruction_ready <= 1;
                     end
                 end else begin
-                    o_instruction_ready <= 0;
+                    o_instruction_ready <= 1'b0;
                 end
             end
             default: begin

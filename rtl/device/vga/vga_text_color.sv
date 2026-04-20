@@ -59,12 +59,10 @@ module vga_text_color (
     logic [ 7: 0] font_data_reg;
 
     // 属性解码
-    logic         blink;  // 闪烁位
     logic [ 2: 0] bg_color;  // 背景色（3bit）
     logic [ 3: 0] fg_color;  // 前景色（4bit）
     logic         pixel_on;  // 当前像素是否为字符前景
 
-    assign blink = attr_reg[7];
     assign bg_color = attr_reg[ 6:  4];
     assign fg_color = attr_reg[ 3: 0];
     assign pixel_on = font_data_reg[7 - char_pixel_x[ 2: 0]];
@@ -82,10 +80,6 @@ module vga_text_color (
     assign font_row_index = char_pixel_y;
 
     // 像素判断：从字体数据中提取当前像素
-
-    // 未连接内部寄存（声明存在但无赋值，不改变综合意图）
-    logic [ 7: 0] char_code_next;
-    logic [ 7: 0] attr_next;
 
     // 第一级流水：锁存字符码与属性
     always_ff @(posedge clk or negedge rst_n) begin

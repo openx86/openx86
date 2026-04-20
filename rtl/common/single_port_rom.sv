@@ -34,6 +34,12 @@ module single_port_rom #(
     logic [DATA_WIDTH-1: 0] rom [0:DEPTH-1];
     /* verilator lint_on UNDRIVEN */
 
+    integer rom_init_i;
+    initial begin
+        for (rom_init_i = 0; rom_init_i < DEPTH; rom_init_i = rom_init_i + 1)
+            rom[rom_init_i] = '0;
+    end
+
     // 同步读：无效地址仍组合取数，由上层保证；复位清零输出
     always_ff @(posedge clk) begin
         if (~rst_n) begin

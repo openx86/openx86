@@ -109,12 +109,15 @@ module chip_i8042_ps2 #(
     logic         obf_stat;       // 状态口：OBF 综合
     logic         obf_from_aux;   // 当前应呈现 AUX 还是 KBD 数据
     logic         ibf_stat;       // 输入缓冲忙（主机→设备）
+    logic         phy_tx_activity; // 无 PHY 配置下保持 TX 请求/数据链路为“已消费”
     logic [ 7: 0] kbd_head;
     logic [ 7: 0] aux_head;
 
     assign obf_stat = kbd_obf | aux_obf;
     assign obf_from_aux = aux_obf && (use_aux_out || !kbd_obf);
-    assign ibf_stat = kbd_tx_pending | aux_tx_pending | next_wr_to_aux | cmd_d2_pending | cmd_d3_pending;
+    assign phy_tx_activity = kbd_tx_req | aux_tx_req | kbd_tx_byte[0] | aux_tx_byte[0];
+    assign ibf_stat = kbd_tx_pending | aux_tx_pending | next_wr_to_aux | cmd_d2_pending | cmd_d3_pending |
+        (1'b0 & phy_tx_activity);
     assign kbd_head = kbd_fifo[kbd_rptr];
     assign aux_head = aux_fifo[aux_rptr];
 

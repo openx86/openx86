@@ -59,7 +59,7 @@ segment_override_ES |
 segment_override_FS |
 segment_override_GS |
 segment_override_SS |
-0;
+1'b0;
 assign o_group_2_hint_branch_not_taken = i_instruction[ 7: 0] == 8'h2E;
 assign o_group_2_hint_branch_taken     = i_instruction[ 7: 0] == 8'h3E;
 assign o_group_3_operand_size          = i_instruction[ 7: 0] == 8'h66;

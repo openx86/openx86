@@ -14,7 +14,7 @@ description: mmu_segmentation_unit
 */
 
 module mmu_segmentation_unit #(
-    read_from_fetch = 0
+    parameter bit read_from_fetch = 1'b0
 ) (
     // ------------------------------------------------------------------------
     // Segmentation context inputs（段式地址：选择子 + 描述符 + 偏移）
@@ -77,7 +77,6 @@ mmu_segmentation_segment_descriptor_decode u_segment_descriptor_decode (
 
 logic is_index_CS; // 当前访问是否为 CS
 
-logic is_code_segment; // 代码段
 logic is_data_segment; // 数据段
 
 logic is_read;
@@ -98,7 +97,6 @@ logic exception_write; // 对 CS 写或数据段不可写
 
 assign segment_descriptor = i_segment_descriptor[i_segment_index];
 assign is_index_CS = (i_segment_index == 3'b001);
-assign is_code_segment = segment_type & date_or_code_executable;
 assign is_data_segment = segment_type & ~date_or_code_executable;
 assign is_read = ~i_write_enable;
 assign is_write = i_write_enable;
@@ -119,7 +117,7 @@ exception_limit |
 exception_privilege_level |
 exception_read |
 exception_write |
-0;
+1'b0;
 
 // Linear address = segment base + offset (32-bit flat model)
 assign o_linear_address = base + i_effective_address;

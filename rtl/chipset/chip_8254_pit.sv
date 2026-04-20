@@ -300,99 +300,99 @@ module chip_8254_pit (
                     end
                 endcase
             end else begin
-                for (ch = 0; ch < 3; ch = ch + 1) begin
-                    if (load_pending[ch]) begin
-                        load_pending[ch]    <= 1'b0;
-                        run_en[ch]          <= 1'b1;
-                        count[ch]           <= reload[ch];
-                        mode2_low_pulse[ch] <= 1'b0;
-                        mode45_low_pulse[ch] <= 1'b0;
+                for (int unsigned ch_i = 0; ch_i < 3; ch_i = ch_i + 1) begin
+                    if (load_pending[ch_i]) begin
+                        load_pending[ch_i]    <= 1'b0;
+                        run_en[ch_i]          <= 1'b1;
+                        count[ch_i]           <= reload[ch_i];
+                        mode2_low_pulse[ch_i] <= 1'b0;
+                        mode45_low_pulse[ch_i] <= 1'b0;
 
-                        if (mode[ch] == LP_MODE0 || mode[ch] == LP_MODE1)
-                            out_r[ch] <= 1'b0;
+                        if (mode[ch_i] == LP_MODE0 || mode[ch_i] == LP_MODE1)
+                            out_r[ch_i] <= 1'b0;
                         else
-                            out_r[ch] <= 1'b1;
+                            out_r[ch_i] <= 1'b1;
 
-                        if (mode[ch] == LP_MODE3) begin
-                            mode3_phase_high[ch] <= 1'b1;
-                            mode3_high_ticks[ch] <= f_mode3_high_ticks(reload[ch]);
-                            mode3_low_ticks[ch]  <= f_mode3_low_ticks(reload[ch]);
-                            mode3_phase_ticks[ch] <= f_mode3_high_ticks(reload[ch]);
+                        if (mode[ch_i] == LP_MODE3) begin
+                            mode3_phase_high[ch_i] <= 1'b1;
+                            mode3_high_ticks[ch_i] <= f_mode3_high_ticks(reload[ch_i]);
+                            mode3_low_ticks[ch_i]  <= f_mode3_low_ticks(reload[ch_i]);
+                            mode3_phase_ticks[ch_i] <= f_mode3_high_ticks(reload[ch_i]);
                         end
-                    end else if (run_en[ch]) begin
-                        unique case (mode[ch])
+                    end else if (run_en[ch_i]) begin
+                        unique case (mode[ch_i])
                             LP_MODE0,
                             LP_MODE1: begin
                                 // 方式 0/1：减计数至 0 拉高 OUT
-                                if (count[ch] > 17'd1) begin
-                                    count[ch] <= count[ch] - 17'd1;
-                                end else if (count[ch] == 17'd1) begin
-                                    count[ch] <= 17'd0;
-                                    out_r[ch] <= 1'b1;
-                                    run_en[ch] <= 1'b0;
+                                if (count[ch_i] > 17'd1) begin
+                                    count[ch_i] <= count[ch_i] - 17'd1;
+                                end else if (count[ch_i] == 17'd1) begin
+                                    count[ch_i] <= 17'd0;
+                                    out_r[ch_i] <= 1'b1;
+                                    run_en[ch_i] <= 1'b0;
                                 end
                             end
                             LP_MODE2: begin
                                 // 方式 2：速率发生器，低脉宽固定 1 拍
-                                if (mode2_low_pulse[ch]) begin
-                                    mode2_low_pulse[ch] <= 1'b0;
-                                    out_r[ch]           <= 1'b1;
-                                    count[ch]           <= reload[ch];
-                                end else if (count[ch] > 17'd2) begin
-                                    count[ch] <= count[ch] - 17'd1;
+                                if (mode2_low_pulse[ch_i]) begin
+                                    mode2_low_pulse[ch_i] <= 1'b0;
+                                    out_r[ch_i]           <= 1'b1;
+                                    count[ch_i]           <= reload[ch_i];
+                                end else if (count[ch_i] > 17'd2) begin
+                                    count[ch_i] <= count[ch_i] - 17'd1;
                                 end else begin
-                                    count[ch]          <= 17'd1;
-                                    out_r[ch]          <= 1'b0;
-                                    mode2_low_pulse[ch] <= 1'b1;
+                                    count[ch_i]          <= 17'd1;
+                                    out_r[ch_i]          <= 1'b0;
+                                    mode2_low_pulse[ch_i] <= 1'b1;
                                 end
                             end
                             LP_MODE3: begin
                                 // 方式 3：方波，高低半周按 reload 折半
-                                if (mode3_phase_ticks[ch] > 17'd1) begin
-                                    mode3_phase_ticks[ch] <= mode3_phase_ticks[ch] - 17'd1;
-                                end else if (mode3_phase_high[ch]) begin
-                                    mode3_phase_high[ch] <= 1'b0;
-                                    out_r[ch] <= 1'b0;
-                                    if (mode3_low_ticks[ch] == 17'd0)
-                                        mode3_phase_ticks[ch] <= 17'd1;
+                                if (mode3_phase_ticks[ch_i] > 17'd1) begin
+                                    mode3_phase_ticks[ch_i] <= mode3_phase_ticks[ch_i] - 17'd1;
+                                end else if (mode3_phase_high[ch_i]) begin
+                                    mode3_phase_high[ch_i] <= 1'b0;
+                                    out_r[ch_i] <= 1'b0;
+                                    if (mode3_low_ticks[ch_i] == 17'd0)
+                                        mode3_phase_ticks[ch_i] <= 17'd1;
                                     else
-                                        mode3_phase_ticks[ch] <= mode3_low_ticks[ch];
+                                        mode3_phase_ticks[ch_i] <= mode3_low_ticks[ch_i];
                                 end else begin
-                                    mode3_phase_high[ch] <= 1'b1;
-                                    out_r[ch] <= 1'b1;
-                                    if (mode3_high_ticks[ch] == 17'd0)
-                                        mode3_phase_ticks[ch] <= 17'd1;
+                                    mode3_phase_high[ch_i] <= 1'b1;
+                                    out_r[ch_i] <= 1'b1;
+                                    if (mode3_high_ticks[ch_i] == 17'd0)
+                                        mode3_phase_ticks[ch_i] <= 17'd1;
                                     else
-                                        mode3_phase_ticks[ch] <= mode3_high_ticks[ch];
+                                        mode3_phase_ticks[ch_i] <= mode3_high_ticks[ch_i];
                                 end
 
-                                if (count[ch] > 17'd1)
-                                    count[ch] <= count[ch] - 17'd1;
+                                if (count[ch_i] > 17'd1)
+                                    count[ch_i] <= count[ch_i] - 17'd1;
                                 else
-                                    count[ch] <= reload[ch];
+                                    count[ch_i] <= reload[ch_i];
                             end
                             LP_MODE4,
                             LP_MODE5: begin
                                 // 方式 4/5：软件触发脉冲
-                                if (mode45_low_pulse[ch]) begin
-                                    mode45_low_pulse[ch] <= 1'b0;
-                                    out_r[ch]            <= 1'b1;
-                                    run_en[ch]           <= 1'b0;
-                                end else if (count[ch] > 17'd1) begin
-                                    count[ch] <= count[ch] - 17'd1;
-                                end else if (count[ch] == 17'd1) begin
-                                    count[ch]           <= 17'd0;
-                                    out_r[ch]           <= 1'b0;
-                                    mode45_low_pulse[ch] <= 1'b1;
+                                if (mode45_low_pulse[ch_i]) begin
+                                    mode45_low_pulse[ch_i] <= 1'b0;
+                                    out_r[ch_i]            <= 1'b1;
+                                    run_en[ch_i]           <= 1'b0;
+                                end else if (count[ch_i] > 17'd1) begin
+                                    count[ch_i] <= count[ch_i] - 17'd1;
+                                end else if (count[ch_i] == 17'd1) begin
+                                    count[ch_i]           <= 17'd0;
+                                    out_r[ch_i]           <= 1'b0;
+                                    mode45_low_pulse[ch_i] <= 1'b1;
                                 end
                             end
                             default: begin
-                                if (count[ch] > 17'd1)
-                                    count[ch] <= count[ch] - 17'd1;
-                                else if (count[ch] == 17'd1) begin
-                                    count[ch] <= 17'd0;
-                                    out_r[ch] <= 1'b1;
-                                    run_en[ch] <= 1'b0;
+                                if (count[ch_i] > 17'd1)
+                                    count[ch_i] <= count[ch_i] - 17'd1;
+                                else if (count[ch_i] == 17'd1) begin
+                                    count[ch_i] <= 17'd0;
+                                    out_r[ch_i] <= 1'b1;
+                                    run_en[ch_i] <= 1'b0;
                                 end
                             end
                         endcase

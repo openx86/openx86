@@ -46,7 +46,6 @@ module ide_controller #(
     logic [ 7: 0] lba_lo, lba_mid, lba_hi; // LBA 28 中的低 24 位
     logic [ 7: 0] drv_head;   // 驱动器/磁头寄存器（简化模型）
     logic [ 7: 0] status_r;   // 读状态字节
-    logic [ 7: 0] error_r;    // 错误寄存器（读清/镜像）
     logic [ 8: 0] buf_ptr;    // 扇区内字节指针（与数据口读同步递增）
     logic [31: 0] mem_off;    // 当前事务起始 LBA（由命令口写入）
     logic         rd_data_d;  // 上一拍是否执行了数据口读（用于边沿式推进 buf_ptr）
@@ -110,7 +109,6 @@ module ide_controller #(
             lba_hi     <= '0;
             drv_head   <= 8'hE0;
             status_r   <= LP_ST_RDY;
-            error_r    <= '0;
             buf_ptr    <= '0;
             mem_off    <= '0;
             rd_data_d  <= 1'b0;
@@ -169,7 +167,7 @@ module ide_controller #(
                     else
                         o_rdata = 8'h00;
                 end
-                16'h01F1: o_rdata = error_r; // 错误
+                16'h01F1: o_rdata = 8'h00; // 错误（当前模型恒 0）
                 16'h01F2: o_rdata = sector_cnt;
                 16'h01F3: o_rdata = lba_lo;
                 16'h01F4: o_rdata = lba_mid;

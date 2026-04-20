@@ -33,19 +33,19 @@ module sdcard_controller #(
 
     localparam int LP_AW = $clog2(P_BYTE_DEPTH);
 
-    // BRAM/映像盘体（P_USE_SDIO_DISK=0 时直接字节读）
-    logic [ 7: 0] image [0:P_BYTE_DEPTH-1];
-
-    // 上电写魔术数到映像首字节（便于仿真可见）
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (~rst_n) begin
-            image[0] <= 8'hA5;
-            image[1] <= 8'h5A;
-        end
-    end
-
     generate
         if (!P_USE_SDIO_DISK) begin : g_bram_only
+            // BRAM/映像盘体（P_USE_SDIO_DISK=0 时直接字节读）
+            logic [ 7: 0] image [0:P_BYTE_DEPTH-1];
+
+            // 上电写魔术数到映像首字节（便于仿真可见）
+            always_ff @(posedge clk or negedge rst_n) begin
+                if (~rst_n) begin
+                    image[0] <= 8'hA5;
+                    image[1] <= 8'h5A;
+                end
+            end
+
             // 纯 BRAM：组合读 image，越界返回 0
             always_comb begin
                 if (i_disk_raddr < P_BYTE_DEPTH) // 地址在映像范围内
@@ -60,7 +60,7 @@ module sdcard_controller #(
             assign o_sdcard_controller_phy_dat_out = 4'hF;
             assign o_sdcard_controller_phy_dat_oe  = 1'b0;
         end else begin : g_sdio
-            logic [ 8: 0]  sector_buf [0:511]; // 当前扇区 512 字节缓存
+            logic [ 7: 0]  sector_buf [0:511]; // 当前扇区 512 字节缓存
             logic          sector_loaded;      // 已有一扇区有效数据
             logic [31: 0]  hold_lba;           // 已载入扇区对应的 LBA
             logic          sd_start;           // 脉冲启动 native host

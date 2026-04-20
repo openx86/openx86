@@ -43,13 +43,9 @@ module chip_8237_dma (
     localparam logic [ 3: 0] LP_REG_CLR_MASK  = 4'hE;
     localparam logic [ 3: 0] LP_REG_ALL_MASK  = 4'hF;
 
-    logic [15: 0] ch_base_addr  [ 0: 3];  // 通道基址（软件模型）
     logic [15: 0] ch_curr_addr  [ 0: 3];  // 通道当前地址
-    logic [15: 0] ch_base_count [ 0: 3];  // 通道基计数
     logic [15: 0] ch_curr_count [ 0: 3];  // 通道当前计数
-    logic [ 7: 0] ch_mode       [ 0: 3];  // 通道模式寄存器镜像
 
-    logic [ 7: 0] reg_command;     // 命令寄存器
     logic [ 7: 0] reg_temp;        // 占位/保留读
     logic [ 7: 0] reg_mode_last;   // 最近一次写入的模式字节
     logic [ 3: 0] reg_request;     // 软件请求位（每通道）
@@ -97,13 +93,9 @@ module chip_8237_dma (
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             for (int i = 0; i < 4; i++) begin
-                ch_base_addr[i]  <= 16'h0000;
                 ch_curr_addr[i]  <= 16'h0000;
-                ch_base_count[i] <= 16'h0000;
                 ch_curr_count[i] <= 16'h0000;
-                ch_mode[i]       <= 8'h00;
             end
-            reg_command   <= 8'h00;
             reg_temp      <= 8'h00;
             reg_mode_last <= 8'h00;
             reg_request   <= 4'h0;
@@ -117,13 +109,9 @@ module chip_8237_dma (
         end else begin
             if (wr_master_clear) begin
                 for (int i = 0; i < 4; i++) begin
-                    ch_base_addr[i]  <= 16'h0000;
                     ch_curr_addr[i]  <= 16'h0000;
-                    ch_base_count[i] <= 16'h0000;
                     ch_curr_count[i] <= 16'h0000;
-                    ch_mode[i]       <= 8'h00;
                 end
-                reg_command   <= 8'h00;
                 reg_temp      <= 8'h00;
                 reg_mode_last <= 8'h00;
                 reg_request   <= 4'h0;
@@ -135,27 +123,20 @@ module chip_8237_dma (
                     if (wr_addr_count) begin
                         if (!is_count_reg) begin
                             if (!first_last_ff) begin
-                                ch_base_addr[ch_sel][ 7: 0] <= i_d;
                                 ch_curr_addr[ch_sel][ 7: 0] <= i_d;
                             end else begin
-                                ch_base_addr[ch_sel][15: 8] <= i_d;
                                 ch_curr_addr[ch_sel][15: 8] <= i_d;
                             end
                         end else begin
                             if (!first_last_ff) begin
-                                ch_base_count[ch_sel][ 7: 0] <= i_d;
                                 ch_curr_count[ch_sel][ 7: 0] <= i_d;
                             end else begin
-                                ch_base_count[ch_sel][15: 8] <= i_d;
                                 ch_curr_count[ch_sel][15: 8] <= i_d;
                             end
                         end
                         first_last_ff <= ~first_last_ff;
                     end else if (hit_lo) begin
                         unique case (lo_idx)
-                            LP_REG_COMMAND: begin
-                                reg_command <= i_d;
-                            end
                             LP_REG_REQUEST: begin
                                 reg_request[i_d[ 1: 0]] <= i_d[2];
                             end
@@ -163,7 +144,6 @@ module chip_8237_dma (
                                 reg_mask[i_d[ 1: 0]] <= i_d[2];
                             end
                             LP_REG_MODE: begin
-                                ch_mode[i_d[ 1: 0]] <= i_d;
                                 reg_mode_last <= i_d;
                             end
                             LP_REG_CLEAR_FF: begin

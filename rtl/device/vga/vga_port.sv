@@ -93,10 +93,10 @@ module vga_port #(
                 if (v_count == W_V_CNT'(V_TOTAL - 1)) begin
                     v_count <= '0;
                 end else begin
-                    v_count <= v_count + 1;
+                    v_count <= v_count + W_V_CNT'(1);
                 end
             end else begin
-                h_count <= h_count + 1;
+                h_count <= h_count + W_H_CNT'(1);
             end
         end
     end

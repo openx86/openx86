@@ -25,7 +25,6 @@ module eu_muldiv_execute_muldiv_unit (
     logic [63: 0] dividend;
     logic [63: 0] divisor_u;
     logic signed [63: 0] sdividend;
-    logic signed [31: 0] sdivisor;
     logic [63: 0] uquot, urem;
     logic signed [63: 0] squot, srem;
 
@@ -36,7 +35,6 @@ module eu_muldiv_execute_muldiv_unit (
         dividend = {i_hi, i_lo};
         divisor_u = {32'h0, i_src};
         sdividend = $signed({i_hi, i_lo});
-        sdivisor  = $signed(i_src);
         uquot = '0;
         urem  = '0;
         squot = '0;

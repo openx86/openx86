@@ -418,23 +418,11 @@ module i486_core (
 
     // 数据/栈/代码段基址（从描述符 cache 拼线性基址）
     logic [31: 0] dseg_base_linear;
-    logic [31: 0] sseg_base_linear;
-    logic [31: 0] cseg_base_linear;
 
     assign dseg_base_linear = {
         descriptor_cache[o_segment_reg_index][31: 24],
         descriptor_cache[o_segment_reg_index][ 7: 0],
         descriptor_cache[o_segment_reg_index][63: 48]
-    };
-    assign sseg_base_linear = {
-        descriptor_cache[`sreg_index_SS][31: 24],
-        descriptor_cache[`sreg_index_SS][ 7: 0],
-        descriptor_cache[`sreg_index_SS][63: 48]
-    };
-    assign cseg_base_linear = {
-        descriptor_cache[`sreg_index_CS][31: 24],
-        descriptor_cache[`sreg_index_CS][ 7: 0],
-        descriptor_cache[`sreg_index_CS][63: 48]
     };
 
     // EU 有效地址与 LSU 线性地址（数据段基址 + EA）
@@ -1390,7 +1378,6 @@ module i486_core (
     );
 
     // --- 异常 / 写回 ---
-    logic [ 7: 0] exception_vector; // 待投递异常号（如 #UD=6、#GP=13）
     logic       in_exception;         // 已进入异常处理路径时阻塞正常发射
 
     // 第二 ModR/M 字节域、短寄存器编码、线性下一条 EIP、短 jmp 符号扩展位移
@@ -1578,32 +1565,6 @@ module i486_core (
         stack_pop_esp = esp + bytes;
     endfunction
 
-    function automatic logic shadow_ret_has_entry(
-        input  logic [ 3: 0] sp
-    );
-        shadow_ret_has_entry = (sp != 4'd0);
-    endfunction
-
-    function automatic logic [31: 0] shadow_ret_top_or(
-        input  logic [ 3: 0]  sp,
-        input  logic [31: 0] fallback
-    );
-        if (sp != 4'd0)
-            shadow_ret_top_or = shadow_ret_stack[sp - 4'd1];
-        else
-            shadow_ret_top_or = fallback;
-    endfunction
-
-    function automatic logic [15: 0] shadow_ret_top16_or(
-        input  logic [ 3: 0]  sp,
-        input  logic [15: 0] fallback
-    );
-        if (sp != 4'd0)
-            shadow_ret_top16_or = shadow_ret_stack[sp - 4'd1][15: 0];
-        else
-            shadow_ret_top16_or = fallback;
-    endfunction
-
     // 时序：指令写回仲裁 — 复位初始化；否则默认关闭各写口，再按异常/多周期/LSU/发射指令分派
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
@@ -1625,7 +1586,6 @@ module i486_core (
             TR_write_enable <= 1'b0;
             TR_write_index <= 3'd0;
             TR_write_data <= 32'd0;
-            exception_vector <= 8'h0;
             in_exception <= 1'b0;
             xadd_wait_reg_wr <= 1'b0;
             muldiv_pair_wait <= 1'b0;
@@ -1675,12 +1635,10 @@ module i486_core (
                 IP_write_enable <= 1'b1;
                 IP_write_data <= EIP + { 28'h0, o_consume_bytes };
             end else if (if_segment_fault && insn_fire) begin
-                exception_vector <= 8'd13;
                 in_exception <= 1'b1;
             end else if (insn_fire && !cpuid_busy && !in_exception) begin
                 // 单拍发射写回：按译码 one-hot 更新 GPR/FLAGS/段/控制寄存器或进入异常态
                 if (o_error || post486_illegal) begin
-                    exception_vector <= 8'd6;
                     in_exception <= 1'b1;
                 end else if (o_opcode_x86_CPUID_CPU_identification) begin
                 end else if (o_opcode_x86_NOP_no_operation || o_opcode_x86_NOP_no_operation_multi_byte) begin
@@ -1693,10 +1651,8 @@ module i486_core (
                     IP_write_enable <= 1'b1;
                     IP_write_data <= EIP;
                 end else if (o_opcode_x86_RSM_resume_from_system_management_mode) begin
-                    exception_vector <= 8'd6;
                     in_exception <= 1'b1;
                 end else if (o_opcode_x86_UD0_undefined_instruction || o_opcode_x86_UD1_undefined_instruction || o_opcode_x86_UD2_undefined_instruction) begin
-                    exception_vector <= 8'd6;
                     in_exception <= 1'b1;
                 end else if (o_opcode_x86_AAA_ASCII_adjust_after_add) begin
                     // BCD / ASCII 调整等：改 AL/AH 与 CF/AF 或部分 FLAGS
@@ -1877,26 +1833,23 @@ module i486_core (
                     write_index <= 3'd4;
                     write_data <= stack_pop_esp(GPR_read_32[4], 32'd4);
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= shadow_ret_top_or(shadow_ret_sp, eip_next_linear);
-                    if (shadow_ret_has_entry(shadow_ret_sp))
+                    IP_write_data <= (shadow_ret_sp != 4'd0) ? shadow_ret_stack[shadow_ret_sp - 4'd1] : eip_next_linear;
+                    if (shadow_ret_sp != 4'd0)
                         shadow_ret_sp <= shadow_ret_sp - 4'd1;
                 end else if (o_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP || o_opcode_x86_RET_return_from_procedure_to_other_segment_adding_imm_to_SP) begin
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
                     write_data <= stack_pop_esp(GPR_read_32[4], 32'd4 + o_immediate);
                     IP_write_enable <= 1'b1;
-                    IP_write_data <= shadow_ret_top_or(shadow_ret_sp, eip_next_linear);
-                    if (shadow_ret_has_entry(shadow_ret_sp))
+                    IP_write_data <= (shadow_ret_sp != 4'd0) ? shadow_ret_stack[shadow_ret_sp - 4'd1] : eip_next_linear;
+                    if (shadow_ret_sp != 4'd0)
                         shadow_ret_sp <= shadow_ret_sp - 4'd1;
                 end else if (o_opcode_x86_INT_interrupt_type_3) begin
-                    exception_vector <= 8'd3;
                     in_exception <= 1'b1;
                 end else if (o_opcode_x86_INT_interrupt_type_n) begin
-                    exception_vector <= o_immediate[ 7: 0];
                     in_exception <= 1'b1;
                 end else if (o_opcode_x86_INT_interrupt_type_4) begin
                     if (OF) begin
-                        exception_vector <= 8'd4;
                         in_exception <= 1'b1;
                     end else begin
                         IP_write_enable <= 1'b1;
@@ -1936,21 +1889,22 @@ module i486_core (
                 end else if (o_opcode_x86_POP_reg) begin
                     write_enable <= 1'b1;
                     write_index <= short_reg_idx;
-                    write_data <= shadow_ret_top_or(shadow_ret_sp, 32'd0);
+                    write_data <= (shadow_ret_sp != 4'd0) ? shadow_ret_stack[shadow_ret_sp - 4'd1] : 32'd0;
                     xadd_saved_reg <= 3'd4;
                     xadd_saved_val <= stack_pop_esp(GPR_read_32[4], 32'd4);
                     xadd_wait_reg_wr <= 1'b1;
                 end else if (o_opcode_x86_POP_reg_mem && modrm_is_reg) begin
                     write_enable <= 1'b1;
                     write_index <= modrm_rm_field;
-                    write_data <= shadow_ret_top_or(shadow_ret_sp, 32'd0);
+                    write_data <= (shadow_ret_sp != 4'd0) ? shadow_ret_stack[shadow_ret_sp - 4'd1] : 32'd0;
                     xadd_saved_reg <= 3'd4;
                     xadd_saved_val <= stack_pop_esp(GPR_read_32[4], 32'd4);
                     xadd_wait_reg_wr <= 1'b1;
                 end else if (o_opcode_x86_POP_sreg_2 || o_opcode_x86_POP_sreg_3) begin
                     SREG_write_enable <= 1'b1;
                     SREG_write_index <= o_seg_reg_index;
-                    SREG_write_selector <= shadow_ret_top16_or(shadow_ret_sp, segment_selector[o_seg_reg_index]);
+                    SREG_write_selector <= (shadow_ret_sp != 4'd0) ?
+                        shadow_ret_stack[shadow_ret_sp - 4'd1][15: 0] : segment_selector[o_seg_reg_index];
                     SREG_write_descriptor <= descriptor_cache[o_seg_reg_index];
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
@@ -1959,7 +1913,7 @@ module i486_core (
                     IP_write_data <= eip_next_linear;
                 end else if (o_opcode_x86_POPF_pop_stack_into_FLAGS_or_EFLAGS) begin
                     FLAGS_write_enable <= 1'b1;
-                    FLAGS_write_data <= shadow_ret_top_or(shadow_ret_sp, EFLAGS);
+                    FLAGS_write_data <= (shadow_ret_sp != 4'd0) ? shadow_ret_stack[shadow_ret_sp - 4'd1] : EFLAGS;
                     write_enable <= 1'b1;
                     write_index <= 3'd4;
                     write_data <= stack_pop_esp(GPR_read_32[4], 32'd4);
@@ -2043,7 +1997,6 @@ module i486_core (
                     ( o_opcode_x86_DIV_acc_by_reg_mem | o_opcode_x86_IDIV_acc_by_reg_mem ) && modrm_is_reg &&
                     eu_md_div0
                 ) begin
-                    exception_vector <= 8'd0;
                     in_exception <= 1'b1;
                 end else if (
                     ( o_opcode_x86_MUL_acc_with_reg_mem | o_opcode_x86_IMUL_acc_with_reg_mem ) && modrm_is_reg
@@ -3019,7 +2972,6 @@ module i486_core (
                     IP_write_data <= EIP + { 28'h0, o_consume_bytes };
                 end else begin
                     // 未覆盖的译码组合：视为非法 → #UD
-                    exception_vector <= 8'd6;
                     in_exception <= 1'b1;
                 end
             end

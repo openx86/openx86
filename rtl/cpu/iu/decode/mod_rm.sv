@@ -265,7 +265,7 @@ assign index_reg_size_32 = default_operation_size_32 & (
     index_mod_xx_EBP |
     index_mod_xx_ESI |
     index_mod_xx_EDI |
-0);
+1'b0);
 assign o_index_reg_is_present = index_reg_size_16 | index_reg_size_32;
 
 
