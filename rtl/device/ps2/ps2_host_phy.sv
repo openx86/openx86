@@ -17,24 +17,24 @@ description: This module implements ps2_host_phy.
 module ps2_host_phy #(
     parameter int CLK_HZ = 50_000_000
 ) (
-    input  logic          i_ps2_clk_in,  // 来自焊盘的 PS/2 时钟（异步输入，经双拍）
-    input  logic          i_ps2_dat_in,  // 来自焊盘的 PS/2 数据
+    input  logic          i_ps2_clk_in, // 来自焊盘的 PS/2 时钟（异步输入，经双拍）
+    input  logic          i_ps2_dat_in, // 来自焊盘的 PS/2 数据
     output logic         o_ps2_clk_out, // 主机驱动时钟线电平（开漏模型）
-    output logic         o_ps2_clk_oe,  // 时钟线输出使能（拉低抑制期）
+    output logic         o_ps2_clk_oe, // 时钟线输出使能（拉低抑制期）
     output logic         o_ps2_dat_out, // 主机数据线驱动
-    output logic         o_ps2_dat_oe,  // 数据线输出使能
-    input  logic          i_tx_req,     // 单周期：请求发送一字节到设备
-    input  logic [ 7: 0] i_tx_byte,     // 待发送数据
+    output logic         o_ps2_dat_oe, // 数据线输出使能
+    input  logic          i_tx_req, // 单周期：请求发送一字节到设备
+    input  logic [ 7: 0] i_tx_byte, // 待发送数据
     // 主机 → 设备（单周期 i_tx_req 脉冲即可，o_tx_busy 期间勿重复请求）
-    output logic         o_tx_busy,     // 发送进行中
-    output logic         o_tx_done,     // 发送成功完成脉冲
-    output logic         o_tx_err,      // 发送超时/无 ACK
-    output logic         o_rx_strobe,   // 收到一字节脉冲
-    output logic [ 7: 0] o_rx_byte,     // 接收数据
+    output logic         o_tx_busy, // 发送进行中
+    output logic         o_tx_done, // 发送成功完成脉冲
+    output logic         o_tx_err, // 发送超时/无 ACK
+    output logic         o_rx_strobe, // 收到一字节脉冲
+    output logic [ 7: 0] o_rx_byte, // 接收数据
     // 设备 → 主机
-    output logic         o_rx_err,      // 接收帧校验失败
-    input  logic          clk,        // 主机逻辑时钟
-    input  logic          rst_n       // 异步低有效复位
+    output logic         o_rx_err, // 接收帧校验失败
+    input  logic          clk, // 主机逻辑时钟
+    input  logic          rst_n // 异步低有效复位
 );
 
     // --- 时间常量（与 CLK_HZ 成比例）-----------------------------------------
