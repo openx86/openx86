@@ -10,7 +10,7 @@ module eu_ari_execute_arithmetic_adc_tb;
     logic [31: 0] a, b, y;
     logic        cf;
 
-    eu_alu_arithmetic_ari_execute_arithmetic_adc u_dut (
+    ari_execute_arithmetic_adc u_dut (
         .operand_1(a),
         .operand_2(b),
         .carry_flag(cf),

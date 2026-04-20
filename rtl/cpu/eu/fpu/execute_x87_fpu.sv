@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_fpu_execute_x87_fpu.
+description: This module implements execute_x87_fpu.
 */
 // ============================================================================
 // X87 FPU 子集（栈式寄存器 ST0–ST7）
@@ -11,8 +11,7 @@ description: This module implements eu_fpu_execute_x87_fpu.
 
 `include "openx86_defs.h.sv"
 
-module eu_fpu_execute_x87_fpu (
-    input  logic          i_valid,  // 操作有效
+module execute_x87_fpu (    input  logic          i_valid,  // 操作有效
     input  logic [ 4: 0]   i_op,  // 乘除操作类型
     input  logic [63: 0] i_push_data,  // 压栈数据
     input  logic [ 2: 0]   i_st_src,  // 源栈寄存器编号

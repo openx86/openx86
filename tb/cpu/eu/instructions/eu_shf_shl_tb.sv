@@ -8,7 +8,7 @@ description: This module implements eu_shf_shl_tb.
 module eu_shf_shl_tb;
 	logic [31: 0] a, c, y;
 
-	eu_alu_shift_rotate_shf_shl u (
+	shf_shl u (
 		.a     ( a ),
 		.count ( c ),
 		.y     ( y )
@@ -19,7 +19,7 @@ module eu_shf_shl_tb;
 		c = 32'd4;
 		#1;
 		if (y !== 32'h10) begin
-			$display("FAIL eu_alu_shift_rotate_shf_shl");
+			$display("FAIL shf_shl");
 			$finish(1);
 		end
 		$display("eu_shf_shl_tb PASS");

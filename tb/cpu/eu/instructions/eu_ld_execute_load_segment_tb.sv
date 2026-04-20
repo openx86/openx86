@@ -21,7 +21,7 @@ module eu_ld_execute_load_segment_tb;
     logic        valid;
     logic        ready;
 
-    eu_agu_lsu_ld_execute_load_segment u_dut (
+    ld_execute_load_segment u_dut (
         .protected_mode_enable(protected_mode_enable),
         .index_segment_register(index_segment_register),
         .index_general_register(index_general_register),

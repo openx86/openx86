@@ -2,10 +2,9 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_bitmanip_bit_btr.
+description: This module implements bit_btr.
 */
-module eu_alu_bitmanip_bit_btr (
-    input  logic [31: 0]  a,  // 操作数 / 源 1
+module bit_btr (    input  logic [31: 0]  a,  // 操作数 / 源 1
     input  logic [31: 0]  bit_index,  // 位测试索引
     output logic [31: 0] y,  // 结果输出
     output logic         cf  // 进位标志

@@ -13,18 +13,18 @@ module eu_misc_cr0_ctrl_tb;
     logic [31: 0] lmsw_y;
     logic [31: 0] smsw_y;
 
-    eu_alu_misc_clts u_clts (
+    misc_clts u_clts (
         .cr0 ( cr0 ),
         .y ( clts_y )
     );
 
-    eu_alu_misc_lmsw u_lmsw (
+    misc_lmsw u_lmsw (
         .cr0 ( cr0 ),
         .src ( src ),
         .y ( lmsw_y )
     );
 
-    eu_alu_misc_smsw u_smsw (
+    misc_smsw u_smsw (
         .cr0 ( cr0 ),
         .y ( smsw_y )
     );

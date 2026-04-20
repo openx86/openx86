@@ -5,8 +5,7 @@ repo: https://github.com/openx86/openx86
 description: Debug register file.
 */
 
-module register_file_rf_debug_register (
-    input  logic         write_enable,       // 写使能
+module rf_debug_register (    input  logic         write_enable,       // 写使能
     input  logic [ 2: 0] write_index,       // DR 索引（0–7）
     input  logic [31: 0] write_data,         // 写入数据
     output logic [ 7: 0][31: 0] DR,       // 调试寄存器 DR0–DR7

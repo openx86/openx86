@@ -5,11 +5,10 @@ repo: https://github.com/openx86/openx86
 description: INVD / WBINVD / INVLPG micro-ops (cache flush and TLB invalidate pulses).
 */
 // ============================================================================
-// eu_extensions_i486_cache_invalidate — i486 cache control placeholders
+// cache_invalidate — i486 cache control placeholders
 // ============================================================================
 
-module eu_extensions_i486_cache_invalidate (
-    input  logic          insn_fire,
+module cache_invalidate (    input  logic          insn_fire,
     input  logic          op_invd,
     input  logic          op_wbinvd,
     input  logic          op_invlpg,

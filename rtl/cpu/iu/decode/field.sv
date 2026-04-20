@@ -2,21 +2,20 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements iu_decode_field.
+description: This module implements field.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: iu_decode_field
+module: field
 create at: 2022-02-25 02:54:27
 description: decode fileds include w, s, reg, mod_r/m, imm, disp
 */
 
 `include "openx86_defs.h.sv"
 
-module iu_decode_field (
-    // 4B 指令切片（已与前缀偏移对齐）；配合各 i_opcode_x86_* 命中选择字段布局
+module field (    // 4B 指令切片（已与前缀偏移对齐）；配合各 i_opcode_x86_* 命中选择字段布局
     input  logic [ 3: 0][ 7: 0] i_instruction,
     input  logic         i_opcode_x86_AAA_ASCII_adjust_after_add,
     input  logic         i_opcode_x86_AAD_ASCII_AX_before_div,

@@ -5,12 +5,11 @@ repo: https://github.com/openx86/openx86
 description: Multi-cycle CPUID micro-sequence for i486-class extensions.
 */
 // ============================================================================
-// eu_extensions_i486_cpuid — CPUID leaf 0/1 (and passthrough latch) GPR write sequence
+// cpuid — CPUID leaf 0/1 (and passthrough latch) GPR write sequence
 // ============================================================================
 `include "openx86_defs.h.sv"
 
-module eu_extensions_i486_cpuid (
-    input  logic          insn_fire,
+module cpuid (    input  logic          insn_fire,
     input  logic          op_cpuid,
     input  logic [31: 0]  gpr_eax,
     output logic         o_cpuid_busy,

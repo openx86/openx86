@@ -2,13 +2,13 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements mmu_segmentation_system_segment_descriptor_decode.
+description: This module implements system_segment_descriptor_decode.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: mmu_segmentation_system_segment_descriptor_decode
+module: system_segment_descriptor_decode
 create at: 2021-10-23 13:43:22
 description: decode the segment register
 */
@@ -34,8 +34,7 @@ specifies the protection level 0–3 associated with a
 segment
 */
 
-module mmu_segmentation_system_segment_descriptor_decode (
-    // 系统段描述符（S=0）：基址/limit/粒度/类型等
+module system_segment_descriptor_decode (    // 系统段描述符（S=0）：基址/limit/粒度/类型等
     output logic [31: 0] o_base,
     output logic [19: 0] o_limit,
     output logic         o_granularity,

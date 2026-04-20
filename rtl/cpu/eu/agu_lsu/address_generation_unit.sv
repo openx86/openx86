@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_agu_lsu_address_generation_unit.
+description: This module implements address_generation_unit.
 */
 // ============================================================================
 // Address Generation Unit (AGU)
@@ -10,8 +10,7 @@ description: This module implements eu_agu_lsu_address_generation_unit.
 // 用于 ModR/M、SIB 寻址；段基址/分页在 MMU 侧叠加
 // ============================================================================
 
-module eu_agu_lsu_address_generation_unit (
-    input  logic [31: 0] i_base,  // 基址
+module address_generation_unit (    input  logic [31: 0] i_base,  // 基址
     input  logic [31: 0] i_index,  // 变址
     input  logic [ 1: 0]   i_scale,  // 比例因子编码
     input  logic [31: 0] i_disp,  // 位移（符号扩展）

@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_shift_rotate_shf_execute_shift_right.
+description: This module implements shf_execute_shift_right.
 */
 // ============================================================================
 // execute_shift_right
@@ -11,8 +11,7 @@ description: This module implements eu_alu_shift_rotate_shf_execute_shift_right.
 // - `is_signed` 用于选择逻辑右移(0)或算术右移(1)的行为（高位填充 0 或符号位）。
 // ============================================================================
 
-module eu_alu_shift_rotate_shf_execute_shift_right #(
-    BIT_WIDTH = 32
+module shf_execute_shift_right #(    BIT_WIDTH = 32
 ) (
     input  logic [BIT_WIDTH-1: 0] operand,  // 待移位/旋转的操作数
     input  logic [BIT_WIDTH-1: 0]  count,  // 移位或旋转计数值（低位有效）

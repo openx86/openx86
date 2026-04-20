@@ -2,16 +2,15 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements wb_write_back_stage.
+description: This module implements write_back_stage.
 */
 // ============================================================================
-// wb_write_back_stage
+// write_back_stage
 // ----------------------------------------------------------------------------
 // Stage 5 (WRB / write-back): wraps commit forwarding to architectural state.
 // ============================================================================
 
-module wb_write_back_stage (
-    input  logic          i_stage4_valid,    // MEM 段有效（WRB 与之对齐）
+module write_back_stage (    input  logic          i_stage4_valid,    // MEM 段有效（WRB 与之对齐）
     output logic         o_stage_valid,     // WRB 段有效（当前等同直通 stage4）
 
     // --- GPR 写回 ---
@@ -80,7 +79,7 @@ module wb_write_back_stage (
 );
 
     // 写回仲裁/直通占位：便于日后加冒险与提交顺序
-    wb_write_back_unit u_wb_write_back_unit (
+    write_back_unit u_wb_write_back_unit (
         .i_gpr_write_enable    ( i_gpr_write_enable ),
         .i_gpr_write_index     ( i_gpr_write_index ),
         .i_gpr_write_data      ( i_gpr_write_data ),

@@ -2,19 +2,18 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements mmu_memory_management_unit.
+description: This module implements memory_management_unit.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: mmu_memory_management_unit
+module: memory_management_unit
 create at: 2022-02-04 23:34:40
-description: mmu_memory_management_unit
+description: memory_management_unit
 */
 
-module mmu_memory_management_unit #(
-    parameter bit read_from_fetch = 1'b0
+module memory_management_unit #(    parameter bit read_from_fetch = 1'b0
 ) (
     // ------------------------------------------------------------------------
     // Handshake（与上游地址请求握手）
@@ -61,9 +60,9 @@ logic         paging_vaild;     // 启动分页 walk
 logic         paging_ready;     // 分页 walk 完成
 logic         seg_priv_err;     // 段检查失败
 
-mmu_segmentation_unit #(
+segmentation_unit #(
     .read_from_fetch ( read_from_fetch )
-) mmu_segmentation_unit (
+) segmentation_unit (
     .i_protected_mode ( i_protected_mode ),
     .i_segment_selector ( i_segment_selector ),
     .i_segment_descriptor ( i_segment_descriptor ),
@@ -79,7 +78,7 @@ mmu_segmentation_unit #(
 
 assign o_segment_fault = seg_priv_err;
 
-mmu_paging_unit mmu_paging_unit (
+paging_unit paging_unit (
     .i_vaild ( paging_vaild ),
     .o_ready ( paging_ready ),
     .i_linear_address ( linear_address ),

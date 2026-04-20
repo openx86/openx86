@@ -8,7 +8,7 @@ description: This module implements eu_ari_add_tb.
 module eu_ari_add_tb;
 	logic [31: 0] a, b, y;
 
-	eu_alu_arithmetic_ari_add u (
+	ari_add u (
 		.a ( a ),
 		.b ( b ),
 		.y ( y )
@@ -19,7 +19,7 @@ module eu_ari_add_tb;
 		b = 3;
 		#1;
 		if (y !== 5) begin
-			$display("FAIL eu_alu_arithmetic_ari_add");
+			$display("FAIL ari_add");
 			$finish(1);
 		end
 		$display("eu_ari_add_tb PASS");

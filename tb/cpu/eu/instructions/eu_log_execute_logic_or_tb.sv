@@ -9,7 +9,7 @@ description: This module implements eu_log_execute_logic_or_tb.
 module eu_log_execute_logic_or_tb;
     logic [31: 0] a, b, y;
 
-    eu_alu_logic_log_execute_logic_or u_dut (
+    log_execute_logic_or u_dut (
         .operand_1(a),
         .operand_2(b),
         .result(y)

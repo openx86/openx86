@@ -2,10 +2,9 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_misc_lahf.
+description: This module implements misc_lahf.
 */
-module eu_alu_misc_lahf (
-    input  logic [31: 0]  eax_in,  // 输入 EAX
+module misc_lahf (    input  logic [31: 0]  eax_in,  // 输入 EAX
     input  logic [31: 0]  flags_in,  // 输入标志
     output logic [31: 0] eax_out  // 输出 EAX
 );

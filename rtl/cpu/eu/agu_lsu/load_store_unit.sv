@@ -2,15 +2,14 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_agu_lsu_load_store_unit.
+description: This module implements load_store_unit.
 */
 // ============================================================================
 // Load / Store Unit (LSU)
 // 将执行侧访存请求转换为对总线/存储器端口的握手（valid/ready）
 // ============================================================================
 
-module eu_agu_lsu_load_store_unit (
-
+module load_store_unit (
     input  logic          i_start,  // 启动一次访存
     input  logic          i_is_store,  // 写访存
     input  logic [31: 0] i_addr,  // 访存地址

@@ -8,7 +8,7 @@ description: This module implements eu_ari_neg_tb.
 module eu_ari_neg_tb;
 	logic [31: 0] a, y;
 
-	eu_alu_arithmetic_ari_neg u (
+	ari_neg u (
 		.a ( a ),
 		.y ( y )
 	);
@@ -17,7 +17,7 @@ module eu_ari_neg_tb;
 		a = 32'd1;
 		#1;
 		if (y !== 32'hFFFF_FFFF) begin
-			$display("FAIL eu_alu_arithmetic_ari_neg");
+			$display("FAIL ari_neg");
 			$finish(1);
 		end
 		$display("eu_ari_neg_tb PASS");

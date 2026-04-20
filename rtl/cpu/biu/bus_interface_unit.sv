@@ -2,17 +2,16 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements biu_bus_interface_unit.
+description: This module implements bus_interface_unit.
 */
 // ============================================================================
-// biu_bus_interface_unit (BIU)
+// bus_interface_unit (BIU)
 // ----------------------------------------------------------------------------
 // 「分页表遍历(mmu)」「取指(code)」「数据(data)」复用到单一系统总线。
 // 优先级：MMU > code > data。
 // ============================================================================
 
-module biu_bus_interface_unit (
-    input  logic          i_mmu_vaild,        // MMU/页表遍历请求有效
+module bus_interface_unit (    input  logic          i_mmu_vaild,        // MMU/页表遍历请求有效
     output logic         o_mmu_ready,        // MMU 事务完成握手
     input  logic [31: 0] i_mmu_address,      // MMU 访存地址
     output logic [31: 0] o_mmu_data_read,    // MMU 读回数据（来自总线）

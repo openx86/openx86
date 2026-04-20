@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_arithmetic_ari_execute_arithmetic_div.
+description: This module implements ari_execute_arithmetic_div.
 */
 // ============================================================================
 // execute_arithmetic_div
@@ -14,8 +14,7 @@ description: This module implements eu_alu_arithmetic_ari_execute_arithmetic_div
 // - 综合时除法器资源开销大；真实实现通常使用多周期除法或共享乘除单元。
 // ============================================================================
 
-module eu_alu_arithmetic_ari_execute_arithmetic_div #(
-    BIT_WIDTH = 32
+module ari_execute_arithmetic_div #(    BIT_WIDTH = 32
 ) (
     input  logic [BIT_WIDTH-1: 0] operand_1,  // 被除数
     input  logic [BIT_WIDTH-1: 0] operand_2,  // 除数

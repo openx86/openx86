@@ -9,7 +9,7 @@ description: This module implements eu_shf_execute_shift_right_tb.
 module eu_shf_execute_shift_right_tb;
     logic [31: 0] op, cnt, is_signed, y;
 
-    eu_alu_shift_rotate_shf_execute_shift_right u_dut (
+    shf_execute_shift_right u_dut (
         .operand(op),
         .count(cnt),
         .is_signed(is_signed),

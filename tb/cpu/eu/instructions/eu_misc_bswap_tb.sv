@@ -10,7 +10,7 @@ module eu_misc_bswap_tb;
     logic [31: 0] a;
     logic [31: 0] y;
 
-    eu_alu_misc_bswap u_dut (
+    misc_bswap u_dut (
         .a ( a ),
         .y ( y )
     );
@@ -19,7 +19,7 @@ module eu_misc_bswap_tb;
         a = 32'h1234_5678;
         #1;
         if (y !== 32'h7856_3412) begin
-            $display("FAIL eu_alu_misc_bswap");
+            $display("FAIL misc_bswap");
             $finish(1);
         end
 

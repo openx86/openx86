@@ -23,26 +23,26 @@ module eu_misc_protected_ops_tb;
     logic [31: 0] verr_selector;
     logic        verr_zf;
 
-    eu_alu_misc_arpl u_arpl (
+    misc_arpl u_arpl (
         .dst ( arpl_dst ),
         .src ( arpl_src ),
         .y ( arpl_y ),
         .zf ( arpl_zf )
     );
 
-    eu_alu_misc_lar u_lar (
+    misc_lar u_lar (
         .src ( lar_src ),
         .y ( lar_y ),
         .zf ( lar_zf )
     );
 
-    eu_alu_misc_lsl u_lsl (
+    misc_lsl u_lsl (
         .src ( lsl_src ),
         .y ( lsl_y ),
         .zf ( lsl_zf )
     );
 
-    eu_alu_misc_verr u_verr (
+    misc_verr u_verr (
         .selector ( verr_selector ),
         .zf ( verr_zf )
     );

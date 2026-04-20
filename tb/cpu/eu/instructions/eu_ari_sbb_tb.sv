@@ -9,7 +9,7 @@ module eu_ari_sbb_tb;
 	logic [31: 0] a, b, y;
 	logic         cf;
 
-	eu_alu_arithmetic_ari_sbb u (
+	ari_sbb u (
 		.a  ( a  ),
 		.b  ( b  ),
 		.cf ( cf ),
@@ -22,7 +22,7 @@ module eu_ari_sbb_tb;
 		cf = 1;
 		#1;
 		if (y !== 4) begin
-			$display("FAIL eu_alu_arithmetic_ari_sbb");
+			$display("FAIL ari_sbb");
 			$finish(1);
 		end
 		$display("eu_ari_sbb_tb PASS");

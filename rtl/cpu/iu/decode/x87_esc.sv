@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements iu_decode_x87_esc.
+description: This module implements x87_esc.
 */
 // ============================================================================
 // X87 FPU — ESC D8h–DFh 译码（第二字节通常为 ModR/M）
@@ -10,8 +10,7 @@ description: This module implements iu_decode_x87_esc.
 
 `include "openx86_defs.h.sv"
 
-module iu_decode_x87_esc (
-    input  logic [ 7: 0]   i_b0,
+module x87_esc (    input  logic [ 7: 0]   i_b0,
     input  logic [ 7: 0]   i_b1,
     output logic         o_is_esc,
     output logic [ 1: 0] o_mod,

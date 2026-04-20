@@ -2,21 +2,20 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements iu_decode_prefix.
+description: This module implements prefix.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: iu_decode_prefix
+module: prefix
 create at: 2022-02-20 09:24:27
 description: decode prefix from instruction
 */
 
 `include "openx86_defs.h.sv"
 // 单字节前缀译码：判定属于手册四组中的哪一类，并给出段覆盖索引
-module iu_decode_prefix (
-    input  logic [ 7: 0] i_instruction,          // 当前字节
+module prefix (    input  logic [ 7: 0] i_instruction,          // 当前字节
     output logic        o_group_1_lock_bus,
     output logic        o_group_1_repeat_not_equal,
     output logic        o_group_1_repeat_equal,

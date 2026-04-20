@@ -2,10 +2,9 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_shift_rotate_shf_shrd.
+description: This module implements shf_shrd.
 */
-module eu_alu_shift_rotate_shf_shrd (
-    input  logic [31: 0]  a,  // 操作数 / 源 1
+module shf_shrd (    input  logic [31: 0]  a,  // 操作数 / 源 1
     input  logic [31: 0]  b,  // 操作数 / 源 2
     input  logic [31: 0]  count,  // 移位或旋转计数值（低位有效）
     output logic [31: 0] y  // 结果输出

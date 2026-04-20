@@ -2,22 +2,21 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements iu_decode_unit.
+description: This module implements unit.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: iu_decode_unit
+module: unit
 create at: 2022-01-04 03:27:51
-description: decode unit (模块名与文件名 iu_decode_unit 一致)
+description: decode unit (模块名与文件名 unit 一致)
 */
 
 `include "openx86_defs.h.sv"
 
 // 顶层译码单元：前缀解析 → 主操作码 one-hot → 域提取 → ModRM/SIB → 位移/立即数 → 字节消耗
-module iu_decode_unit (
-    input  logic [15: 0][ 7: 0] i_instruction, // 16B 指令滑窗（低字节为首字节）
+module unit (    input  logic [15: 0][ 7: 0] i_instruction, // 16B 指令滑窗（低字节为首字节）
     input  logic          i_default_operand_size,  // 默认操作数宽度（16/32）
     output logic         o_opcode_x86_AAA_ASCII_adjust_after_add,
     output logic         o_opcode_x86_AAD_ASCII_AX_before_div,
@@ -290,7 +289,7 @@ assign prefix_instruction[1] = i_instruction[1];
 assign prefix_instruction[2] = i_instruction[2];
 assign prefix_instruction[3] = i_instruction[3];
 // 解析四组前缀并给出消费字节数/错误（非法重复前缀）
-iu_decode_prefix_all deocde_decode_prefix_all (
+prefix_all deocde_decode_prefix_all (
     .i_instruction ( prefix_instruction ),
     .o_group_1_lock_bus ( prefix_o_group_1_lock_bus ),
     .o_group_1_repeat_not_equal ( prefix_o_group_1_repeat_not_equal ),
@@ -371,7 +370,7 @@ logic [ 1: 0] x87_mod_int;
 logic [ 2: 0] x87_reg_int;
 logic [ 2: 0] x87_rm_int;
 
-iu_decode_x87_esc u_decode_x87_esc (
+x87_esc u_decode_x87_esc (
     .i_b0               ( opcode_instruction[0] ),
     .i_b1               ( opcode_instruction[1] ),
     .o_is_esc           ( x87_esc_int ),
@@ -385,7 +384,7 @@ iu_decode_x87_esc u_decode_x87_esc (
 );
 
 // IA-32 主 opcode → 各指令 one-hot（大表，纯组合）
-iu_decode_opcode_x86 deocde_decode_opcode_x86 (
+opcode_x86 deocde_decode_opcode_x86 (
     .o_opcode_x86_AAA_ASCII_adjust_after_add ( o_opcode_x86_AAA_ASCII_adjust_after_add ),
     .o_opcode_x86_AAD_ASCII_AX_before_div ( o_opcode_x86_AAD_ASCII_AX_before_div ),
     .o_opcode_x86_AAM_ASCII_AX_after_mul ( o_opcode_x86_AAM_ASCII_AX_after_mul ),
@@ -629,7 +628,7 @@ logic        field_o_primary_opcode_byte_1;
 logic        field_o_primary_opcode_byte_2;
 logic        field_o_primary_opcode_byte_3;
 logic        field_o_error;
-iu_decode_field deocde_decode_field (
+field deocde_decode_field (
     .i_instruction ( opcode_instruction ),
     .i_opcode_x86_AAA_ASCII_adjust_after_add ( o_opcode_x86_AAA_ASCII_adjust_after_add ),
     .i_opcode_x86_AAD_ASCII_AX_before_div ( o_opcode_x86_AAD_ASCII_AX_before_div ),
@@ -909,7 +908,7 @@ assign mod_rm_i_w = field_o_w;
 assign mod_rm_i_default_operand_size = i_default_operand_size;
 
 // ModR/M：解析寻址模式、寄存器/段、位移宽度、是否需要 SIB
-iu_decode_mod_rm deocde_decode_mod_rm (
+mod_rm deocde_decode_mod_rm (
     .i_mod ( mod_rm_i_mod ),
     .i_rm ( mod_rm_i_rm ),
     .i_w_is_present ( mod_rm_i_w_is_present ),
@@ -961,7 +960,7 @@ assign sib_i_mod = mod_rm_i_mod;
 //         4'h8: sib_i_sib = i_instruction[8];
 //     endcase
 // SIB：scale/index/base 与 disp8/disp32 特例（mod=00,base=101）
-iu_decode_sib deocde_decode_sib (
+sib deocde_decode_sib (
     .i_sib ( sib_i_sib ),
     .i_mod ( sib_i_mod ),
     .o_scale_factor ( sib_o_scale_factor ),
@@ -1021,7 +1020,7 @@ always_comb begin
     disp_imm_i_instruction[7] = i_instruction[offset_disp_imm + 7];
 end
 // 从位移/立即数起点顺序拼接变长字段
-iu_decode_disp_imm deocde_decode_disp_imm (
+disp_imm deocde_decode_disp_imm (
     .i_instruction ( disp_imm_i_instruction ),
     .i_displacement_size_1 ( disp_imm_i_displacement_size_1 ),
     .i_displacement_size_2 ( disp_imm_i_displacement_size_2 ),

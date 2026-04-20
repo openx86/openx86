@@ -8,7 +8,7 @@ description: This module implements eu_ari_dec_tb.
 module eu_ari_dec_tb;
 	logic [31: 0] a, y;
 
-	eu_alu_arithmetic_ari_dec u (
+	ari_dec u (
 		.a ( a ),
 		.y ( y )
 	);
@@ -17,7 +17,7 @@ module eu_ari_dec_tb;
 		a = 32'd42;
 		#1;
 		if (y !== 32'd41) begin
-			$display("FAIL eu_alu_arithmetic_ari_dec");
+			$display("FAIL ari_dec");
 			$finish(1);
 		end
 		$display("eu_ari_dec_tb PASS");

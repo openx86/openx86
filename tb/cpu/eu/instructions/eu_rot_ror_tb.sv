@@ -8,7 +8,7 @@ description: This module implements eu_rot_ror_tb.
 module eu_rot_ror_tb;
 	logic [31: 0] a, c, y;
 
-	eu_alu_shift_rotate_rot_ror u (
+	rot_ror u (
 		.a     ( a ),
 		.count ( c ),
 		.y     ( y )
@@ -19,7 +19,7 @@ module eu_rot_ror_tb;
 		c = 32'd8;
 		#1;
 		if (y !== 32'h7812_3456) begin
-			$display("FAIL eu_alu_shift_rotate_rot_ror");
+			$display("FAIL rot_ror");
 			$finish(1);
 		end
 		$display("eu_rot_ror_tb PASS");

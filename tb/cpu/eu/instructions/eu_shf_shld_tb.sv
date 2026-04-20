@@ -12,7 +12,7 @@ module eu_shf_shld_tb;
     logic [31: 0] c;
     logic [31: 0] y;
 
-    eu_alu_shift_rotate_shf_shld u_dut (
+    shf_shld u_dut (
         .a ( a ),
         .b ( b ),
         .count ( c ),
@@ -25,14 +25,14 @@ module eu_shf_shld_tb;
         c = 32'd4;
         #1;
         if (y !== 32'h2345_6789) begin
-            $display("FAIL eu_alu_shift_rotate_shf_shld");
+            $display("FAIL shf_shld");
             $finish(1);
         end
 
         c = 32'd0;
         #1;
         if (y !== a) begin
-            $display("FAIL eu_alu_shift_rotate_shf_shld count0");
+            $display("FAIL shf_shld count0");
             $finish(1);
         end
 

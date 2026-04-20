@@ -9,7 +9,7 @@ description: This module implements eu_log_execute_logic_not_tb.
 module eu_log_execute_logic_not_tb;
     logic [31: 0] a, y;
 
-    eu_alu_logic_log_execute_logic_not u_dut (
+    log_execute_logic_not u_dut (
         .operand_1(a),
         .result(y)
     );

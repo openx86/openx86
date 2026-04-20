@@ -9,7 +9,7 @@ description: This module implements eu_rot_execute_rotate_right_tb.
 module eu_rot_execute_rotate_right_tb;
     logic [31: 0] op, cnt, y;
 
-    eu_alu_shift_rotate_rot_execute_rotate_right u_dut (
+    rot_execute_rotate_right u_dut (
         .operand(op),
         .count(cnt),
         .result(y)

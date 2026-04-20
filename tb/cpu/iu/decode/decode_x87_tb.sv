@@ -18,7 +18,7 @@ module decode_x87_tb;
     logic esc;
     logic [31: 0] mask;
 
-    iu_decode_x87_esc dut (
+    x87_esc dut (
         .i_b0             ( b0 ),
         .i_b1             ( b1 ),
         .o_is_esc         ( esc ),

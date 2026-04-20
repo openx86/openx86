@@ -2,16 +2,15 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements mem_memory_stage.
+description: This module implements memory_stage.
 */
 // ============================================================================
-// mem_memory_stage
+// memory_stage
 // ----------------------------------------------------------------------------
 // Stage 4 (MEM / memory): wraps LSU memory access sequencing.
 // ============================================================================
 
-module mem_memory_stage (
-    input  logic          i_stage3_valid,   // 上游 EXE 阶段有效（与 MEM 流水对齐）
+module memory_stage (    input  logic          i_stage3_valid,   // 上游 EXE 阶段有效（与 MEM 流水对齐）
     output logic         o_stage_valid,    // 本阶段对外有效（busy 或 done 时保持传递）
 
     input  logic          i_start,          // 启动一次 LSU 访存
@@ -32,7 +31,7 @@ module mem_memory_stage (
 );
 
     // 委托 LSU 时序与下游 mem 接口细节
-    mem_access_memory u_am_access_memory (
+    access_memory u_am_access_memory (
         .clk         ( clk ),
         .rst_n       ( rst_n ),
         .i_start     ( i_start ),

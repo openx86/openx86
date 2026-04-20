@@ -2,10 +2,9 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_misc_setcc.
+description: This module implements misc_setcc.
 */
-module eu_alu_misc_setcc (
-    input  logic [31: 0]  flags,  // 标志寄存器位域
+module misc_setcc (    input  logic [31: 0]  flags,  // 标志寄存器位域
     input  logic [ 3: 0]   tttn,  // 条件码 nibble（SETcc）
     output logic [31: 0] y  // 结果输出
 );

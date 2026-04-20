@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_shift_rotate_rot_execute_rotate_left.
+description: This module implements rot_execute_rotate_left.
 */
 // ============================================================================
 // execute_rotate_left
@@ -13,8 +13,7 @@ description: This module implements eu_alu_shift_rotate_rot_execute_rotate_left.
 // - `result = (operand << count) | (operand >> (BIT_WIDTH - count))`
 // ============================================================================
 
-module eu_alu_shift_rotate_rot_execute_rotate_left #(
-    BIT_WIDTH = 32
+module rot_execute_rotate_left #(    BIT_WIDTH = 32
 ) (
     input  logic [BIT_WIDTH-1: 0] operand,  // 待移位/旋转的操作数
     input  logic [BIT_WIDTH-1: 0]  count,  // 移位或旋转计数值（低位有效）

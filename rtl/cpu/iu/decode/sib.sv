@@ -2,13 +2,13 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements iu_decode_sib.
+description: This module implements sib.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: iu_decode_sib
+module: sib
 create at: 2022-02-25 04:26:25
 description: decode the s-i-b means scale-index-base
 */
@@ -20,8 +20,7 @@ Intel486(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 `include "openx86_defs.h.sv"
 
-module iu_decode_sib (
-    input  logic [ 7: 0] i_sib,           // SIB 字节：ss|index|base
+module sib (    input  logic [ 7: 0] i_sib,           // SIB 字节：ss|index|base
     input  logic [ 1: 0] i_mod,           // 来自 ModR/M，用于 disp32 特例
     output logic [ 1: 0] o_scale_factor,
     output logic [ 2: 0] o_segment_reg_index,

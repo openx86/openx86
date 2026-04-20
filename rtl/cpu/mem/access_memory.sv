@@ -2,11 +2,10 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements mem_access_memory.
+description: This module implements access_memory.
 */
 // MEM 子模块薄封装：将 stage_4 接口转发到 EXE 阶段 LSU，复用既有 load/store 时序
-module mem_access_memory (
-    input  logic          i_start,           // 启动访存
+module access_memory (    input  logic          i_start,           // 启动访存
     input  logic          i_is_store,       // store/load 选择
     input  logic [31: 0] i_addr,            // 访存地址
     input  logic [31: 0] i_wdata,           // store 数据
@@ -23,7 +22,7 @@ module mem_access_memory (
     input  logic          rst_n
 );
 
-    eu_agu_lsu_load_store_unit u_lsu (
+    load_store_unit u_lsu (
         .clk ( clk ),
         .rst_n ( rst_n ),
         .i_start ( i_start ),

@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_agu_lsu_ld_execute_load_segment.
+description: This module implements ld_execute_load_segment.
 */
 // ============================================================================
 // execute_load_segment
@@ -21,8 +21,7 @@ description: This module implements eu_agu_lsu_ld_execute_load_segment.
 
 `include "openx86_defs.h.sv"
 
-module eu_agu_lsu_ld_execute_load_segment (
-    input  logic          protected_mode_enable,  // 1=保护模式
+module ld_execute_load_segment (    input  logic          protected_mode_enable,  // 1=保护模式
     input  logic [15: 0] index_segment_register,  // 目标段寄存器索引
     input  logic [15: 0] index_general_register,  // 源通用寄存器索引
     input  logic [ 7: 0]   greg__8,  // 8 位源操作数
@@ -72,7 +71,7 @@ logic        decode_code_conforming;
 logic        decode_code_readable;
 logic        decode_date_or_code_accessed;
 
-mmu_segmentation_segment_descriptor_encode u_segment_descriptor_encode (
+segment_descriptor_encode u_segment_descriptor_encode (
     .base                                     ( encode_base ),
     .limit                                    ( encode_limit ),
     .present                                  ( encode_present ),
@@ -88,7 +87,7 @@ mmu_segmentation_segment_descriptor_encode u_segment_descriptor_encode (
     .descriptor                               ( encode_descriptor )
 );
 
-mmu_segmentation_segment_descriptor_decode u_segment_descriptor_decode (
+segment_descriptor_decode u_segment_descriptor_decode (
     .o_base                                     ( decode_base ),
     .o_limit                                    ( decode_limit ),
     .o_date_or_code_present                     ( decode_present ),

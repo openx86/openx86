@@ -2,12 +2,11 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements wb_write_back_unit_tb.
+description: This module implements write_back_unit_tb.
 */
 `timescale 1ns/1ns
 
-module wb_write_back_unit_tb;
-    logic        i_gpr_write_enable;
+module write_back_unit_tb;    logic        i_gpr_write_enable;
     logic [ 2: 0] i_gpr_write_index;
     logic [31: 0] i_gpr_write_data;
     logic        o_gpr_write_enable;
@@ -63,7 +62,7 @@ module wb_write_back_unit_tb;
     logic [31: 0] o_mem_address;
     logic [31: 0] o_mem_write_data;
 
-    wb_write_back_unit u_dut (
+    write_back_unit u_dut (
         .i_gpr_write_enable(i_gpr_write_enable),
         .i_gpr_write_index(i_gpr_write_index),
         .i_gpr_write_data(i_gpr_write_data),
@@ -152,7 +151,7 @@ module wb_write_back_unit_tb;
             $finish(1);
         end
 
-        $display("wb_write_back_unit_tb PASS");
+        $display("write_back_unit_tb PASS");
         $finish;
     end
 

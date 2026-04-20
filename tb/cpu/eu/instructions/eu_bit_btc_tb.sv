@@ -12,7 +12,7 @@ module eu_bit_btc_tb;
     logic [31: 0] y;
     logic        cf;
 
-    eu_alu_bitmanip_bit_btc u_dut (
+    bit_btc u_dut (
         .a ( a ),
         .bit_index ( b ),
         .y ( y ),
@@ -24,14 +24,14 @@ module eu_bit_btc_tb;
         b = 32'd1;
         #1;
         if (cf !== 1'b0 || y !== 32'h0000_0002) begin
-            $display("FAIL eu_alu_bitmanip_bit_btc toggle1");
+            $display("FAIL bit_btc toggle1");
             $finish(1);
         end
 
         a = y;
         #1;
         if (cf !== 1'b1 || y !== 32'h0000_0000) begin
-            $display("FAIL eu_alu_bitmanip_bit_btc toggle2");
+            $display("FAIL bit_btc toggle2");
             $finish(1);
         end
 

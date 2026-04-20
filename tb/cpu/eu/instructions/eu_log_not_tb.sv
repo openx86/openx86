@@ -8,7 +8,7 @@ description: This module implements eu_log_not_tb.
 module eu_log_not_tb;
 	logic [31: 0] a, y;
 
-	eu_alu_logic_log_not u (
+	log_not u (
 		.a ( a ),
 		.y ( y )
 	);
@@ -17,7 +17,7 @@ module eu_log_not_tb;
 		a = 32'hFFFF_0000;
 		#1;
 		if (y !== 32'h0000_FFFF) begin
-			$display("FAIL eu_alu_logic_log_not");
+			$display("FAIL log_not");
 			$finish(1);
 		end
 		$display("eu_log_not_tb PASS");

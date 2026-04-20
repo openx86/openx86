@@ -2,10 +2,9 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_misc_sahf.
+description: This module implements misc_sahf.
 */
-module eu_alu_misc_sahf (
-    input  logic [31: 0]  flags_in,  // 输入标志
+module misc_sahf (    input  logic [31: 0]  flags_in,  // 输入标志
     input  logic [31: 0]  eax_in,  // 输入 EAX
     output logic [31: 0] flags_out  // 输出标志
 );

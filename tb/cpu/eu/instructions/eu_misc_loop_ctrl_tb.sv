@@ -13,7 +13,7 @@ module eu_misc_loop_ctrl_tb;
     logic [31: 0] ecx_next;
     logic        taken;
 
-    eu_alu_misc_loop_ctrl u_dut (
+    misc_loop_ctrl u_dut (
         .ecx ( ecx ),
         .zf ( zf ),
         .mode ( mode ),
@@ -24,7 +24,7 @@ module eu_misc_loop_ctrl_tb;
     task automatic check(input logic cond, input [127: 0] name);
         begin
             if (!cond) begin
-                $display("FAIL eu_alu_misc_loop_ctrl %s", name);
+                $display("FAIL misc_loop_ctrl %s", name);
                 $finish(1);
             end
         end

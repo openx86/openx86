@@ -14,7 +14,7 @@ module eu_misc_daa_tb;
     logic        af_out;
     logic        cf_out;
 
-    eu_alu_misc_daa u_dut (
+    misc_daa u_dut (
         .a ( a ),
         .af_in ( af_in ),
         .cf_in ( cf_in ),
@@ -29,7 +29,7 @@ module eu_misc_daa_tb;
         cf_in = 1'b0;
         #1;
         if ((y !== 32'h0000_0000) || (af_out !== 1'b1) || (cf_out !== 1'b1)) begin
-            $display("FAIL eu_alu_misc_daa double-adjust");
+            $display("FAIL misc_daa double-adjust");
             $finish(1);
         end
 
@@ -38,7 +38,7 @@ module eu_misc_daa_tb;
         cf_in = 1'b0;
         #1;
         if ((y !== 32'h0000_0015) || (af_out !== 1'b0) || (cf_out !== 1'b0)) begin
-            $display("FAIL eu_alu_misc_daa no-adjust");
+            $display("FAIL misc_daa no-adjust");
             $finish(1);
         end
 

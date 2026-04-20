@@ -2,16 +2,15 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: pipe_mem_to_wb_pipeline_boundary — combinational bridge from MEM LSU outputs to WRB inputs.
+description: pipeline_boundary — combinational bridge from MEM LSU outputs to WRB inputs.
 */
 // ============================================================================
-// pipe_mem_to_wb_pipeline_boundary
+// pipeline_boundary
 // ----------------------------------------------------------------------------
-// Passes MEM stage valid and data-bus request bundle into wb_write_back_stage.
+// Passes MEM stage valid and data-bus request bundle into write_back_stage.
 // ============================================================================
 
-module pipe_mem_to_wb_pipeline_boundary (
-    input  logic          i_stage4_valid,
+module pipeline_boundary (    input  logic          i_stage4_valid,
     output logic         o_stage4_valid,
     input  logic          i_mem_valid,
     output logic         o_mem_valid,

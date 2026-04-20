@@ -10,7 +10,7 @@ description: This module implements i486_cpu.
 // CPU 顶层封装：对外提供统一的简化 SoC bus 接口（valid/ready）。
 //
 // 说明：
-// - 实例化 `i486_core` 作为 CPU 核实现，并在核外封装 `biu_bus_interface_unit`。
+// - 实例化 `i486_core` 作为 CPU 核实现，并在核外封装 `bus_interface_unit`。
 // ============================================================================
 module i486_cpu (
     // 以下为历史 80386 风格总线信号（保留注释，未接线）
@@ -87,7 +87,7 @@ i486_core cpu_core_0 (
 );
 
 // 总线接口单元：仲裁并折叠到单一 valid/ready SoC 总线
-biu_bus_interface_unit biu_0 (
+bus_interface_unit biu_0 (
     .i_mmu_vaild        ( mmu_vaild ),
     .o_mmu_ready        ( mmu_ready ),
     .i_mmu_address      ( mmu_address ),

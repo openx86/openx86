@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_muldiv_execute_muldiv_unit.
+description: This module implements execute_muldiv_unit.
 */
 // ============================================================================
 // Multiply / Divide Unit — MUL/IMUL 32×32→64，DIV/IDIV 64÷32
@@ -10,8 +10,7 @@ description: This module implements eu_muldiv_execute_muldiv_unit.
 
 `include "openx86_defs.h.sv"
 
-module eu_muldiv_execute_muldiv_unit (
-    input  logic [ 2: 0] i_op,  // 乘除操作类型
+module execute_muldiv_unit (    input  logic [ 2: 0] i_op,  // 乘除操作类型
     input  logic [31: 0] i_lo,  // 低半部 / 被除数低 32 位
     input  logic [31: 0] i_hi,  // 被除数高 32 位
     input  logic [31: 0] i_src,  // 乘数或除数

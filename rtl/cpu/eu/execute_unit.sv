@@ -2,17 +2,16 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_execute_unit.
+description: This module implements execute_unit.
 */
 // ============================================================================
-// eu_execute_unit — AGU / Branch / MulDiv / X87 子模块聚合顶层
+// execute_unit — AGU / Branch / MulDiv / X87 子模块聚合顶层
 // 译码/微码侧通过选择信号驱动各簇；此处为直连端口便于 SoC 集成
 // ============================================================================
 
 `include "openx86_defs.h.sv"
 
-module eu_execute_unit (
-
+module execute_unit (
     // --- AGU ---
     input  logic [31: 0]        i_agu_base,  // 输入：agu base
     input  logic [31: 0]        i_agu_index,  // 输入：agu index
@@ -70,7 +69,7 @@ module eu_execute_unit (
     input  logic                clk,  // 时钟
     input  logic                rst_n  // 异步低有效复位
 );
-    eu_agu_lsu_address_generation_unit u_agu (
+    address_generation_unit u_agu (
         .i_base              ( i_agu_base ),
         .i_index             ( i_agu_index ),
         .i_scale             ( i_agu_scale ),
@@ -78,7 +77,7 @@ module eu_execute_unit (
         .o_effective_address ( o_agu_effective_addr )
     );
 
-    eu_branch_execute_branch_unit u_br (
+    execute_branch_unit u_br (
         .i_is_jcc      ( i_br_is_jcc ),
         .i_jcc_nibble  ( i_br_jcc_nibble ),
         .i_CF          ( i_br_CF ),
@@ -94,7 +93,7 @@ module eu_execute_unit (
         .o_target_eip  ( o_br_target_eip )
     );
 
-    eu_muldiv_execute_muldiv_unit u_md (
+    execute_muldiv_unit u_md (
         .i_op   ( i_md_op ),
         .i_lo   ( i_md_lo ),
         .i_hi   ( i_md_hi ),
@@ -230,115 +229,115 @@ module eu_execute_unit (
         end
     endfunction
 
-    eu_alu_arithmetic_ari_add u_int_add (
+    ari_add u_int_add (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .y ( int_add_res )
     );
 
-    eu_alu_arithmetic_ari_adc u_int_adc (
+    ari_adc u_int_adc (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .cf ( i_int_cf ),
         .y ( int_adc_res )
     );
 
-    eu_alu_arithmetic_ari_sub u_int_sub (
+    ari_sub u_int_sub (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .y ( int_sub_res )
     );
 
-    eu_alu_arithmetic_ari_sbb u_int_sbb (
+    ari_sbb u_int_sbb (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .cf ( i_int_cf ),
         .y ( int_sbb_res )
     );
 
-    eu_alu_logic_log_and u_int_and (
+    log_and u_int_and (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .y ( int_and_res )
     );
 
-    eu_alu_logic_log_or u_int_or (
+    log_or u_int_or (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .y ( int_or_res )
     );
 
-    eu_alu_logic_log_xor u_int_xor (
+    log_xor u_int_xor (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .y ( int_xor_res )
     );
 
-    eu_alu_logic_log_not u_int_not (
+    log_not u_int_not (
         .a ( i_int_a ),
         .y ( int_not_res )
     );
 
-    eu_alu_arithmetic_ari_neg u_int_neg (
+    ari_neg u_int_neg (
         .a ( i_int_a ),
         .y ( int_neg_res )
     );
 
-    eu_alu_arithmetic_ari_inc u_int_inc (
+    ari_inc u_int_inc (
         .a ( i_int_a ),
         .y ( int_inc_res )
     );
 
-    eu_alu_arithmetic_ari_dec u_int_dec (
+    ari_dec u_int_dec (
         .a ( i_int_a ),
         .y ( int_dec_res )
     );
 
-    eu_alu_shift_rotate_shf_shl u_int_shl (
+    shf_shl u_int_shl (
         .a ( i_int_a ),
         .count ( i_int_count ),
         .y ( int_shl_res )
     );
 
-    eu_alu_shift_rotate_shf_shr u_int_shr (
+    shf_shr u_int_shr (
         .a ( i_int_a ),
         .count ( i_int_count ),
         .y ( int_shr_res )
     );
 
-    eu_alu_shift_rotate_shf_sar u_int_sar (
+    shf_sar u_int_sar (
         .a ( i_int_a ),
         .count ( i_int_count ),
         .y ( int_sar_res )
     );
 
-    eu_alu_shift_rotate_shf_shld u_int_shld (
+    shf_shld u_int_shld (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .count ( i_int_count ),
         .y ( int_shld_res )
     );
 
-    eu_alu_shift_rotate_shf_shrd u_int_shrd (
+    shf_shrd u_int_shrd (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .count ( i_int_count ),
         .y ( int_shrd_res )
     );
 
-    eu_alu_shift_rotate_rot_rol u_int_rol (
+    rot_rol u_int_rol (
         .a ( i_int_a ),
         .count ( i_int_count ),
         .y ( int_rol_res )
     );
 
-    eu_alu_shift_rotate_rot_ror u_int_ror (
+    rot_ror u_int_ror (
         .a ( i_int_a ),
         .count ( i_int_count ),
         .y ( int_ror_res )
     );
 
-    eu_alu_shift_rotate_rot_rcl u_int_rcl (
+    rot_rcl u_int_rcl (
         .a ( i_int_a ),
         .count ( i_int_count ),
         .cf_in ( i_int_cf ),
@@ -346,7 +345,7 @@ module eu_execute_unit (
         .cf_out ( int_rcl_cf )
     );
 
-    eu_alu_shift_rotate_rot_rcr u_int_rcr (
+    rot_rcr u_int_rcr (
         .a ( i_int_a ),
         .count ( i_int_count ),
         .cf_in ( i_int_cf ),
@@ -354,52 +353,52 @@ module eu_execute_unit (
         .cf_out ( int_rcr_cf )
     );
 
-    eu_alu_bitmanip_bit_bsf u_int_bsf (
+    bit_bsf u_int_bsf (
         .a ( i_int_a ),
         .y ( int_bsf_res ),
         .zf ( int_bsf_zf )
     );
 
-    eu_alu_bitmanip_bit_bsr u_int_bsr (
+    bit_bsr u_int_bsr (
         .a ( i_int_a ),
         .y ( int_bsr_res ),
         .zf ( int_bsr_zf )
     );
 
-    eu_alu_bitmanip_bit_bt u_int_bt (
+    bit_bt u_int_bt (
         .a ( i_int_a ),
         .bit_index ( i_int_b ),
         .y ( int_bt_res ),
         .cf ( int_bt_cf )
     );
 
-    eu_alu_bitmanip_bit_bts u_int_bts (
+    bit_bts u_int_bts (
         .a ( i_int_a ),
         .bit_index ( i_int_b ),
         .y ( int_bts_res ),
         .cf ( int_bts_cf )
     );
 
-    eu_alu_bitmanip_bit_btr u_int_btr (
+    bit_btr u_int_btr (
         .a ( i_int_a ),
         .bit_index ( i_int_b ),
         .y ( int_btr_res ),
         .cf ( int_btr_cf )
     );
 
-    eu_alu_bitmanip_bit_btc u_int_btc (
+    bit_btc u_int_btc (
         .a ( i_int_a ),
         .bit_index ( i_int_b ),
         .y ( int_btc_res ),
         .cf ( int_btc_cf )
     );
 
-    eu_alu_misc_bswap u_int_bswap (
+    misc_bswap u_int_bswap (
         .a ( i_int_a ),
         .y ( int_bswap_res )
     );
 
-    eu_alu_misc_aaa u_int_aaa (
+    misc_aaa u_int_aaa (
         .a ( i_int_a ),
         .af_in ( i_int_af ),
         .y ( int_aaa_res ),
@@ -407,7 +406,7 @@ module eu_execute_unit (
         .cf_out ( int_aaa_cf )
     );
 
-    eu_alu_misc_aas u_int_aas (
+    misc_aas u_int_aas (
         .a ( i_int_a ),
         .af_in ( i_int_af ),
         .y ( int_aas_res ),
@@ -415,7 +414,7 @@ module eu_execute_unit (
         .cf_out ( int_aas_cf )
     );
 
-    eu_alu_misc_daa u_int_daa (
+    misc_daa u_int_daa (
         .a ( i_int_a ),
         .af_in ( i_int_af ),
         .cf_in ( i_int_cf ),
@@ -424,7 +423,7 @@ module eu_execute_unit (
         .cf_out ( int_daa_cf )
     );
 
-    eu_alu_misc_das u_int_das (
+    misc_das u_int_das (
         .a ( i_int_a ),
         .af_in ( i_int_af ),
         .cf_in ( i_int_cf ),
@@ -433,64 +432,64 @@ module eu_execute_unit (
         .cf_out ( int_das_cf )
     );
 
-    eu_alu_misc_aad u_int_aad (
+    misc_aad u_int_aad (
         .a ( i_int_a ),
         .y ( int_aad_res )
     );
 
-    eu_alu_misc_aam u_int_aam (
+    misc_aam u_int_aam (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .y ( int_aam_res )
     );
 
-    eu_alu_misc_cbw u_int_cbw (
+    misc_cbw u_int_cbw (
         .a ( i_int_a ),
         .y ( int_cbw_res )
     );
 
-    eu_alu_misc_cdq u_int_cdq (
+    misc_cdq u_int_cdq (
         .a ( i_int_a ),
         .y ( int_cdq_res )
     );
 
-    eu_alu_misc_movsx u_int_movsx (
+    misc_movsx u_int_movsx (
         .a ( i_int_a ),
         .width ( i_int_count[ 1: 0] ),
         .y ( int_movsx_res )
     );
 
-    eu_alu_misc_movzx u_int_movzx (
+    misc_movzx u_int_movzx (
         .a ( i_int_a ),
         .width ( i_int_count[ 1: 0] ),
         .y ( int_movzx_res )
     );
 
-    eu_alu_misc_lahf u_int_lahf (
+    misc_lahf u_int_lahf (
         .eax_in ( i_int_a ),
         .flags_in ( i_int_b ),
         .eax_out ( int_lahf_res )
     );
 
-    eu_alu_misc_sahf u_int_sahf (
+    misc_sahf u_int_sahf (
         .flags_in ( i_int_a ),
         .eax_in ( i_int_b ),
         .flags_out ( int_sahf_res )
     );
 
-    eu_alu_misc_xchg u_int_xchg (
+    misc_xchg u_int_xchg (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .y ( int_xchg_res )
     );
 
-    eu_alu_misc_xadd u_int_xadd (
+    misc_xadd u_int_xadd (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .y ( int_xadd_res )
     );
 
-    eu_alu_misc_cmpxchg u_int_cmpxchg (
+    misc_cmpxchg u_int_cmpxchg (
         .acc ( i_int_a ),
         .dst ( i_int_b ),
         .src ( i_int_count ),
@@ -498,66 +497,66 @@ module eu_execute_unit (
         .zf ( int_cmpxchg_zf )
     );
 
-    eu_alu_misc_setcc u_int_setcc (
+    misc_setcc u_int_setcc (
         .flags ( i_int_a ),
         .tttn ( i_int_count[ 3: 0] ),
         .y ( int_setcc_res )
     );
 
-    eu_alu_misc_arpl u_int_arpl (
+    misc_arpl u_int_arpl (
         .dst ( i_int_a ),
         .src ( i_int_b ),
         .y ( int_arpl_res ),
         .zf ( int_arpl_zf )
     );
 
-    eu_alu_misc_lar u_int_lar (
+    misc_lar u_int_lar (
         .src ( i_int_a ),
         .y ( int_lar_res ),
         .zf ( int_lar_zf )
     );
 
-    eu_alu_misc_lsl u_int_lsl (
+    misc_lsl u_int_lsl (
         .src ( i_int_a ),
         .y ( int_lsl_res ),
         .zf ( int_lsl_zf )
     );
 
-    eu_alu_misc_verr u_int_verr (
+    misc_verr u_int_verr (
         .selector ( i_int_a ),
         .zf ( int_verr_zf )
     );
 
-    eu_alu_misc_stridx_step u_int_stridx_step (
+    misc_stridx_step u_int_stridx_step (
         .idx ( i_int_a ),
         .df ( i_int_count[0] ),
         .y ( int_stridx_step_res )
     );
 
-    eu_alu_misc_imul_imm u_int_imul_imm (
+    misc_imul_imm u_int_imul_imm (
         .a ( i_int_a ),
         .b ( i_int_b ),
         .y ( int_imul_imm_res ),
         .overflow ( int_imul_imm_overflow )
     );
 
-    eu_alu_misc_clts u_int_clts (
+    misc_clts u_int_clts (
         .cr0 ( i_int_a ),
         .y ( int_clts_res )
     );
 
-    eu_alu_misc_lmsw u_int_lmsw (
+    misc_lmsw u_int_lmsw (
         .cr0 ( i_int_a ),
         .src ( i_int_b ),
         .y ( int_lmsw_res )
     );
 
-    eu_alu_misc_smsw u_int_smsw (
+    misc_smsw u_int_smsw (
         .cr0 ( i_int_a ),
         .y ( int_smsw_res )
     );
 
-    eu_alu_misc_loop_ctrl u_int_loop_ctrl (
+    misc_loop_ctrl u_int_loop_ctrl (
         .ecx ( i_int_a ),
         .zf ( i_int_b[0] ),
         .mode ( i_int_count[ 1: 0] ),
@@ -565,7 +564,7 @@ module eu_execute_unit (
         .taken ( int_loop_ctrl_taken )
     );
 
-    eu_alu_misc_flag_status u_int_flag_status (
+    misc_flag_status u_int_flag_status (
         .flags_in ( i_int_a ),
         .op ( i_int_op ),
         .flags_out ( int_flag_status_res )
@@ -773,7 +772,7 @@ module eu_execute_unit (
         end
     end
 
-    eu_fpu_execute_x87_fpu u_x87 (
+    execute_x87_fpu u_x87 (
         .clk         ( clk ),
         .rst_n       ( rst_n ),
         .i_valid     ( i_x87_valid ),

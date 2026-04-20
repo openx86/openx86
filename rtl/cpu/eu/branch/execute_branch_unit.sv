@@ -2,14 +2,13 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_branch_execute_branch_unit.
+description: This module implements execute_branch_unit.
 */
 // ============================================================================
 // Branch Unit — 近分支相对位移与 Jcc 条件判定（386 子集）
 // ============================================================================
 
-module eu_branch_execute_branch_unit (
-    input  logic                i_is_jcc,  // 是否为条件跳转
+module execute_branch_unit (    input  logic                i_is_jcc,  // 是否为条件跳转
     input  logic [ 3: 0]         i_jcc_nibble,  // Jcc 条件编码
     input  logic                i_CF,  // 进位 CF
     input  logic                i_PF,  // 奇偶 PF

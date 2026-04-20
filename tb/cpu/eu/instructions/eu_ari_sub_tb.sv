@@ -8,7 +8,7 @@ description: This module implements eu_ari_sub_tb.
 module eu_ari_sub_tb;
 	logic [31: 0] a, b, y;
 
-	eu_alu_arithmetic_ari_sub u (
+	ari_sub u (
 		.a ( a ),
 		.b ( b ),
 		.y ( y )
@@ -19,7 +19,7 @@ module eu_ari_sub_tb;
 		b = 4;
 		#1;
 		if (y !== 5) begin
-			$display("FAIL eu_alu_arithmetic_ari_sub");
+			$display("FAIL ari_sub");
 			$finish(1);
 		end
 		$display("eu_ari_sub_tb PASS");

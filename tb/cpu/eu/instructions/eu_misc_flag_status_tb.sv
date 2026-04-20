@@ -14,7 +14,7 @@ module eu_misc_flag_status_tb;
     logic [ 5: 0] op;
     logic [31: 0] flags_out;
 
-    eu_alu_misc_flag_status u_dut (
+    misc_flag_status u_dut (
         .flags_in ( flags_in ),
         .op ( op ),
         .flags_out ( flags_out )
@@ -26,21 +26,21 @@ module eu_misc_flag_status_tb;
         op = `EXE_INT_CLC;
         #1;
         if (flags_out[0] !== 1'b0) begin
-            $display("FAIL eu_alu_misc_flag_status CLC");
+            $display("FAIL misc_flag_status CLC");
             $finish(1);
         end
 
         op = `EXE_INT_STC;
         #1;
         if (flags_out[0] !== 1'b1) begin
-            $display("FAIL eu_alu_misc_flag_status STC");
+            $display("FAIL misc_flag_status STC");
             $finish(1);
         end
 
         op = `EXE_INT_CMC;
         #1;
         if (flags_out[0] !== 1'b0) begin
-            $display("FAIL eu_alu_misc_flag_status CMC");
+            $display("FAIL misc_flag_status CMC");
             $finish(1);
         end
 
@@ -48,7 +48,7 @@ module eu_misc_flag_status_tb;
         op = `EXE_INT_STI;
         #1;
         if (flags_out[9] !== 1'b1) begin
-            $display("FAIL eu_alu_misc_flag_status STI");
+            $display("FAIL misc_flag_status STI");
             $finish(1);
         end
 
@@ -56,7 +56,7 @@ module eu_misc_flag_status_tb;
         op = `EXE_INT_CLI;
         #1;
         if (flags_out[9] !== 1'b0) begin
-            $display("FAIL eu_alu_misc_flag_status CLI");
+            $display("FAIL misc_flag_status CLI");
             $finish(1);
         end
 
@@ -64,7 +64,7 @@ module eu_misc_flag_status_tb;
         op = `EXE_INT_CLD;
         #1;
         if (flags_out[10] !== 1'b0) begin
-            $display("FAIL eu_alu_misc_flag_status CLD");
+            $display("FAIL misc_flag_status CLD");
             $finish(1);
         end
 
@@ -72,7 +72,7 @@ module eu_misc_flag_status_tb;
         op = `EXE_INT_STD;
         #1;
         if (flags_out[10] !== 1'b1) begin
-            $display("FAIL eu_alu_misc_flag_status STD");
+            $display("FAIL misc_flag_status STD");
             $finish(1);
         end
 

@@ -2,16 +2,15 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: pipe_exe_to_mem_pipeline_boundary — combinational bridge from EXE stage to MEM (LSU) inputs.
+description: pipeline_boundary — combinational bridge from EXE stage to MEM (LSU) inputs.
 */
 // ============================================================================
-// pipe_exe_to_mem_pipeline_boundary
+// pipeline_boundary
 // ----------------------------------------------------------------------------
-// Passes EXE valid and LSU request / memory return paths into mem_memory_stage.
+// Passes EXE valid and LSU request / memory return paths into memory_stage.
 // ============================================================================
 
-module pipe_exe_to_mem_pipeline_boundary (
-    input  logic          i_stage3_valid,
+module pipeline_boundary (    input  logic          i_stage3_valid,
     output logic         o_stage3_valid,
     input  logic          i_start,
     output logic         o_start,

@@ -2,12 +2,11 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_misc_flag_status.
+description: This module implements misc_flag_status.
 */
 `include "openx86_defs.h.sv"
 
-module eu_alu_misc_flag_status (
-    input  logic [31: 0]  flags_in,  // 输入标志
+module misc_flag_status (    input  logic [31: 0]  flags_in,  // 输入标志
     input  logic [ 5: 0]   op,  // 标志类微操作
     output logic [31: 0] flags_out  // 输出标志
 );

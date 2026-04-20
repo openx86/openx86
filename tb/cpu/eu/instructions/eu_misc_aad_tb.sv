@@ -10,7 +10,7 @@ module eu_misc_aad_tb;
     logic [31: 0] a;
     logic [31: 0] y;
 
-    eu_alu_misc_aad u_dut (
+    misc_aad u_dut (
         .a ( a ),
         .y ( y )
     );
@@ -19,7 +19,7 @@ module eu_misc_aad_tb;
         a = 32'h0000_0203;
         #1;
         if (y !== 32'h0000_0017) begin
-            $display("FAIL eu_alu_misc_aad");
+            $display("FAIL misc_aad");
             $finish(1);
         end
 

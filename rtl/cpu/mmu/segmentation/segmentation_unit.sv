@@ -2,19 +2,18 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements mmu_segmentation_unit.
+description: This module implements segmentation_unit.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: mmu_segmentation_unit
+module: segmentation_unit
 create at: 2022-01-31 01:31:23
-description: mmu_segmentation_unit
+description: segmentation_unit
 */
 
-module mmu_segmentation_unit #(
-    parameter bit read_from_fetch = 1'b0
+module segmentation_unit #(    parameter bit read_from_fetch = 1'b0
 ) (
     // ------------------------------------------------------------------------
     // Segmentation context inputs（段式地址：选择子 + 描述符 + 偏移）
@@ -57,7 +56,7 @@ logic        code_conforming;
 logic        code_readable;
 logic        date_or_code_accessed;
 
-mmu_segmentation_segment_descriptor_decode u_segment_descriptor_decode (
+segment_descriptor_decode u_segment_descriptor_decode (
     .o_base                                ( base ),
     .o_limit                               ( limit ),
     .o_date_or_code_present                ( date_or_code_present ),

@@ -2,16 +2,15 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements iu_prefetch_unit.
+description: This module implements prefetch_unit.
 */
 // ============================================================================
-// iu_prefetch_unit
+// prefetch_unit
 // ----------------------------------------------------------------------------
 // Stage 1 (IFU / instruction fetch): wraps instruction fetch + MMU translation.
 // ============================================================================
 
-module iu_prefetch_unit (
-    // ------------------------------------------------------------------------
+module prefetch_unit (    // ------------------------------------------------------------------------
     // Instruction fetch bus interface（取指总线：地址/数据/就绪握手）
     // ------------------------------------------------------------------------
     output logic         o_code_vaild,              // 取指请求有效
@@ -54,7 +53,7 @@ module iu_prefetch_unit (
 );
 
     // 取指 + 段/分页翻译封装
-    iu_prefetch_instruction_fetch u_if_instruction_fetch (
+    instruction_fetch u_if_instruction_fetch (
         .o_code_vaild              ( o_code_vaild ),
         .i_code_ready              ( i_code_ready ),
         .o_code_address            ( o_code_address ),

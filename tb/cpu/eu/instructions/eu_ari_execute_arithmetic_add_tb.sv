@@ -9,7 +9,7 @@ description: This module implements eu_ari_execute_arithmetic_add_tb.
 module eu_ari_execute_arithmetic_add_tb;
     logic [31: 0] a, b, y;
 
-    eu_alu_arithmetic_ari_execute_arithmetic_add u_dut (
+    ari_execute_arithmetic_add u_dut (
         .operand_1(a),
         .operand_2(b),
         .result(y)

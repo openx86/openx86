@@ -2,10 +2,10 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: Verilator TB for eu_extensions_i486_execute_unit (CPUID smoke).
+description: Verilator TB for execute_unit (CPUID smoke).
 */
 // ============================================================================
-// eu_extensions_i486_execute_unit — CPUID 多周期写回冒烟（iverilog -g2012 / Verilator）
+// execute_unit — CPUID 多周期写回冒烟（iverilog -g2012 / Verilator）
 // ============================================================================
 `timescale 1ns/1ns
 
@@ -46,7 +46,7 @@ module execute_i486_cpuid_tb;
         forever #5 clk = ~clk;
     end
 
-    eu_extensions_i486_execute_unit u_dut (
+    execute_unit u_dut (
         .clk ( clk ),
         .rst_n ( rst_n ),
         .insn_fire ( insn_fire ),

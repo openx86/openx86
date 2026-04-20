@@ -110,7 +110,7 @@ module i486_core (
     logic [15: 0] IDTR_limit;
     logic [31: 0] IDTR_base;
 
-    register_file_rf_general_purpose_register u_rf_gpr (
+    rf_general_purpose_register u_rf_gpr (
         .write_enable ( wb_write_enable ),
         .write_index ( wb_write_index ),
         .write_data ( wb_write_data ),
@@ -121,7 +121,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    register_file_rf_segment_register u_rf_sreg (
+    rf_segment_register u_rf_sreg (
         .write_enable ( wb_SREG_write_enable ),
         .write_index ( wb_SREG_write_index ),
         .write_selector ( wb_SREG_write_selector ),
@@ -132,7 +132,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    register_file_rf_flags_register u_rf_flags (
+    rf_flags_register u_rf_flags (
         .write_enable ( wb_FLAGS_write_enable ),
         .write_data ( wb_FLAGS_write_data ),
         .CF ( CF ),
@@ -154,7 +154,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    register_file_rf_instruction_pointer_register u_rf_ip (
+    rf_instruction_pointer_register u_rf_ip (
         .write_enable ( wb_IP_write_enable ),
         .write_data ( wb_IP_write_data ),
         .IP ( IP ),
@@ -163,7 +163,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    register_file_rf_control_register u_rf_cr (
+    rf_control_register u_rf_cr (
         .write_enable ( wb_CR_write_enable ),
         .write_index ( wb_CR_write_index ),
         .write_data ( wb_CR_write_data ),
@@ -179,7 +179,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    register_file_rf_debug_register u_rf_dr (
+    rf_debug_register u_rf_dr (
         .write_enable ( wb_DR_write_enable ),
         .write_index ( wb_DR_write_index ),
         .write_data ( wb_DR_write_data ),
@@ -188,7 +188,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    register_file_rf_test_register u_rf_tr (
+    rf_test_register u_rf_tr (
         .write_enable ( wb_TR_write_enable ),
         .write_index ( wb_TR_write_index ),
         .write_data ( wb_TR_write_data ),
@@ -197,7 +197,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    register_file_rf_gdtr_register u_rf_gdtr (
+    rf_gdtr_register u_rf_gdtr (
         .gdtr_write_enable ( 1'b0 ),
         .gdtr_write_data_limit ( 16'd0 ),
         .gdtr_write_data_base ( 32'd0 ),
@@ -207,7 +207,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    register_file_rf_idtr_register u_rf_idtr (
+    rf_idtr_register u_rf_idtr (
         .idtr_write_enable ( 1'b0 ),
         .idtr_write_data_limit ( 16'd0 ),
         .idtr_write_data_base ( 32'd0 ),
@@ -279,7 +279,7 @@ module i486_core (
 
     assign ip_valid_to_fetch = ~exec_stall;
 
-    iu_prefetch_unit u_stage_1_ifu (
+    prefetch_unit u_stage_1_ifu (
         .o_code_vaild ( code_vaild ),
         .i_code_ready ( code_ready ),
         .o_code_address ( code_address ),
@@ -303,7 +303,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    pipe_if_to_dec_pipeline_boundary u_stage_1_2_ifu_dec (
+    pipeline_boundary u_stage_1_2_ifu_dec (
         .i_instruction ( if_instruction ),
         .i_instruction_ready ( if_instruction_ready ),
         .i_segment_fault ( if_segment_fault_from_if ),
@@ -315,7 +315,7 @@ module i486_core (
     );
 
     // --- 译码（.* 连接 iu_decode_outputs_decl 中声明的同名线网）---
-    iu_decode_unit core_decode (
+    unit core_decode (
         .i_instruction ( instruction ),
         .i_default_operand_size ( 1'b1 ),
         .*
@@ -355,7 +355,7 @@ module i486_core (
     logic [ 2: 0]  xadd_saved_reg;
     logic [31: 0] xadd_saved_val;
 
-    pipe_dec_to_exe_pipeline_boundary u_stage_2_3_dec_exe (
+    pipeline_boundary u_stage_2_3_dec_exe (
         .i_instruction_ready ( instruction_ready ),
         .o_stage_valid ( stage2_valid ),
         .o_insn_fire ( insn_fire ),
@@ -363,7 +363,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    eu_extensions_i486_execute_unit u_exec486 (
+    execute_unit u_exec486 (
         .clk ( clk ),
         .rst_n ( rst_n ),
         .insn_fire ( insn_fire ),
@@ -471,7 +471,7 @@ module i486_core (
             eu_md_op = `EXE_MD_IDIV32;
     end
 
-    // 组合逻辑：译码 one-hot → 整数 EU 操作/源操作数/移位次数（供 eu_execute_unit）
+    // 组合逻辑：译码 one-hot → 整数 EU 操作/源操作数/移位次数（供 execute_unit）
     always_comb begin
         eu_int_op_sel = `EXE_INT_NOP;
         eu_int_valid  = 1'b0;
@@ -1110,7 +1110,7 @@ module i486_core (
     logic mov_ld_acc_mem_e;
     logic mov_st_acc_mem_e;
     logic [31: 0] mov_moffs_linear;
-    // LSU 请求组合：是否写、地址/写数据、是否启动 mem_memory_stage
+    // LSU 请求组合：是否写、地址/写数据、是否启动 memory_stage
     logic        lsu_is_store_w;
     logic [31: 0] lsu_addr_req_w;
     logic [31: 0] lsu_wdata_req_w;
@@ -1128,7 +1128,7 @@ module i486_core (
         insn_fire & ~cpuid_busy & ~in_exception & ~o_error & ~post486_illegal & ~if_segment_fault &
         ( mov_ld_mem_e | mov_st_mem_e | mov_ld_acc_mem_e | mov_st_acc_mem_e );
 
-    // AM（mem_memory_stage）与 EU 分支结果
+    // AM（memory_stage）与 EU 分支结果
     logic        am_lsu_done;
     logic        am_lsu_busy;
     logic        am_lsu_mem_valid;
@@ -1159,7 +1159,7 @@ module i486_core (
     logic [31: 0] wb_mem_address;
     logic [31: 0] wb_mem_write_data;
 
-    // EXE→MEM 桥（pipe_exe_to_mem_pipeline_boundary → mem_memory_stage）
+    // EXE→MEM 桥（pipeline_boundary → memory_stage）
     logic        s34_stage3_valid;
     logic        s34_start;
     logic        s34_is_store;
@@ -1168,14 +1168,14 @@ module i486_core (
     logic [31: 0] s34_mem_rdata;
     logic        s34_mem_ready;
 
-    // MEM→WRB 桥（mem_memory_stage → pipe_mem_to_wb_pipeline_boundary → wb_write_back_stage）
+    // MEM→WRB 桥（memory_stage → pipeline_boundary → write_back_stage）
     logic        s45_stage4_valid;
     logic        s45_mem_valid;
     logic        s45_mem_write_enable;
     logic [31: 0] s45_mem_address;
     logic [31: 0] s45_mem_write_data;
 
-    wb_write_back_stage u_stage_5_wrb (
+    write_back_stage u_stage_5_wrb (
         .i_stage4_valid ( s45_stage4_valid ),
         .o_stage_valid ( stage5_valid ),
         .i_gpr_write_enable ( write_enable ),
@@ -1229,7 +1229,7 @@ module i486_core (
     );
 
 
-    eu_execute_unit u_eu (
+    execute_unit u_eu (
         .clk ( clk ),
         .rst_n ( rst_n ),
         .i_agu_base ( agu_base_w ),
@@ -1282,7 +1282,7 @@ module i486_core (
         .o_x87_cf ( eu_x87_cf )
     );
 
-    pipe_exe_to_mem_pipeline_boundary u_stage_3_4_exe_mem (
+    pipeline_boundary u_stage_3_4_exe_mem (
         .i_stage3_valid ( stage3_valid ),
         .o_stage3_valid ( s34_stage3_valid ),
         .i_start ( am_lsu_start_w ),
@@ -1301,7 +1301,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    mem_memory_stage u_stage_4_mem (
+    memory_stage u_stage_4_mem (
         .i_stage3_valid ( s34_stage3_valid ),
         .o_stage_valid ( stage4_valid ),
         .clk ( clk ),
@@ -1321,7 +1321,7 @@ module i486_core (
         .i_mem_ready ( s34_mem_ready )
     );
 
-    pipe_mem_to_wb_pipeline_boundary u_stage_4_5_mem_wrb (
+    pipeline_boundary u_stage_4_5_mem_wrb (
         .i_stage4_valid ( stage4_valid ),
         .o_stage4_valid ( s45_stage4_valid ),
         .i_mem_valid ( am_lsu_mem_valid ),
@@ -1367,7 +1367,7 @@ module i486_core (
         end
     end
 
-    eu_control_execute_stall u_stage_3_exe (
+    execute_stall u_stage_3_exe (
         .i_stage2_valid ( stage2_valid ),
         .i_cpuid_busy ( cpuid_busy ),
         .i_xadd_wait_reg_wr ( xadd_wait_reg_wr ),

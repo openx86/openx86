@@ -2,13 +2,13 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements mmu_segmentation_segment_descriptor_encode.
+description: This module implements segment_descriptor_encode.
 */
 /*
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: mmu_segmentation_segment_descriptor_encode
+module: segment_descriptor_encode
 create at: 2022-01-27 13:23:55
 description: encode the segment information to segment descriptor
 */
@@ -34,8 +34,7 @@ specifies the protection level 0–3 associated with a
 segment
 */
 
-module mmu_segmentation_segment_descriptor_encode (
-    // 将结构化属性打包回 64b 描述符（写回/构造路径）
+module segment_descriptor_encode (    // 将结构化属性打包回 64b 描述符（写回/构造路径）
     input  logic [31: 0]  base,
     input  logic [19: 0]  limit,
     input  logic          present,

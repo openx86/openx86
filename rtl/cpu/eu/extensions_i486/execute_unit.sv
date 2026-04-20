@@ -5,11 +5,10 @@ repo: https://github.com/openx86/openx86
 description: Shell integrating i486 CPUID and cache-invalidate extension units.
 */
 // ============================================================================
-// eu_extensions_i486_execute_unit — wires cpuid.sv + cache_invalidate.sv
+// execute_unit — wires cpuid.sv + cache_invalidate.sv
 // ============================================================================
 
-module eu_extensions_i486_execute_unit (
-    input  logic          insn_fire,
+module execute_unit (    input  logic          insn_fire,
     input  logic          op_cpuid,
     input  logic [31: 0]  gpr_eax,
     input  logic [31: 0]  gpr_ecx,
@@ -29,7 +28,7 @@ module eu_extensions_i486_execute_unit (
     input  logic          rst_n
 );
 
-    eu_extensions_i486_cpuid u_cpuid (
+    cpuid u_cpuid (
         .insn_fire          ( insn_fire ),
         .op_cpuid           ( op_cpuid ),
         .gpr_eax            ( gpr_eax ),
@@ -42,7 +41,7 @@ module eu_extensions_i486_execute_unit (
         .rst_n              ( rst_n )
     );
 
-    eu_extensions_i486_cache_invalidate u_cache (
+    cache_invalidate u_cache (
         .insn_fire             ( insn_fire ),
         .op_invd               ( op_invd ),
         .op_wbinvd             ( op_wbinvd ),

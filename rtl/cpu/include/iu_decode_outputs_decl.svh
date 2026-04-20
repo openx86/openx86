@@ -1,4 +1,4 @@
-// Auto-generated from iu_decode_unit output ports
+// Auto-generated from unit output ports
     logic o_opcode_x86_AAA_ASCII_adjust_after_add;
     logic o_opcode_x86_AAD_ASCII_AX_before_div;
     logic o_opcode_x86_AAM_ASCII_AX_after_mul;

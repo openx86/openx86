@@ -2,10 +2,9 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements eu_alu_misc_aaa.
+description: This module implements misc_aaa.
 */
-module eu_alu_misc_aaa (
-    input  logic [31: 0]  a,  // 操作数 / 源 1
+module misc_aaa (    input  logic [31: 0]  a,  // 操作数 / 源 1
     input  logic          af_in,
     output logic [31: 0] y,  // 结果输出
     output logic         af_out,

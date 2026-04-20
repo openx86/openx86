@@ -12,7 +12,7 @@ module eu_bit_bts_tb;
     logic [31: 0] y;
     logic        cf;
 
-    eu_alu_bitmanip_bit_bts u_dut (
+    bit_bts u_dut (
         .a ( a ),
         .bit_index ( b ),
         .y ( y ),
@@ -24,14 +24,14 @@ module eu_bit_bts_tb;
         b = 32'd3;
         #1;
         if (cf !== 1'b0 || y !== 32'h0000_0008) begin
-            $display("FAIL eu_alu_bitmanip_bit_bts set");
+            $display("FAIL bit_bts set");
             $finish(1);
         end
 
         a = y;
         #1;
         if (cf !== 1'b1 || y !== 32'h0000_0008) begin
-            $display("FAIL eu_alu_bitmanip_bit_bts keep");
+            $display("FAIL bit_bts keep");
             $finish(1);
         end
 

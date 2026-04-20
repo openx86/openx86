@@ -2,10 +2,10 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements wb_write_back_unit.
+description: This module implements write_back_unit.
 */
 // ============================================================================
-// wb_write_back_unit
+// write_back_unit
 // ----------------------------------------------------------------------------
 // Execute stage write-back arbiter/pass-through.
 //
@@ -15,8 +15,7 @@ description: This module implements wb_write_back_unit.
 // priority arbitration, and commit logging.
 // ============================================================================
 
-module wb_write_back_unit (
-    // --- GPR：通用寄存器写回（直通）---
+module write_back_unit (    // --- GPR：通用寄存器写回（直通）---
     input  logic          i_gpr_write_enable,
     input  logic [ 2: 0]   i_gpr_write_index,
     input  logic [31: 0] i_gpr_write_data,
