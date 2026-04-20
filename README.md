@@ -3,7 +3,7 @@
 openx86 是一个面向 bring-up 和持续演进的 x86 SoC/CPU RTL 仓库。
 
 - SoC 主线用于打通总线、芯片组、内存与外设路径。
-- `w686_*` CPU 相关模块在 `rtl/cpu/` 下持续迭代，并配有分层 testbench。
+- `i486_cpu` / `i486_core` 及相关子系统在 `rtl/cpu/` 下按 80386 功能块（BIU/IU/EU/MMU 等）组织，并配有分层 testbench。
 
 ## 当前目录结构
 
@@ -13,7 +13,7 @@ openx86 是一个面向 bring-up 和持续演进的 x86 SoC/CPU RTL 仓库。
 - `rtl/bus_controller.sv`：总线整合
 - `rtl/chipset/`：825x、RTC、COM、LPT、PS2 等芯片组模块
 - `rtl/common/`：ROM/RAM/边沿检测等公共模块
-- `rtl/cpu/`：`w686_*` CPU 与各 stage 模块
+- `rtl/cpu/`：Intel486 风格目录（`top/`、`biu/`、`iu/`、`eu/`、`mmu/`、`pipe/` 等）与对应 `*.sv`
 - `rtl/device/`：设备侧模块（如 `ide_controller`、`vga`、`ps2`）
 - `rtl/memory/`：内存控制器
 - `rtl/peripheral/`：外设协议/PHY 相关模块（如 SDCard）
@@ -24,9 +24,7 @@ openx86 是一个面向 bring-up 和持续演进的 x86 SoC/CPU RTL 仓库。
 
 - `tb/chipset/`
 - `tb/common/`
-- `tb/cpu/stage_1_isc/`
-- `tb/cpu/stage_2_dec/`
-- `tb/cpu/stage_3_exe/`
+- `tb/cpu/biu/`、`tb/cpu/iu/`、`tb/cpu/eu/`、`tb/cpu/wb/`（与 `rtl/cpu/` 功能划分一致）
 - `tb/device/`
 - `tb/memory/`
 - `tb/peripheral/`
@@ -96,7 +94,7 @@ scripts/test_all_verilator.sh
 强制指定 filelist（示例）：
 
 ```bash
-RTL_FILELIST=sim/filelists/rtl_experimental.f scripts/sim_tb_verilator.sh --tb tb/cpu/stage_3_exe/execute_unit_tb.sv
+RTL_FILELIST=sim/filelists/rtl_experimental.f scripts/sim_tb_verilator.sh --tb tb/cpu/eu/execute_unit_tb.sv
 ```
 
 ## 其他脚本

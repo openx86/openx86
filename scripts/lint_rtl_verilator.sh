@@ -36,10 +36,10 @@ fi
 
 # Verilator 命令文件：选项 + 全部源文件（避免命令行长度上限）
 # `include "openx86_defs.h.sv"` -> @include/
-# `include "w686_decode_outputs_decl.svh"` -> rtl/cpu/
+# `include "iu_decode_outputs_decl.svh"` -> rtl/cpu/include/
 CMDFILE="${LINT_OBJDIR}/verilator_rtl_lint.vf"
 {
-  printf '%s\n' "-I@include" "-Irtl/cpu"
+  printf '%s\n' "-I@include" "-Irtl/cpu" "-Irtl/cpu/include"
   cat "$RTL_SV_LIST"
 } >"$CMDFILE"
 

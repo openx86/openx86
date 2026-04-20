@@ -5,7 +5,7 @@ repo: https://github.com/openx86/openx86
 description: This module implements soc_top_tb.
 */
 // ============================================================================
-// openx86_soc_top smoke test — 复位后运行固定周期（cpu + bus_controller + SDRAM 窗口）
+// openx86_soc_top smoke test — 复位后运行固定周期（i486_cpu + bus_controller + SDRAM 窗口）
 // ============================================================================
 
 module soc_top_tb;
