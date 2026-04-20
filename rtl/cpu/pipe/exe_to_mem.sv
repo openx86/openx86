@@ -12,6 +12,8 @@ description: pipeline_boundary — combinational bridge from EXE stage to MEM (L
 
 module exe_to_mem (    input  logic          i_stage3_valid,
     output logic         o_stage3_valid,
+    input  logic          i_mem_stage_ready,
+    output logic         o_exe_ready,
     input  logic          i_start,
     output logic         o_start,
     input  logic          i_is_store,
@@ -29,6 +31,7 @@ module exe_to_mem (    input  logic          i_stage3_valid,
 );
 
     assign o_stage3_valid = i_stage3_valid;
+    assign o_exe_ready    = i_mem_stage_ready;
     assign o_start          = i_start;
     assign o_is_store       = i_is_store;
     assign o_addr           = i_addr;

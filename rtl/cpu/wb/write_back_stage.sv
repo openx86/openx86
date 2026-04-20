@@ -12,6 +12,8 @@ description: This module implements write_back_stage.
 
 module write_back_stage (    input  logic          i_stage4_valid,    // MEM 段有效（WRB 与之对齐）
     output logic         o_stage_valid,     // WRB 段有效（当前等同直通 stage4）
+    input  logic          i_stage5_ready,   // 提交端可接收（当前核心内恒为 1）
+    output logic         o_stage4_ready,    // 回传给 MEM 的 ready
 
     // --- GPR 写回 ---
     input  logic          i_gpr_write_enable,
@@ -130,6 +132,7 @@ module write_back_stage (    input  logic          i_stage4_valid,    // MEM 段
         .o_mem_write_data      ( o_mem_write_data )
     );
 
-    assign o_stage_valid = i_stage4_valid;
+    assign o_stage_valid = i_stage4_valid & i_stage5_ready;
+    assign o_stage4_ready = i_stage5_ready;
 
 endmodule

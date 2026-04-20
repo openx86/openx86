@@ -11,6 +11,8 @@ description: pipeline_boundary — bridge DEC front (insn_fire / stage2 valid) t
 // ============================================================================
 
 module dec_to_exe (    input  logic i_instruction_ready,
+    input  logic i_exe_ready,
+    output logic o_dec_ready,
     output logic o_insn_fire,
     output logic o_stage_valid,
     input  logic clk,
@@ -19,6 +21,8 @@ module dec_to_exe (    input  logic i_instruction_ready,
 
     decode_stage u_stage_2_dec (
         .i_instruction_ready ( i_instruction_ready ),
+        .i_stage3_ready      ( i_exe_ready ),
+        .o_stage_ready       ( o_dec_ready ),
         .o_insn_fire         ( o_insn_fire ),
         .o_stage_valid       ( o_stage_valid ),
         .clk                 ( clk ),

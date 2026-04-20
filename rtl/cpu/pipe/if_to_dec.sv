@@ -16,12 +16,15 @@ module if_to_dec (    input  logic [15: 0][ 7: 0] i_instruction,
     output logic [15: 0][ 7: 0] o_instruction,
     output logic         o_instruction_ready,
     output logic         o_segment_fault,
+    input  logic          i_dec_ready,
+    output logic         o_ifu_ready,
     input  logic          clk,
     input  logic          rst_n
 );
 
     assign o_instruction       = i_instruction;
-    assign o_instruction_ready = i_instruction_ready;
+    assign o_instruction_ready = i_instruction_ready & i_dec_ready;
     assign o_segment_fault     = i_segment_fault;
+    assign o_ifu_ready         = i_dec_ready;
 
 endmodule

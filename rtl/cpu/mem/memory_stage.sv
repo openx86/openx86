@@ -12,6 +12,7 @@ description: This module implements memory_stage.
 
 module memory_stage (    input  logic          i_stage3_valid,   // 上游 EXE 阶段有效（与 MEM 流水对齐）
     output logic         o_stage_valid,    // 本阶段对外有效（busy 或 done 时保持传递）
+    output logic         o_stage_ready,    // 本阶段可接收上游新事务
 
     input  logic          i_start,          // 启动一次 LSU 访存
     input  logic          i_is_store,       // 1=写（store），0=读（load）
@@ -48,6 +49,8 @@ module memory_stage (    input  logic          i_stage3_valid,   // 上游 EXE �
         .i_mem_rdata ( i_mem_rdata ),
         .i_mem_ready ( i_mem_ready )
     );
+
+    assign o_stage_ready = ~o_busy;
 
     // MEM 段有效：上游有效且本次事务已发起或已结束（与 busy/done 组合避免气泡丢失）
     assign o_stage_valid = i_stage3_valid & (o_busy | o_done);

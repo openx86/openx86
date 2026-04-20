@@ -10,8 +10,10 @@ description: pipeline_boundary — combinational bridge from MEM LSU outputs to 
 // Passes MEM stage valid and data-bus request bundle into write_back_stage.
 // ============================================================================
 
-module mem_to_wb (    input  logic          i_stage4_valid,
+module mem_to_wrb (    input  logic          i_stage4_valid,
     output logic         o_stage4_valid,
+    input  logic          i_wrb_ready,
+    output logic         o_mem_ready,
     input  logic          i_mem_valid,
     output logic         o_mem_valid,
     input  logic          i_mem_write_enable,
@@ -24,10 +26,11 @@ module mem_to_wb (    input  logic          i_stage4_valid,
     input  logic          rst_n
 );
 
-    assign o_stage4_valid     = i_stage4_valid;
-    assign o_mem_valid        = i_mem_valid;
+    assign o_stage4_valid     = i_stage4_valid & i_wrb_ready;
+    assign o_mem_valid        = i_mem_valid & i_wrb_ready;
     assign o_mem_write_enable = i_mem_write_enable;
     assign o_mem_address      = i_mem_address;
     assign o_mem_write_data   = i_mem_write_data;
+    assign o_mem_ready        = i_wrb_ready;
 
 endmodule

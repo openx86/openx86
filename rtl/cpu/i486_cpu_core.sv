@@ -37,53 +37,53 @@ module i486_cpu_core (
     // 译码子模块 .* 互连线：必须放在模块内，避免在编译单元顶层声明而与子模块端口同名（VARHIDDEN）
 `include "iu_decode_outputs_decl.svh"
     // --- GPR / 段 / 标志 / EIP / 控制寄存器 ---
-    // 组合级写口（本拍译码/执行结果）；wb_* 为 WRB 级打拍后真正写入 RF 的信号
+    // 组合级写口（本拍译码/执行结果）；wrb_* 为 WRB 级打拍后真正写入 RF 的信号
     logic        write_enable;
     logic [ 2: 0] write_index;
     logic [31: 0] write_data;
-    logic        wb_write_enable;
-    logic [ 2: 0] wb_write_index;
-    logic [31: 0] wb_write_data;
+    logic        wrb_write_enable;
+    logic [ 2: 0] wrb_write_index;
+    logic [31: 0] wrb_write_data;
 
     logic        SREG_write_enable;
     logic [ 2: 0] SREG_write_index;
     logic [15: 0] SREG_write_selector;
     logic [63: 0] SREG_write_descriptor;
-    logic        wb_SREG_write_enable;
-    logic [ 2: 0] wb_SREG_write_index;
-    logic [15: 0] wb_SREG_write_selector;
-    logic [63: 0] wb_SREG_write_descriptor;
+    logic        wrb_SREG_write_enable;
+    logic [ 2: 0] wrb_SREG_write_index;
+    logic [15: 0] wrb_SREG_write_selector;
+    logic [63: 0] wrb_SREG_write_descriptor;
 
     logic         FLAGS_write_enable;
     logic [31: 0]  FLAGS_write_data;
-    logic         wb_FLAGS_write_enable;
-    logic [31: 0]  wb_FLAGS_write_data;
+    logic         wrb_FLAGS_write_enable;
+    logic [31: 0]  wrb_FLAGS_write_data;
 
     logic        IP_write_enable;
     logic [31: 0] IP_write_data;
-    logic        wb_IP_write_enable;
-    logic [31: 0] wb_IP_write_data;
+    logic        wrb_IP_write_enable;
+    logic [31: 0] wrb_IP_write_data;
 
     logic         CR_write_enable;
     logic [ 2: 0] CR_write_index;
     logic [31: 0] CR_write_data;
-    logic         wb_CR_write_enable;
-    logic [ 2: 0] wb_CR_write_index;
-    logic [31: 0] wb_CR_write_data;
+    logic         wrb_CR_write_enable;
+    logic [ 2: 0] wrb_CR_write_index;
+    logic [31: 0] wrb_CR_write_data;
 
     logic         DR_write_enable;
     logic [ 2: 0] DR_write_index;
     logic [31: 0] DR_write_data;
-    logic         wb_DR_write_enable;
-    logic [ 2: 0] wb_DR_write_index;
-    logic [31: 0] wb_DR_write_data;
+    logic         wrb_DR_write_enable;
+    logic [ 2: 0] wrb_DR_write_index;
+    logic [31: 0] wrb_DR_write_data;
 
     logic         TR_write_enable;
     logic [ 2: 0] TR_write_index;
     logic [31: 0] TR_write_data;
-    logic         wb_TR_write_enable;
-    logic [ 2: 0] wb_TR_write_index;
-    logic [31: 0] wb_TR_write_data;
+    logic         wrb_TR_write_enable;
+    logic [ 2: 0] wrb_TR_write_index;
+    logic [31: 0] wrb_TR_write_data;
 
     // GPR 读出口：按 8/16/32 位视图广播给译码与 EU
     logic [ 7: 0][31: 0] GPR_read__8;
@@ -111,9 +111,9 @@ module i486_cpu_core (
     logic [31: 0] IDTR_base;
 
     rf_general_purpose_register u_rf_gpr (
-        .write_enable ( wb_write_enable ),
-        .write_index ( wb_write_index ),
-        .write_data ( wb_write_data ),
+        .write_enable ( wrb_write_enable ),
+        .write_index ( wrb_write_index ),
+        .write_data ( wrb_write_data ),
         .read__8 ( GPR_read__8 ),
         .read_16 ( GPR_read_16 ),
         .read_32 ( GPR_read_32 ),
@@ -122,10 +122,10 @@ module i486_cpu_core (
     );
 
     rf_segment_register u_rf_sreg (
-        .write_enable ( wb_SREG_write_enable ),
-        .write_index ( wb_SREG_write_index ),
-        .write_selector ( wb_SREG_write_selector ),
-        .write_descriptor ( wb_SREG_write_descriptor ),
+        .write_enable ( wrb_SREG_write_enable ),
+        .write_index ( wrb_SREG_write_index ),
+        .write_selector ( wrb_SREG_write_selector ),
+        .write_descriptor ( wrb_SREG_write_descriptor ),
         .segment_selector ( segment_selector ),
         .descriptor_cache ( descriptor_cache ),
         .clk ( clk ),
@@ -133,8 +133,8 @@ module i486_cpu_core (
     );
 
     rf_flags_register u_rf_flags (
-        .write_enable ( wb_FLAGS_write_enable ),
-        .write_data ( wb_FLAGS_write_data ),
+        .write_enable ( wrb_FLAGS_write_enable ),
+        .write_data ( wrb_FLAGS_write_data ),
         .CF ( CF ),
         .PF ( PF ),
         .AF ( AF ),
@@ -155,8 +155,8 @@ module i486_cpu_core (
     );
 
     rf_instruction_pointer_register u_rf_ip (
-        .write_enable ( wb_IP_write_enable ),
-        .write_data ( wb_IP_write_data ),
+        .write_enable ( wrb_IP_write_enable ),
+        .write_data ( wrb_IP_write_data ),
         .IP ( IP ),
         .EIP ( EIP ),
         .clk ( clk ),
@@ -164,9 +164,9 @@ module i486_cpu_core (
     );
 
     rf_control_register u_rf_cr (
-        .write_enable ( wb_CR_write_enable ),
-        .write_index ( wb_CR_write_index ),
-        .write_data ( wb_CR_write_data ),
+        .write_enable ( wrb_CR_write_enable ),
+        .write_index ( wrb_CR_write_index ),
+        .write_data ( wrb_CR_write_data ),
         .CR ( CR ),
         .PE ( PE ),
         .MP ( MP ),
@@ -180,18 +180,18 @@ module i486_cpu_core (
     );
 
     rf_debug_register u_rf_dr (
-        .write_enable ( wb_DR_write_enable ),
-        .write_index ( wb_DR_write_index ),
-        .write_data ( wb_DR_write_data ),
+        .write_enable ( wrb_DR_write_enable ),
+        .write_index ( wrb_DR_write_index ),
+        .write_data ( wrb_DR_write_data ),
         .DR ( DR ),
         .clk ( clk ),
         .rst_n ( rst_n )
     );
 
     rf_test_register u_rf_tr (
-        .write_enable ( wb_TR_write_enable ),
-        .write_index ( wb_TR_write_index ),
-        .write_data ( wb_TR_write_data ),
+        .write_enable ( wrb_TR_write_enable ),
+        .write_index ( wrb_TR_write_index ),
+        .write_data ( wrb_TR_write_data ),
         .TR ( TR ),
         .clk ( clk ),
         .rst_n ( rst_n )
@@ -245,12 +245,12 @@ module i486_cpu_core (
     assign mmu_bus_rdata = i_mmu_data_read;
     assign code_ready = i_code_ready;
     assign code_data_read = i_code_data_read;
-    assign data_vaild = wb_mem_valid;
+    assign data_vaild = wrb_mem_valid;
     assign data_ready = i_data_ready;
-    assign data_write_enable = wb_mem_write_enable;
-    assign data_address = wb_mem_address;
+    assign data_write_enable = wrb_mem_write_enable;
+    assign data_address = wrb_mem_address;
     assign data_data_read = i_data_data_read;
-    assign data_data_write = wb_mem_write_data;
+    assign data_data_write = wrb_mem_write_data;
 
     assign o_mmu_vaild    = mmu_bus_vaild;
     assign o_mmu_address  = mmu_bus_addr;
@@ -272,12 +272,15 @@ module i486_cpu_core (
     logic [15: 0][ 7: 0] instruction;
     logic        instruction_ready;
     logic        if_segment_fault;
+    logic        s12_ifu_ready;
+    logic        s12_dec_ready;
 
     // 执行背压：stall 时暂停向 IF 提交有效 EIP 推进
     logic         exec_stall;
     logic         ip_valid_to_fetch;
+    logic        s23_exe_ready;
 
-    assign ip_valid_to_fetch = ~exec_stall;
+    assign ip_valid_to_fetch = s12_ifu_ready;
 
     prefetch_unit u_stage_1_ifu (
         .o_code_vaild ( code_vaild ),
@@ -310,6 +313,8 @@ module i486_cpu_core (
         .o_instruction ( instruction ),
         .o_instruction_ready ( instruction_ready ),
         .o_segment_fault ( if_segment_fault ),
+        .i_dec_ready ( s12_dec_ready ),
+        .o_ifu_ready ( s12_ifu_ready ),
         .clk ( clk ),
         .rst_n ( rst_n )
     );
@@ -357,6 +362,8 @@ module i486_cpu_core (
 
     dec_to_exe u_stage_2_3_dec_exe (
         .i_instruction_ready ( instruction_ready ),
+        .i_exe_ready ( s23_exe_ready ),
+        .o_dec_ready ( s12_dec_ready ),
         .o_stage_valid ( stage2_valid ),
         .o_insn_fire ( insn_fire ),
         .clk ( clk ),
@@ -1154,10 +1161,10 @@ module i486_cpu_core (
     logic        eu_x87_cf;
 
     // WRB 打拍后的数据总线请求（接至顶层 o_data_*）
-    logic        wb_mem_valid;
-    logic        wb_mem_write_enable;
-    logic [31: 0] wb_mem_address;
-    logic [31: 0] wb_mem_write_data;
+    logic        wrb_mem_valid;
+    logic        wrb_mem_write_enable;
+    logic [31: 0] wrb_mem_address;
+    logic [31: 0] wrb_mem_write_data;
 
     // EXE→MEM 桥（pipeline_boundary → memory_stage）
     logic        s34_stage3_valid;
@@ -1167,6 +1174,7 @@ module i486_cpu_core (
     logic [31: 0] s34_wdata;
     logic [31: 0] s34_mem_rdata;
     logic        s34_mem_ready;
+    logic        s34_stage_ready;
 
     // MEM→WRB 桥（memory_stage → pipeline_boundary → write_back_stage）
     logic        s45_stage4_valid;
@@ -1174,58 +1182,61 @@ module i486_cpu_core (
     logic        s45_mem_write_enable;
     logic [31: 0] s45_mem_address;
     logic [31: 0] s45_mem_write_data;
+    logic        s45_stage_ready;
 
     write_back_stage u_stage_5_wrb (
         .i_stage4_valid ( s45_stage4_valid ),
         .o_stage_valid ( stage5_valid ),
+        .i_stage5_ready ( 1'b1 ),
+        .o_stage4_ready ( s45_stage_ready ),
         .i_gpr_write_enable ( write_enable ),
         .i_gpr_write_index ( write_index ),
         .i_gpr_write_data ( write_data ),
-        .o_gpr_write_enable ( wb_write_enable ),
-        .o_gpr_write_index ( wb_write_index ),
-        .o_gpr_write_data ( wb_write_data ),
+        .o_gpr_write_enable ( wrb_write_enable ),
+        .o_gpr_write_index ( wrb_write_index ),
+        .o_gpr_write_data ( wrb_write_data ),
         .i_sreg_write_enable ( SREG_write_enable ),
         .i_sreg_write_index ( SREG_write_index ),
         .i_sreg_write_selector ( SREG_write_selector ),
         .i_sreg_write_descriptor ( SREG_write_descriptor ),
-        .o_sreg_write_enable ( wb_SREG_write_enable ),
-        .o_sreg_write_index ( wb_SREG_write_index ),
-        .o_sreg_write_selector ( wb_SREG_write_selector ),
-        .o_sreg_write_descriptor ( wb_SREG_write_descriptor ),
+        .o_sreg_write_enable ( wrb_SREG_write_enable ),
+        .o_sreg_write_index ( wrb_SREG_write_index ),
+        .o_sreg_write_selector ( wrb_SREG_write_selector ),
+        .o_sreg_write_descriptor ( wrb_SREG_write_descriptor ),
         .i_flags_write_enable ( FLAGS_write_enable ),
         .i_flags_write_data ( FLAGS_write_data ),
-        .o_flags_write_enable ( wb_FLAGS_write_enable ),
-        .o_flags_write_data ( wb_FLAGS_write_data ),
+        .o_flags_write_enable ( wrb_FLAGS_write_enable ),
+        .o_flags_write_data ( wrb_FLAGS_write_data ),
         .i_ip_write_enable ( IP_write_enable ),
         .i_ip_write_data ( IP_write_data ),
-        .o_ip_write_enable ( wb_IP_write_enable ),
-        .o_ip_write_data ( wb_IP_write_data ),
+        .o_ip_write_enable ( wrb_IP_write_enable ),
+        .o_ip_write_data ( wrb_IP_write_data ),
         .i_cr_write_enable ( CR_write_enable ),
         .i_cr_write_index ( CR_write_index ),
         .i_cr_write_data ( CR_write_data ),
-        .o_cr_write_enable ( wb_CR_write_enable ),
-        .o_cr_write_index ( wb_CR_write_index ),
-        .o_cr_write_data ( wb_CR_write_data ),
+        .o_cr_write_enable ( wrb_CR_write_enable ),
+        .o_cr_write_index ( wrb_CR_write_index ),
+        .o_cr_write_data ( wrb_CR_write_data ),
         .i_dr_write_enable ( DR_write_enable ),
         .i_dr_write_index ( DR_write_index ),
         .i_dr_write_data ( DR_write_data ),
-        .o_dr_write_enable ( wb_DR_write_enable ),
-        .o_dr_write_index ( wb_DR_write_index ),
-        .o_dr_write_data ( wb_DR_write_data ),
+        .o_dr_write_enable ( wrb_DR_write_enable ),
+        .o_dr_write_index ( wrb_DR_write_index ),
+        .o_dr_write_data ( wrb_DR_write_data ),
         .i_tr_write_enable ( TR_write_enable ),
         .i_tr_write_index ( TR_write_index ),
         .i_tr_write_data ( TR_write_data ),
-        .o_tr_write_enable ( wb_TR_write_enable ),
-        .o_tr_write_index ( wb_TR_write_index ),
-        .o_tr_write_data ( wb_TR_write_data ),
+        .o_tr_write_enable ( wrb_TR_write_enable ),
+        .o_tr_write_index ( wrb_TR_write_index ),
+        .o_tr_write_data ( wrb_TR_write_data ),
         .i_mem_valid ( s45_mem_valid ),
         .i_mem_write_enable ( s45_mem_write_enable ),
         .i_mem_address ( s45_mem_address ),
         .i_mem_write_data ( s45_mem_write_data ),
-        .o_mem_valid ( wb_mem_valid ),
-        .o_mem_write_enable ( wb_mem_write_enable ),
-        .o_mem_address ( wb_mem_address ),
-        .o_mem_write_data ( wb_mem_write_data )
+        .o_mem_valid ( wrb_mem_valid ),
+        .o_mem_write_enable ( wrb_mem_write_enable ),
+        .o_mem_address ( wrb_mem_address ),
+        .o_mem_write_data ( wrb_mem_write_data )
     );
 
 
@@ -1285,6 +1296,8 @@ module i486_cpu_core (
     exe_to_mem u_stage_3_4_exe_mem (
         .i_stage3_valid ( stage3_valid ),
         .o_stage3_valid ( s34_stage3_valid ),
+        .i_mem_stage_ready ( s34_stage_ready ),
+        .o_exe_ready ( ),
         .i_start ( am_lsu_start_w ),
         .o_start ( s34_start ),
         .i_is_store ( lsu_is_store_w ),
@@ -1304,6 +1317,7 @@ module i486_cpu_core (
     memory_stage u_stage_4_mem (
         .i_stage3_valid ( s34_stage3_valid ),
         .o_stage_valid ( stage4_valid ),
+        .o_stage_ready ( s34_stage_ready ),
         .clk ( clk ),
         .rst_n ( rst_n ),
         .i_start ( s34_start ),
@@ -1321,9 +1335,11 @@ module i486_cpu_core (
         .i_mem_ready ( s34_mem_ready )
     );
 
-    mem_to_wb u_stage_4_5_mem_wrb (
+    mem_to_wrb u_stage_4_5_mem_wrb (
         .i_stage4_valid ( stage4_valid ),
         .o_stage4_valid ( s45_stage4_valid ),
+        .i_wrb_ready ( s45_stage_ready ),
+        .o_mem_ready ( ),
         .i_mem_valid ( am_lsu_mem_valid ),
         .o_mem_valid ( s45_mem_valid ),
         .i_mem_write_enable ( am_lsu_mem_we ),
@@ -1374,6 +1390,7 @@ module i486_cpu_core (
         .i_am_lsu_busy ( am_lsu_busy ),
         .i_muldiv_pair_wait ( muldiv_pair_wait ),
         .o_exec_stall ( exec_stall ),
+        .o_stage_ready ( s23_exe_ready ),
         .o_stage_valid ( stage3_valid )
     );
 
