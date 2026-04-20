@@ -16,19 +16,19 @@ module sdcard_controller #(
     parameter int P_BYTE_DEPTH    = 512 * 2048,
     parameter bit P_USE_SDIO_DISK = 1'b0
 ) (
-    input  logic [31: 0] i_disk_raddr,       // 磁盘线性字节读地址
-    output logic [ 7: 0] o_disk_rdata,      // 当前地址读出的字节
-    input  logic         i_disk_sector_req,   // SDIO 模式：请求确保当前 LBA 扇区已载入缓冲
+    input  logic [31: 0] i_disk_raddr, // 磁盘线性字节读地址
+    output logic [ 7: 0] o_disk_rdata, // 当前地址读出的字节
+    input  logic         i_disk_sector_req, // SDIO 模式：请求确保当前 LBA 扇区已载入缓冲
     output logic         o_disk_sector_ready, // 当前读地址所在扇区已在 sector_buf 就绪（脉冲/保持见逻辑）
-    output logic         o_sdcard_controller_phy_clk,     // 下至 PHY/卡的 SD 时钟
+    output logic         o_sdcard_controller_phy_clk, // 下至 PHY/卡的 SD 时钟
     output logic         o_sdcard_controller_phy_cmd_out, // CMD 线驱动数据
-    output logic         o_sdcard_controller_phy_cmd_oe,  // CMD 输出使能
-    input  logic         i_sdcard_controller_phy_cmd_in,  // CMD 总线回读
+    output logic         o_sdcard_controller_phy_cmd_oe, // CMD 输出使能
+    input  logic         i_sdcard_controller_phy_cmd_in, // CMD 总线回读
     output logic [ 3: 0] o_sdcard_controller_phy_dat_out, // DAT[3: 0] 驱动
-    output logic         o_sdcard_controller_phy_dat_oe,   // DAT 输出使能
-    input  logic [ 3: 0] i_sdcard_controller_phy_dat_in,   // DAT 总线回读
-    input  logic         clk,             // 控制器时钟
-    input  logic         rst_n            // 异步低有效复位
+    output logic         o_sdcard_controller_phy_dat_oe, // DAT 输出使能
+    input  logic [ 3: 0] i_sdcard_controller_phy_dat_in, // DAT 总线回读
+    input  logic         clk, // 控制器时钟
+    input  logic         rst_n // 异步低有效复位
 );
 
     localparam int LP_AW = $clog2(P_BYTE_DEPTH);

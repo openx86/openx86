@@ -12,23 +12,23 @@ description: Minimal SD native 4-bit host — CMD17 single-block read for RTL + 
 // ============================================================================
 
 module sdcard_native_host_4bit (
-    input  logic         i_start,  // 启动一次 CMD17 单块读（脉冲/单拍均可，经沿检测）
-    input  logic [31: 0] i_lba,     // 逻辑块地址（512B 块号）
-    output logic         o_busy,    // 忙：传输进行中
-    output logic         o_done,    // 完成脉冲：整块读入 payload RAM
-    output logic         o_err,     // 错误脉冲（本最小实现较少触发）
-    output logic         o_payload_we,   // 写入扇区缓冲写使能
+    input  logic         i_start, // 启动一次 CMD17 单块读（脉冲/单拍均可，经沿检测）
+    input  logic [31: 0] i_lba, // 逻辑块地址（512B 块号）
+    output logic         o_busy, // 忙：传输进行中
+    output logic         o_done, // 完成脉冲：整块读入 payload RAM
+    output logic         o_err, // 错误脉冲（本最小实现较少触发）
+    output logic         o_payload_we, // 写入扇区缓冲写使能
     output logic [ 8: 0] o_payload_addr, // 扇区缓冲字节地址 0..511
-    output logic [ 7: 0] o_payload_data,   // 扇区缓冲写入数据
-    output logic         o_sdcard_native_host_4bit_phy_clk,     // SD 时钟输出（直连本模块 clk）
+    output logic [ 7: 0] o_payload_data, // 扇区缓冲写入数据
+    output logic         o_sdcard_native_host_4bit_phy_clk, // SD 时钟输出（直连本模块 clk）
     output logic         o_sdcard_native_host_4bit_phy_cmd_out, // CMD 线驱动数据（配合 oe）
-    output logic         o_sdcard_native_host_4bit_phy_cmd_oe,  // CMD 输出使能（开漏主机模型）
-    input  logic         i_sdcard_native_host_4bit_phy_cmd_in,  // CMD 总线回读
+    output logic         o_sdcard_native_host_4bit_phy_cmd_oe, // CMD 输出使能（开漏主机模型）
+    input  logic         i_sdcard_native_host_4bit_phy_cmd_in, // CMD 总线回读
     output logic [ 3: 0] o_sdcard_native_host_4bit_phy_dat_out, // DAT[3: 0] 驱动
-    output logic         o_sdcard_native_host_4bit_phy_dat_oe,   // DAT 输出使能
-    input  logic [ 3: 0] i_sdcard_native_host_4bit_phy_dat_in,  // DAT 总线回读
-    input  logic         clk,    // 主机逻辑时钟
-    input  logic         rst_n   // 异步低有效复位
+    output logic         o_sdcard_native_host_4bit_phy_dat_oe, // DAT 输出使能
+    input  logic [ 3: 0] i_sdcard_native_host_4bit_phy_dat_in, // DAT 总线回读
+    input  logic         clk, // 主机逻辑时钟
+    input  logic         rst_n // 异步低有效复位
 );
 
     typedef enum logic [ 3: 0] {
