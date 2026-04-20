@@ -155,7 +155,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cp
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/register_file/rf_instruction_pointer_register.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/register_file/rf_segment_register.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/register_file/rf_test_register.sv"
-set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/top/i486_core.sv"
+set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/top/i486_cpu_core.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/top/i486_cpu.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/wb/write_back_stage.sv"
 set_global_assignment -name SYSTEMVERILOG_FILE "D:/GitHub/openx86/openx86/rtl/cpu/wb/write_back_unit.sv"

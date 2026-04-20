@@ -2,14 +2,14 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: i486_core — Intel486-class pipeline core (IU/EU/MMU/WRB integration).
+description: i486_cpu_core — Intel486-class pipeline core (IU/EU/MMU/WRB integration).
 */
 // ============================================================================
-// i486_core — core-side pipeline (prefetch/decode/execute/memory/writeback)
+// i486_cpu_core — core-side pipeline (prefetch/decode/execute/memory/writeback)
 // ============================================================================
 `include "openx86_defs.h.sv"
 
-module i486_core (
+module i486_cpu_core (
     // MMU 通道：向 BIU/MMU 发起线性地址翻译或取数
     output logic         o_mmu_vaild,       // MMU 请求有效（与 i_mmu_ready 握手）
     input  logic          i_mmu_ready,      // MMU 可接收或已完成当前事务
@@ -303,7 +303,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    pipeline_boundary u_stage_1_2_ifu_dec (
+    if_to_dec u_stage_1_2_ifu_dec (
         .i_instruction ( if_instruction ),
         .i_instruction_ready ( if_instruction_ready ),
         .i_segment_fault ( if_segment_fault_from_if ),
@@ -355,7 +355,7 @@ module i486_core (
     logic [ 2: 0]  xadd_saved_reg;
     logic [31: 0] xadd_saved_val;
 
-    pipeline_boundary u_stage_2_3_dec_exe (
+    dec_to_exe u_stage_2_3_dec_exe (
         .i_instruction_ready ( instruction_ready ),
         .o_stage_valid ( stage2_valid ),
         .o_insn_fire ( insn_fire ),
@@ -363,7 +363,7 @@ module i486_core (
         .rst_n ( rst_n )
     );
 
-    execute_unit u_exec486 (
+    execute_unit_i486_ext u_exec486 (
         .clk ( clk ),
         .rst_n ( rst_n ),
         .insn_fire ( insn_fire ),
@@ -1282,7 +1282,7 @@ module i486_core (
         .o_x87_cf ( eu_x87_cf )
     );
 
-    pipeline_boundary u_stage_3_4_exe_mem (
+    exe_to_mem u_stage_3_4_exe_mem (
         .i_stage3_valid ( stage3_valid ),
         .o_stage3_valid ( s34_stage3_valid ),
         .i_start ( am_lsu_start_w ),
@@ -1321,7 +1321,7 @@ module i486_core (
         .i_mem_ready ( s34_mem_ready )
     );
 
-    pipeline_boundary u_stage_4_5_mem_wrb (
+    mem_to_wb u_stage_4_5_mem_wrb (
         .i_stage4_valid ( stage4_valid ),
         .o_stage4_valid ( s45_stage4_valid ),
         .i_mem_valid ( am_lsu_mem_valid ),

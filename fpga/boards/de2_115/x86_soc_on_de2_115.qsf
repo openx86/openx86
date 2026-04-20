@@ -1342,7 +1342,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_file/rf
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_file/rf_instruction_pointer_register.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_file/rf_segment_register.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_file/rf_test_register.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/top/i486_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/top/i486_cpu_core.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/top/i486_cpu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/wb/write_back_stage.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/wb/write_back_unit.sv
@@ -1354,4 +1354,10 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/device/vga/vga_port.
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/device/vga/vga_text_color.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/device/vga/vga_text_intense.sv
 
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/i486_cpu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/i486_cpu_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipe/dec_to_exe.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipe/exe_to_mem.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipe/if_to_dec.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipe/mem_to_wb.sv
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

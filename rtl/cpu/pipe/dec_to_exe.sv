@@ -10,7 +10,7 @@ description: pipeline_boundary — bridge DEC front (insn_fire / stage2 valid) t
 // Wraps decode_stage between instruction-ready and execute-side handshake nets.
 // ============================================================================
 
-module pipeline_boundary (    input  logic i_instruction_ready,
+module dec_to_exe (    input  logic i_instruction_ready,
     output logic o_insn_fire,
     output logic o_stage_valid,
     input  logic clk,

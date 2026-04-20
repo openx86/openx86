@@ -10,7 +10,7 @@ description: pipeline_boundary — combinational bridge from EXE stage to MEM (L
 // Passes EXE valid and LSU request / memory return paths into memory_stage.
 // ============================================================================
 
-module pipeline_boundary (    input  logic          i_stage3_valid,
+module exe_to_mem (    input  logic          i_stage3_valid,
     output logic         o_stage3_valid,
     input  logic          i_start,
     output logic         o_start,

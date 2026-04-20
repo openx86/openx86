@@ -135,7 +135,7 @@ rtl/cpu/register_file/rf_idtr_register.sv
 rtl/cpu/register_file/rf_instruction_pointer_register.sv
 rtl/cpu/register_file/rf_segment_register.sv
 rtl/cpu/register_file/rf_test_register.sv
-rtl/cpu/top/i486_core.sv
+rtl/cpu/top/i486_cpu_core.sv
 rtl/cpu/top/i486_cpu.sv
 rtl/cpu/wb/write_back_stage.sv
 rtl/cpu/wb/write_back_unit.sv

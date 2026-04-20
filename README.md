@@ -3,7 +3,7 @@
 openx86 是一个面向 bring-up 和持续演进的 x86 SoC/CPU RTL 仓库。
 
 - SoC 主线用于打通总线、芯片组、内存与外设路径。
-- `i486_cpu` / `i486_core` 及相关子系统在 `rtl/cpu/` 下按 80386 功能块（BIU/IU/EU/MMU 等）组织，并配有分层 testbench。
+- `i486_cpu` / `i486_cpu_core` 及相关子系统在 `rtl/cpu/` 下按 80386 功能块（BIU/IU/EU/MMU 等）组织，并配有分层 testbench。
 
 ## 当前目录结构
 

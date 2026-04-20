@@ -46,7 +46,7 @@ module execute_i486_cpuid_tb;
         forever #5 clk = ~clk;
     end
 
-    execute_unit u_dut (
+    execute_unit_i486_ext u_dut (
         .clk ( clk ),
         .rst_n ( rst_n ),
         .insn_fire ( insn_fire ),

@@ -10,7 +10,7 @@ description: pipeline_boundary — combinational bridge from IF (stage_1) to dec
 // Passes instruction window, ready, and segment fault from IFU to DEC.
 // ============================================================================
 
-module pipeline_boundary (    input  logic [15: 0][ 7: 0] i_instruction,
+module if_to_dec (    input  logic [15: 0][ 7: 0] i_instruction,
     input  logic          i_instruction_ready,
     input  logic          i_segment_fault,
     output logic [15: 0][ 7: 0] o_instruction,
