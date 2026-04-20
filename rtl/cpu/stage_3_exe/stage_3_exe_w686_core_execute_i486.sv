@@ -2,14 +2,14 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements stage_3_exe_w686_core_execute_i486.
+description: This module implements stage_3_exe_cpu__execute_i486.
 */
 // ============================================================================
-// stage_3_exe_w686_core_execute_i486 — 80486 模式：多周期 CPUID、INVD/WBINVD/INVLPG 占位
+// stage_3_exe_cpu__execute_i486 — 80486 模式：多周期 CPUID、INVD/WBINVD/INVLPG 占位
 // ============================================================================
 `include "openx86_defs.h.sv"
 
-module stage_3_exe_w686_core_execute_i486 (
+module stage_3_exe_cpu__execute_i486 (
     input  logic          insn_fire,  // 指令发射脉冲
     input  logic          op_cpuid,  // CPUID 微操作
     input  logic [31: 0]  gpr_eax,  // 当前 EAX（叶号）

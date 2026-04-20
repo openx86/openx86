@@ -5,7 +5,7 @@ repo: https://github.com/openx86/openx86
 description: This module implements openx86_soc_top.
 */
 // ============================================================================
-// 最小 SoC：w686_cpu 仅接 bus_controller；SDRAM/ROM/VGA/chipset 由总线控制器译码驱动
+// 最小 SoC：cpu 仅接 bus_controller；SDRAM/ROM/VGA/chipset 由总线控制器译码驱动
 // ============================================================================
 
 module openx86_soc_top #(
@@ -125,7 +125,7 @@ module openx86_soc_top #(
     logic [ 3: 0]  sdio_dat_in;
 
     // W686 CPU 与总线控制器之间的主事务通道
-    w686_cpu u_cpu (
+    cpu u_cpu (
         .bus_vaild        ( bus_valid ),
         .bus_ready        ( bus_ready ),
         .bus_busy         ( bus_busy ),

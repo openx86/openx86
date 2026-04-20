@@ -24,9 +24,9 @@ rtl/cpu/stage_2_3_dec_exe/stage_2_3_dec_exe.sv
 rtl/cpu/stage_3_4_exe_mem/stage_3_4_exe_mem.sv
 rtl/cpu/stage_4_5_mem_wrb/stage_4_5_mem_wrb.sv
 rtl/cpu/w686_core.sv
-rtl/cpu/w686_cpu.sv
+rtl/cpu/cpu.sv
 rtl/cpu/stage_1_ifu/stage_1_ifu.sv
-rtl/cpu/stage_1_ifu/stage_1_ifu_if_instruction_fetch.sv
+rtl/cpu/stage_1_ifu/stage_1_ifu_instruction_fetch.sv
 rtl/cpu/mmu/mmu_memory_management_unit.sv
 rtl/cpu/mmu/mmu_pg_paging_unit.sv
 rtl/cpu/mmu/mmu_seg_gate_segment_descriptor_decode.sv
@@ -124,7 +124,7 @@ rtl/cpu/stage_3_exe/alu/shift_rotate/stage_3_exe_shf_shrd.sv
 rtl/cpu/stage_3_exe/ctrl/stage_3_exe_w686_core_execute_i486.sv
 rtl/cpu/stage_4_mem/stage_4_mem.sv
 rtl/cpu/stage_4_mem/stage_4_mem_access_memory.sv
-rtl/cpu/stage_4_mem/stage_4_mem_bus_interface_unit.sv
+rtl/cpu/bus_interface_unit.sv
 rtl/cpu/stage_5_wrb/stage_5_wrb.sv
 rtl/cpu/register_files/rf_control_register.sv
 rtl/cpu/register_files/rf_debug_register.sv

@@ -2,10 +2,10 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements w686_cpu.
+description: This module implements cpu.
 */
 // ============================================================================
-// w686_cpu
+// cpu
 // ----------------------------------------------------------------------------
 // CPU 顶层封装：对外提供统一的简化 SoC bus 接口（valid/ready）。
 //
@@ -13,7 +13,7 @@ description: This module implements w686_cpu.
 // - 该模块目前实例化 `w686_core` 作为具体实现。
 // - 历史命名 `w80386_*`/`w486_*` 已统一更名为 `w686_*`。
 // ============================================================================
-module w686_cpu (
+module cpu (
     // 以下为历史 80386 风格总线信号（保留注释，未接线）
     // input  logic        next_address_n,
     // input  logic        bus_ready_n,
@@ -67,7 +67,7 @@ logic [31: 0] data_data_read;
 logic [31: 0] data_data_write;
 
 // 具体 CPU 微架构实现（MMU/取指/数据三主端口出核）
-w686_core core_0 (
+cpu_core cpu_core_0 (
     .o_mmu_vaild        ( mmu_vaild ),
     .i_mmu_ready        ( mmu_ready ),
     .o_mmu_address      ( mmu_address ),
@@ -88,7 +88,7 @@ w686_core core_0 (
 );
 
 // 总线接口单元：仲裁并折叠到单一 valid/ready SoC 总线
-stage_4_mem_bus_interface_unit biu_0 (
+bus_interface_unit biu_0 (
     .i_mmu_vaild        ( mmu_vaild ),
     .o_mmu_ready        ( mmu_ready ),
     .i_mmu_address      ( mmu_address ),

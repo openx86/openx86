@@ -1227,9 +1227,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/single_port_r
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/single_port_rom.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/common/true_dual_port_ram.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/w686_core.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/w686_cpu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/cpu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_1_ifu/stage_1_ifu.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_1_ifu/stage_1_ifu_if_instruction_fetch.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_1_ifu/stage_1_ifu_instruction_fetch.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/mmu/mmu_memory_management_unit.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/mmu/mmu_pg_paging_unit.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/mmu/mmu_seg_gate_segment_descriptor_decode.sv
@@ -1329,7 +1329,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_3_exe/alu/
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_3_exe/ctrl/stage_3_exe_w686_core_execute_i486.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_4_mem/stage_4_mem.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_4_mem/stage_4_mem_access_memory.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_4_mem/stage_4_mem_bus_interface_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/bus_interface_unit.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_5_wrb/stage_5_wrb.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_5_wrb/stage_5_wrb_control_register.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_5_wrb/stage_5_wrb_debug_register.sv
@@ -1361,4 +1361,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_1_2_ifu_de
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_2_3_dec_exe/stage_2_3_dec_exe.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_3_4_exe_mem/stage_3_4_exe_mem.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_4_5_mem_wrb/stage_4_5_mem_wrb.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/cpu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/cpu_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_3_exe/stage_3_exe.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_3_exe/stage_3_exe_execute_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/stage_3_exe/stage_3_exe_w686_core_execute_i486.sv
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -5,7 +5,7 @@ repo: https://github.com/openx86/openx86
 description: This module implements w686_execute_i486_cpuid_tb.
 */
 // ============================================================================
-// stage_3_exe_w686_core_execute_i486 — CPUID 多周期写回冒烟（iverilog -g2012 / Verilator）
+// stage_3_exe_cpu__execute_i486 — CPUID 多周期写回冒烟（iverilog -g2012 / Verilator）
 // ============================================================================
 `timescale 1ns/1ns
 
@@ -46,7 +46,7 @@ module w686_execute_i486_cpuid_tb;
         forever #5 clk = ~clk;
     end
 
-    stage_3_exe_w686_core_execute_i486 u_dut (
+    stage_3_exe_cpu__execute_i486 u_dut (
         .clk ( clk ),
         .rst_n ( rst_n ),
         .insn_fire ( insn_fire ),

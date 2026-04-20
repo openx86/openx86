@@ -9,7 +9,7 @@ description: w686_core — 80486 级 CPU 核：取指/译码/执行单元与 LSU
 // ============================================================================
 `include "openx86_defs.h.sv"
 
-module w686_core (
+module cpu_core (
     // MMU 通道：向 BIU/MMU 发起线性地址翻译或取数
     output logic         o_mmu_vaild,       // MMU 请求有效（与 i_mmu_ready 握手）
     input  logic          i_mmu_ready,      // MMU 可接收或已完成当前事务
@@ -220,7 +220,7 @@ module w686_core (
     // CPL = CS.RPL
     logic [ 1: 0] current_privilege_level;
 
-    // --- Core-side memory request channels (BIU is instantiated in w686_cpu) ---
+    // --- Core-side memory request channels (BIU is instantiated in cpu) ---
     // 与顶层 i_mmu_* / o_mmu_* 之间的 core 内 MMU 事务线
     logic        mmu_bus_vaild;
     logic        mmu_bus_ready;

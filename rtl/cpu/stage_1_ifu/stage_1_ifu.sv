@@ -54,7 +54,7 @@ module stage_1_ifu (
 );
 
     // 取指 + 段/分页翻译封装
-    stage_1_ifu_if_instruction_fetch u_if_instruction_fetch (
+    stage_1_ifu_instruction_fetch u_if_instruction_fetch (
         .o_code_vaild              ( o_code_vaild ),
         .i_code_ready              ( i_code_ready ),
         .o_code_address            ( o_code_address ),

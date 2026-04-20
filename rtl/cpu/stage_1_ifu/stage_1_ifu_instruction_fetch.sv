@@ -2,7 +2,7 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements stage_1_ifu_if_instruction_fetch.
+description: This module implements stage_1_ifu_instruction_fetch.
 */
 // project: w80386dx
 // author: Chang Wei<changwei1006@gmail.com>
@@ -11,7 +11,7 @@ description: This module implements stage_1_ifu_if_instruction_fetch.
 // description: instruction fetch module
 
 `include "openx86_defs.h.sv"
-module stage_1_ifu_if_instruction_fetch (
+module stage_1_ifu_instruction_fetch (
     // 取指总线（对 BIU/存储子系统）
     output logic         o_code_vaild,
     input  logic          i_code_ready,

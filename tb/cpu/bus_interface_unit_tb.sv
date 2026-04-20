@@ -137,7 +137,7 @@ initial begin
     $finish;
 end
 
-stage_4_mem_bus_interface_unit tb_bus_interface_unit (
+bus_interface_unit tb_bus_interface_unit (
     .i_mmu_vaild         ( i_mmu_vaild ),
     .o_mmu_ready         ( o_mmu_ready ),
     .i_mmu_address       ( i_mmu_address ),
