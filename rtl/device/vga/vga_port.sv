@@ -31,20 +31,20 @@ module vga_port #(
 
     
     // VGA 物理信号输出
-    output logic                   vga_hsync,   // 行同步（低有效区间见时序块）
-    output logic                   vga_vsync,   // 场同步
-    output logic [ 3: 0]           vga_r,       // RGB 各 4 位（图形调色展开）
-    output logic [ 3: 0]           vga_g,
-    output logic [ 3: 0]           vga_b,
+    output logic                   vga_hsync, // 行同步（低有效区间见时序块）
+    output logic                   vga_vsync, // 场同步
+    output logic [ 3: 0]           vga_r, // RGB 各 4 位（图形调色展开）
+    output logic [ 3: 0]           vga_g, // 输出信号
+    output logic [ 3: 0]           vga_b, // 输出信号
     
     // 时序输出（供其他模块使用）
-    output logic [$clog2(800)-1: 0] h_count,     // 行内像素计数 0..799
-    output logic [$clog2(525)-1: 0] v_count,     // 行计数 0..524
+    output logic [$clog2(800)-1: 0] h_count, // 行内像素计数 0..799
+    output logic [$clog2(525)-1: 0] v_count, // 行计数 0..524
     output logic                   video_active, // 可见像素窗口内为 1
     
     // 时钟和复位（放在末尾）
-    input  logic                    rst_n,     // 异步低有效复位
-    input  logic                    clk        // 像素时钟
+    input  logic                    rst_n, // 异步低有效复位
+    input  logic                    clk // 像素时钟
 );
 
     // ------------------------------------------------------------------------

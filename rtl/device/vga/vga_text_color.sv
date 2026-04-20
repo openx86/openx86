@@ -10,29 +10,29 @@ description: This module implements vga_text_color.
 
 module vga_text_color (
     // VRAM 读接口（文本模式：80x25 = 2000 字符 = 4000 字节）
-    output logic [12: 0]          vram_rd_addr,   // 文本缓冲字节地址
+    output logic [12: 0]          vram_rd_addr, // 文本缓冲字节地址
     input  logic [ 7: 0]           vram_char_data, // 对齐后的字符码
     input  logic [ 7: 0]           vram_attr_data, // 对齐后的属性字节
 
 
     // 字符生成器接口
-    output logic [ 7: 0]          font_char_code,
-    output logic [ 3: 0]          font_row_index,
-    input  logic [ 7: 0]           font_data,
+    output logic [ 7: 0]          font_char_code, // 输出信号
+    output logic [ 3: 0]          font_row_index, // 输出信号
+    input  logic [ 7: 0]           font_data, // 输入信号
 
     // VGA 输出
-    output logic [ 3: 0]          vga_r,
-    output logic [ 3: 0]          vga_g,
-    output logic [ 3: 0]          vga_b,
+    output logic [ 3: 0]          vga_r, // 输出信号
+    output logic [ 3: 0]          vga_g, // 输出信号
+    output logic [ 3: 0]          vga_b, // 输出信号
 
     // 时序输入
-    input  logic [$clog2(800)-1: 0] h_count,      // 水平计数（0-799）
-    input  logic [$clog2(525)-1: 0] v_count,      // 垂直计数（0-524）
-    input  logic                   video_active,
+    input  logic [$clog2(800)-1: 0] h_count, // 水平计数（0-799）
+    input  logic [$clog2(525)-1: 0] v_count, // 垂直计数（0-524）
+    input  logic                   video_active, // 输入信号
 
     // 时钟和复位
-    input  logic                   rst_n,
-    input  logic                   clk
+    input  logic                   rst_n, // 复位信号
+    input  logic                   clk // 时钟信号
 );
 
     // 文本模式参数

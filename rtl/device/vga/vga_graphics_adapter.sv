@@ -9,27 +9,27 @@ module vga_graphics_adapter (
     // bus
 
     // CPU I/O port access
-    input  logic          io_en_w,    // I/O 写选通（已译码到 VGA 窗口）
-    input  logic          io_en_r,    // I/O 读选通
-    input  logic [15: 0] io_addr,     // I/O 地址（如 03C0/03C2/03DA）
-    input  logic [ 7: 0] io_data_w,   // I/O 写数据
-    output logic [ 7: 0] io_data_r,   // I/O 读数据
+    input  logic          io_en_w, // I/O 写选通（已译码到 VGA 窗口）
+    input  logic          io_en_r, // I/O 读选通
+    input  logic [15: 0] io_addr, // I/O 地址（如 03C0/03C2/03DA）
+    input  logic [ 7: 0] io_data_w, // I/O 写数据
+    output logic [ 7: 0] io_data_r, // I/O 读数据
 
     // CPU memory access (VRAM window)
-    input  logic          mem_en_w,   // VRAM 窗口写使能
-    input  logic [19: 0]  mem_addr,   // VRAM 字节地址（高位由映射决定）
+    input  logic          mem_en_w, // VRAM 窗口写使能
+    input  logic [19: 0]  mem_addr, // VRAM 字节地址（高位由映射决定）
     input  logic [ 7: 0]  mem_data_w, // VRAM 写数据
 
     // VGA physical signals
-    output logic         vga_hsync,   // 行同步（负极性约定由 vga_port 产生）
-    output logic         vga_vsync,   // 场同步
-    output logic [ 3: 0] vga_r,       // 像素红分量
-    output logic [ 3: 0] vga_g,
-    output logic [ 3: 0] vga_b,
+    output logic         vga_hsync, // 行同步（负极性约定由 vga_port 产生）
+    output logic         vga_vsync, // 场同步
+    output logic [ 3: 0] vga_r, // 像素红分量
+    output logic [ 3: 0] vga_g, // 输出信号
+    output logic [ 3: 0] vga_b, // 输出信号
 
     // common
-    input  logic          rst_n,    // 异步低有效复位
-    input  logic          clk       // 像素域主时钟
+    input  logic          rst_n, // 异步低有效复位
+    input  logic          clk // 像素域主时钟
 );
 
     // VGA VRAM：一帧 640×480 字节线性缓冲（与 vga_port 线性读地址一致）
@@ -123,6 +123,7 @@ module vga_graphics_adapter (
     assign text_vram_char_data = text_vram_char_data_reg;
     assign text_vram_attr_data = text_vram_attr_data_reg;
 
+    // 组合逻辑块
     always_comb begin
         unique case (vga_mode)
             MODE_TEXT_COLOR:   text_vram_addr = text_vram_addr_color;
@@ -164,6 +165,7 @@ module vga_graphics_adapter (
     logic [ 3: 0] font_row_index;
     logic [ 7: 0] font_data;
 
+    // 组合逻辑块
     always_comb begin
         unique case (vga_mode)
             MODE_TEXT_COLOR: begin

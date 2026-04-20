@@ -22,7 +22,7 @@ module vga_font_rom (
     // Clock / reset
     // ------------------------------------------------------------------------
     input  logic          rst_n, // 异步低有效复位（送子 ROM）
-    input  logic          clk    // 字体读同步时钟
+    input  logic          clk // 字体读同步时钟
 );
 
     // 字体线性地址：{字符, 行}
