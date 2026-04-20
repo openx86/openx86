@@ -16,24 +16,24 @@ description: segment_descriptor_cache
 `include "openx86_defs.h.sv"
 
 module segment_descriptor_cache (    input  logic         protect_enable,       // 1=保护模式：走描述符译码
-    input  logic [15: 0] segment_selector,
-    input  logic [63: 0] segment_descriptor,
-    input  logic         is_code_segment,      // 实模式简化路径：是否代码语义
-    input  logic [15: 0] write_data,
-    input  logic         write_enable,
-    output logic         read_data,
-    output logic [31: 0] base,
-    output logic [31: 0] limit,
-    output logic [ 1: 0] present,
-    output logic         privilege_level,
-    output logic         accessed,
-    output logic         granularity,
-    output logic         expansion_direction,
-    output logic         readable,
-    output logic         writeable,
-    output logic         executable,
-    output logic         stack_size,
-    output logic         conforming_privilege
+    input  logic [15: 0] segment_selector, // 输入信号
+    input  logic [63: 0] segment_descriptor, // 输入信号
+    input  logic         is_code_segment, // 实模式简化路径：是否代码语义
+    input  logic [15: 0] write_data, // 输入信号
+    input  logic         write_enable, // 输入信号
+    output logic         read_data, // 输出信号
+    output logic [31: 0] base, // 输出信号
+    output logic [31: 0] limit, // 输出信号
+    output logic [ 1: 0] present, // 输出信号
+    output logic         privilege_level, // 输出信号
+    output logic         accessed, // 输出信号
+    output logic         granularity, // 输出信号
+    output logic         expansion_direction, // 输出信号
+    output logic         readable, // 输出信号
+    output logic         writeable, // 输出信号
+    output logic         executable, // 输出信号
+    output logic         stack_size, // 输出信号
+    output logic         conforming_privilege // 输出信号
 );
 
 // 子译码器输出（保护模式）

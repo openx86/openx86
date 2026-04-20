@@ -16,24 +16,24 @@ description: generic valid/ready pipeline register with flush.
 // ============================================================================
 
 module pipeline_reg #(
-    parameter type T = logic [0: 0]
+    parameter int unsigned P_DATA_WIDTH = 1
 ) (
-    input  logic i_flush,
+    input  logic i_flush, // 输入信号
 
-    input  logic i_valid,
-    output logic o_ready,
-    input  T     i_payload,
+    input  logic i_valid, // 输入信号
+    output logic o_ready, // 输出信号
+    input  logic [P_DATA_WIDTH - 1: 0] i_payload, // 输入信号
 
-    output logic o_valid,
-    input  logic i_ready,
-    output T     o_payload,
+    output logic o_valid, // 输出信号
+    input  logic i_ready, // 输入信号
+    output logic [P_DATA_WIDTH - 1: 0] o_payload, // 输出信号
 
-    input  logic clk,
-    input  logic rst_n
+    input  logic clk, // 时钟信号
+    input  logic rst_n // 复位信号
 );
 
-    logic full;
-    T     payload_r;
+    logic                             full;
+    logic [P_DATA_WIDTH - 1: 0] payload_r;
 
     assign o_valid   = full;
     assign o_payload = payload_r;
@@ -41,6 +41,7 @@ module pipeline_reg #(
     // Can accept new data when empty, or when current data is being accepted.
     assign o_ready = ~full | (full & i_ready);
 
+    // 时序逻辑块
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             full      <= 1'b0;

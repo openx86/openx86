@@ -17,6 +17,7 @@ rtl/chipset/chip_ns16550_com.sv
 rtl/chipset/chip_pc_bios_eeprom.sv
 rtl/common/dual_port_rom.sv
 rtl/common/edge_detect.sv
+rtl/common/fifo.sv
 rtl/common/simple_dual_port_ram.sv
 rtl/common/single_port_ram.sv
 rtl/common/single_port_rom.sv
@@ -113,6 +114,8 @@ rtl/cpu/iu/decode/unit.sv
 rtl/cpu/iu/decode/x87_esc.sv
 rtl/cpu/iu/prefetch/instruction_fetch.sv
 rtl/cpu/iu/prefetch/prefetch_unit.sv
+rtl/cpu/pipeline/dec.sv
+rtl/cpu/pipeline/ifu.sv
 rtl/cpu/mem/access_memory.sv
 rtl/cpu/mem/memory_stage.sv
 rtl/cpu/mmu/memory_management_unit.sv

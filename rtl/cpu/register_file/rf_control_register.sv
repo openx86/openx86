@@ -6,18 +6,18 @@ description: Control register file.
 */
 
 module rf_control_register (    input  logic         write_enable,       // CR 写使能
-    input  logic [ 2: 0] write_index,       // CR 编号（0–7）
-    input  logic [31: 0] write_data,         // 写入数据
-    output logic [ 7: 0][31: 0] CR,       // 控制寄存器 CR0–CR7
-    output logic         PE,                 // CR0.0 保护模式使能
-    output logic         MP,                 // CR0.1 监视协处理器
-    output logic         EM,                 // CR0.2 仿真
-    output logic         TS,                 // CR0.3 任务切换
-    output logic         R,                  // CR0[4]
-    output logic         PG,                 // CR0.31 分页使能
+    input  logic [ 2: 0] write_index, // CR 编号（0–7）
+    input  logic [31: 0] write_data, // 写入数据
+    output logic [ 7: 0][31: 0] CR, // 控制寄存器 CR0–CR7
+    output logic         PE, // CR0.0 保护模式使能
+    output logic         MP, // CR0.1 监视协处理器
+    output logic         EM, // CR0.2 仿真
+    output logic         TS, // CR0.3 任务切换
+    output logic         R, // CR0[4]
+    output logic         PG, // CR0.31 分页使能
     output logic [19: 0] page_directory_base, // CR3 页目录物理基址（高 20 位域）
-    input  logic         clk,
-    input  logic         rst_n
+    input  logic         clk, // 时钟信号
+    input  logic         rst_n // 复位信号
 );
 
 // 复位清零全部 CR；使能时按索引写入（MOV CR 等）

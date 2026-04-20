@@ -6,11 +6,11 @@ description: Instruction pointer register file.
 */
 
 module rf_instruction_pointer_register (    input  logic         write_enable,   // 写使能（更新 EIP）
-    input  logic [31: 0] write_data,      // 完整 32 位指令指针写入值
-    output logic [15: 0] IP,             // 16 位可见 IP（EIP 低 16）
-    output logic [31: 0] EIP,            // 32 位 EIP
-    input  logic         clk,
-    input  logic         rst_n
+    input  logic [31: 0] write_data, // 完整 32 位指令指针写入值
+    output logic [15: 0] IP, // 16 位可见 IP（EIP 低 16）
+    output logic [31: 0] EIP, // 32 位 EIP
+    input  logic         clk, // 时钟信号
+    input  logic         rst_n // 复位信号
 );
 
 logic [31: 0] instruction_pointer;  // 内部统一存 32 位指令指针

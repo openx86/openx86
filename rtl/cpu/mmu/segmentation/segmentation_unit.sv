@@ -18,25 +18,25 @@ module segmentation_unit #(    parameter bit read_from_fetch = 1'b0
     // ------------------------------------------------------------------------
     // Segmentation context inputs（段式地址：选择子 + 描述符 + 偏移）
     // ------------------------------------------------------------------------
-    input  logic          i_protected_mode,                              // CR0.PE
-    input  logic [ 5: 0][15: 0] i_segment_selector,                      // 段寄存器侧选择子
-    input  logic [ 5: 0][63: 0] i_segment_descriptor,                    // 描述符缓存（与选择子对应）
-    input  logic [ 2: 0] i_segment_index,                               // 本次访问使用哪一段
-    input  logic [ 1: 0] i_current_privilege_level,                     // CPL
-    input  logic [31: 0] i_effective_address,                           // 段内有效地址
-    input  logic          i_write_enable,                                // 1=写，0=读/取指
+    input  logic          i_protected_mode, // CR0.PE
+    input  logic [ 5: 0][15: 0] i_segment_selector, // 段寄存器侧选择子
+    input  logic [ 5: 0][63: 0] i_segment_descriptor, // 描述符缓存（与选择子对应）
+    input  logic [ 2: 0] i_segment_index, // 本次访问使用哪一段
+    input  logic [ 1: 0] i_current_privilege_level, // CPL
+    input  logic [31: 0] i_effective_address, // 段内有效地址
+    input  logic          i_write_enable, // 1=写，0=读/取指
 
     // ------------------------------------------------------------------------
     // Segmentation outputs（输出线性地址或 fault）
     // ------------------------------------------------------------------------
-    output logic [31: 0] o_linear_address,                              // 送分页单元
-    output logic         o_segment_privilege_error,                     // 段检查失败聚合
+    output logic [31: 0] o_linear_address, // 送分页单元
+    output logic         o_segment_privilege_error, // 段检查失败聚合
 
     // ------------------------------------------------------------------------
     // Clock / reset
     // ------------------------------------------------------------------------
-    input  logic          clk,
-    input  logic          rst_n
+    input  logic          clk, // 时钟信号
+    input  logic          rst_n // 复位信号
 );
 
 logic  [63: 0] segment_descriptor; // 当前段描述符（按 index 选取）

@@ -94,7 +94,7 @@ scripts/test_all_verilator.sh
 强制指定 filelist（示例）：
 
 ```bash
-RTL_FILELIST=sim/filelists/rtl_experimental.f scripts/sim_tb_verilator.sh --tb tb/cpu/eu/execute_unit_tb.sv
+RTL_FILELIST=sim/filelists/rtl_experimental.f scripts/sim_tb_verilator.sh --tb tb/cpu/execute_unit/execute_unit_tb.sv
 ```
 
 ## 其他脚本

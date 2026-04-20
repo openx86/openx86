@@ -45,13 +45,13 @@ trap gates is that the interrupt gate disables interrupts (resets the IF bit) wh
 */
 
 module gate_segment_descriptor_decode (    // 门描述符：选择子 + 偏移 + 类型/DPL/P 等（调用/中断/陷阱/任务门）
-    output logic [15: 0] o_selector,
-    output logic [31: 0] o_offset,
-    output logic         o_present,
-    output logic [ 1: 0] o_privilege_level,
-    output logic         o_gate_segment_type,
-    output logic [ 4: 0] o_word_count,
-    input  logic [63: 0] i_descriptor
+    output logic [15: 0] o_selector, // 输出信号
+    output logic [31: 0] o_offset, // 输出信号
+    output logic         o_present, // 输出信号
+    output logic [ 1: 0] o_privilege_level, // 输出信号
+    output logic         o_gate_segment_type, // 输出信号
+    output logic [ 4: 0] o_word_count, // 输出信号
+    input  logic [63: 0] i_descriptor // 输入信号
 );
 
 // 门类型子集（80286/80386 门编码）

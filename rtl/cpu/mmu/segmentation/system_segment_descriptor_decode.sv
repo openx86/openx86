@@ -35,13 +35,13 @@ segment
 */
 
 module system_segment_descriptor_decode (    // 系统段描述符（S=0）：基址/limit/粒度/类型等
-    output logic [31: 0] o_base,
-    output logic [19: 0] o_limit,
-    output logic         o_granularity,
-    output logic         o_present,
-    output logic         o_privilege_level,
-    output logic [ 3: 0] o_system_segment_type,
-    input  logic [63: 0] i_descriptor
+    output logic [31: 0] o_base, // 输出信号
+    output logic [19: 0] o_limit, // 输出信号
+    output logic         o_granularity, // 输出信号
+    output logic         o_present, // 输出信号
+    output logic         o_privilege_level, // 输出信号
+    output logic [ 3: 0] o_system_segment_type, // 输出信号
+    input  logic [63: 0] i_descriptor // 输入信号
 );
 
 // 系统段描述符：基址与 limit 非连续字节拼接

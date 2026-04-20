@@ -6,12 +6,12 @@ description: GDTR register file.
 */
 
 module rf_gdtr_register (    input  logic         gdtr_write_enable,       // GDTR 写使能
-    input  logic [15: 0] gdtr_write_data_limit,   // 写入：GDT 限长
-    input  logic [31: 0] gdtr_write_data_base,    // 写入：GDT 线性基址
-    output logic [15: 0] gdtr_limit,              // 当前 GDT 限长
-    output logic [31: 0] gdtr_base,               // 当前 GDT 基址
-    input  logic         clk,
-    input  logic         rst_n
+    input  logic [15: 0] gdtr_write_data_limit, // 写入：GDT 限长
+    input  logic [31: 0] gdtr_write_data_base, // 写入：GDT 线性基址
+    output logic [15: 0] gdtr_limit, // 当前 GDT 限长
+    output logic [31: 0] gdtr_base, // 当前 GDT 基址
+    input  logic         clk, // 时钟信号
+    input  logic         rst_n // 复位信号
 );
 
 // SGDT 读出 / LGDT 写入的架构寄存器快照

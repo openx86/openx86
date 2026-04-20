@@ -35,19 +35,19 @@ segment
 */
 
 module segment_descriptor_encode (    // 将结构化属性打包回 64b 描述符（写回/构造路径）
-    input  logic [31: 0]  base,
-    input  logic [19: 0]  limit,
-    input  logic          present,
-    input  logic [ 1: 0]   privilege_level,
-    input  logic          available_field,
-    input  logic          descriptor_type,
-    input  logic          date_or_code_granularity,
-    input  logic          date_or_code_default_operation_size,
-    input  logic          date_or_code_executable,
-    input  logic          data_expansion_direction_code_conforming,
-    input  logic          data_writeable_code_readable,
-    input  logic          date_or_code_accessed,
-    output logic [63: 0] descriptor
+    input  logic [31: 0]  base, // 输入信号
+    input  logic [19: 0]  limit, // 输入信号
+    input  logic          present, // 输入信号
+    input  logic [ 1: 0]   privilege_level, // 输入信号
+    input  logic          available_field, // 输入信号
+    input  logic          descriptor_type, // 输入信号
+    input  logic          date_or_code_granularity, // 输入信号
+    input  logic          date_or_code_default_operation_size, // 输入信号
+    input  logic          date_or_code_executable, // 输入信号
+    input  logic          data_expansion_direction_code_conforming, // 输入信号
+    input  logic          data_writeable_code_readable, // 输入信号
+    input  logic          date_or_code_accessed, // 输入信号
+    output logic [63: 0] descriptor // 输出信号
 );
 
 // 按手册位序拼接（含 AVL/G/D/B 等属性位）

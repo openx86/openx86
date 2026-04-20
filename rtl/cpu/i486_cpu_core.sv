@@ -11,28 +11,28 @@ description: i486_cpu_core — Intel486-class pipeline core (IU/EU/MMU/WRB integ
 
 module i486_cpu_core (
     // MMU 通道：向 BIU/MMU 发起线性地址翻译或取数
-    output logic         o_mmu_vaild,       // MMU 请求有效（与 i_mmu_ready 握手）
-    input  logic          i_mmu_ready,      // MMU 可接收或已完成当前事务
-    output logic [31: 0] o_mmu_address,     // 发往 MMU 的线性/物理侧地址
-    input  logic [31: 0] i_mmu_data_read,   // MMU 读回数据
+    output logic         o_mmu_vaild, // MMU 请求有效（与 i_mmu_ready 握手）
+    input  logic          i_mmu_ready, // MMU 可接收或已完成当前事务
+    output logic [31: 0] o_mmu_address, // 发往 MMU 的线性/物理侧地址
+    input  logic [31: 0] i_mmu_data_read, // MMU 读回数据
 
     // 指令取指通道：向 I-cache/BIU 取指字节流
-    output logic         o_code_vaild,    // 取指请求有效
-    input  logic          i_code_ready,     // 取指侧可接受或已返回当前拍数据
-    output logic [31: 0] o_code_address,    // 取指线性地址
-    input  logic [31: 0] i_code_data_read,  // 取指返回的指令字
+    output logic         o_code_vaild, // 取指请求有效
+    input  logic          i_code_ready, // 取指侧可接受或已返回当前拍数据
+    output logic [31: 0] o_code_address, // 取指线性地址
+    input  logic [31: 0] i_code_data_read, // 取指返回的指令字
 
     // 数据访存通道：向 D-cache/BIU 发起 load/store
-    output logic         o_data_vaild,        // 数据访问请求有效
-    input  logic          i_data_ready,       // 数据总线可完成当前事务
+    output logic         o_data_vaild, // 数据访问请求有效
+    input  logic          i_data_ready, // 数据总线可完成当前事务
     output logic         o_data_write_enable, // 1=写事务，0=读事务
-    output logic         o_data_io_access,    // 本 core 固定为内存访问（非 IO）
-    output logic [31: 0] o_data_address,      // 数据访问地址
-    input  logic [31: 0] i_data_data_read,    // load 读回数据
-    output logic [31: 0] o_data_data_write,   // store 写出数据
+    output logic         o_data_io_access, // 本 core 固定为内存访问（非 IO）
+    output logic [31: 0] o_data_address, // 数据访问地址
+    input  logic [31: 0] i_data_data_read, // load 读回数据
+    output logic [31: 0] o_data_data_write, // store 写出数据
 
-    input  logic          rst_n,          // 异步低有效复位
-    input  logic          clk             // 核心时钟
+    input  logic          rst_n, // 异步低有效复位
+    input  logic          clk // 核心时钟
 );
     // 译码子模块 .* 互连线：必须放在模块内，避免在编译单元顶层声明而与子模块端口同名（VARHIDDEN）
 `include "iu_decode_outputs_decl.svh"

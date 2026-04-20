@@ -6,24 +6,24 @@ description: EFLAGS/FLAGS register file.
 */
 
 module rf_flags_register (    input  logic         write_enable,    // EFLAGS 整体写使能
-    input  logic [31: 0] write_data,       // 写入的 EFLAGS 位域
-    output logic         CF,              // 进位
-    output logic         PF,              // 奇偶
-    output logic         AF,              // 辅助进位
-    output logic         ZF,              // 零标志
-    output logic         SF,              // 符号
-    output logic         TF,              // 陷阱（单步）
-    output logic         IF,              // 可屏蔽中断允许
-    output logic         DF,              // 方向
-    output logic         OF,              // 溢出
-    output logic [ 1: 0] IOPL,            // I/O 特权级
-    output logic         NT,              // 嵌套任务
-    output logic         RF,              // 恢复标志
-    output logic         VM,              // 虚拟 8086
-    output logic [31: 0] EFLAGS,          // 完整 32 位标志
-    output logic [15: 0] FLAGS,           // 低 16 位 FLAGS 视图
-    input  logic         clk,
-    input  logic         rst_n
+    input  logic [31: 0] write_data, // 写入的 EFLAGS 位域
+    output logic         CF, // 进位
+    output logic         PF, // 奇偶
+    output logic         AF, // 辅助进位
+    output logic         ZF, // 零标志
+    output logic         SF, // 符号
+    output logic         TF, // 陷阱（单步）
+    output logic         IF, // 可屏蔽中断允许
+    output logic         DF, // 方向
+    output logic         OF, // 溢出
+    output logic [ 1: 0] IOPL, // I/O 特权级
+    output logic         NT, // 嵌套任务
+    output logic         RF, // 恢复标志
+    output logic         VM, // 虚拟 8086
+    output logic [31: 0] EFLAGS, // 完整 32 位标志
+    output logic [15: 0] FLAGS, // 低 16 位 FLAGS 视图
+    input  logic         clk, // 时钟信号
+    input  logic         rst_n // 复位信号
 );
 
 logic [31: 0] flags_reg;  // 内部 EFLAGS 存储

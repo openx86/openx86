@@ -142,12 +142,12 @@ module write_back_unit_tb;    logic        i_gpr_write_enable;
         #1;
 
         if (!o_gpr_write_enable || o_gpr_write_index != 3'd2 || o_gpr_write_data != 32'hA5A5_5A5A) begin
-            $display("FAIL wb gpr");
+            $display("FAIL write_back gpr");
             $finish(1);
         end
 
         if (!o_mem_valid || !o_mem_write_enable || o_mem_address != 32'h0000_2000 || o_mem_write_data != 32'h1234_5678) begin
-            $display("FAIL wb mem");
+            $display("FAIL write_back memory");
             $finish(1);
         end
 

@@ -11,24 +11,24 @@ description: pipeline_boundary — bridge DEC front (insn_fire / stage2 valid) t
 // ============================================================================
 
 module dec_to_exe (
-    input  logic i_instruction_ready,
-    input  logic i_exe_ready,
-    output logic o_dec_ready,
-    output logic o_insn_fire,
-    output logic o_stage_valid,
-    input  logic i_flush,
-    input  logic clk,
-    input  logic rst_n
+    input  logic i_instruction_ready, // 输入信号
+    input  logic i_exe_ready, // 输入信号
+    output logic o_dec_ready, // 输出信号
+    output logic o_insn_fire, // 输出信号
+    output logic o_stage_valid, // 输出信号
+    input  logic i_flush, // 输入信号
+    input  logic clk, // 时钟信号
+    input  logic rst_n // 复位信号
 );
 
-    logic dummy_in;
-    logic dummy_out;
+    logic [0: 0] dummy_in;
+    logic [0: 0] dummy_out;
     logic vld_out;
 
-    assign dummy_in = 1'b0;
+    assign dummy_in[0] = 1'b0;
 
     pipeline_reg #(
-        .T ( logic )
+        .P_DATA_WIDTH ( 1 )
     ) u_dec_to_exe_reg (
         .i_flush   ( i_flush ),
         .i_valid   ( i_instruction_ready ),

@@ -6,13 +6,13 @@ description: Segment register file.
 */
 
 module rf_segment_register (    input  logic         write_enable,       // 写使能
-    input  logic [ 2: 0] write_index,       // 段寄存器索引（CS/SS/…）
-    input  logic [15: 0] write_selector,   // 段选择子（可见部分）
-    input  logic [63: 0] write_descriptor,   // 段描述符缓存（隐藏寄存器）
+    input  logic [ 2: 0] write_index, // 段寄存器索引（CS/SS/…）
+    input  logic [15: 0] write_selector, // 段选择子（可见部分）
+    input  logic [63: 0] write_descriptor, // 段描述符缓存（隐藏寄存器）
     output logic [ 5: 0][15: 0] segment_selector, // 各段选择子输出
     output logic [ 5: 0][63: 0] descriptor_cache, // 各段描述符缓存输出
-    input  logic         clk,
-    input  logic         rst_n
+    input  logic         clk, // 时钟信号
+    input  logic         rst_n // 复位信号
 );
 
 // 选择子寄存器：复位清零；使能时与描述符同步更新索引对应项

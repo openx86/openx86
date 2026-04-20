@@ -42,21 +42,21 @@ Lookaside Buffer).
 */
 
 module paging_unit (    // 与 MMU 上级握手
-    input  logic         i_vaild,
-    output logic         o_ready,
+    input  logic         i_vaild, // 输入信号
+    output logic         o_ready, // 输出信号
     // 线性地址与页目录基址（CR3）
-    input  logic [31: 0] i_linear_address,
-    input  logic [31: 0] i_page_directory_base,
-    output logic [31: 0] o_physical_address,
+    input  logic [31: 0] i_linear_address, // 输入信号
+    input  logic [31: 0] i_page_directory_base, // 输入信号
+    output logic [31: 0] o_physical_address, // 输出信号
     // 外部总线：读页目录项 / 页表项
-    output logic         o_bus_vaild,
-    input  logic         i_bus_ready,
-    output logic         o_bus_write_enable,
-    output logic [31: 0] o_bus_address,
-    input  logic [31: 0] i_bus_data_read,
-    output logic [31: 0] o_bus_data_write,
-    input  logic          clk,
-    input  logic          rst_n
+    output logic         o_bus_vaild, // 输出信号
+    input  logic         i_bus_ready, // 输入信号
+    output logic         o_bus_write_enable, // 输出信号
+    output logic [31: 0] o_bus_address, // 输出信号
+    input  logic [31: 0] i_bus_data_read, // 输入信号
+    output logic [31: 0] o_bus_data_write, // 输出信号
+    input  logic          clk, // 时钟信号
+    input  logic          rst_n // 复位信号
 );
 
 logic  [ 9: 0] page_directory_index; // 线性地址 [31: 22]
@@ -82,6 +82,7 @@ enum logic [ 1: 0] {
     STATE_WAIT_FOR_VAILD = 2'h0                 // 空闲
 } state;
 
+// 时序逻辑块
 always_ff @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
         state <= STATE_WAIT_FOR_VAILD;

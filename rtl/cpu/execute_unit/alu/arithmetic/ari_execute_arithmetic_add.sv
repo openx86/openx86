@@ -1,0 +1,27 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: This module implements ari_execute_arithmetic_add.
+*/
+// ============================================================================
+// execute_arithmetic_add
+// ----------------------------------------------------------------------------
+// 执行单元算术子模块：ADD（无进位加法）。
+//
+// 语义：
+// - `result = operand_1 + operand_2`
+// - 本文件仅输出加法结果；标志位更新通常由上层统一实现。
+// ============================================================================
+
+module ari_execute_arithmetic_add #(    BIT_WIDTH = 32
+) (
+    input  logic [BIT_WIDTH-1: 0] operand_1, // 第一操作数
+    input  logic [BIT_WIDTH-1: 0] operand_2, // 第二操作数
+    output logic [BIT_WIDTH-1: 0] result // 无进位和
+);
+
+// 组合逻辑：连续赋值
+assign result = operand_1 + operand_2;
+
+endmodule
