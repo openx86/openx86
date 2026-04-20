@@ -22,16 +22,16 @@ module dual_port_rom #(
     parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读端口A
-    input  logic [ADDR_WIDTH-1: 0] addra,  // A 口读地址
+    input  logic [ADDR_WIDTH-1: 0] addra, // A 口读地址
     output logic [DATA_WIDTH-1: 0] rdataa, // A 口同步读数据
 
     // 读端口B
-    input  logic [ADDR_WIDTH-1: 0] addrb,  // B 口读地址
+    input  logic [ADDR_WIDTH-1: 0] addrb, // B 口读地址
     output logic [DATA_WIDTH-1: 0] rdatab, // B 口同步读数据
 
     // 时钟和复位
-    input  logic                  clk,   // 两读口共享时钟
-    input  logic                  rst_n  // 低有效：两路输出清零
+    input  logic                  clk, // 两读口共享时钟
+    input  logic                  rst_n // 低有效：两路输出清零
 );
 
     // 双读口共享 ROM 体（内容由外部初始化）

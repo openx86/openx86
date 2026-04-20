@@ -23,21 +23,21 @@ module simple_dual_port_ram #(
     parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 写端口
-    input  logic                  we,     // 写使能：高时本拍写入 waddr
+    input  logic                  we, // 写使能：高时本拍写入 waddr
     input  logic [ADDR_WIDTH-1: 0] waddr, // 写地址
     input  logic [DATA_WIDTH-1: 0] wdata, // 写数据
     // 读端口
-    input  logic                  re,     // 读使能：高时下一拍更新 rdata（与写口同相）
+    input  logic                  re, // 读使能：高时下一拍更新 rdata（与写口同相）
     input  logic [ADDR_WIDTH-1: 0] raddr, // 读地址
     output logic [DATA_WIDTH-1: 0] rdata, // 读数据输出（re=0 时本实现仍保持上一值路径见代码）
     // 时钟与复位（放在末尾）
-    input  logic                  clk,   // 单时钟
+    input  logic                  clk // 单时钟
     input  logic                  rst_n); // 低有效：清零 rdata
 
     // 单存储体：一写一读端口分离
     logic [DATA_WIDTH-1: 0] mem [0:DEPTH-1];
 
-    // 写口：同步写 waddr；复位不刷 mem
+    // 写口：同步写 waddr；复位不刷 memory
     always_ff @(posedge clk) begin
         if (~rst_n) begin
             // 可选：清零或保持

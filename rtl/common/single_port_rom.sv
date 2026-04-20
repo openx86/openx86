@@ -21,12 +21,12 @@ module single_port_rom #(
     parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读端口
-    input  logic [ADDR_WIDTH-1: 0] addr,  // 读地址（深度 2^ADDR_WIDTH，内容需外部初始化）
+    input  logic [ADDR_WIDTH-1: 0] addr, // 读地址（深度 2^ADDR_WIDTH，内容需外部初始化）
     output logic [DATA_WIDTH-1: 0] rdata, // 同步读数据输出
 
     // 时钟和复位
-    input  logic                   clk,   // 读数据在此时钟沿更新
-    input  logic                   rst_n   // 低有效：复位时 rdata 清零，ROM 内容不变
+    input  logic                   clk, // 读数据在此时钟沿更新
+    input  logic                   rst_n // 低有效：复位时 rdata 清零，ROM 内容不变
 );
 
     // 只读内容阵列（仿真/综合由外部或 IP 装载；TB 可层次化写入）
