@@ -9,7 +9,7 @@ description: This module implements openx86_soc_top.
 // ============================================================================
 
 module openx86_soc_top #(
-    parameter bit USE_SDIO_DISK = 1'b0  // 1：IDE 走 SDIO 盘体；0：空闲/占位
+    parameter bit P_USE_SDIO_DISK = 1'b0  // 1：IDE 走 SDIO 盘体；0：空闲/占位
 ) (
 
     // ------------------------------------------------------------------------
@@ -17,54 +17,54 @@ module openx86_soc_top #(
     // ------------------------------------------------------------------------
     output logic         o_vga_hsync, // 行同步
     output logic         o_vga_vsync, // 场同步
-    output logic [ 3: 0] o_vga_r, // 红基色
-    output logic [ 3: 0] o_vga_g, // 输出信号
-    output logic [ 3: 0] o_vga_b, // 输出信号
+    output logic [ 3: 0] o_vga_r,    // 红基色
+    output logic [ 3: 0] o_vga_g,    // 输出信号
+    output logic [ 3: 0] o_vga_b,    // 输出信号
 
     // ------------------------------------------------------------------------
     // PS/2：开漏；每线为（输出数据、输出使能、总线回读）
     // ------------------------------------------------------------------------
     output logic         o_ps2_kbd_clk_out, // 时钟信号
-    output logic         o_ps2_kbd_clk_oe, // 时钟信号
-    input  logic          i_ps2_kbd_clk_in, // 时钟信号
+    output logic         o_ps2_kbd_clk_oe,  // 时钟信号
+    input  logic          i_ps2_kbd_clk_in,  // 时钟信号
     output logic         o_ps2_kbd_dat_out, // 输出信号
-    output logic         o_ps2_kbd_dat_oe, // 输出信号
-    input  logic          i_ps2_kbd_dat_in, // 输入信号
+    output logic         o_ps2_kbd_dat_oe,  // 输出信号
+    input  logic          i_ps2_kbd_dat_in,  // 输入信号
     output logic         o_ps2_aux_clk_out, // 时钟信号
-    output logic         o_ps2_aux_clk_oe, // 时钟信号
-    input  logic          i_ps2_aux_clk_in, // 时钟信号
+    output logic         o_ps2_aux_clk_oe,  // 时钟信号
+    input  logic          i_ps2_aux_clk_in,  // 时钟信号
     output logic         o_ps2_aux_dat_out, // 输出信号
-    output logic         o_ps2_aux_dat_oe, // 输出信号
-    input  logic          i_ps2_aux_dat_in, // 输入信号
+    output logic         o_ps2_aux_dat_oe,  // 输出信号
+    input  logic          i_ps2_aux_dat_in,  // 输入信号
 
     // ------------------------------------------------------------------------
     // SDIO / SD 4-bit（IDE 通道；PHY 在片内）
     // ------------------------------------------------------------------------
-    output logic         o_sdio_clk, // SD 时钟至卡
-    inout  logic         io_sdio_cmd, // CMD 双向
-    inout  logic [ 3: 0] io_sdio_dat, // DAT[3: 0] 双向
+    output logic         o_sdio_clk,    // SD 时钟至卡
+    inout  logic         io_sdio_cmd,   // CMD 双向
+    inout  logic [ 3: 0] io_sdio_dat,  // DAT[3: 0] 双向
 
     // ------------------------------------------------------------------------
     // SDRAM 物理接口（x16 器件）
     // ------------------------------------------------------------------------
-    output logic         o_sdram_clk, // SDRAM 时钟输出
-    output logic         o_sdram_cke, // 时钟使能
+    output logic         o_sdram_clk,  // SDRAM 时钟输出
+    output logic         o_sdram_cke,  // 时钟使能
     output logic         o_sdram_cs_n, // 片选
     output logic         o_sdram_ras_n, // 行地址选通
     output logic         o_sdram_cas_n, // 列地址选通
     output logic         o_sdram_we_n, // 写使能
-    output logic [ 1: 0] o_sdram_ba, // Bank 地址
-    output logic [12: 0] o_sdram_a, // 地址/命令复用
-    output logic [ 1: 0] o_sdram_dqm, // 字节掩码
-    inout  logic [15: 0] io_sdram_dq, // 数据总线
+    output logic [ 1: 0] o_sdram_ba,   // Bank 地址
+    output logic [12: 0] o_sdram_a,    // 地址/命令复用
+    output logic [ 1: 0] o_sdram_dqm,  // 字节掩码
+    inout  logic [15: 0] io_sdram_dq,  // 数据总线
 
     // ------------------------------------------------------------------------
     // 板级时钟与复位
     // ------------------------------------------------------------------------
     // clk：外部 50MHz 振荡器
     // rst_n：低有效复位（按键/POR）
-    input  logic          clk, // 系统时钟
-    input  logic          rst_n // 异步低有效复位
+    input  logic          clk,          // 系统时钟
+    input  logic          rst_n         // 异步低有效复位
 );
 
     logic        bus_valid;      // CPU 总线事务有效
@@ -159,7 +159,7 @@ module openx86_soc_top #(
     assign sdio_dat_in = io_sdio_dat;
 
     bus_controller #(
-        .USE_SDIO_DISK ( USE_SDIO_DISK )
+        .P_USE_SDIO_DISK ( P_USE_SDIO_DISK )
     ) u_bus_controller (
         .i_bus_valid        ( bus_valid ),
         .o_bus_ready        ( bus_ready ),

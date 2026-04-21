@@ -17,25 +17,25 @@ description: This module implements dual_port_rom.
 // ============================================================================
 
 module dual_port_rom #(
-    parameter int DATA_WIDTH = 8,    // 数据位宽
-    parameter int ADDR_WIDTH = 10,   // 地址位宽（深度 = 2^ADDR_WIDTH）
-    parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
+    parameter int P_DATA_WIDTH = 8,    // 数据位宽
+    parameter int P_ADDR_WIDTH = 10,   // 地址位宽（深度 = 2^ADDR_WIDTH）
+    parameter int P_DEPTH      = 1 << P_ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读端口A
-    input  logic [ADDR_WIDTH-1: 0] addra, // A 口读地址
-    output logic [DATA_WIDTH-1: 0] rdataa, // A 口同步读数据
+    input  logic [P_ADDR_WIDTH-1: 0] addra, // A 口读地址
+    output logic [P_DATA_WIDTH-1: 0] rdataa, // A 口同步读数据
 
     // 读端口B
-    input  logic [ADDR_WIDTH-1: 0] addrb, // B 口读地址
-    output logic [DATA_WIDTH-1: 0] rdatab, // B 口同步读数据
+    input  logic [P_ADDR_WIDTH-1: 0] addrb, // B 口读地址
+    output logic [P_DATA_WIDTH-1: 0] rdatab, // B 口同步读数据
 
     // 时钟和复位
-    input  logic                  clk, // 两读口共享时钟
-    input  logic                  rst_n // 低有效：两路输出清零
+    input  logic                  clk,    // 两读口共享时钟
+    input  logic                  rst_n   // 低有效：两路输出清零
 );
 
     // 双读口共享 ROM 体（内容由外部初始化）
-    logic [DATA_WIDTH-1: 0] rom [0:DEPTH-1];
+    logic [P_DATA_WIDTH-1: 0] rom [0:P_DEPTH-1];
 
     // A 口同步读
     always_ff @(posedge clk) begin

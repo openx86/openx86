@@ -24,29 +24,29 @@ description: This module implements chip_at24lc32_eeprom.
 // ============================================================================
 
 module chip_at24lc32_eeprom #(
-    parameter logic [ 2: 0] A_PINS     = 3'b000,
-    parameter int         NUM_BYTES  = 4096,
-    parameter int         PAGE_BYTES = 32
+    parameter logic [ 2: 0] P_A_PINS     = 3'b000,
+    parameter int         P_NUM_BYTES  = 4096,
+    parameter int         P_PAGE_BYTES = 32
 ) (
     // ------------------------------------------------------------------------
     // I2C 总线引脚
     // ------------------------------------------------------------------------
-    input  logic i_scl, // I2C 串行时钟（输入采样）
-    input  logic i_sda, // I2C 串行数据
+    input  logic i_scl,    // I2C 串行时钟（输入采样）
+    input  logic i_sda,    // I2C 串行数据
     output logic o_sda_oe, // 1=开漏拉低 SDA，0=释放由上拉决定
 
     // ------------------------------------------------------------------------
     // 仿真/集成用系统时钟与复位
     // ------------------------------------------------------------------------
-    input  logic clk, // 模块采样时钟
-    input  logic rst_n // 异步低有效复位
+    input  logic clk,      // 模块采样时钟
+    input  logic rst_n     // 异步低有效复位
 );
 
-    localparam int AW = $clog2(NUM_BYTES);
+    localparam int AW = $clog2(P_NUM_BYTES);
     localparam logic [ 3: 0] DEV_TYPE = 4'b1010; // 24xx EEPROM family
 
     (* ramstyle = "M9K" *)
-    logic [ 7: 0] mem[0:NUM_BYTES-1];
+    logic [ 7: 0] mem[0:P_NUM_BYTES-1];
 
     logic scl_q, sda_q;  // SCL/SDA 输入同步寄存
     // 同步 I2C 输入，滤毛刺意图由外部保证。

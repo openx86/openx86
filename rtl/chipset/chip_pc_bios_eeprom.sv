@@ -7,14 +7,12 @@ description: This module implements chip_pc_bios_eeprom.
 // 24LC32 后端镜像：扩展 ROM（128KB）与系统 BIOS（64KB）线性寻址后按 4KiB 取模映射到同一物理阵列。
 
 module chip_pc_bios_eeprom (
-	input  logic [15: 0] i_sys_bios_byte_off, // 系统 BIOS 区（64KB）内字节偏移
-	input  logic [16: 0] i_ext_bios_byte_off, // 扩展 ROM 区（128KB）内字节偏移
-	output logic [31: 0] o_sys_bios_rdata, // 系统 BIOS 字读取（小端四字节）
-	output logic [31: 0] o_ext_bios_rdata, // 扩展 ROM 字读取（小端四字节）
-	/* verilator lint_off UNUSEDSIGNAL */
-	input  logic         rst_n, // 异步低有效复位（保留接口）
-	input  logic         clk, // 系统时钟（本模型组合读，寄存器未用）
-	/* verilator lint_on UNUSEDSIGNAL */
+    input  logic [15: 0] i_sys_bios_byte_off, // 系统 BIOS 窗口内字偏移（0x0000–0x0FFF）
+    input  logic [16: 0] i_ext_bios_byte_off, // 扩展 ROM 窗口内字节偏移（0x00000–0x1FFFF）
+    output logic [31: 0] o_sys_bios_rdata,    // 系统 BIOS 窗口读回数据（字对齐）
+    output logic [31: 0] o_ext_bios_rdata,    // 扩展 ROM 窗口读回数据
+    input  logic         clk,                 // 时钟信号
+    input  logic         rst_n                // 复位信号
 );
 
 	// EEPROM 物理深度与扩展 ROM 线性尺寸（镜像用）

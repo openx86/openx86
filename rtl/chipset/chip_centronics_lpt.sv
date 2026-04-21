@@ -11,14 +11,14 @@ description: This module implements chip_centronics_lpt.
 // ============================================================================
 
 module chip_centronics_lpt (
-    input  logic         i_cs_n, // 低有效片选
-    input  logic         i_rd_n, // 低有效读
-    input  logic         i_wr_n, // 低有效写
-    input  logic [ 2: 0] i_a, // 寄存器偏移（相对 0x378）
-    input  logic [ 7: 0] i_d, // 写数据
-    output logic [ 7: 0] o_d, // 读数据
-    input  logic         rst_n, // 异步低有效复位
-    input  logic         clk // 系统时钟
+    input  logic         i_cs_n,  // 低有效片选
+    input  logic         i_rd_n,  // 低有效读
+    input  logic         i_wr_n,  // 低有效写
+    input  logic [ 2: 0] i_a,     // 寄存器偏移（相对 0x378）
+    input  logic [ 7: 0] i_d,     // 写数据
+    output logic [ 7: 0] o_d,     // 读数据
+    input  logic         clk,     // 系统时钟
+    input  logic         rst_n    // 异步低有效复位
 );
 
     logic [ 2: 0] off;  // 与 i_a 相同的寄存器索引

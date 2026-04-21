@@ -32,16 +32,16 @@ module i486_cpu (
     // output logic        memory_io_n,
     // output logic        bus_lock_n,
     // output logic        address_status_n,
-    output logic         bus_vaild, // 对外总线事务请求有效（拼写沿用 legacy）
-    input  logic          bus_ready, // 从设备就绪（完成）
-    input  logic          bus_busy, // 总线忙（与 ready 相与后送入 BIU）
+    output logic         bus_vaild,      // 对外总线事务请求有效（拼写沿用 legacy）
+    input  logic          bus_ready,     // 从设备就绪（完成）
+    input  logic          bus_busy,      // 总线忙（与 ready 相与后送入 BIU）
     output logic         bus_write_enable, // 写/读指示
     output logic         bus_io_access, // 存储器或 I/O 映射访问
-    output logic [31: 0] bus_address, // 地址
-    input  logic [31: 0]  bus_read_data, // 读数据
+    output logic [31: 0] bus_address,   // 地址
+    input  logic [31: 0] bus_read_data, // 读数据
     output logic [31: 0] bus_write_data, // 写数据
-    input  logic          rst_n, // 复位信号
-    input  logic          clk // 时钟信号
+    input  logic          clk,           // 时钟信号
+    input  logic          rst_n          // 复位信号
 );
 
 // core → BIU：MMU（页表遍历）端口

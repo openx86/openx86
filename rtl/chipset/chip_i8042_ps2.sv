@@ -14,35 +14,35 @@ description: This module implements chip_i8042_ps2.
 // ============================================================================
 
 module chip_i8042_ps2 #(
-    parameter bit  USE_REAL_PS2 = 1'b0,   // 1：接真实 PS/2 PHY；0：仿真注入/引脚空闲模型
-    parameter int CLK_HZ        = 50_000_000  // PHY 位时序参考时钟频率
+    parameter bit  P_USE_REAL_PS2 = 1'b0,   // 1：接真实 PS/2 PHY；0：仿真注入/引脚空闲模型
+    parameter int  P_CLK_HZ        = 50_000_000  // PHY 位时序参考时钟频率
 ) (
-    input  logic         i_cs_n, // 低有效片选
-    input  logic         i_rd_n, // 低有效读
-    input  logic         i_wr_n, // 低有效写
-    input  logic         i_a0, // 0=数据口 0x60，1=状态/命令 0x64
-    input  logic [ 7: 0] i_d, // 写数据
-    output logic [ 7: 0] o_d, // 读数据
-    input  logic         i_kbd_push, // 仿真：键盘 FIFO 注入脉冲
-    input  logic [ 7: 0] i_kbd_data, // 仿真：键盘注入字节
-    input  logic         i_aux_push, // 仿真：AUX FIFO 注入脉冲
-    input  logic [ 7: 0] i_aux_data, // 仿真：AUX 注入字节
-    output logic         o_kbd_irq, // 键盘 OBF 中断请求
-    output logic         o_aux_irq, // AUX OBF 中断请求
-    output logic         o_ps2_kbd_clk_out, // 键盘时钟线驱动数据（开漏模型）
-    output logic         o_ps2_kbd_clk_oe, // 键盘时钟输出使能（1=拉低驱动）
-    input  logic         i_ps2_kbd_clk_in, // 键盘时钟总线回读
-    output logic         o_ps2_kbd_dat_out, // 键盘数据线驱动数据
-    output logic         o_ps2_kbd_dat_oe, // 键盘数据输出使能
-    input  logic         i_ps2_kbd_dat_in, // 键盘数据总线回读
-    output logic         o_ps2_aux_clk_out, // 鼠标时钟线驱动
-    output logic         o_ps2_aux_clk_oe, // 时钟信号
-    input  logic         i_ps2_aux_clk_in, // 时钟信号
-    output logic         o_ps2_aux_dat_out, // 输出信号
-    output logic         o_ps2_aux_dat_oe, // 输出信号
-    input  logic         i_ps2_aux_dat_in, // 鼠标数据总线回读
-    input  logic         clk, // 系统时钟
-    input  logic         rst_n // 异步低有效复位
+    input  logic         i_cs_n,              // 低有效片选
+    input  logic         i_rd_n,              // 低有效读
+    input  logic         i_wr_n,              // 低有效写
+    input  logic         i_a0,                // 0=数据口 0x60，1=状态/命令 0x64
+    input  logic [ 7: 0] i_d,                // 写数据
+    output logic [ 7: 0] o_d,                // 读数据
+    input  logic         i_kbd_push,          // 仿真：键盘 FIFO 注入脉冲
+    input  logic [ 7: 0] i_kbd_data,          // 仿真：键盘注入字节
+    input  logic         i_aux_push,          // 仿真：AUX FIFO 注入脉冲
+    input  logic [ 7: 0] i_aux_data,          // 仿真：AUX 注入字节
+    output logic         o_kbd_irq,           // 键盘 OBF 中断请求
+    output logic         o_aux_irq,           // AUX OBF 中断请求
+    output logic         o_ps2_kbd_clk_out,   // 键盘时钟线驱动数据（开漏模型）
+    output logic         o_ps2_kbd_clk_oe,    // 键盘时钟输出使能（1=拉低驱动）
+    input  logic         i_ps2_kbd_clk_in,    // 键盘时钟总线回读
+    output logic         o_ps2_kbd_dat_out,   // 键盘数据线驱动数据
+    output logic         o_ps2_kbd_dat_oe,    // 键盘数据输出使能
+    input  logic         i_ps2_kbd_dat_in,    // 键盘数据总线回读
+    output logic         o_ps2_aux_clk_out,   // 鼠标时钟线驱动
+    output logic         o_ps2_aux_clk_oe,    // 时钟信号
+    input  logic         i_ps2_aux_clk_in,    // 时钟信号
+    output logic         o_ps2_aux_dat_out,   // 输出信号
+    output logic         o_ps2_aux_dat_oe,    // 输出信号
+    input  logic         i_ps2_aux_dat_in,    // 鼠标数据总线回读
+    input  logic         clk,                 // 系统时钟
+    input  logic         rst_n                // 异步低有效复位
 );
 
     logic wr;
@@ -51,14 +51,14 @@ module chip_i8042_ps2 #(
     assign wr = !i_cs_n && !i_wr_n;
     assign rd = !i_cs_n && !i_rd_n;
 
-    localparam int KBD_D = 16;  // 键盘输出 FIFO 深度
-    localparam int AUX_D = 16;  // AUX 输出 FIFO 深度
+    localparam int LP_KBD_D = 16;  // 键盘输出 FIFO 深度
+    localparam int LP_AUX_D = 16;  // AUX 输出 FIFO 深度
     // 与计数器同宽，避免与 int 型 localparam 比较时触发 Verilator WIDTHEXPAND
-    localparam logic [ 4: 0] KBD_D_W = 5'(KBD_D);
-    localparam logic [ 4: 0] AUX_D_W = 5'(AUX_D);
+    localparam logic [ 4: 0] LP_KBD_D_W = 5'(LP_KBD_D);
+    localparam logic [ 4: 0] LP_AUX_D_W = 5'(LP_AUX_D);
 
-    logic [ 7: 0] kbd_fifo [0:KBD_D-1];
-    logic [ 7: 0] aux_fifo [0:AUX_D-1];
+    logic [ 7: 0] kbd_fifo [0:LP_KBD_D-1];
+    logic [ 7: 0] aux_fifo [0:LP_AUX_D-1];
     logic [ 3: 0] kbd_wptr, kbd_rptr;  // 环形索引 0..15
     logic [ 4: 0] kbd_count;          // 占用计数 0..16（需 5 位）
     logic [ 3: 0] aux_wptr, aux_rptr;
@@ -138,9 +138,9 @@ module chip_i8042_ps2 #(
     };
 
     generate
-        if (USE_REAL_PS2) begin : g_phy
+        if (P_USE_REAL_PS2) begin : g_phy
             ps2_host_phy #(
-                .CLK_HZ ( CLK_HZ )
+                .CLK_HZ ( P_CLK_HZ )
             ) u_kbd_phy (
                 .clk       ( clk ),
                 .rst_n       ( rst_n ),
@@ -161,7 +161,7 @@ module chip_i8042_ps2 #(
             );
 
             ps2_host_phy #(
-                .CLK_HZ ( CLK_HZ )
+                .CLK_HZ ( P_CLK_HZ )
             ) u_aux_phy (
                 .clk       ( clk ),
                 .rst_n       ( rst_n ),
@@ -237,34 +237,34 @@ module chip_i8042_ps2 #(
             kbd_tx_req <= 1'b0;
             aux_tx_req <= 1'b0;
 
-            if (USE_REAL_PS2 && kbd_rx_str && (kbd_count < KBD_D_W)) begin
+            if (P_USE_REAL_PS2 && kbd_rx_str && (kbd_count < LP_KBD_D_W)) begin
                 kbd_fifo[kbd_wptr] <= kbd_rx_dat;
                 kbd_wptr           <= kbd_wptr + 4'h1;
                 kbd_count          <= kbd_count + 5'h1;
                 if ((kbd_count == 5'h0) && (aux_count == 5'h0))
                     use_aux_out <= 1'b0;
             end
-            if (USE_REAL_PS2 && kbd_rx_err)
+            if (P_USE_REAL_PS2 && kbd_rx_err)
                 kbd_parity_err <= 1'b1;
 
-            if (USE_REAL_PS2 && aux_rx_str && (aux_count < AUX_D_W)) begin
+            if (P_USE_REAL_PS2 && aux_rx_str && (aux_count < LP_AUX_D_W)) begin
                 aux_fifo[aux_wptr] <= aux_rx_dat;
                 aux_wptr           <= aux_wptr + 4'h1;
                 aux_count          <= aux_count + 5'h1;
                 if ((kbd_count == 5'h0) && (aux_count == 5'h0))
                     use_aux_out <= 1'b1;
             end
-            if (USE_REAL_PS2 && aux_rx_err)
+            if (P_USE_REAL_PS2 && aux_rx_err)
                 aux_parity_err <= 1'b1;
 
-            if (i_kbd_push && (kbd_count < KBD_D_W)) begin
+            if (i_kbd_push && (kbd_count < LP_KBD_D_W)) begin
                 kbd_fifo[kbd_wptr] <= i_kbd_data;
                 kbd_wptr           <= kbd_wptr + 4'h1;
                 kbd_count          <= kbd_count + 5'h1;
                 if ((kbd_count == 5'h0) && (aux_count == 5'h0))
                     use_aux_out <= 1'b0;
             end
-            if (i_aux_push && (aux_count < AUX_D_W)) begin
+            if (i_aux_push && (aux_count < LP_AUX_D_W)) begin
                 aux_fifo[aux_wptr] <= i_aux_data;
                 aux_wptr           <= aux_wptr + 4'h1;
                 aux_count          <= aux_count + 5'h1;
@@ -304,7 +304,7 @@ module chip_i8042_ps2 #(
             if (wr && !i_a0) begin
                 last_wr_cmd <= 1'b0;
                 if (cmd_d2_pending) begin
-                    if (kbd_count < KBD_D_W) begin
+                    if (kbd_count < LP_KBD_D_W) begin
                         kbd_fifo[kbd_wptr] <= i_d;
                         kbd_wptr           <= kbd_wptr + 4'h1;
                         kbd_count          <= kbd_count + 5'h1;
@@ -312,14 +312,14 @@ module chip_i8042_ps2 #(
                     end
                     cmd_d2_pending <= 1'b0;
                 end else if (cmd_d3_pending) begin
-                    if (aux_count < AUX_D_W) begin
+                    if (aux_count < LP_AUX_D_W) begin
                         aux_fifo[aux_wptr] <= i_d;
                         aux_wptr           <= aux_wptr + 4'h1;
                         aux_count          <= aux_count + 5'h1;
                         use_aux_out        <= 1'b1;
                     end
                     cmd_d3_pending <= 1'b0;
-                end else if (USE_REAL_PS2) begin
+                end else if (P_USE_REAL_PS2) begin
                     if (next_wr_to_aux) begin
                         if (aux_if_en) begin
                             if (!aux_tx_busy && !aux_tx_pending) begin
@@ -343,20 +343,20 @@ module chip_i8042_ps2 #(
                 next_wr_to_aux <= 1'b0;
             end
 
-            if (USE_REAL_PS2 && kbd_tx_done && kbd_tx_pending) begin
+            if (P_USE_REAL_PS2 && kbd_tx_done && kbd_tx_pending) begin
                 kbd_tx_req     <= 1'b1;
                 kbd_tx_byte    <= kbd_tx_hold;
                 kbd_tx_pending <= 1'b0;
             end
-            if (USE_REAL_PS2 && kbd_tx_err)
+            if (P_USE_REAL_PS2 && kbd_tx_err)
                 kbd_tx_pending <= 1'b0;
 
-            if (USE_REAL_PS2 && aux_tx_done && aux_tx_pending) begin
+            if (P_USE_REAL_PS2 && aux_tx_done && aux_tx_pending) begin
                 aux_tx_req     <= 1'b1;
                 aux_tx_byte    <= aux_tx_hold;
                 aux_tx_pending <= 1'b0;
             end
-            if (USE_REAL_PS2 && aux_tx_err)
+            if (P_USE_REAL_PS2 && aux_tx_err)
                 aux_tx_pending <= 1'b0;
 
             if (rd_data_port_d && !(rd && !i_a0)) begin

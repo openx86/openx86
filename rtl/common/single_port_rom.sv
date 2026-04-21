@@ -16,27 +16,27 @@ description: This module implements single_port_rom.
 // ============================================================================
 
 module single_port_rom #(
-    parameter int DATA_WIDTH = 8,    // 数据位宽
-    parameter int ADDR_WIDTH = 10,   // 地址位宽（深度 = 2^ADDR_WIDTH）
-    parameter int DEPTH      = 1 << ADDR_WIDTH  // 显式深度参数（可选）
+    parameter int P_DATA_WIDTH = 8,    // 数据位宽
+    parameter int P_ADDR_WIDTH = 10,   // 地址位宽（深度 = 2^ADDR_WIDTH）
+    parameter int P_DEPTH      = 1 << P_ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读端口
-    input  logic [ADDR_WIDTH-1: 0] addr, // 读地址（深度 2^ADDR_WIDTH，内容需外部初始化）
-    output logic [DATA_WIDTH-1: 0] rdata, // 同步读数据输出
+    input  logic [P_ADDR_WIDTH-1: 0] addr, // 读地址（深度 2^ADDR_WIDTH，内容需外部初始化）
+    output logic [P_DATA_WIDTH-1: 0] rdata, // 同步读数据输出
 
     // 时钟和复位
-    input  logic                   clk, // 读数据在此时钟沿更新
-    input  logic                   rst_n // 低有效：复位时 rdata 清零，ROM 内容不变
+    input  logic                   clk,    // 读数据在此时钟沿更新
+    input  logic                   rst_n   // 低有效：复位时 rdata 清零，ROM 内容不变
 );
 
     // 只读内容阵列（仿真/综合由外部或 IP 装载；TB 可层次化写入）
     /* verilator lint_off UNDRIVEN */
-    logic [DATA_WIDTH-1: 0] rom [0:DEPTH-1];
+    logic [P_DATA_WIDTH-1: 0] rom [0:P_DEPTH-1];
     /* verilator lint_on UNDRIVEN */
 
     integer rom_init_i;
     initial begin
-        for (rom_init_i = 0; rom_init_i < DEPTH; rom_init_i = rom_init_i + 1)
+        for (rom_init_i = 0; rom_init_i < P_DEPTH; rom_init_i = rom_init_i + 1)
             rom[rom_init_i] = '0;
     end
 

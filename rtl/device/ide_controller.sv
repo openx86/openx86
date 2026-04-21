@@ -16,21 +16,21 @@ module ide_controller #(
     parameter int P_SECTOR_COUNT   = 2048,
     parameter bit P_USE_SDIO_DISK  = 1'b0
 ) (
-    input  logic         i_cs_n, // 片选#：低有效时本译码窗口内端口访问有效
-    input  logic         i_rd_n, // 读选通#（与 i_cs_n 组合）
-    input  logic         i_wr_n, // 写选通#
-    input  logic [15: 0] i_addr, // ISA 风格字地址（1F0h 等由上层译码）
-    input  logic [ 7: 0] i_wdata, // 写数据（寄存器/命令口）
-    output logic [ 7: 0] o_rdata, // 读数据（数据口/状态口复用）
-    output logic         o_sdio_clk, // 下至 sdcard_controller / PHY 的 SD 时钟
+    input  logic         i_cs_n,        // 片选#：低有效时本译码窗口内端口访问有效
+    input  logic         i_rd_n,        // 读选通#（与 i_cs_n 组合）
+    input  logic         i_wr_n,        // 写选通#
+    input  logic [15: 0] i_addr,        // ISA 风格字地址（1F0h 等由上层译码）
+    input  logic [ 7: 0] i_wdata,       // 写数据（寄存器/命令口）
+    output logic [ 7: 0] o_rdata,       // 读数据（数据口/状态口复用）
+    output logic         o_sdio_clk,    // 下至 sdcard_controller / PHY 的 SD 时钟
     output logic         o_sdio_cmd_out, // 输出信号
     output logic         o_sdio_cmd_oe, // 输出信号
     input  logic         i_sdio_cmd_in, // 输入信号
     output logic [ 3: 0] o_sdio_dat_out, // 输出信号
     output logic         o_sdio_dat_oe, // 输出信号
     input  logic [ 3: 0] i_sdio_dat_in, // 输入信号
-    input  logic         clk, // 控制器时钟
-    input  logic         rst_n // 异步低有效复位
+    input  logic         clk,           // 控制器时钟
+    input  logic         rst_n          // 异步低有效复位
 );
 
     typedef enum logic [ 2: 0] {

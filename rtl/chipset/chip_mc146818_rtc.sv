@@ -17,23 +17,23 @@ description: This module implements chip_mc146818_rtc.
 // ============================================================================
 
 module chip_mc146818_rtc #(
-    parameter int CLK_HZ = 8_000  // 日历推进与分频器参考频率（仿真可放低）
+    parameter int P_CLK_HZ = 8_000  // 日历推进与分频器参考频率（仿真可放低）
 ) (
-    input  logic         i_cs_n, // 低有效片选
-    input  logic         i_rd_n, // 低有效读
-    input  logic         i_wr_n, // 低有效写
-    input  logic         i_a0, // 0=索引口 0x70，1=数据口 0x71
-    input  logic [ 7: 0] i_d, // 写数据
-    output logic [ 7: 0] o_d, // 读数据
+    input  logic         i_cs_n,    // 低有效片选
+    input  logic         i_rd_n,    // 低有效读
+    input  logic         i_wr_n,    // 低有效写
+    input  logic         i_a0,      // 0=索引口 0x70，1=数据口 0x71
+    input  logic [ 7: 0] i_d,       // 写数据
+    output logic [ 7: 0] o_d,       // 读数据
     output logic         o_rtc_irq, // 寄存器 C 中 IRQF 聚合输出
-    input  logic         clk, // 系统时钟
-    input  logic         rst_n // 异步低有效复位
+    input  logic         clk,       // 系统时钟
+    input  logic         rst_n      // 异步低有效复位
 );
 
-    localparam int UIP_CYC = ((CLK_HZ * 244) / 1_000_000) > 0 ? ((CLK_HZ * 244) / 1_000_000) : 1;
-    localparam int CW      = $clog2(CLK_HZ + 1);
-    localparam logic [CW-1: 0] SUB_LAST = CW'(CLK_HZ - 1);
-    localparam logic [CW-1: 0] UIP_START = (CLK_HZ > UIP_CYC) ? CW'(CLK_HZ - UIP_CYC) : CW'(0);
+    localparam int UIP_CYC = ((P_CLK_HZ * 244) / 1_000_000) > 0 ? ((P_CLK_HZ * 244) / 1_000_000) : 1;
+    localparam int CW      = $clog2(P_CLK_HZ + 1);
+    localparam logic [CW-1: 0] SUB_LAST = CW'(P_CLK_HZ - 1);
+    localparam logic [CW-1: 0] UIP_START = (P_CLK_HZ > UIP_CYC) ? CW'(P_CLK_HZ - UIP_CYC) : CW'(0);
 
     logic wr;
     logic rd;

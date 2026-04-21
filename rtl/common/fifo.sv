@@ -16,22 +16,22 @@ module fifo #(
     parameter int P_DEPTH      = 16,
     parameter int P_DATA_WIDTH = 8
 ) (
-    input  logic                                  i_push_valid, // 输入信号
-    input  logic [P_DEPTH - 1: 0][P_DATA_WIDTH - 1: 0] i_push_data, // 输入信号
-    input  logic [$clog2(P_DEPTH + 1) - 1: 0]    i_push_bytes, // 输入信号
-    output logic                                  o_push_ready, // 输出信号
+    input  logic                                  i_push_valid,  // 输入信号
+    input  logic [P_DEPTH - 1: 0][P_DATA_WIDTH - 1: 0] i_push_data,  // 输入信号
+    input  logic [$clog2(P_DEPTH + 1) - 1: 0]    i_push_bytes,  // 输入信号
+    output logic                                  o_push_ready,  // 输出信号
 
-    input  logic                                  i_pop_valid, // 输入信号
-    input  logic [$clog2(P_DEPTH + 1) - 1: 0]    i_pop_bytes, // 输入信号
-    output logic                                  o_pop_ready, // 输出信号
+    input  logic                                  i_pop_valid,   // 输入信号
+    input  logic [$clog2(P_DEPTH + 1) - 1: 0]    i_pop_bytes,   // 输入信号
+    output logic                                  o_pop_ready,   // 输出信号
 
     output logic [P_DEPTH - 1: 0][P_DATA_WIDTH - 1: 0] o_window_data, // 输出信号
-    output logic [$clog2(P_DEPTH + 1) - 1: 0]    o_count, // 输出信号
-    output logic                                  o_full, // 输出信号
-    output logic                                  o_empty, // 输出信号
+    output logic [$clog2(P_DEPTH + 1) - 1: 0]    o_count,       // 输出信号
+    output logic                                  o_full,        // 输出信号
+    output logic                                  o_empty,       // 输出信号
 
-    input  logic                                  clk, // 时钟信号
-    input  logic                                  rst_n // 复位信号
+    input  logic                                  clk,           // 时钟信号
+    input  logic                                  rst_n          // 复位信号
 );
 
     localparam int LP_ADDR_WIDTH  = $clog2(P_DEPTH);
