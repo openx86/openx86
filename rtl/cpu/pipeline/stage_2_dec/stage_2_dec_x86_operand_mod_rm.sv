@@ -8,7 +8,7 @@ description: This module implements mod_rm.
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: mod_rm
+module: stage_2_dec_x86_operand_mod_rm
 create at: 2021-10-23 15:54:39
 description: decode mod and r/m field in instruction
 */
@@ -63,7 +63,8 @@ addressing modes.
 
 `include "openx86_defs.h.sv"
 
-module mod_rm (    // ModR/M 输入：mod/rm + W/默认操作数尺寸 → 寻址分量与位移宽度
+module mod_rm (
+    // ModR/M 输入：mod/rm + W/默认操作数尺寸 → 寻址分量与位移宽度
     input  logic [ 1: 0] i_mod, // 输入信号
     input  logic [ 2: 0] i_rm, // 输入信号
     input  logic         i_w_is_present, // 输入信号

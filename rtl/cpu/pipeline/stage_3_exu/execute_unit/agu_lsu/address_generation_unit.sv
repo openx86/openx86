@@ -10,7 +10,8 @@ description: This module implements address_generation_unit.
 // 用于 ModR/M、SIB 寻址；段基址/分页在 MMU 侧叠加
 // ============================================================================
 
-module address_generation_unit (    input  logic [31: 0] i_base,  // 基址
+
+    input  logic [31: 0] i_base,  // 基址
     input  logic [31: 0] i_index, // 变址
     input  logic [ 1: 0]   i_scale, // 比例因子编码
     input  logic [31: 0] i_disp, // 位移（符号扩展）

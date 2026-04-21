@@ -8,7 +8,7 @@ description: This module implements sib.
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: sib
+module: stage_2_dec_x86_operand_sib
 create at: 2022-02-25 04:26:25
 description: decode the s-i-b means scale-index-base
 */
@@ -20,7 +20,8 @@ Intel486(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 `include "openx86_defs.h.sv"
 
-module sib (    input  logic [ 7: 0] i_sib,           // SIB 字节：ss|index|base
+module sib (
+    input  logic [ 7: 0] i_sib,           // SIB 字节：ss|index|base
     input  logic [ 1: 0] i_mod, // 来自 ModR/M，用于 disp32 特例
     output logic [ 1: 0] o_scale_factor, // 输出信号
     output logic [ 2: 0] o_segment_reg_index, // 输出信号

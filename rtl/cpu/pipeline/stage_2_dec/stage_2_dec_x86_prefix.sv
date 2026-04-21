@@ -8,7 +8,7 @@ description: This module implements prefix.
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: prefix
+module: stage_2_dec_x86_prefix
 create at: 2022-02-20 09:24:27
 description: decode prefix from instruction
 */

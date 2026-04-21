@@ -21,7 +21,8 @@ description: This module implements ld_execute_load_segment.
 
 `include "openx86_defs.h.sv"
 
-module ld_execute_load_segment (    input  logic          protected_mode_enable,  // 1=保护模式
+
+    input  logic          protected_mode_enable,  // 1=保护模式
     input  logic [15: 0] index_segment_register, // 目标段寄存器索引
     input  logic [15: 0] index_general_register, // 源通用寄存器索引
     input  logic [ 7: 0]   greg__8, // 8 位源操作数

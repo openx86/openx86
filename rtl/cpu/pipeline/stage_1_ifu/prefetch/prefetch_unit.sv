@@ -10,7 +10,8 @@ description: This module implements prefetch_unit.
 // Stage 1 (IFU / instruction fetch): wraps instruction fetch + MMU translation.
 // ============================================================================
 
-module prefetch_unit (    // ------------------------------------------------------------------------
+module prefetch_unit (
+    // ------------------------------------------------------------------------
     // Instruction fetch bus interface（取指总线：地址/数据/就绪握手）
     // ------------------------------------------------------------------------
     output logic         o_code_vaild, // 取指请求有效

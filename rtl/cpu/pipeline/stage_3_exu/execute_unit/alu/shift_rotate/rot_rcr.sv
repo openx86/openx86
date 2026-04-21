@@ -4,7 +4,8 @@ author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
 description: This module implements rot_rcr.
 */
-module rot_rcr (    input  logic [31: 0]  a,  // 操作数 / 源 1
+
+    input  logic [31: 0]  a,  // 操作数 / 源 1
     input  logic [31: 0]  count, // 移位或旋转计数值（低位有效）
     input  logic          cf_in, // 输入进位
     output logic [31: 0] y, // 结果输出

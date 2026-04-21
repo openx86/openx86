@@ -6,7 +6,8 @@ description: This module implements misc_flag_status.
 */
 `include "openx86_defs.h.sv"
 
-module misc_flag_status (    input  logic [31: 0]  flags_in,  // 输入标志
+
+    input  logic [31: 0]  flags_in,  // 输入标志
     input  logic [ 5: 0]   op, // 标志类微操作
     output logic [31: 0] flags_out // 输出标志
 );

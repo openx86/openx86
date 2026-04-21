@@ -11,7 +11,8 @@ description: This module implements instruction_fetch.
 // description: instruction fetch module
 
 `include "openx86_defs.h.sv"
-module instruction_fetch (    // 取指总线（对 BIU/存储子系统）
+module instruction_fetch (
+    // 取指总线（对 BIU/存储子系统）
     output logic         o_code_vaild, // 输出信号
     input  logic          i_code_ready, // 输入信号
     output logic [31: 0] o_code_address, // 输出信号

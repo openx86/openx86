@@ -8,7 +8,7 @@ description: This module implements disp_imm.
 project: w80386dx
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/w80386dx
-module: disp_imm
+module: stage_2_dec_x86_operand_disp_imm
 create at: 2022-02-25 04:29:04
 description: decode the s-i-b means scale-index-base
 */
@@ -20,7 +20,8 @@ Intel486(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 `include "openx86_defs.h.sv"
 
-module disp_imm (    // 从位移起点开始的连续字节窗口（最多 8B，覆盖 disp+imm 组合）
+module disp_imm (
+    // 从位移起点开始的连续字节窗口（最多 8B，覆盖 disp+imm 组合）
     input  logic [ 7: 0][ 7: 0] i_instruction, // 输入信号
     input  logic          i_displacement_size_1, // 输入信号
     input  logic          i_displacement_size_2, // 输入信号

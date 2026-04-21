@@ -10,7 +10,8 @@ description: This module implements execute_stall.
 // Stage 3 (EXE / execute control): centralizes stall composition for execute.
 // ============================================================================
 
-module execute_stall (    input  logic i_stage2_valid,  // 上一流水级有效
+
+    input  logic i_stage2_valid,  // 上一流水级有效
     input  logic i_cpuid_busy, // CPUID 忙
     input  logic i_xadd_wait_reg_wr, // XADD 等待写回
     input  logic i_am_lsu_busy, // 访存单元忙

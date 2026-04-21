@@ -4,7 +4,8 @@ author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
 description: This module implements misc_sahf.
 */
-module misc_sahf (    input  logic [31: 0]  flags_in,  // 输入标志
+
+    input  logic [31: 0]  flags_in,  // 输入标志
     input  logic [31: 0]  eax_in, // 输入 EAX
     output logic [31: 0] flags_out // 输出标志
 );

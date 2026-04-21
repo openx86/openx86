@@ -4,7 +4,8 @@ author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
 description: This module implements misc_daa.
 */
-module misc_daa (    input  logic [31: 0]  a,  // 操作数 / 源 1
+
+    input  logic [31: 0]  a,  // 操作数 / 源 1
     input  logic          af_in, // 输入信号
     input  logic          cf_in, // 输入进位
     output logic [31: 0] y, // 结果输出
