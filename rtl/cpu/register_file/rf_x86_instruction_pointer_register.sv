@@ -5,7 +5,7 @@ repo: https://github.com/openx86/openx86
 description: Instruction pointer register file.
 */
 
-module rf_instruction_pointer_register (
+module rf_x86_instruction_pointer_register (
     input  logic         write_enable,   // 写使能（更新 EIP）
     input  logic [31: 0] write_data, // 完整 32 位指令指针写入值
     output logic [15: 0] IP, // 16 位可见 IP（EIP 低 16）

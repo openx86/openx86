@@ -5,7 +5,7 @@ repo: https://github.com/openx86/openx86
 description: GDTR register file.
 */
 
-module rf_gdtr_register (
+module rf_x86_gdtr_register (
     input  logic         gdtr_write_enable,       // GDTR 写使能
     input  logic [15: 0] gdtr_write_data_limit, // 写入：GDT 限长
     input  logic [31: 0] gdtr_write_data_base, // 写入：GDT 线性基址

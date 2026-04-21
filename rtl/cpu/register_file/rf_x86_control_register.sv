@@ -5,7 +5,7 @@ repo: https://github.com/openx86/openx86
 description: Control register file.
 */
 
-module rf_control_register (
+module rf_x86_control_register (
     input  logic         write_enable,       // CR 写使能
     input  logic [ 2: 0] write_index, // CR 编号（0–7）
     input  logic [31: 0] write_data, // 写入数据

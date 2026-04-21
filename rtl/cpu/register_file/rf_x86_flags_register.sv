@@ -5,7 +5,7 @@ repo: https://github.com/openx86/openx86
 description: EFLAGS/FLAGS register file.
 */
 
-module rf_flags_register (
+module rf_x86_flags_register (
     input  logic         write_enable,    // EFLAGS 整体写使能
     input  logic [31: 0] write_data, // 写入的 EFLAGS 位域
     output logic         CF, // 进位
