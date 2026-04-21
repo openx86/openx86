@@ -233,36 +233,35 @@ module stage_2_dec_x86_operand_field (
     input  logic         i_opcode_x86_XOR_reg_mem_to_reg, // 输入信号
     input  logic         i_opcode_x86_XOR_imm_to_reg_mem, // 输入信号
     input  logic         i_opcode_x86_XOR_imm_to_acc, // 输入信号
-    output logic [ 3: 0] o_tttn, // 输出信号
-    output logic        o_gen_reg_index_is_present, // 输出信号
-    output logic [ 2: 0] o_gen_reg_index, // 输出信号
-    output logic        o_seg_reg_index_is_present, // 输出信号
-    output logic [ 2: 0] o_seg_reg_index, // 输出信号
-    output logic        o_w_is_present, // 输出信号
-    output logic        o_w, // 输出信号
-    output logic        o_s_is_present, // 输出信号
-    output logic        o_s, // 输出信号
-    output logic [ 2: 0] o_eee, // 输出信号
-    output logic        o_mod_rm_is_present, // 输出信号
-    output logic [ 1: 0] o_mod, // 输出信号
-    output logic [ 2: 0] o_rm, // 输出信号
-    output logic        o_immediate_size_full, // 输出信号
-    output logic        o_immediate_size_16, // 输出信号
-    output logic        o_immediate_size_8, // 输出信号
-    output logic        o_immediate_is_present, // 输出信号
-    output logic        o_displacement_size_full, // 输出信号
-    output logic        o_displacement_size_8, // 输出信号
-    output logic        o_displacement_is_present, // 输出信号
-    output logic        o_primary_opcode_byte_1, // 输出信号
-    output logic        o_primary_opcode_byte_2, // 输出信号
-    output logic        o_primary_opcode_byte_3, // 输出信号
-    output logic        o_error // 输出信号
+    output logic [ 3: 0] o_tttn,
+    output logic        o_gpr_reg_index_valid,
+    output logic [ 2: 0] o_gpr_reg_index,
+    output logic        o_seg_reg_index_valid,
+    output logic [ 2: 0] o_seg_reg_index,
+    output logic        o_w_valid,
+    output logic        o_w,
+    output logic        o_s_valid,
+    output logic        o_s,
+    output logic [ 2: 0] o_eee,
+    output logic        o_modrm_present,
+    output logic [ 1: 0] o_mod,
+    output logic [ 2: 0] o_rm,
+    output logic        o_imm_size_full,
+    output logic        o_imm_size_16b,
+    output logic        o_imm_size_8b,
+    output logic        o_imm_present,
+    output logic        o_disp_size_full,
+    output logic        o_disp_size_8b,
+    output logic        o_disp_present,
+    output logic        o_opcode_byte_1,
+    output logic        o_opcode_byte_2,
+    output logic        o_decode_error
 );
 
 // 字段译码：按命中指令把 tttn/reg/ModRM 位置、立即数/位移尺寸等展开为下游控制
 // 以下组合逻辑：按“哪条指令命中”选择字段取自第几字节、以及是否需要 ModRM/立即数/位移
 // 当前无独立字段错误；占位 0 供上游 OR 聚合（避免 UNDRIVEN）
-assign o_error = 1'b0;
+assign o_decode_error = 1'b0;
 
 logic tttn_at_1_3_0;
 assign tttn_at_1_3_0 =
@@ -282,7 +281,7 @@ assign sreg2_at_0_4_3 =
 i_opcode_x86_POP_sreg_2 |
 i_opcode_x86_PUSH_sreg_2 |
 1'b0;
-assign o_seg_reg_index_is_present =
+assign o_seg_reg_index_valid =
 sreg3_at_1_5_3 |
 sreg2_at_0_4_3 |
 1'b0;
@@ -337,7 +336,7 @@ i_opcode_x86_MOV_reg_from_DR |
 i_opcode_x86_MOV_TR_from_reg |
 i_opcode_x86_MOV_reg_from_TR |
 1'b0;
-assign o_gen_reg_index_is_present =
+assign o_gpr_reg_index_valid =
 reg_1_at_0_2_0 |
 reg_1_at_1_5_3 |
 reg_1_at_1_2_0 |
@@ -346,11 +345,11 @@ reg_1_at_2_2_0 |
 // 通用寄存器编号：可能位于 opcode 不同字节位段
 always_comb begin
     unique case (1'b1)
-        reg_1_at_0_2_0 : o_gen_reg_index = i_instruction[0][ 2: 0];
-        reg_1_at_1_5_3 : o_gen_reg_index = i_instruction[1][ 5:  3];
-        reg_1_at_1_2_0 : o_gen_reg_index = i_instruction[1][ 2: 0];
-        reg_1_at_2_2_0 : o_gen_reg_index = i_instruction[2][ 2: 0];
-        default        : o_gen_reg_index = 3'b000;
+        reg_1_at_0_2_0 : o_gpr_reg_index = i_instruction[0][ 2: 0];
+        reg_1_at_1_5_3 : o_gpr_reg_index = i_instruction[1][ 5:  3];
+        reg_1_at_1_2_0 : o_gpr_reg_index = i_instruction[1][ 2: 0];
+        reg_1_at_2_2_0 : o_gpr_reg_index = i_instruction[2][ 2: 0];
+        default        : o_gpr_reg_index = 3'b000;
     endcase
 end
 
@@ -448,7 +447,7 @@ i_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg |
 i_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg |
 i_opcode_x86_XADD_exchange_and_add |
 1'b0;
-assign o_w_is_present =
+assign o_w_valid =
 w_at_0_0 |
 w_at_0_3 |
 w_at_1_0 |
@@ -476,7 +475,7 @@ i_opcode_x86_SBB_imm_to_reg_mem |
 i_opcode_x86_SUB_imm_to_reg_mem |
 i_opcode_x86_XOR_imm_to_reg_mem |
 1'b0;
-assign o_s_is_present =
+assign o_s_valid =
 s_at_0_1 |
 1'b0;
 // S 位：立即数符号扩展控制（存在时取自 opcode 字节）
@@ -487,7 +486,7 @@ always_comb begin
     endcase
 end
 
-assign o_mod_rm_is_present =
+assign o_modrm_present =
 i_opcode_x86_ADC_reg_to_reg_mem |
 i_opcode_x86_ADC_reg_mem_to_reg |
 i_opcode_x86_ADC_imm_to_reg_mem |
@@ -614,10 +613,10 @@ assign { o_mod, o_rm } = { mod_rm_instruction[ 7:  6], mod_rm_instruction[ 2: 0]
 // ModR/M 原始字节：随主 opcode 为 1/2/3 字节指令而相对位移
 always_comb begin
     case (1'b1)
-        o_primary_opcode_byte_1: mod_rm_instruction = i_instruction[1];
-        o_primary_opcode_byte_2: mod_rm_instruction = i_instruction[2];
-        o_primary_opcode_byte_3: mod_rm_instruction = i_instruction[3];
-        default                : mod_rm_instruction = 8'b0;
+        o_opcode_byte_1: mod_rm_instruction = i_instruction[1];
+        o_opcode_byte_2: mod_rm_instruction = i_instruction[2];
+        o_opcode_byte_3: mod_rm_instruction = i_instruction[3];
+        default         : mod_rm_instruction = 8'b0;
     endcase
 end
 
@@ -651,12 +650,12 @@ i_opcode_x86_TEST_imm_and_acc |
 i_opcode_x86_XOR_imm_to_reg_mem |
 i_opcode_x86_XOR_imm_to_acc |
 1'b0;
-assign o_immediate_size_16 =
+assign o_imm_size_16b =
 i_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP |
 i_opcode_x86_RET_return_from_procedure_to_other_segment_adding_imm_to_SP |
 unsigned_full_offset_selector_is_present |
 1'b0;
-assign o_immediate_size_8 =
+assign o_imm_size_8b =
 i_opcode_x86_BT_reg_mem_with_imm |
 i_opcode_x86_BTC_reg_mem_with_imm |
 i_opcode_x86_BTR_reg_mem_with_imm |
@@ -672,13 +671,13 @@ i_opcode_x86_SHL_reg_mem_by_imm |
 i_opcode_x86_SHR_reg_mem_by_imm |
 i_opcode_x86_SHRD_reg_mem_by_imm |
 1'b0;
-assign o_immediate_is_present =
-o_immediate_size_full |
-o_immediate_size_16 |
-o_immediate_size_8 |
+assign o_imm_present =
+o_imm_size_full |
+o_imm_size_16b |
+o_imm_size_8b |
 1'b0;
 
-assign o_displacement_size_full =
+assign o_disp_size_full =
 i_opcode_x86_CALL_in_same_segment_direct |
 i_opcode_x86_Jcc_jump_if_cond_is_met_full_disp |
 i_opcode_x86_JMP_to_same_segment_direct |
@@ -686,7 +685,7 @@ i_opcode_x86_MOV_mem_to_acc |
 i_opcode_x86_MOV_acc_to_mem |
 unsigned_full_offset_selector_is_present |
 1'b0;
-assign o_displacement_size_8 =
+assign o_disp_size_8b =
 i_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp |
 i_opcode_x86_JCXZ_jump_on_CX_zero |
 i_opcode_x86_JMP_to_same_segment_short |
@@ -695,9 +694,9 @@ i_opcode_x86_LOOPZ_count_while_zero |
 i_opcode_x86_LOOPNZ_count_while_not_zero |
 i_opcode_x86_OUT_port_fixed |
 1'b0;
-assign o_displacement_is_present =
-o_displacement_size_full |
-o_displacement_size_8 |
+assign o_disp_present =
+o_disp_size_full |
+o_disp_size_8b |
 1'b0;
 
 // i_opcode_x86_ADC_reg_to_reg_mem |
@@ -908,7 +907,7 @@ o_displacement_size_8 |
 // i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem |
 // i_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id |
 
-assign o_primary_opcode_byte_1 =
+assign o_opcode_byte_1 =
 i_opcode_x86_AAA_ASCII_adjust_after_add |
 i_opcode_x86_AAS_ASCII_adjust_after_sub |
 i_opcode_x86_ADC_reg_to_reg_mem |
@@ -1057,7 +1056,7 @@ i_opcode_x86_XOR_reg_mem_to_reg |
 i_opcode_x86_XOR_imm_to_reg_mem |
 i_opcode_x86_XOR_imm_to_acc |
 1'b0;
-assign o_primary_opcode_byte_2 =
+assign o_opcode_byte_2 =
 i_opcode_x86_AAD_ASCII_AX_before_div |
 i_opcode_x86_AAM_ASCII_AX_after_mul |
 i_opcode_x86_BSF_bit_scan_forward |
@@ -1123,7 +1122,7 @@ i_opcode_x86_WBINVD_writeback_and_invalidate_data_cache |
 i_opcode_x86_WRMSR_write_to_model_specific_register |
 i_opcode_x86_XADD_exchange_and_add |
 1'b0;
-assign o_primary_opcode_byte_3 =
+assign o_opcode_byte_3 =
 i_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size |
 i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_mem_to_reg |
 i_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem |

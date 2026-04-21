@@ -22,18 +22,18 @@ Intel486(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 module stage_2_dec_x86_operand_disp_imm (
     // 从位移起点开始的连续字节窗口（最多 8B，覆盖 disp+imm 组合）
-    input  logic [ 7: 0][ 7: 0] i_instruction, // 输入信号
-    input  logic          i_displacement_size_1, // 输入信号
-    input  logic          i_displacement_size_2, // 输入信号
-    input  logic          i_displacement_size_4, // 输入信号
-    input  logic          i_immediate_size_1, // 输入信号
-    input  logic          i_immediate_size_2, // 输入信号
-    input  logic          i_immediate_size_4, // 输入信号
-    input  logic          i_immediate_size_f, // 输入信号
-    output logic [31: 0] o_displacement, // 输出信号
-    output logic [31: 0] o_immediate, // 输出信号
-    output logic [ 3: 0] o_consume_bytes, // 输出信号
-    output logic         o_error // 输出信号
+    input  logic [ 7: 0][ 7: 0] i_instruction_bytes,
+    input  logic          i_disp_size_1b,
+    input  logic          i_disp_size_2b,
+    input  logic          i_disp_size_4b,
+    input  logic          i_imm_size_1b,
+    input  logic          i_imm_size_2b,
+    input  logic          i_imm_size_4b,
+    input  logic          i_imm_size_full,
+    output logic [31: 0] o_disp_value,
+    output logic [31: 0] o_imm_value,
+    output logic [ 3: 0] o_consume_byte_count,
+    output logic         o_decode_error
 );
 
 logic [ 7: 0] instruction_for_immediate [ 0: 3]; // 立即数字节相对位移后的切片
@@ -41,33 +41,33 @@ logic [ 7: 0] instruction_for_immediate [ 0: 3]; // 立即数字节相对位移�
 // 先根据位移宽度截取位移并调整立即数字节起点
 always_comb begin
     case (1'b1)
-        i_displacement_size_1: begin
-            instruction_for_immediate[0] = i_instruction[1];
-            instruction_for_immediate[1] = i_instruction[2];
-            instruction_for_immediate[2] = i_instruction[3];
-            instruction_for_immediate[3] = i_instruction[4];
-            o_displacement = {24'b0, i_instruction[0][ 7: 0]};
+        i_disp_size_1b: begin
+            instruction_for_immediate[0] = i_instruction_bytes[1];
+            instruction_for_immediate[1] = i_instruction_bytes[2];
+            instruction_for_immediate[2] = i_instruction_bytes[3];
+            instruction_for_immediate[3] = i_instruction_bytes[4];
+            o_disp_value = {24'b0, i_instruction_bytes[0][ 7: 0]};
         end
-        i_displacement_size_2: begin
-            instruction_for_immediate[0] = i_instruction[2];
-            instruction_for_immediate[1] = i_instruction[3];
-            instruction_for_immediate[2] = i_instruction[4];
-            instruction_for_immediate[3] = i_instruction[5];
-            o_displacement = {16'b0, i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]};
+        i_disp_size_2b: begin
+            instruction_for_immediate[0] = i_instruction_bytes[2];
+            instruction_for_immediate[1] = i_instruction_bytes[3];
+            instruction_for_immediate[2] = i_instruction_bytes[4];
+            instruction_for_immediate[3] = i_instruction_bytes[5];
+            o_disp_value = {16'b0, i_instruction_bytes[1][ 7: 0], i_instruction_bytes[0][ 7: 0]};
         end
-        i_displacement_size_4: begin
-            instruction_for_immediate[0] = i_instruction[4];
-            instruction_for_immediate[1] = i_instruction[5];
-            instruction_for_immediate[2] = i_instruction[6];
-            instruction_for_immediate[3] = i_instruction[7];
-            o_displacement = {i_instruction[3][ 7: 0], i_instruction[2][ 7: 0], i_instruction[1][ 7: 0], i_instruction[0][ 7: 0]};
+        i_disp_size_4b: begin
+            instruction_for_immediate[0] = i_instruction_bytes[4];
+            instruction_for_immediate[1] = i_instruction_bytes[5];
+            instruction_for_immediate[2] = i_instruction_bytes[6];
+            instruction_for_immediate[3] = i_instruction_bytes[7];
+            o_disp_value = {i_instruction_bytes[3][ 7: 0], i_instruction_bytes[2][ 7: 0], i_instruction_bytes[1][ 7: 0], i_instruction_bytes[0][ 7: 0]};
         end
         default: begin
-            instruction_for_immediate[0] = i_instruction[0];
-            instruction_for_immediate[1] = i_instruction[1];
-            instruction_for_immediate[2] = i_instruction[2];
-            instruction_for_immediate[3] = i_instruction[3];
-            o_displacement = 32'b0;
+            instruction_for_immediate[0] = i_instruction_bytes[0];
+            instruction_for_immediate[1] = i_instruction_bytes[1];
+            instruction_for_immediate[2] = i_instruction_bytes[2];
+            instruction_for_immediate[3] = i_instruction_bytes[3];
+            o_disp_value = 32'b0;
         end
     endcase
 end
@@ -75,40 +75,39 @@ end
 // 立即数：1/2/4 字节零扩或拼 32b（full 模式同 4B）
 always_comb begin
     case (1'b1)
-        i_immediate_size_1: o_immediate = {24'b0, instruction_for_immediate[0][ 7: 0]};
-        i_immediate_size_2: o_immediate = {16'b0, instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
-        i_immediate_size_4: o_immediate = {       instruction_for_immediate[3][ 7: 0], instruction_for_immediate[2][ 7: 0], instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
-        i_immediate_size_f: o_immediate = {       instruction_for_immediate[3][ 7: 0], instruction_for_immediate[2][ 7: 0], instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
-        default:               o_immediate = 32'b0;
+        i_imm_size_1b:  o_imm_value = {24'b0, instruction_for_immediate[0][ 7: 0]};
+        i_imm_size_2b:  o_imm_value = {16'b0, instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
+        i_imm_size_4b:  o_imm_value = {       instruction_for_immediate[3][ 7: 0], instruction_for_immediate[2][ 7: 0], instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
+        i_imm_size_full: o_imm_value = {       instruction_for_immediate[3][ 7: 0], instruction_for_immediate[2][ 7: 0], instruction_for_immediate[1][ 7: 0], instruction_for_immediate[0][ 7: 0]};
+        default:         o_imm_value = 32'b0;
     endcase
 end
 
-logic [ 3: 0] displacement_bytes;
+logic [ 3: 0] disp_byte_count;
 // 统计位移占用字节数
 always_comb begin
     case (1'b1)
-        i_displacement_size_1: displacement_bytes = 4'h1;
-        i_displacement_size_2: displacement_bytes = 4'h2;
-        i_displacement_size_4: displacement_bytes = 4'h4;
-        // i_displacement_size_full: displacement_bytes = 4'h4;
-        default              : displacement_bytes = 4'h0;
+        i_disp_size_1b: disp_byte_count = 4'h1;
+        i_disp_size_2b: disp_byte_count = 4'h2;
+        i_disp_size_4b: disp_byte_count = 4'h4;
+        default         : disp_byte_count = 4'h0;
     endcase
 end
 
-logic [ 3: 0] immediate_bytes;
+logic [ 3: 0] imm_byte_count;
 // 统计立即数占用字节数
 always_comb begin
     case (1'b1)
-        i_immediate_size_1: immediate_bytes = 4'h1;
-        i_immediate_size_2: immediate_bytes = 4'h2;
-        i_immediate_size_4: immediate_bytes = 4'h4;
-        i_immediate_size_f: immediate_bytes = 4'h4;
-        default           : immediate_bytes = 4'h0;
+        i_imm_size_1b:  imm_byte_count = 4'h1;
+        i_imm_size_2b:  imm_byte_count = 4'h2;
+        i_imm_size_4b:  imm_byte_count = 4'h4;
+        i_imm_size_full: imm_byte_count = 4'h4;
+        default          : imm_byte_count = 4'h0;
     endcase
 end
 
-assign o_consume_bytes = displacement_bytes + immediate_bytes;
+assign o_consume_byte_count = disp_byte_count + imm_byte_count;
 // 当前位移/立即数切片路径不产生独立错误码；占位为 0 供上游 OR 聚合
-assign o_error          = 1'b0;
+assign o_decode_error       = 1'b0;
 
 endmodule
