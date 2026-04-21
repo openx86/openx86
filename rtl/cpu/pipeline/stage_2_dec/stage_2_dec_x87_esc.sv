@@ -10,7 +10,7 @@ description: This module implements x87_esc.
 
 `include "openx86_defs.h.sv"
 
-module x87_esc (    input  logic [ 7: 0]   i_b0,
+module stage_2_dec_x87_esc (    input  logic [ 7: 0]   i_b0,
     input  logic [ 7: 0]   i_b1, // 输入信号
     output logic         o_is_esc, // 输出信号
     output logic [ 1: 0] o_mod, // 输出信号

@@ -56,48 +56,49 @@ Kevin McGrath and Dave Christie, "The AMD x86-64 Architecture: Extending the x86
 
 `include "openx86_defs.h.sv"
 // 连续前缀扫描：最多 4 字节，检测每组前缀重复非法并折叠输出
-module prefix_all (    input  logic [ 3: 0][ 7: 0] i_instruction,
-    output logic        o_group_1_lock_bus, // 输出信号
-    output logic        o_group_1_repeat_not_equal, // 输出信号
-    output logic        o_group_1_repeat_equal, // 输出信号
-    output logic        o_group_1_bound, // 输出信号
-    output logic        o_group_2_segment_override, // 输出信号
-    output logic        o_group_2_hint_branch_not_taken, // 输出信号
-    output logic        o_group_2_hint_branch_taken, // 输出信号
-    output logic        o_group_3_operand_size, // 输出信号
-    output logic        o_group_4_address_size, // 输出信号
-    output logic        o_group_1_is_present, // 输出信号
-    output logic        o_group_2_is_present, // 输出信号
-    output logic        o_group_3_is_present, // 输出信号
-    output logic        o_group_4_is_present, // 输出信号
-    output logic [ 2: 0] o_segment_override_index, // 输出信号
-    output logic        o_consume_bytes_prefix_1, // 输出信号
-    output logic        o_consume_bytes_prefix_2, // 输出信号
-    output logic        o_consume_bytes_prefix_3, // 输出信号
-    output logic        o_consume_bytes_prefix_4, // 输出信号
-    output logic        o_error // 输出信号
+module stage_2_dec_prefix_all (    
+    input  logic [ 3: 0][ 7: 0] i_instruction,
+    output logic                o_group_1_lock_bus, // 输出信号
+    output logic                o_group_1_repeat_not_equal, // 输出信号
+    output logic                o_group_1_repeat_equal, // 输出信号
+    output logic                o_group_1_bound, // 输出信号
+    output logic                o_group_2_segment_override, // 输出信号
+    output logic                o_group_2_hint_branch_not_taken, // 输出信号
+    output logic                o_group_2_hint_branch_taken, // 输出信号
+    output logic                o_group_3_operand_size, // 输出信号
+    output logic                o_group_4_address_size, // 输出信号
+    output logic                o_group_1_is_present, // 输出信号
+    output logic                o_group_2_is_present, // 输出信号
+    output logic                o_group_3_is_present, // 输出信号
+    output logic                o_group_4_is_present, // 输出信号
+    output logic [ 2: 0]        o_segment_override_index, // 输出信号
+    output logic                o_consume_bytes_prefix_1, // 输出信号
+    output logic                o_consume_bytes_prefix_2, // 输出信号
+    output logic                o_consume_bytes_prefix_3, // 输出信号
+    output logic                o_consume_bytes_prefix_4, // 输出信号
+    output logic                o_error // 输出信号
 );
 
-logic        group_1_lock_bus [ 0:  3];
-logic        group_1_repeat_not_equal [ 0:  3];
-logic        group_1_repeat_equal [ 0:  3];
-logic        group_1_bound [ 0:  3];
-logic        group_2_segment_override [ 0:  3];
-logic        group_2_hint_branch_not_taken [ 0:  3];
-logic        group_2_hint_branch_taken [ 0:  3];
-logic        group_3_operand_size [ 0:  3];
-logic        group_4_address_size [ 0:  3];
-logic        group_1_is_present [ 0:  3];
-logic        group_2_is_present [ 0:  3];
-logic        group_3_is_present [ 0:  3];
-logic        group_4_is_present [ 0:  3];
-logic        is_present [ 0:  3];
+logic         group_1_lock_bus [ 0:  3];
+logic         group_1_repeat_not_equal [ 0:  3];
+logic         group_1_repeat_equal [ 0:  3];
+logic         group_1_bound [ 0:  3];
+logic         group_2_segment_override [ 0:  3];
+logic         group_2_hint_branch_not_taken [ 0:  3];
+logic         group_2_hint_branch_taken [ 0:  3];
+logic         group_3_operand_size [ 0:  3];
+logic         group_4_address_size [ 0:  3];
+logic         group_1_is_present [ 0:  3];
+logic         group_2_is_present [ 0:  3];
+logic         group_3_is_present [ 0:  3];
+logic         group_4_is_present [ 0:  3];
+logic         is_present [ 0:  3];
 logic [ 2: 0] segment_override_index [ 0:  3];
 
-logic  [ 2: 0] sum_group_1;
-logic  [ 2: 0] sum_group_2;
-logic  [ 2: 0] sum_group_3;
-logic  [ 2: 0] sum_group_4;
+logic [ 2: 0] sum_group_1;
+logic [ 2: 0] sum_group_2;
+logic [ 2: 0] sum_group_3;
+logic [ 2: 0] sum_group_4;
 
 logic         error_repeat_group_1;
 logic         error_repeat_group_2;
@@ -209,7 +210,7 @@ always_comb begin
     endcase
 end
 
-prefix decode_prefix_in_stage_0_from_instruction_0 (
+stage_2_dec_prefix u_stage_2_dec_prefix_0 (
     .i_instruction                   ( i_instruction                [0] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [0] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [0] ),
@@ -228,7 +229,7 @@ prefix decode_prefix_in_stage_0_from_instruction_0 (
     .o_segment_override_index        ( segment_override_index       [0] )
 );
 
-prefix decode_prefix_in_stage_0_from_instruction_1 (
+stage_2_dec_prefix u_stage_2_dec_prefix_1 (
     .i_instruction                   ( i_instruction                [1] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [1] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [1] ),
@@ -247,7 +248,7 @@ prefix decode_prefix_in_stage_0_from_instruction_1 (
     .o_segment_override_index        ( segment_override_index       [1] )
 );
 
-prefix decode_prefix_in_stage_0_from_instruction_2 (
+stage_2_dec_prefix u_stage_2_dec_prefix_2 (
     .i_instruction                   ( i_instruction                [2] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [2] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [2] ),
@@ -266,7 +267,7 @@ prefix decode_prefix_in_stage_0_from_instruction_2 (
     .o_segment_override_index        ( segment_override_index       [2] )
 );
 
-prefix decode_prefix_in_stage_0_from_instruction_3 (
+stage_2_dec_prefix u_stage_2_dec_prefix_3 (
     .i_instruction                   ( i_instruction                [3] ),
     .o_group_1_lock_bus              ( group_1_lock_bus             [3] ),
     .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [3] ),
