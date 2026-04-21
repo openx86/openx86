@@ -20,7 +20,7 @@ Intel486(TM) DX MICROPROCESSOR 32-BIT CHMOS MICROPROCESSOR WITH INTEGRATED MEMOR
 
 `include "openx86_defs.h.sv"
 
-module sib (
+module stage_2_dec_x86_operand_sib (
     input  logic [ 7: 0] i_sib,           // SIB 字节：ss|index|base
     input  logic [ 1: 0] i_mod, // 来自 ModR/M，用于 disp32 特例
     output logic [ 1: 0] o_scale_factor, // 输出信号

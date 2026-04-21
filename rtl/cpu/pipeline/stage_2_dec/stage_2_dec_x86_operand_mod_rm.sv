@@ -63,7 +63,7 @@ addressing modes.
 
 `include "openx86_defs.h.sv"
 
-module mod_rm (
+module stage_2_dec_x86_operand_mod_rm (
     // ModR/M 输入：mod/rm + W/默认操作数尺寸 → 寻址分量与位移宽度
     input  logic [ 1: 0] i_mod, // 输入信号
     input  logic [ 2: 0] i_rm, // 输入信号
