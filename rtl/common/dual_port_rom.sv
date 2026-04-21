@@ -22,16 +22,16 @@ module dual_port_rom #(
     parameter int P_DEPTH      = 1 << P_ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读端口A
-    input  logic [P_ADDR_WIDTH-1: 0] addra, // A 口读地址
-    output logic [P_DATA_WIDTH-1: 0] rdataa, // A 口同步读数据
+    input  logic [P_ADDR_WIDTH - 1: 0] i_addra,  // A 口读地址
+    output logic [P_DATA_WIDTH - 1: 0] o_rdataa, // A 口同步读数据
 
     // 读端口B
-    input  logic [P_ADDR_WIDTH-1: 0] addrb, // B 口读地址
-    output logic [P_DATA_WIDTH-1: 0] rdatab, // B 口同步读数据
+    input  logic [P_ADDR_WIDTH - 1: 0] i_addrb,  // B 口读地址
+    output logic [P_DATA_WIDTH - 1: 0] o_rdatab, // B 口同步读数据
 
     // 时钟和复位
-    input  logic                  clk,    // 两读口共享时钟
-    input  logic                  rst_n   // 低有效：两路输出清零
+    input  logic                      clk,       // 两读口共享时钟
+    input  logic                      rst_n      // 低有效：两路输出清零
 );
 
     // 双读口共享 ROM 体（内容由外部初始化）
@@ -40,18 +40,18 @@ module dual_port_rom #(
     // A 口同步读
     always_ff @(posedge clk) begin
         if (~rst_n) begin
-            rdataa <= '0;
+            o_rdataa <= '0;
         end else begin
-            rdataa <= rom[addra];
+            o_rdataa <= rom[i_addra];
         end
     end
 
     // B 口同步读
     always_ff @(posedge clk) begin
         if (~rst_n) begin
-            rdatab <= '0;
+            o_rdatab <= '0;
         end else begin
-            rdatab <= rom[addrb];
+            o_rdatab <= rom[i_addrb];
         end
     end
 

@@ -24,14 +24,14 @@ module single_port_ram #(
     parameter int P_DEPTH      = 1 << P_ADDR_WIDTH  // 显式深度参数（可选）
 ) (
     // 读写端口
-    input  logic                  we,     // 写使能：高电平在时钟沿将 wdata 写入 addr
-    input  logic [P_ADDR_WIDTH-1: 0] addr, // 读写共用地址（半字/字节粒度由 DATA_WIDTH 决定）
-    input  logic [P_DATA_WIDTH-1: 0] wdata, // 待写入数据
-    output logic [P_DATA_WIDTH-1: 0] rdata, // 同步读输出（一拍延迟，见 always_ff 读口）
+    input  logic                      i_we,       // 写使能：高电平在时钟沿将 wdata 写入 addr
+    input  logic [P_ADDR_WIDTH - 1: 0] i_addr,     // 读写共用地址（半字/字节粒度由 DATA_WIDTH 决定）
+    input  logic [P_DATA_WIDTH - 1: 0] i_wdata,    // 待写入数据
+    output logic [P_DATA_WIDTH - 1: 0] o_rdata,    // 同步读输出（一拍延迟，见 always_ff 读口）
 
     // 时钟和复位
-    input  logic                  clk,    // 单时钟域：写与读均在此沿更新
-    input  logic                  rst_n   // 异步低有效复位：清零 rdata；阵列内容不强制清零
+    input  logic                      clk,        // 单时钟域：写与读均在此沿更新
+    input  logic                      rst_n       // 异步低有效复位：清零 rdata；阵列内容不强制清零
 );
 
     // 存储阵列（综合为 BRAM 时行为由器件/工具决定）
@@ -43,8 +43,8 @@ module single_port_ram #(
             // 复位时可以选择清零，也可以保持（取决于应用需求）
             // 这里不自动清零，由用户控制
         end else begin
-            if (we) begin
-                mem[addr] <= wdata;
+            if (i_we) begin
+                mem[i_addr] <= i_wdata;
             end
         end
     end
@@ -52,9 +52,9 @@ module single_port_ram #(
     // 读口时序：同步读一拍；复位将读数据口置 0
     always_ff @(posedge clk) begin
         if (~rst_n) begin
-            rdata <= '0;
+            o_rdata <= '0;
         end else begin
-            rdata <= mem[addr];
+            o_rdata <= mem[i_addr];
         end
     end
 
