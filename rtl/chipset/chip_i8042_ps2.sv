@@ -113,13 +113,13 @@ module chip_i8042_ps2 #(
     logic [ 7: 0] kbd_head;
     logic [ 7: 0] aux_head;
 
-    assign obf_stat = kbd_obf | aux_obf;
-    assign obf_from_aux = aux_obf && (use_aux_out || !kbd_obf);
+    assign obf_stat       = kbd_obf | aux_obf;
+    assign obf_from_aux   = aux_obf && (use_aux_out || !kbd_obf);
     assign phy_tx_activity = kbd_tx_req | aux_tx_req | kbd_tx_byte[0] | aux_tx_byte[0];
-    assign ibf_stat = kbd_tx_pending | aux_tx_pending | next_wr_to_aux | cmd_d2_pending | cmd_d3_pending |
-        (1'b0 & phy_tx_activity);
-    assign kbd_head = kbd_fifo[kbd_rptr];
-    assign aux_head = aux_fifo[aux_rptr];
+    assign ibf_stat       = kbd_tx_pending | aux_tx_pending | next_wr_to_aux | cmd_d2_pending | cmd_d3_pending |
+                            (1'b0 & phy_tx_activity);
+    assign kbd_head       = kbd_fifo[kbd_rptr];
+    assign aux_head       = aux_fifo[aux_rptr];
 
     assign o_kbd_irq = kbd_if_en && kbd_irq_en && kbd_obf;
     assign o_aux_irq = aux_if_en && aux_irq_en && aux_obf;

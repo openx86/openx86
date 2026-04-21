@@ -51,12 +51,12 @@ module chip_mc146818_rtc #(
     logic aie_en;      // 闹钟中断允许
     logic uie_en;      // 更新结束中断允许
 
-    assign dm_bin = cmos_ram[11][2];
+    assign dm_bin   = cmos_ram[11][2];
     assign mode_24h = cmos_ram[11][1];
     assign set_stop = cmos_ram[11][7];
-    assign pie_en = cmos_ram[11][6];
-    assign aie_en = cmos_ram[11][5];
-    assign uie_en = cmos_ram[11][4];
+    assign pie_en   = cmos_ram[11][6];
+    assign aie_en   = cmos_ram[11][5];
+    assign uie_en   = cmos_ram[11][4];
 
     logic [ 5: 0] sec_bin, min_bin;
     logic [ 4: 0] hour_bin;

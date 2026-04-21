@@ -12,16 +12,16 @@ description: This module implements chip_ns16550_com.
 // ============================================================================
 
 module chip_ns16550_com (
-    input  logic         i_cs_n,     // 低有效片选
-    input  logic         i_rd_n,     // 低有效读
-    input  logic         i_wr_n,     // 低有效写
-    input  logic [ 2: 0] i_a,        // 寄存器偏移（相对 0x3F8）
-    input  logic [ 7: 0] i_d,        // 写数据
-    output logic [ 7: 0] o_d,        // 读数据
-    input  logic         i_rx_push,  // 仿真/注入：推入一字节到接收缓冲
-    input  logic [ 7: 0] i_rx_data,  // 注入数据
-    input  logic         clk,        // 系统时钟
-    input  logic         rst_n       // 异步低有效复位
+    input  logic         i_cs_n,    // 低有效片选
+    input  logic         i_rd_n,    // 低有效读
+    input  logic         i_wr_n,    // 低有效写
+    input  logic [ 2: 0] i_a,       // 寄存器偏移（相对 0x3F8）
+    input  logic [ 7: 0] i_d,       // 写数据
+    output logic [ 7: 0] o_d,       // 读数据
+    input  logic         i_rx_push, // 仿真/注入：推入一字节到接收缓冲
+    input  logic [ 7: 0] i_rx_data, // 注入数据
+    input  logic         clk,       // 系统时钟
+    input  logic         rst_n      // 异步低有效复位
 );
 
     localparam int LP_FIFO_D = 16;
@@ -51,8 +51,8 @@ module chip_ns16550_com (
     logic         rd;
 
     assign dlab = lcr[7];
-    assign wr = !i_cs_n && !i_wr_n;
-    assign rd = !i_cs_n && !i_rd_n;
+    assign wr   = !i_cs_n && !i_wr_n;
+    assign rd   = !i_cs_n && !i_rd_n;
 
     logic         thr_empty;         // THR 空（简化 TX）
     logic         tx_empty;          // 发送移位路径空
@@ -75,12 +75,12 @@ module chip_ns16550_com (
 
     logic [ 7: 0] lsr;  // 线路状态（简化）
 
-    assign irq_rda = ier[0] && rbr_valid;
-    assign irq_thre = ier[1] && thre_irq_pending;
-    assign irq_ms = ier[3] && (|msr_delta);
+    assign irq_rda       = ier[0] && rbr_valid;
+    assign irq_thre      = ier[1] && thre_irq_pending;
+    assign irq_ms        = ier[3] && (|msr_delta);
     assign iir_fifo_bits = fcr[0] ? 2'b11 : 2'b00;
-    assign iir = {iir_fifo_bits, 2'b00, iir_code[3: 1], iir_code[0]};
-    assign lsr = {1'b0, tx_empty, thr_empty, 1'b0, 1'b0, 1'b0, 1'b0, rbr_valid};
+    assign iir           = {iir_fifo_bits, 2'b00, iir_code[3: 1], iir_code[0]};
+    assign lsr           = {1'b0, tx_empty, thr_empty, 1'b0, 1'b0, 1'b0, 1'b0, rbr_valid};
 
 
 

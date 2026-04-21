@@ -75,8 +75,8 @@ module chip_8259_pic (
     logic [ 2: 0]        isr_idx, isr_idx_n;                // 正在服务的中断索引
     logic                irq_eligible, irq_eligible_n;    // 可拉 INTR（含嵌套规则）
 
-    assign wr = !i_cs_n && !i_wr_n;
-    assign rd = !i_cs_n && !i_rd_n;
+    assign wr          = !i_cs_n && !i_wr_n;
+    assign rd          = !i_cs_n && !i_rd_n;
 
     // 屏蔽 IRR、优先级索引与 INTR 条件（基于现态寄存器）。
     always_comb begin

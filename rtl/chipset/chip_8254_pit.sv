@@ -57,8 +57,8 @@ module chip_8254_pit (
     logic wr;  // 写事务
     logic rd;  // 读事务
 
-    assign wr = (!i_cs_n) && (!i_wr_n);
-    assign rd = (!i_cs_n) && (!i_rd_n);
+    assign wr     = (!i_cs_n) && (!i_wr_n);
+    assign rd     = (!i_cs_n) && (!i_rd_n);
 
     assign o_out0 = out_r[0];
     assign o_out1 = out_r[1];

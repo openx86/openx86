@@ -24,14 +24,14 @@ description: Intel 8237 DMA register-level model (PC/XT oriented).
 // ============================================================================
 
 module chip_8237_dma (
-    input  logic         i_cs_n, // 低有效片选（命中 DMA/页寄存器/16 位窗口之一）
-    input  logic         i_rd_n, // 低有效读
-    input  logic         i_wr_n, // 低有效写
-    input  logic [15: 0] i_addr, // I/O 地址（16 位）
-    input  logic [ 7: 0] i_d,    // 写数据
-    output logic [ 7: 0] o_d,    // 读数据
-    input  logic         clk,    // 系统时钟
-    input  logic         rst_n   // 异步低有效复位
+    input  logic         i_cs_n,  // 低有效片选（命中 DMA/页寄存器/16 位窗口之一）
+    input  logic         i_rd_n,  // 低有效读
+    input  logic         i_wr_n,  // 低有效写
+    input  logic [15: 0] i_addr,  // I/O 地址（16 位）
+    input  logic [ 7: 0] i_d,     // 写数据
+    output logic [ 7: 0] o_d,     // 读数据
+    input  logic         clk,     // 系统时钟
+    input  logic         rst_n    // 异步低有效复位
 );
 
     localparam logic [ 3: 0] LP_REG_COMMAND   = 4'h8;
@@ -73,20 +73,20 @@ module chip_8237_dma (
 
     // 地址窗口与片选/读写微操作译码。
     always_comb begin
-        hit_lo        = (i_addr <= 16'h000F);
-        hit_page      = (i_addr >= 16'h0080) && (i_addr <= 16'h008F);
-        hit_hi        = (i_addr >= 16'h00C0) && (i_addr <= 16'h00DF);
-        wr            = !i_cs_n && !i_wr_n;
-        rd            = !i_cs_n && !i_rd_n;
-        lo_idx        = i_addr[ 3: 0];
-        ch_sel        = i_addr[ 2: 1];
-        is_count_reg  = i_addr[0];
-        page_idx      = i_addr[ 3: 0];
-        hi_idx        = i_addr[ 4: 0];
-        rd_status     = rd && hit_lo && (lo_idx == LP_REG_COMMAND);
-        wr_addr_count = wr && hit_lo && (lo_idx <= 4'h7);
+        hit_lo          = (i_addr <= 16'h000F);
+        hit_page        = (i_addr >= 16'h0080) && (i_addr <= 16'h008F);
+        hit_hi          = (i_addr >= 16'h00C0) && (i_addr <= 16'h00DF);
+        wr              = !i_cs_n && !i_wr_n;
+        rd              = !i_cs_n && !i_rd_n;
+        lo_idx          = i_addr[ 3: 0];
+        ch_sel          = i_addr[ 2: 1];
+        is_count_reg    = i_addr[0];
+        page_idx        = i_addr[ 3: 0];
+        hi_idx          = i_addr[ 4: 0];
+        rd_status       = rd && hit_lo && (lo_idx == LP_REG_COMMAND);
+        wr_addr_count   = wr && hit_lo && (lo_idx <= 4'h7);
         wr_master_clear = wr && hit_lo && (lo_idx == LP_REG_MCLR);
-        wr_clear_ff   = wr && hit_lo && (lo_idx == LP_REG_CLEAR_FF);
+        wr_clear_ff     = wr && hit_lo && (lo_idx == LP_REG_CLEAR_FF);
     end
 
     // 寄存器与通道数组：写路径、主清除、先/后字节翻转。
