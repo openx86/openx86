@@ -5,7 +5,7 @@ repo: https://github.com/openx86/openx86
 description: Segment register file.
 */
 
-module rf_x86_segment_register (
+module rf_x86_segment (
     input  logic         write_enable,       // 写使能
     input  logic [ 2: 0] write_index, // 段寄存器索引（CS/SS/…）
     input  logic [15: 0] write_selector, // 段选择子（可见部分）

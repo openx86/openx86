@@ -5,7 +5,7 @@ repo: https://github.com/openx86/openx86
 description: Test register file.
 */
 
-module rf_x86_test_register (
+module rf_x86_test (
     input  logic         write_enable,       // 写使能
     input  logic [ 2: 0] write_index, // 目标寄存器索引（0–7）
     input  logic [31: 0] write_data, // 写入数据
