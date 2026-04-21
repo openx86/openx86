@@ -2,17 +2,17 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: stage_5_wbu wrapper for write_back_stage commit path.
+description: stage_6_wbu wrapper for write_back_stage commit path.
 */
 // ============================================================================
-// stage_5_wbu
+// stage_6_wbu
 // ----------------------------------------------------------------------------
-// Stage 5 WBU:
+// Stage 6 WBU:
 // - forwards writeback controls/data to architectural register file ports
 // - forwards memory commit bundle to external core bus channel
 // ============================================================================
 
-module stage_5_wbu (
+module stage_6_wbu (
     input  logic          i_stage4_valid, // 输入信号
     output logic          o_stage_valid, // 输出信号
     input  logic          i_stage5_ready, // 输入信号

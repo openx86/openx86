@@ -416,4 +416,74 @@ description: This SystemVerilog source file provides shared definitions for open
 `define EXE_INT_SMSW        6'd59
 `define EXE_INT_LOOP_CTRL   6'd60
 
+// Micro-op structure definition for stage_3_uop
+// Micro-op format: simplified internal instruction representation
+typedef struct packed {
+    logic [ 5: 0] uop_opcode;        // Micro-op operation code
+    logic [ 2: 0] uop_dest_reg;      // Destination register index
+    logic [ 2: 0] uop_src1_reg;      // Source register 1 index
+    logic [ 2: 0] uop_src2_reg;      // Source register 2 index
+    logic [31: 0] uop_immediate;     // Immediate value
+    logic [31: 0] uop_displacement;  // Displacement value
+    logic        uop_has_imm;        // Has immediate operand
+    logic        uop_has_disp;       // Has displacement operand
+    logic        uop_mem_access;     // Memory access operation
+    logic        uop_is_store;       // Store operation (1) vs load (0)
+    logic        uop_valid;          // Micro-op valid flag
+} micro_op_t;
+
+// Micro-op opcodes (extended for full instruction set)
+`define UOP_NOP        6'd0
+`define UOP_ADD        6'd1
+`define UOP_ADC        6'd2
+`define UOP_SUB        6'd3
+`define UOP_SBB        6'd4
+`define UOP_AND        6'd5
+`define UOP_OR         6'd6
+`define UOP_XOR        6'd7
+`define UOP_MOV        6'd8
+`define UOP_MOVSX      6'd9
+`define UOP_MOVZX      6'd10
+`define UOP_LOAD       6'd11
+`define UOP_STORE      6'd12
+`define UOP_BRANCH     6'd13
+`define UOP_CALL       6'd14
+`define UOP_RET        6'd15
+`define UOP_PUSH       6'd16
+`define UOP_POP        6'd17
+`define UOP_MUL        6'd18
+`define UOP_IMUL       6'd19
+`define UOP_DIV        6'd20
+`define UOP_IDIV       6'd21
+`define UOP_INC        6'd22
+`define UOP_DEC        6'd23
+`define UOP_NEG        6'd24
+`define UOP_NOT        6'd25
+`define UOP_CMP        6'd26
+`define UOP_TEST       6'd27
+`define UOP_SHL        6'd28
+`define UOP_SHR        6'd29
+`define UOP_SAR        6'd30
+`define UOP_ROL        6'd31
+`define UOP_ROR        6'd32
+`define UOP_RCL        6'd33
+`define UOP_RCR        6'd34
+`define UOP_SHLD       6'd35
+`define UOP_SHRD       6'd36
+`define UOP_BT         6'd37
+`define UOP_BTS        6'd38
+`define UOP_BTR        6'd39
+`define UOP_BTC        6'd40
+`define UOP_BSF        6'd41
+`define UOP_BSR        6'd42
+`define UOP_XCHG       6'd43
+`define UOP_LEA        6'd44
+`define UOP_XADD       6'd45
+`define UOP_CMPXCHG    6'd46
+`define UOP_SETCC      6'd47
+`define UOP_X87        6'd48
+`define UOP_STRING     6'd49
+`define UOP_FLAG_CTRL  6'd50
+`define UOP_MISC       6'd51
+
 `endif

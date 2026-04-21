@@ -2,18 +2,18 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: stage_4_mem wrapper for EXE->MEM->WRB memory path handshake.
+description: stage_5_mem wrapper for EXE->MEM->WRB memory path handshake.
 */
 // ============================================================================
-// stage_4_mem
+// stage_5_mem
 // ----------------------------------------------------------------------------
-// Stage 4 MEM:
+// Stage 5 MEM:
 // - bridges EXE LSU request through exe_to_mem boundary
 // - executes access in memory_stage
 // - forwards commit-side mem bundle through mem_to_wrb boundary
 // ============================================================================
 
-module stage_4_mem (
+module stage_5_mem (
     input  logic          i_stage3_valid, // 输入信号
     output logic          o_stage3_ready, // 输出信号
 

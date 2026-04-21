@@ -35,6 +35,7 @@ segment
 */
 
 
+module segment_descriptor_decode (
     // 8 字节代码/数据段描述符字段展开（非系统段路径）
     output logic [31: 0] o_base, // 输出信号
     output logic [19: 0] o_limit, // 输出信号

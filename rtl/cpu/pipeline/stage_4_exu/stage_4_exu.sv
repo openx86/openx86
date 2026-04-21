@@ -2,18 +2,18 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: stage_3_exu wrapper for execute units and EXU backpressure.
+description: stage_4_exu wrapper for execute units and EXU backpressure.
 */
 // ============================================================================
-// stage_3_exu
+// stage_4_exu
 // ----------------------------------------------------------------------------
-// Stage 3 EXU:
+// Stage 4 EXU:
 // - i486 extension helpers (CPUID/INVD/WBINVD/INVLPG)
 // - integer/branch/muldiv/x87 execute unit
 // - execute stall and stage ready/valid generation
 // ============================================================================
 
-module stage_3_exu (
+module stage_4_exu (
     // Stage handshake/control
     input  logic                i_stage2_valid, // 输入信号
     input  logic                i_xadd_wait_reg_wr, // 输入信号
