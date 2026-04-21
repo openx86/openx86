@@ -5,7 +5,8 @@ repo: https://github.com/openx86/openx86
 description: IDTR register file.
 */
 
-module rf_idtr_register (    input  logic         idtr_write_enable,       // IDTR 写使能
+module rf_idtr_register (
+    input  logic         idtr_write_enable,       // IDTR 写使能
     input  logic [15: 0] idtr_write_data_limit, // 写入：IDT 限长
     input  logic [31: 0] idtr_write_data_base, // 写入：IDT 线性基址
     output logic [15: 0] idtr_limit, // 当前 IDT 限长

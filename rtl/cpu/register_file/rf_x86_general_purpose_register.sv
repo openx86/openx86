@@ -5,7 +5,8 @@ repo: https://github.com/openx86/openx86
 description: General purpose register file.
 */
 
-module rf_general_purpose_register (    input  logic         write_enable,       // GPR 写使能
+module rf_general_purpose_register (
+    input  logic         write_enable,       // GPR 写使能
     input  logic [ 2: 0] write_index, // 目标 GPR 编号（0–7）
     input  logic [31: 0] write_data, // 写入数据（32 位）
     output logic [ 7: 0][31: 0] read__8, // 8 位读视图（零扩展到 32）

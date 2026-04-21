@@ -110,7 +110,7 @@ module i486_cpu_core (
     logic [15: 0] IDTR_limit;
     logic [31: 0] IDTR_base;
 
-    rf_general_purpose_register u_rf_gpr (
+    rf_x86_general_purpose_register u_rf_gpr (
         .write_enable ( wrb_write_enable ),
         .write_index ( wrb_write_index ),
         .write_data ( wrb_write_data ),
@@ -121,7 +121,7 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    rf_segment_register u_rf_sreg (
+    rf_x86_segment_register u_rf_sreg (
         .write_enable ( wrb_SREG_write_enable ),
         .write_index ( wrb_SREG_write_index ),
         .write_selector ( wrb_SREG_write_selector ),
@@ -132,7 +132,7 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    rf_flags_register u_rf_flags (
+    rf_x86_flags_register u_rf_flags (
         .write_enable ( wrb_FLAGS_write_enable ),
         .write_data ( wrb_FLAGS_write_data ),
         .CF ( CF ),
@@ -154,7 +154,7 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    rf_instruction_pointer_register u_rf_ip (
+    rf_x86_instruction_pointer_register u_rf_ip (
         .write_enable ( wrb_IP_write_enable ),
         .write_data ( wrb_IP_write_data ),
         .IP ( IP ),
@@ -163,7 +163,7 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    rf_control_register u_rf_cr (
+    rf_x86_control_register u_rf_cr (
         .write_enable ( wrb_CR_write_enable ),
         .write_index ( wrb_CR_write_index ),
         .write_data ( wrb_CR_write_data ),
@@ -179,7 +179,7 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    rf_debug_register u_rf_dr (
+    rf_x86_debug_register u_rf_dr (
         .write_enable ( wrb_DR_write_enable ),
         .write_index ( wrb_DR_write_index ),
         .write_data ( wrb_DR_write_data ),
@@ -188,7 +188,7 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    rf_test_register u_rf_tr (
+    rf_x86_test_register u_rf_tr (
         .write_enable ( wrb_TR_write_enable ),
         .write_index ( wrb_TR_write_index ),
         .write_data ( wrb_TR_write_data ),
@@ -197,7 +197,7 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    rf_gdtr_register u_rf_gdtr (
+    rf_x86_gdtr_register u_rf_gdtr (
         .gdtr_write_enable ( 1'b0 ),
         .gdtr_write_data_limit ( 16'd0 ),
         .gdtr_write_data_base ( 32'd0 ),
@@ -207,7 +207,7 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    rf_idtr_register u_rf_idtr (
+    rf_x86_idtr_register u_rf_idtr (
         .idtr_write_enable ( 1'b0 ),
         .idtr_write_data_limit ( 16'd0 ),
         .idtr_write_data_base ( 32'd0 ),
