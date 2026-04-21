@@ -90,6 +90,8 @@ module ifu_dec_tb;
         .o_opcode_cpuid            ( ),
         .o_opcode_mov_reg_to_reg_mem ( ),
         .o_opcode_mov_reg_mem_to_reg ( ),
+        .o_opcode_mov_mem_to_acc   ( ),
+        .o_opcode_mov_acc_to_mem   ( ),
         .o_opcode_add_reg_to_reg_mem ( ),
         .o_opcode_sub_reg_to_reg_mem ( ),
         .o_opcode_jcc_short        ( ),

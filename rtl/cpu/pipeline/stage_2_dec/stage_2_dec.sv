@@ -31,6 +31,8 @@ module stage_2_dec (
     output logic                o_opcode_cpuid, // 输出信号
     output logic                o_opcode_mov_reg_to_reg_mem, // 输出信号
     output logic                o_opcode_mov_reg_mem_to_reg, // 输出信号
+    output logic                o_opcode_mov_mem_to_acc, // 输出信号
+    output logic                o_opcode_mov_acc_to_mem, // 输出信号
     output logic                o_opcode_add_reg_to_reg_mem, // 输出信号
     output logic                o_opcode_sub_reg_to_reg_mem, // 输出信号
     output logic                o_opcode_jcc_short, // 输出信号
@@ -60,6 +62,8 @@ module stage_2_dec (
         .o_opcode_x86_CPUID_CPU_identification        ( o_opcode_cpuid ),
         .o_opcode_x86_MOV_reg_to_reg_mem              ( o_opcode_mov_reg_to_reg_mem ),
         .o_opcode_x86_MOV_reg_mem_to_reg              ( o_opcode_mov_reg_mem_to_reg ),
+        .o_opcode_x86_MOV_mem_to_acc                  ( o_opcode_mov_mem_to_acc ),
+        .o_opcode_x86_MOV_acc_to_mem                  ( o_opcode_mov_acc_to_mem ),
         .o_opcode_x86_ADD_reg_to_reg_mem              ( o_opcode_add_reg_to_reg_mem ),
         .o_opcode_x86_SUB_reg_to_reg_mem              ( o_opcode_sub_reg_to_reg_mem ),
         .o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp ( o_opcode_jcc_short ),
@@ -78,18 +82,30 @@ module stage_2_dec (
         .o_error                                       ( o_decode_error )
     );
 
-    // 译码成功后再向 EXU 发射，避免错误指令占用执行流水。
-    dec_to_exe u_stage_2_dec_to_exe (
+    stage_2_dec_decode_stage u_stage_2_dec_decode_stage (
         .i_instruction_ready ( i_instruction_valid & ~o_decode_error ),
-        .i_exe_ready         ( i_exu_ready ),
-        .o_dec_ready         ( dec_if_ready ),
-        .o_insn_fire         ( o_instruction_fire ),
-        .o_stage_valid       ( o_stage_valid ),
+        .i_stage3_ready      ( i_exu_ready ),
         .i_flush             ( i_flush ),
-        .clk                 ( clk ),
-        .rst_n               ( rst_n )
+        .o_stage_ready       ( dec_if_ready ),
+        .o_stage_valid       ( o_stage_valid ),
+        .o_insn_fire         ( o_instruction_fire )
     );
 
     assign o_ifu_ready = dec_if_ready;
+
+endmodule
+
+module stage_2_dec_decode_stage (
+    input  logic i_instruction_ready,
+    input  logic i_stage3_ready,
+    input  logic i_flush,
+    output logic o_stage_ready,
+    output logic o_stage_valid,
+    output logic o_insn_fire
+);
+
+    assign o_stage_ready = i_stage3_ready;
+    assign o_insn_fire   = i_instruction_ready & i_stage3_ready & ~i_flush;
+    assign o_stage_valid = i_instruction_ready & ~i_flush;
 
 endmodule
