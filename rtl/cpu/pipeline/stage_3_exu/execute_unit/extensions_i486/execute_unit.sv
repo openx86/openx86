@@ -8,8 +8,7 @@ description: Shell integrating i486 CPUID and cache-invalidate extension units.
 // execute_unit — wires cpuid.sv + cache_invalidate.sv
 // ============================================================================
 
-
-    input  logic          insn_fire,
+module execute_unit_i486_ext (    input  logic          insn_fire,
     input  logic          op_cpuid, // 输入信号
     input  logic [31: 0]  gpr_eax, // 输入信号
     input  logic [31: 0]  gpr_ecx, // 输入信号

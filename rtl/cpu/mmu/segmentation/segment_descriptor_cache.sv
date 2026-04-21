@@ -15,7 +15,8 @@ description: segment_descriptor_cache
 
 `include "openx86_defs.h.sv"
 
-module segment_descriptor_cache (    input  logic         protect_enable,       // 1=保护模式：走描述符译码
+
+    input  logic         protect_enable,       // 1=保护模式：走描述符译码
     input  logic [15: 0] segment_selector, // 输入信号
     input  logic [63: 0] segment_descriptor, // 输入信号
     input  logic         is_code_segment, // 实模式简化路径：是否代码语义

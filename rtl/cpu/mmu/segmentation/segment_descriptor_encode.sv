@@ -34,7 +34,8 @@ specifies the protection level 0–3 associated with a
 segment
 */
 
-module segment_descriptor_encode (    // 将结构化属性打包回 64b 描述符（写回/构造路径）
+
+    // 将结构化属性打包回 64b 描述符（写回/构造路径）
     input  logic [31: 0]  base, // 输入信号
     input  logic [19: 0]  limit, // 输入信号
     input  logic          present, // 输入信号

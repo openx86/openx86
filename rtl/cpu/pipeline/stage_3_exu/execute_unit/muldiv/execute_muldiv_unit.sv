@@ -10,8 +10,7 @@ description: This module implements execute_muldiv_unit.
 
 `include "openx86_defs.h.sv"
 
-
-    input  logic [ 2: 0] i_op,  // 乘除操作类型
+module execute_muldiv_unit (    input  logic [ 2: 0] i_op,  // 乘除操作类型
     input  logic [31: 0] i_lo, // 低半部 / 被除数低 32 位
     input  logic [31: 0] i_hi, // 被除数高 32 位
     input  logic [31: 0] i_src, // 乘数或除数

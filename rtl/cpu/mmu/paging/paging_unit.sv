@@ -41,7 +41,8 @@ changes the value of CR0. (See 4.5.4 Translation
 Lookaside Buffer).
 */
 
-module paging_unit (    // 与 MMU 上级握手
+
+    // 与 MMU 上级握手
     input  logic         i_vaild, // 输入信号
     output logic         o_ready, // 输出信号
     // 线性地址与页目录基址（CR3）

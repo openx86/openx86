@@ -44,7 +44,8 @@ routines. The difference between interrupt gates and
 trap gates is that the interrupt gate disables interrupts (resets the IF bit) while the trap gate does not.
 */
 
-module gate_segment_descriptor_decode (    // 门描述符：选择子 + 偏移 + 类型/DPL/P 等（调用/中断/陷阱/任务门）
+
+    // 门描述符：选择子 + 偏移 + 类型/DPL/P 等（调用/中断/陷阱/任务门）
     output logic [15: 0] o_selector, // 输出信号
     output logic [31: 0] o_offset, // 输出信号
     output logic         o_present, // 输出信号

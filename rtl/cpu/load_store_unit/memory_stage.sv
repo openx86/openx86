@@ -10,7 +10,8 @@ description: This module implements memory_stage.
 // Stage 4 (MEM / memory): wraps LSU memory access sequencing.
 // ============================================================================
 
-module memory_stage (    input  logic          i_stage3_valid,   // 上游 EXE 阶段有效（与 MEM 流水对齐）
+
+    input  logic          i_stage3_valid,   // 上游 EXE 阶段有效（与 MEM 流水对齐）
     output logic         o_stage_valid, // 本阶段对外有效（busy 或 done 时保持传递）
     output logic         o_stage_ready, // 本阶段可接收上游新事务
 

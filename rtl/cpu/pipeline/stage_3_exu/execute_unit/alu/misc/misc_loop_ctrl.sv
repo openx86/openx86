@@ -4,8 +4,7 @@ author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
 description: This module implements misc_loop_ctrl.
 */
-
-    input  logic [31: 0]  ecx,  // ECX 当前值
+module misc_loop_ctrl (    input  logic [31: 0]  ecx,  // ECX 当前值
     input  logic          zf, // 零标志
     input  logic [ 1: 0]   mode, // LOOP 族模式
     output logic [31: 0] ecx_next, // LOOP 后 ECX
