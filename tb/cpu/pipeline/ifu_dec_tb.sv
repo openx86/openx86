@@ -42,7 +42,9 @@ module ifu_dec_tb;
     logic [ 4: 0]        o_fifo_count;
     logic [31: 0]        o_eip;
 
-    ifu u_dut (
+    logic dec_if_ready;
+
+    stage_1_ifu u_stage_1_ifu (
         .o_code_vaild              ( o_code_vaild ),
         .i_code_ready              ( i_code_ready ),
         .o_code_address            ( o_code_address ),
@@ -63,12 +65,45 @@ module ifu_dec_tb;
         .i_reload_eip_value        ( i_reload_eip_value ),
         .o_instruction             ( o_instruction ),
         .o_instruction_valid       ( o_instruction_valid ),
-        .o_decode_length           ( o_decode_length ),
-        .o_decode_fire             ( o_decode_fire ),
-        .o_decode_error            ( o_decode_error ),
         .o_segment_fault           ( o_segment_fault ),
         .o_fifo_count              ( o_fifo_count ),
         .o_eip                     ( o_eip ),
+        .i_dec_ready               ( dec_if_ready ),
+        .i_dec_fire                ( o_decode_fire ),
+        .i_dec_consume_bytes       ( o_decode_length ),
+        .i_dec_error               ( o_decode_error ),
+        .clk                       ( clk ),
+        .rst_n                     ( rst_n )
+    );
+
+    stage_2_dec u_stage_2_dec (
+        .i_instruction             ( o_instruction ),
+        .i_instruction_valid       ( o_instruction_valid ),
+        .i_default_operand_size    ( 1'b1 ),
+        .i_exu_ready               ( 1'b1 ),
+        .i_flush                   ( 1'b0 ),
+        .o_ifu_ready               ( dec_if_ready ),
+        .o_instruction_fire        ( o_decode_fire ),
+        .o_stage_valid             ( ),
+        .o_consume_bytes           ( o_decode_length ),
+        .o_decode_error            ( o_decode_error ),
+        .o_opcode_cpuid            ( ),
+        .o_opcode_mov_reg_to_reg_mem ( ),
+        .o_opcode_mov_reg_mem_to_reg ( ),
+        .o_opcode_add_reg_to_reg_mem ( ),
+        .o_opcode_sub_reg_to_reg_mem ( ),
+        .o_opcode_jcc_short        ( ),
+        .o_opcode_jcc_near         ( ),
+        .o_opcode_x87_esc          ( ),
+        .o_dec_displacement        ( ),
+        .o_dec_immediate           ( ),
+        .o_dec_base_reg_is_present ( ),
+        .o_dec_base_reg_index      ( ),
+        .o_dec_index_reg_is_present( ),
+        .o_dec_index_reg_index     ( ),
+        .o_dec_segment_reg_index   ( ),
+        .o_dec_sib_scale_factor    ( ),
+        .o_dec_modrm_mod           ( ),
         .clk                       ( clk ),
         .rst_n                     ( rst_n )
     );

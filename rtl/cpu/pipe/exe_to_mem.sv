@@ -32,7 +32,7 @@ module exe_to_mem (
     input  logic          rst_n // 复位信号
 );
 
-`include "cpu/pipeline/pipeline_types.svh"
+`include "cpu/pipe/pipeline_types.svh"
 
     exe_to_mem_t payload_in;
     exe_to_mem_t payload_out;

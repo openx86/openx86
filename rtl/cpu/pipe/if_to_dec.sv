@@ -24,7 +24,7 @@ module if_to_dec (
     input  logic          rst_n // 复位信号
 );
 
-`include "cpu/pipeline/pipeline_types.svh"
+`include "cpu/pipe/pipeline_types.svh"
 
     ifu_to_dec_t payload_in;
     ifu_to_dec_t payload_out;

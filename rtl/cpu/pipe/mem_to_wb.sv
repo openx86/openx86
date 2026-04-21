@@ -28,7 +28,7 @@ module mem_to_wrb (
     input  logic          rst_n // 复位信号
 );
 
-`include "cpu/pipeline/pipeline_types.svh"
+`include "cpu/pipe/pipeline_types.svh"
 
     mem_to_wrb_t payload_in;
     mem_to_wrb_t payload_out;

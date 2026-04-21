@@ -376,27 +376,6 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    execute_unit_i486_ext u_exec486 (
-        .clk ( clk ),
-        .rst_n ( rst_n ),
-        .insn_fire ( insn_fire ),
-        .op_cpuid ( o_opcode_x86_CPUID_CPU_identification ),
-        .gpr_eax ( GPR_read_32[0] ),
-        .gpr_ecx ( GPR_read_32[1] ),
-        .cpuid_busy ( cpuid_busy ),
-        .gpr_wr_en ( cpuid_gpr_wr ),
-        .gpr_wr_idx ( cpuid_gpr_idx ),
-        .gpr_wr_data ( cpuid_gpr_wdata ),
-        .cpuid_done_pulse ( cpuid_done_pulse ),
-        .op_invd ( o_opcode_x86_INVD_invalidate_cache ),
-        .op_wbinvd ( o_opcode_x86_WBINVD_writeback_and_invalidate_data_cache ),
-        .op_invlpg ( o_opcode_x86_INVLPG_invalidate_TLB_entry ),
-        .invlpg_ea ( o_displacement ),
-        .cache_flush_pulse ( cache_flush_pulse ),
-        .invlpg_pulse ( invlpg_pulse ),
-        .invlpg_linear_addr ( invlpg_linear_addr )
-    );
-
     // --- EU/AM：EU 负责计算，AM 负责访存握手 ---
     // 相对跳转立即数：Jcc 等使用（32 位位移 / 8 位符号扩展）
     logic [31: 0] br_rel32;
@@ -1144,10 +1123,6 @@ module i486_cpu_core (
     // AM（memory_stage）与 EU 分支结果
     logic        am_lsu_done;
     logic        am_lsu_busy;
-    logic        am_lsu_mem_valid;
-    logic        am_lsu_mem_we;
-    logic [31: 0] am_lsu_mem_addr;
-    logic [31: 0] am_lsu_mem_wdata;
     logic [31: 0] am_lsu_rdata;
     logic        br_taken;
     logic [31: 0] br_tgt;
@@ -1172,17 +1147,7 @@ module i486_cpu_core (
     logic [31: 0] wrb_mem_address;
     logic [31: 0] wrb_mem_write_data;
 
-    // EXE→MEM 桥（pipeline_boundary → memory_stage）
-    logic        s34_stage3_valid;
-    logic        s34_start;
-    logic        s34_is_store;
-    logic [31: 0] s34_addr;
-    logic [31: 0] s34_wdata;
-    logic [31: 0] s34_mem_rdata;
-    logic        s34_mem_ready;
-    logic        s34_stage_ready;
-
-    // MEM→WRB 桥（memory_stage → pipeline_boundary → write_back_stage）
+    // MEM→WRB 桥（stage_4_mem → stage_5_wbu）
     logic        s45_stage4_valid;
     logic        s45_mem_valid;
     logic        s45_mem_write_enable;
@@ -1190,7 +1155,7 @@ module i486_cpu_core (
     logic [31: 0] s45_mem_write_data;
     logic        s45_stage_ready;
 
-    write_back_stage u_stage_5_wrb (
+    stage_5_wbu u_stage_5_wbu (
         .i_stage4_valid ( s45_stage4_valid ),
         .o_stage_valid ( stage5_valid ),
         .i_stage5_ready ( 1'b1 ),
@@ -1242,18 +1207,40 @@ module i486_cpu_core (
         .o_mem_valid ( wrb_mem_valid ),
         .o_mem_write_enable ( wrb_mem_write_enable ),
         .o_mem_address ( wrb_mem_address ),
-        .o_mem_write_data ( wrb_mem_write_data )
+        .o_mem_write_data ( wrb_mem_write_data ),
+        .clk ( clk ),
+        .rst_n ( rst_n )
     );
 
 
-    execute_unit u_eu (
-        .clk ( clk ),
-        .rst_n ( rst_n ),
+    stage_3_exu u_stage_3_exu_main (
+        .i_stage2_valid ( stage2_valid ),
+        .i_xadd_wait_reg_wr ( xadd_wait_reg_wr ),
+        .i_am_lsu_busy ( am_lsu_busy ),
+        .i_muldiv_pair_wait ( muldiv_pair_wait ),
+        .o_exec_stall ( exec_stall ),
+        .o_stage_ready ( s23_exe_ready ),
+        .o_stage_valid ( stage3_valid ),
+        .i_insn_fire ( insn_fire ),
+        .i_op_cpuid ( o_opcode_x86_CPUID_CPU_identification ),
+        .i_gpr_eax ( GPR_read_32[0] ),
+        .i_gpr_ecx ( GPR_read_32[1] ),
+        .i_op_invd ( o_opcode_x86_INVD_invalidate_cache ),
+        .i_op_wbinvd ( o_opcode_x86_WBINVD_writeback_and_invalidate_data_cache ),
+        .i_op_invlpg ( o_opcode_x86_INVLPG_invalidate_TLB_entry ),
+        .i_invlpg_ea ( o_displacement ),
+        .o_cpuid_busy ( cpuid_busy ),
+        .o_cpuid_gpr_wr ( cpuid_gpr_wr ),
+        .o_cpuid_gpr_idx ( cpuid_gpr_idx ),
+        .o_cpuid_gpr_wdata ( cpuid_gpr_wdata ),
+        .o_cpuid_done_pulse ( cpuid_done_pulse ),
+        .o_cache_flush_pulse ( cache_flush_pulse ),
+        .o_invlpg_pulse ( invlpg_pulse ),
+        .o_invlpg_linear_addr ( invlpg_linear_addr ),
         .i_agu_base ( agu_base_w ),
         .i_agu_index ( agu_index_w ),
         .i_agu_scale ( o_sib_scale_factor ),
         .i_agu_disp ( o_displacement ),
-        .o_agu_effective_addr ( eu_agu_ea ),
         .i_br_is_jcc ( o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp | o_opcode_x86_Jcc_jump_if_cond_is_met_full_disp ),
         .i_br_jcc_nibble ( o_tttn ),
         .i_br_CF ( CF ),
@@ -1265,15 +1252,10 @@ module i486_cpu_core (
         .i_br_rel32 ( br_rel32 ),
         .i_br_rel8 ( br_rel8 ),
         .i_br_use_rel8 ( o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp ),
-        .o_br_taken ( br_taken ),
-        .o_br_target_eip ( br_tgt ),
         .i_md_op ( eu_md_op ),
         .i_md_lo ( eu_md_lo ),
         .i_md_hi ( eu_md_hi ),
         .i_md_src ( eu_md_src ),
-        .o_md_lo ( eu_md_out_lo ),
-        .o_md_hi ( eu_md_out_hi ),
-        .o_md_div0 ( eu_md_div0 ),
         .i_int_valid ( eu_int_valid ),
         .i_int_op ( eu_int_op_sel ),
         .i_int_a ( eu_int_a ),
@@ -1281,10 +1263,6 @@ module i486_cpu_core (
         .i_int_cf ( eu_int_cf ),
         .i_int_af ( eu_int_af ),
         .i_int_count ( eu_int_count ),
-        .o_int_result ( eu_int_result ),
-        .o_int_cf ( eu_int_cf_out ),
-        .o_int_af ( eu_int_af_out ),
-        .o_int_zf ( eu_int_zf_out ),
         .i_x87_valid (
             insn_fire & o_x87_is_esc & ( eu_x87_op_sel != `EXE_X87_NOP ) & ~cpuid_busy & ~in_exception &
             ~o_error & ~post486_illegal
@@ -1292,68 +1270,42 @@ module i486_cpu_core (
         .i_x87_op ( eu_x87_op_sel ),
         .i_x87_push_data ( eu_x87_push_data ),
         .i_x87_st_src ( o_x87_memory_operand ? 3'd0 : o_x87_rm ),
+        .o_agu_effective_addr ( eu_agu_ea ),
+        .o_br_taken ( br_taken ),
+        .o_br_target_eip ( br_tgt ),
+        .o_md_lo ( eu_md_out_lo ),
+        .o_md_hi ( eu_md_out_hi ),
+        .o_md_div0 ( eu_md_div0 ),
+        .o_int_result ( eu_int_result ),
+        .o_int_cf ( eu_int_cf_out ),
+        .o_int_af ( eu_int_af_out ),
+        .o_int_zf ( eu_int_zf_out ),
         .o_x87_st0 ( eu_x87_st0 ),
         .o_x87_st1 ( eu_x87_st1 ),
         .o_x87_zf ( eu_x87_zf ),
         .o_x87_pf ( eu_x87_pf ),
-        .o_x87_cf ( eu_x87_cf )
-    );
-
-    exe_to_mem u_stage_3_4_exe_mem (
-        .i_stage3_valid ( stage3_valid ),
-        .o_stage3_valid ( s34_stage3_valid ),
-        .i_mem_stage_ready ( s34_stage_ready ),
-        .o_exe_ready ( ),
-        .i_start ( am_lsu_start_w ),
-        .o_start ( s34_start ),
-        .i_is_store ( lsu_is_store_w ),
-        .o_is_store ( s34_is_store ),
-        .i_addr ( lsu_addr_req_w ),
-        .o_addr ( s34_addr ),
-        .i_wdata ( lsu_wdata_req_w ),
-        .o_wdata ( s34_wdata ),
-        .i_mem_rdata ( data_data_read ),
-        .o_mem_rdata ( s34_mem_rdata ),
-        .i_mem_ready ( data_ready ),
-        .o_mem_ready ( s34_mem_ready ),
-        .i_flush ( pipe_flush ),
+        .o_x87_cf ( eu_x87_cf ),
         .clk ( clk ),
         .rst_n ( rst_n )
     );
 
-    memory_stage u_stage_4_mem (
-        .i_stage3_valid ( s34_stage3_valid ),
-        .o_stage_valid ( stage4_valid ),
-        .o_stage_ready ( s34_stage_ready ),
-        .clk ( clk ),
-        .rst_n ( rst_n ),
-        .i_start ( s34_start ),
-        .i_is_store ( s34_is_store ),
-        .i_addr ( s34_addr ),
-        .i_wdata ( s34_wdata ),
-        .o_rdata ( am_lsu_rdata ),
-        .o_done ( am_lsu_done ),
-        .o_busy ( am_lsu_busy ),
-        .o_mem_valid ( am_lsu_mem_valid ),
-        .o_mem_we ( am_lsu_mem_we ),
-        .o_mem_addr ( am_lsu_mem_addr ),
-        .o_mem_wdata ( am_lsu_mem_wdata ),
-        .i_mem_rdata ( s34_mem_rdata ),
-        .i_mem_ready ( s34_mem_ready )
-    );
-
-    mem_to_wrb u_stage_4_5_mem_wrb (
-        .i_stage4_valid ( stage4_valid ),
+    stage_4_mem u_stage_4_mem_main (
+        .i_stage3_valid ( stage3_valid ),
+        .o_stage3_ready ( ),
+        .i_start ( am_lsu_start_w ),
+        .i_is_store ( lsu_is_store_w ),
+        .i_addr ( lsu_addr_req_w ),
+        .i_wdata ( lsu_wdata_req_w ),
+        .i_mem_rdata ( data_data_read ),
+        .i_mem_ready ( data_ready ),
+        .o_lsu_rdata ( am_lsu_rdata ),
+        .o_lsu_done ( am_lsu_done ),
+        .o_lsu_busy ( am_lsu_busy ),
         .o_stage4_valid ( s45_stage4_valid ),
         .i_wrb_ready ( s45_stage_ready ),
-        .o_mem_ready ( ),
-        .i_mem_valid ( am_lsu_mem_valid ),
         .o_mem_valid ( s45_mem_valid ),
-        .i_mem_write_enable ( am_lsu_mem_we ),
         .o_mem_write_enable ( s45_mem_write_enable ),
-        .i_mem_address ( am_lsu_mem_addr ),
         .o_mem_address ( s45_mem_address ),
-        .i_mem_write_data ( am_lsu_mem_wdata ),
         .o_mem_write_data ( s45_mem_write_data ),
         .i_flush ( pipe_flush ),
         .clk ( clk ),
@@ -1390,17 +1342,6 @@ module i486_cpu_core (
                 lsu_ld_dst_reg <= modrm_reg_field; // 其余 load：目的为 ModR/M 的 reg 域
         end
     end
-
-    execute_stall u_stage_3_exe (
-        .i_stage2_valid ( stage2_valid ),
-        .i_cpuid_busy ( cpuid_busy ),
-        .i_xadd_wait_reg_wr ( xadd_wait_reg_wr ),
-        .i_am_lsu_busy ( am_lsu_busy ),
-        .i_muldiv_pair_wait ( muldiv_pair_wait ),
-        .o_exec_stall ( exec_stall ),
-        .o_stage_ready ( s23_exe_ready ),
-        .o_stage_valid ( stage3_valid )
-    );
 
     // --- 异常 / 写回 ---
     logic       in_exception;         // 已进入异常处理路径时阻塞正常发射
