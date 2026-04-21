@@ -2,21 +2,13 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements unit.
-*/
-/*
-project: w80386dx
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/w80386dx
-module: unit
-create at: 2022-01-04 03:27:51
-description: decode unit (模块名与文件名 unit 一致)
+description: stage_2_dec decode unit - x86 instruction decoder.
 */
 
 `include "openx86_defs.h.sv"
 
 // 顶层译码单元：前缀解析 → 主操作码 one-hot → 域提取 → ModRM/SIB → 位移/立即数 → 字节消耗
-module unit (
+module stage_2_dec_decode_unit (
     input  logic [15: 0][ 7: 0] i_instruction, // 16B 指令滑窗（低字节为首字节）
     input  logic          i_default_operand_size, // 默认操作数宽度（16/32）
     output logic         o_opcode_x86_AAA_ASCII_adjust_after_add, // 输出信号

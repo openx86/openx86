@@ -1,3 +1,10 @@
+/*
+project: openx86
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
+description: decode x87 FPU operand fields from ModR/M byte
+*/
+
 module stage_2_dec_x87_operand (
 
     // =========================
@@ -45,12 +52,12 @@ module stage_2_dec_x87_operand (
     // ============================================================
     // decode ModR/M
     // ============================================================
-    wire [1:0] mod       = i_instruction[1][7:6];
-    wire [2:0] rm        = i_instruction[1][2:0];
-    wire [2:0] reg_field = i_instruction[1][5:3];
+    logic [1:0] mod       = i_instruction[1][7:6];
+    logic [2:0] rm        = i_instruction[1][2:0];
+    logic [2:0] reg_field = i_instruction[1][5:3];
 
-    wire is_mem = (mod != 2'b11);
-    wire is_reg = (mod == 2'b11);
+    logic is_mem = (mod != 2'b11);
+    logic is_reg = (mod == 2'b11);
 
     // ============================================================
     // operand type classification

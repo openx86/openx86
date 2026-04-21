@@ -262,9 +262,12 @@ module stage_2_dec (
     input  logic                rst_n // 复位信号
 );
 
-    logic dec_if_ready;
+    // Decode stage handshake logic (merged from decode_stage.sv)
+    assign o_ifu_ready = i_exu_ready;
+    assign o_instruction_fire = i_instruction_valid & i_exu_ready & ~i_flush;
+    assign o_stage_valid = i_instruction_valid & ~o_decode_error;
 
-    unit u_stage_2_dec_unit (
+    stage_2_dec_decode_unit u_stage_2_dec_unit (
         .i_instruction                                 ( i_instruction ),
         .i_default_operand_size                        ( i_default_operand_size ),
         .o_opcode_x86_AAA_ASCII_adjust_after_add       ( o_opcode_aaa ),
@@ -498,30 +501,5 @@ module stage_2_dec (
         .o_error                                       ( o_decode_error )
     );
 
-    stage_2_dec_decode_stage u_stage_2_dec_decode_stage (
-        .i_instruction_ready ( i_instruction_valid & ~o_decode_error ),
-        .i_stage3_ready      ( i_exu_ready ),
-        .i_flush             ( i_flush ),
-        .o_stage_ready       ( dec_if_ready ),
-        .o_stage_valid       ( o_stage_valid ),
-        .o_insn_fire         ( o_instruction_fire )
-    );
-
-    assign o_ifu_ready = dec_if_ready;
-
-endmodule
-
-module stage_2_dec_decode_stage (
-    input  logic i_instruction_ready,
-    input  logic i_stage3_ready,
-    input  logic i_flush,
-    output logic o_stage_ready,
-    output logic o_stage_valid,
-    output logic o_insn_fire
-);
-
-    assign o_stage_ready = i_stage3_ready;
-    assign o_insn_fire   = i_instruction_ready & i_stage3_ready & ~i_flush;
-    assign o_stage_valid = i_instruction_ready & ~i_flush;
 
 endmodule

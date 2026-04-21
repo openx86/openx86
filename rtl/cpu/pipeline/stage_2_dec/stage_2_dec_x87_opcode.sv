@@ -1,8 +1,8 @@
 /*
 project: openx86
-module: opcode_x87
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
 description: decode x87 FPU ESC instruction set (D8–DF)
-author: Chang Wei
 */
 
 module stage_2_dec_x87_opcode (
@@ -48,8 +48,8 @@ module stage_2_dec_x87_opcode (
 );
 
     // wire       esc           = (i_instruction[0] >= 8'hD8) && (i_instruction[0] <= 8'hDF);
-    wire [2:0] modrm_reg     = i_instruction[1][5:3];
-    wire [1:0] mod           = i_instruction[1][7:6];
+    logic [2:0] modrm_reg     = i_instruction[1][5:3];
+    logic [1:0] mod           = i_instruction[1][7:6];
     // wire       fpu_reg_group = esc && (mod == 2'b11);
 
     assign o_opcode_x87_FADD                = (i_instruction[0] == 8'hD8 && modrm_reg == 3'b000);

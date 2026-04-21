@@ -2,14 +2,6 @@
 project: openx86
 author: Chang Wei<changwei1006@gmail.com>
 repo: https://github.com/openx86/openx86
-description: This module implements mod_rm.
-*/
-/*
-project: w80386dx
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/w80386dx
-module: stage_2_dec_x86_operand_mod_rm
-create at: 2021-10-23 15:54:39
 description: decode mod and r/m field in instruction
 */
 

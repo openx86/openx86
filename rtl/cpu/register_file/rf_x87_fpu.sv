@@ -1,8 +1,8 @@
 /*
 project: openx86
-module: rf_x87_fpu
+author: Chang Wei<changwei1006@gmail.com>
+repo: https://github.com/openx86/openx86
 description: x87 floating point register stack (ST0–ST7)
-author: Chang Wei
 */
 
 module rf_x87_fpu (
@@ -54,8 +54,8 @@ module rf_x87_fpu (
         map_idx = top + sti; // 自然溢出就是 mod 8
     endfunction
 
-    wire [2:0] phys_write_idx = map_idx(write_sti);
-    wire [2:0] phys_read_idx  = map_idx(read_sti);
+    logic [2:0] phys_write_idx = map_idx(write_sti);
+    logic [2:0] phys_read_idx  = map_idx(read_sti);
 
     // ============================================================
     // sequential logic
