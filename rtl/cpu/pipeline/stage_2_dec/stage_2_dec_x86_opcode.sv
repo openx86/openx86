@@ -13,12 +13,12 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : stage_2_dec_x86_opcode_x86.sv
+//  File        : stage_2_dec_x86_opcode.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : stage_2_dec_x86_opcode_x86 module
+//  Description : stage_2_dec_x86_opcode module
 // ============================================================================
 
-module stage_2_dec_x86_opcode_x86 (
+module stage_2_dec_x86_opcode (
     output logic                o_opcode_x86_AAA_ASCII_adjust_after_add,
     output logic                o_opcode_x86_AAD_ASCII_AX_before_div,
     output logic                o_opcode_x86_AAM_ASCII_AX_after_mul,
