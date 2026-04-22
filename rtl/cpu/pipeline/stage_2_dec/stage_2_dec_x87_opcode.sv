@@ -34,6 +34,8 @@ module stage_2_dec_x87_opcode (
     // =========================
     output logic            o_opcode_x87_FADD,
     output logic            o_opcode_x87_FMUL,
+    output logic            o_opcode_x87_FCOM,
+    output logic            o_opcode_x87_FCOMP,
     output logic            o_opcode_x87_FSUB,
     output logic            o_opcode_x87_FSUBR,
     output logic            o_opcode_x87_FDIV,

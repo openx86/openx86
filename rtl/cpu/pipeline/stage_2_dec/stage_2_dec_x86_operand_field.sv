@@ -269,6 +269,7 @@ module stage_2_dec_x86_operand_field (
     output logic        o_disp_present,
     output logic        o_opcode_byte_1,
     output logic        o_opcode_byte_2,
+    output logic        o_opcode_byte_3,
     output logic        o_decode_error
 );
 
@@ -384,7 +385,7 @@ assign w_at_0_0 =
     i_opcode_x86_CMP_mem_with_reg |
     i_opcode_x86_CMP_reg_with_mem |
     i_opcode_x86_CMP_imm_with_reg_mem |
-    i_opcode_x86_CMP_imm_to_acc |
+    i_opcode_x86_CMP_imm_with_acc |
     i_opcode_x86_DEC_reg_mem |
     i_opcode_x86_DIV_acc_by_reg_mem |
     i_opcode_x86_IDIV_acc_by_reg_mem |
@@ -443,7 +444,7 @@ assign w_at_0_0 =
     i_opcode_x86_SUB_imm_to_acc |
     i_opcode_x86_TEST_reg_mem_and_reg |
     i_opcode_x86_TEST_imm_and_reg_mem |
-    i_opcode_x86_TEST_imm_to_acc |
+    i_opcode_x86_TEST_imm_and_acc |
     i_opcode_x86_XCHG_reg_mem_with_reg |
     i_opcode_x86_XOR_reg_to_reg_mem |
     i_opcode_x86_XOR_reg_mem_to_reg |
@@ -640,7 +641,7 @@ assign unsigned_full_offset_selector_is_present =
     i_opcode_x86_JMP_to_other_segment_direct |
     1'b0;
 
-assign o_immediate_size_full =
+assign o_imm_size_full =
     i_opcode_x86_ADC_imm_to_reg_mem |
     i_opcode_x86_ADC_imm_to_acc |
     i_opcode_x86_ADD_imm_to_reg_mem |
@@ -648,7 +649,7 @@ assign o_immediate_size_full =
     i_opcode_x86_AND_imm_to_reg_mem |
     i_opcode_x86_AND_imm_to_acc |
     i_opcode_x86_CMP_imm_with_reg_mem |
-    i_opcode_x86_CMP_imm_to_acc |
+    i_opcode_x86_CMP_imm_with_acc |
     i_opcode_x86_IMUL_reg_mem_with_imm_to_reg |
     i_opcode_x86_MOV_imm_to_reg_mem |
     i_opcode_x86_MOV_imm_to_reg |
@@ -660,7 +661,7 @@ assign o_immediate_size_full =
     i_opcode_x86_SUB_imm_to_reg_mem |
     i_opcode_x86_SUB_imm_to_acc |
     i_opcode_x86_TEST_imm_and_reg_mem |
-    i_opcode_x86_TEST_imm_to_acc |
+    i_opcode_x86_TEST_imm_and_acc |
     i_opcode_x86_XOR_imm_to_reg_mem |
     i_opcode_x86_XOR_imm_to_acc |
     1'b0;
@@ -951,7 +952,7 @@ assign o_opcode_byte_1 =
     i_opcode_x86_CMP_mem_with_reg                |
     i_opcode_x86_CMP_reg_with_mem                |
     i_opcode_x86_CMP_imm_with_reg_mem            |
-    i_opcode_x86_CMP_imm_to_acc                  |
+    i_opcode_x86_CMP_imm_with_acc                  |
     i_opcode_x86_CMPS_compare_string_operands    |
     i_opcode_x86_CWD_convert_word_to_double      |
     i_opcode_x86_CWDE_convert_word_to_double     |

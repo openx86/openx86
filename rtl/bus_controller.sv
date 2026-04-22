@@ -393,8 +393,8 @@ chip_8254_pit u_chip_pit (
 );
 
 chip_i8042_ps2 #(
-    .USE_REAL_PS2 (USE_REAL_PS2),
-    .CLK_HZ       (PS2_CLK_HZ)
+    .P_USE_REAL_PS2 (USE_REAL_PS2),
+    .P_CLK_HZ       (PS2_CLK_HZ)
 ) u_chip_ps2 (
     .clk               (clk),
     .rst_n             (rst_n),
@@ -472,12 +472,12 @@ ide_controller #(
     .i_wdata       (i_bus_data_write[7: 0]),
     .o_rdata       (r_ide),
     .o_sdio_clk    (o_sdio_clk),
-    .o_sdio_cmd_o  (o_sdio_cmd_o),
+    .o_sdio_cmd_out (o_sdio_cmd_o),
     .o_sdio_cmd_oe (o_sdio_cmd_oe),
-    .i_sdio_cmd_i  (i_sdio_cmd_i),
-    .o_sdio_dat_o  (o_sdio_dat_o),
+    .i_sdio_cmd_in (i_sdio_cmd_i),
+    .o_sdio_dat_out (o_sdio_dat_o),
     .o_sdio_dat_oe (o_sdio_dat_oe),
-    .i_sdio_dat_i  (i_sdio_dat_i),
+    .i_sdio_dat_in (i_sdio_dat_i),
     .clk           (clk),
     .rst_n         (rst_n)
 );

@@ -283,239 +283,242 @@ module stage_2_dec (
     assign o_instruction_fire = i_instruction_valid & i_exu_ready & ~i_flush;
     assign o_stage_valid       = i_instruction_valid & ~o_decode_error;
 
-    stage_2_dec_decode_unit u_stage_2_dec_unit (
-        .i_instruction          (i_instruction),
-        .i_default_operand_size (i_default_operand_size),
-        .o_opcode_x86_AAA_ASCII_adjust_after_add       (o_opcode_aaa),
-        .o_opcode_x86_AAD_ASCII_AX_before_div          (o_opcode_aad),
-        .o_opcode_x86_AAM_ASCII_AX_after_mul           (o_opcode_aam),
-        .o_opcode_x86_AAS_ASCII_adjust_after_sub       (o_opcode_aas),
-        .o_opcode_x86_ADC_reg_to_reg_mem               (o_opcode_adc_reg_to_reg_mem),
-        .o_opcode_x86_ADC_reg_mem_to_reg               (o_opcode_adc_reg_mem_to_reg),
-        .o_opcode_x86_ADC_imm_to_reg_mem              (o_opcode_adc_imm_to_reg_mem),
-        .o_opcode_x86_ADC_imm_to_acc                   (o_opcode_adc_imm_to_acc),
-        .o_opcode_x86_ADD_reg_to_reg_mem               (o_opcode_add_reg_to_reg_mem),
-        .o_opcode_x86_ADD_reg_mem_to_reg               (o_opcode_add_reg_mem_to_reg),
-        .o_opcode_x86_ADD_imm_to_reg_mem              (o_opcode_add_imm_to_reg_mem),
-        .o_opcode_x86_ADD_imm_to_acc                   (o_opcode_add_imm_to_acc),
-        .o_opcode_x86_AND_reg_to_reg_mem               (o_opcode_and_reg_to_reg_mem),
-        .o_opcode_x86_AND_reg_mem_to_reg               (o_opcode_and_reg_mem_to_reg),
-        .o_opcode_x86_AND_imm_to_reg_mem              (o_opcode_and_imm_to_reg_mem),
-        .o_opcode_x86_AND_imm_to_acc                   (o_opcode_and_imm_to_acc),
-        .o_opcode_x86_ARPL_adjust_RPL_field_of_selector (o_opcode_arpl),
-        .o_opcode_x86_BOUND_check_array_against_bounds (o_opcode_bound),
-        .o_opcode_x86_BSF_bit_scan_forward             (o_opcode_bsf),
-        .o_opcode_x86_BSR_bit_scan_reverse             (o_opcode_bsr),
-        .o_opcode_x86_BSWAP_byte_swap                  (o_opcode_bswap),
-        .o_opcode_x86_BT_reg_mem_with_imm              (o_opcode_bt_imm),
-        .o_opcode_x86_BT_reg_mem_with_reg              (o_opcode_bt_reg),
-        .o_opcode_x86_BTC_reg_mem_with_imm             (o_opcode_btc_imm),
-        .o_opcode_x86_BTC_reg_mem_with_reg             (o_opcode_btc_reg),
-        .o_opcode_x86_BTR_reg_mem_with_imm             (o_opcode_btr_imm),
-        .o_opcode_x86_BTR_reg_mem_with_reg             (o_opcode_btr_reg),
-        .o_opcode_x86_BTS_reg_mem_with_imm             (o_opcode_bts_imm),
-        .o_opcode_x86_BTS_reg_mem_with_reg             (o_opcode_bts_reg),
-        .o_opcode_x86_CALL_in_same_segment_direct      (o_opcode_call_near_direct),
-        .o_opcode_x86_CALL_in_same_segment_indirect    (o_opcode_call_near_indirect),
-        .o_opcode_x86_CALL_in_other_segment_direct     (o_opcode_call_far_direct),
-        .o_opcode_x86_CALL_in_other_segment_indirect   (o_opcode_call_far_indirect),
-        .o_opcode_x86_CBW_convert_byte_to_word         (o_opcode_cbw),
-        .o_opcode_x86_CDQ_convert_double_word_to_quad_word (o_opcode_cdq),
-        .o_opcode_x86_CLC_clear_carry_flag              (o_opcode_clc),
-        .o_opcode_x86_CLD_clear_direction_flag         (o_opcode_cld),
-        .o_opcode_x86_CLI_clear_interrupt_enable_flag  (o_opcode_cli),
-        .o_opcode_x86_CLTS_clear_task_switched_flag    (o_opcode_clts),
-        .o_opcode_x86_CMC_complement_carry_flag        (o_opcode_cmc),
-        .o_opcode_x86_CMP_mem_with_reg                 (o_opcode_cmp_mem_reg),
-        .o_opcode_x86_CMP_reg_with_mem                 (o_opcode_cmp_reg_mem),
-        .o_opcode_x86_CMP_imm_with_reg_mem             (o_opcode_cmp_imm_reg_mem),
-        .o_opcode_x86_CMP_imm_with_acc                 (o_opcode_cmp_imm_acc),
-        .o_opcode_x86_CMPS_compare_string_operands     (o_opcode_cmps),
-        .o_opcode_x86_CMPXCHG_compare_and_exchange      (o_opcode_cmpxchg),
-        .o_opcode_x86_CPUID_CPU_identification        (o_opcode_cpuid),
-        .o_opcode_x86_CWD_convert_word_to_double       (o_opcode_cwd),
-        .o_opcode_x86_CWDE_convert_word_to_double      (o_opcode_cwde),
-        .o_opcode_x86_DAA_decimal_adjust_AL_after_add  (o_opcode_daa),
-        .o_opcode_x86_DAS_decimal_adjust_AL_after_sub  (o_opcode_das),
-        .o_opcode_x86_DEC_reg_mem                      (o_opcode_dec_reg_mem),
-        .o_opcode_x86_DEC_reg                          (o_opcode_dec_reg),
-        .o_opcode_x86_DIV_acc_by_reg_mem               (o_opcode_div),
-        .o_opcode_x86_HLT_halt                         (o_opcode_hlt),
-        .o_opcode_x86_IDIV_acc_by_reg_mem              (o_opcode_idiv),
-        .o_opcode_x86_IMUL_acc_with_reg_mem             (o_opcode_imul_acc),
-        .o_opcode_x86_IMUL_reg_with_reg_mem             (o_opcode_imul_reg),
-        .o_opcode_x86_IMUL_reg_mem_with_imm_to_reg      (o_opcode_imul_imm),
-        .o_opcode_x86_IN_port_fixed                    (o_opcode_in_fixed),
-        .o_opcode_x86_IN_port_variable                  (o_opcode_in_var),
-        .o_opcode_x86_INC_reg_mem                      (o_opcode_inc_reg_mem),
-        .o_opcode_x86_INC_reg                          (o_opcode_inc_reg),
-        .o_opcode_x86_INS_input_from_DX_port            (o_opcode_ins),
-        .o_opcode_x86_INT_interrupt_type_n             (o_opcode_int_n),
-        .o_opcode_x86_INT_interrupt_type_3             (o_opcode_int_3),
-        .o_opcode_x86_INT_interrupt_type_4             (o_opcode_int_4),
-        .o_opcode_x86_INVD_invalidate_cache             (o_opcode_invd),
-        .o_opcode_x86_INVLPG_invalidate_TLB_entry       (o_opcode_invlpg),
-        .o_opcode_x86_INVPCID_invalidate_process_ctx_id_without_pfx_operand_size (o_opcode_invpcid),
-        .o_opcode_x86_IRET_interrupt_return            (o_opcode_iret),
-        .o_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp (o_opcode_jcc_short),
-        .o_opcode_x86_Jcc_jump_if_cond_is_met_full_disp (o_opcode_jcc_near),
-        .o_opcode_x86_JCXZ_jump_on_CX_zero             (o_opcode_jcxz),
-        .o_opcode_x86_JMP_to_same_segment_short        (o_opcode_jmp_short),
-        .o_opcode_x86_JMP_to_same_segment_direct       (o_opcode_jmp_near_direct),
-        .o_opcode_x86_JMP_to_same_segment_indirect     (o_opcode_jmp_near_indirect),
-        .o_opcode_x86_JMP_to_other_segment_direct      (o_opcode_jmp_far_direct),
-        .o_opcode_x86_JMP_to_other_segment_indirect    (o_opcode_jmp_far_indirect),
-        .o_opcode_x86_LAHF_load_FLAG_into_AH           (o_opcode_lahf),
-        .o_opcode_x86_LAR_load_access_rights_byte       (o_opcode_lar),
-        .o_opcode_x86_LDS_load_pointer_to_DS            (o_opcode_lds),
-        .o_opcode_x86_LEA_load_effective_adddress_to_reg (o_opcode_lea),
-        .o_opcode_x86_LEAVE_high_level_procedure_exit  (o_opcode_leave),
-        .o_opcode_x86_LES_load_pointer_to_ES           (o_opcode_les),
-        .o_opcode_x86_LFS_load_pointer_to_FS            (o_opcode_lfs),
-        .o_opcode_x86_LGDT_load_global_desciptor_table_reg (o_opcode_lgdt),
-        .o_opcode_x86_LGS_load_pointer_to_GS           (o_opcode_lgs),
-        .o_opcode_x86_LIDT_load_interrupt_desciptor_table_reg (o_opcode_lidt),
-        .o_opcode_x86_LLDT_load_local_desciptor_table_reg (o_opcode_lldt),
-        .o_opcode_x86_LMSW_load_status_word            (o_opcode_lmsw),
-        .o_opcode_x86_LODS_load_string_operand        (o_opcode_lods),
-        .o_opcode_x86_LOOP_count                      (o_opcode_loop),
-        .o_opcode_x86_LOOPZ_count_while_zero           (o_opcode_loopz),
-        .o_opcode_x86_LOOPNZ_count_while_not_zero      (o_opcode_loopnz),
-        .o_opcode_x86_LSL_load_segment_limit            (o_opcode_lsl),
-        .o_opcode_x86_LSS_load_pointer_to_SS            (o_opcode_lss),
-        .o_opcode_x86_LTR_load_task_register            (o_opcode_ltr),
-        .o_opcode_x86_MOV_reg_to_reg_mem               (o_opcode_mov_reg_to_reg_mem),
-        .o_opcode_x86_MOV_reg_mem_to_reg               (o_opcode_mov_reg_mem_to_reg),
-        .o_opcode_x86_MOV_imm_to_reg_mem               (o_opcode_mov_imm_to_reg_mem),
-        .o_opcode_x86_MOV_imm_to_reg                   (o_opcode_mov_imm_to_reg),
-        .o_opcode_x86_MOV_mem_to_acc                   (o_opcode_mov_mem_to_acc),
-        .o_opcode_x86_MOV_acc_to_mem                   (o_opcode_mov_acc_to_mem),
-        .o_opcode_x86_MOV_CR_from_reg                  (o_opcode_mov_cr_from_reg),
-        .o_opcode_x86_MOV_reg_from_CR                  (o_opcode_mov_reg_from_cr),
-        .o_opcode_x86_MOV_DR_from_reg                  (o_opcode_mov_dr_from_reg),
-        .o_opcode_x86_MOV_reg_from_DR                  (o_opcode_mov_reg_from_dr),
-        .o_opcode_x86_MOV_TR_from_reg                  (o_opcode_mov_tr_from_reg),
-        .o_opcode_x86_MOV_reg_from_TR                  (o_opcode_mov_reg_from_tr),
-        .o_opcode_x86_MOV_reg_mem_to_sreg              (o_opcode_mov_reg_mem_to_sreg),
-        .o_opcode_x86_MOV_sreg_to_reg_mem              (o_opcode_mov_sreg_to_reg_mem),
-        .o_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_mem_to_reg (o_opcode_movbe_mem_reg),
-        .o_opcode_x86_MOVBE_move_data_after_swapping_bytes_reg_to_reg_mem (o_opcode_movbe_reg_mem),
-        .o_opcode_x86_MOVS_move_data_from_string_to_string (o_opcode_movs),
-        .o_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg (o_opcode_movsx),
-        .o_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg (o_opcode_movzx),
-        .o_opcode_x86_MUL_acc_with_reg_mem             (o_opcode_mul),
-        .o_opcode_x86_NEG_two_s_complement_negation    (o_opcode_neg),
-        .o_opcode_x86_NOP_no_operation                 (o_opcode_nop),
-        .o_opcode_x86_NOP_no_operation_multi_byte      (o_opcode_nop_multibyte),
-        .o_opcode_x86_NOT_one_s_complement_negation    (o_opcode_not),
-        .o_opcode_x86_OR_reg_to_reg_mem                (o_opcode_or_reg_to_reg_mem),
-        .o_opcode_x86_OR_reg_mem_to_reg                (o_opcode_or_reg_mem_to_reg),
-        .o_opcode_x86_OR_imm_to_reg_mem               (o_opcode_or_imm_to_reg_mem),
-        .o_opcode_x86_OR_imm_to_acc                    (o_opcode_or_imm_to_acc),
-        .o_opcode_x86_OUT_port_fixed                   (o_opcode_out_fixed),
-        .o_opcode_x86_OUT_port_variable                (o_opcode_out_var),
-        .o_opcode_x86_OUTS_output_string               (o_opcode_outs),
-        .o_opcode_x86_POP_reg_mem                      (o_opcode_pop_reg_mem),
-        .o_opcode_x86_POP_reg                          (o_opcode_pop_reg),
-        .o_opcode_x86_POP_sreg_2                       (o_opcode_pop_sreg_2),
-        .o_opcode_x86_POP_sreg_3                       (o_opcode_pop_sreg_3),
-        .o_opcode_x86_POPA_pop_all_general_registers    (o_opcode_popa),
-        .o_opcode_x86_POPF_pop_stack_into_FLAGS_or_EFLAGS (o_opcode_popf),
-        .o_opcode_x86_PUSH_reg_mem                     (o_opcode_push_reg_mem),
-        .o_opcode_x86_PUSH_reg                         (o_opcode_push_reg),
-        .o_opcode_x86_PUSH_sreg_2                      (o_opcode_push_sreg_2),
-        .o_opcode_x86_PUSH_sreg_3                      (o_opcode_push_sreg_3),
-        .o_opcode_x86_PUSH_imm                        (o_opcode_push_imm),
-        .o_opcode_x86_PUSH_all_general_registers       (o_opcode_pusha),
-        .o_opcode_x86_PUSHF_push_flags_onto_stack      (o_opcode_pushf),
-        .o_opcode_x86_RCL_reg_mem_by_1                 (o_opcode_rcl_1),
-        .o_opcode_x86_RCL_reg_mem_by_CL                (o_opcode_rcl_cl),
-        .o_opcode_x86_RCL_reg_mem_by_imm               (o_opcode_rcl_imm),
-        .o_opcode_x86_RCR_reg_mem_by_1                 (o_opcode_rcr_1),
-        .o_opcode_x86_RCR_reg_mem_by_CL                (o_opcode_rcr_cl),
-        .o_opcode_x86_RCR_reg_mem_by_imm               (o_opcode_rcr_imm),
-        .o_opcode_x86_RDMSR_read_from_model_specific_reg (o_opcode_rdmsr),
-        .o_opcode_x86_RDPMC_read_performance_monitoring_counters (o_opcode_rdpmc),
-        .o_opcode_x86_RDTSC_read_time_stamp_counter     (o_opcode_rdtsc),
-        .o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id (o_opcode_rdtscp),
-        .o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument (o_opcode_ret_near),
-        .o_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP (o_opcode_ret_near_imm),
-        .o_opcode_x86_RET_return_from_procedure_to_other_segment_no_argument (o_opcode_ret_far),
-        .o_opcode_x86_RET_return_from_procedure_to_other_segment_adding_imm_to_SP (o_opcode_ret_far_imm),
-        .o_opcode_x86_ROL_reg_mem_by_1                 (o_opcode_rol_1),
-        .o_opcode_x86_ROL_reg_mem_by_CL                (o_opcode_rol_cl),
-        .o_opcode_x86_ROL_reg_mem_by_imm               (o_opcode_rol_imm),
-        .o_opcode_x86_ROR_reg_mem_by_1                 (o_opcode_ror_1),
-        .o_opcode_x86_ROR_reg_mem_by_CL                (o_opcode_ror_cl),
-        .o_opcode_x86_ROR_reg_mem_by_imm               (o_opcode_ror_imm),
-        .o_opcode_x86_RSM_resume_from_system_management_mode (o_opcode_rsm),
-        .o_opcode_x86_SAHF_store_AH_into_flags         (o_opcode_sahf),
-        .o_opcode_x86_SAR_reg_mem_by_1                 (o_opcode_sar_1),
-        .o_opcode_x86_SAR_reg_mem_by_CL                (o_opcode_sar_cl),
-        .o_opcode_x86_SAR_reg_mem_by_imm               (o_opcode_sar_imm),
-        .o_opcode_x86_SBB_reg_to_reg_mem               (o_opcode_sbb_reg_to_reg_mem),
-        .o_opcode_x86_SBB_reg_mem_to_reg               (o_opcode_sbb_reg_mem_to_reg),
-        .o_opcode_x86_SBB_imm_to_reg_mem              (o_opcode_sbb_imm_to_reg_mem),
-        .o_opcode_x86_SBB_imm_to_acc                   (o_opcode_sbb_imm_to_acc),
-        .o_opcode_x86_SCAS_scan_string                 (o_opcode_scas),
-        .o_opcode_x86_SETcc_byte_set_on_condition      (o_opcode_setcc),
-        .o_opcode_x86_SGDT_store_global_descriptor_table_register (o_opcode_sgdt),
-        .o_opcode_x86_SHL_reg_mem_by_1                 (o_opcode_shl_1),
-        .o_opcode_x86_SHL_reg_mem_by_CL                (o_opcode_shl_cl),
-        .o_opcode_x86_SHL_reg_mem_by_imm               (o_opcode_shl_imm),
-        .o_opcode_x86_SHLD_reg_mem_by_imm              (o_opcode_shld_imm),
-        .o_opcode_x86_SHLD_reg_mem_by_CL               (o_opcode_shld_cl),
-        .o_opcode_x86_SHR_reg_mem_by_1                 (o_opcode_shr_1),
-        .o_opcode_x86_SHR_reg_mem_by_CL                (o_opcode_shr_cl),
-        .o_opcode_x86_SHR_reg_mem_by_imm               (o_opcode_shr_imm),
-        .o_opcode_x86_SHRD_reg_mem_by_imm              (o_opcode_shrd_imm),
-        .o_opcode_x86_SHRD_reg_mem_by_CL               (o_opcode_shrd_cl),
-        .o_opcode_x86_SIDT_store_interrupt_desciptor_table_register (o_opcode_sidt),
-        .o_opcode_x86_SLDT_store_local_desciptor_table_register (o_opcode_sldt),
-        .o_opcode_x86_SMSW_store_machine_status_word   (o_opcode_smsw),
-        .o_opcode_x86_STC_set_carry_flag               (o_opcode_stc),
-        .o_opcode_x86_STD_set_direction_flag           (o_opcode_std),
-        .o_opcode_x86_STI_set_interrupt_enable_flag    (o_opcode_sti),
-        .o_opcode_x86_STOS_store_string_data           (o_opcode_stos),
-        .o_opcode_x86_STR_store_task_register          (o_opcode_str),
-        .o_opcode_x86_SUB_reg_to_reg_mem               (o_opcode_sub_reg_to_reg_mem),
-        .o_opcode_x86_SUB_reg_mem_to_reg               (o_opcode_sub_reg_mem_to_reg),
-        .o_opcode_x86_SUB_imm_to_reg_mem              (o_opcode_sub_imm_to_reg_mem),
-        .o_opcode_x86_SUB_imm_to_acc                   (o_opcode_sub_imm_to_acc),
-        .o_opcode_x86_TEST_reg_mem_and_reg              (o_opcode_test_reg_mem),
-        .o_opcode_x86_TEST_imm_and_reg_mem             (o_opcode_test_imm_reg_mem),
-        .o_opcode_x86_TEST_imm_and_acc                 (o_opcode_test_imm_acc),
-        .o_opcode_x86_UD0_undefined_instruction         (o_opcode_ud0),
-        .o_opcode_x86_UD1_undefined_instruction         (o_opcode_ud1),
-        .o_opcode_x86_UD2_undefined_instruction         (o_opcode_ud2),
-        .o_opcode_x86_VERR_verify_a_segment_for_reading (o_opcode_verr),
-        .o_opcode_x86_VERW_verify_a_segment_for_writing (o_opcode_verw),
-        .o_opcode_x86_WAIT_wait                        (o_opcode_wait),
-        .o_opcode_x86_WBINVD_writeback_and_invalidate_data_cache (o_opcode_wbinvd),
-        .o_opcode_x86_WRMSR_write_to_model_specific_register (o_opcode_wrmsr),
-        .o_opcode_x86_XADD_exchange_and_add             (o_opcode_xadd),
-        .o_opcode_x86_XCHG_reg_mem_with_reg             (o_opcode_xchg_reg_mem),
-        .o_opcode_x86_XCHG_reg_with_acc_short           (o_opcode_xchg_acc),
-        .o_opcode_x86_XLAT_table_look_up_translation    (o_opcode_xlat),
-        .o_opcode_x86_XOR_reg_to_reg_mem                (o_opcode_xor_reg_to_reg_mem),
-        .o_opcode_x86_XOR_reg_mem_to_reg                (o_opcode_xor_reg_mem_to_reg),
-        .o_opcode_x86_XOR_imm_to_reg_mem               (o_opcode_xor_imm_to_reg_mem),
-        .o_opcode_x86_XOR_imm_to_acc                    (o_opcode_xor_imm_to_acc),
-        .o_x87_is_esc                                  (o_opcode_x87_esc),
-        .o_tttn                                        (o_tttn),
-        .o_eee                                         (o_eee),
-        .o_displacement                                (o_dec_displacement),
-        .o_immediate                                   (o_dec_immediate),
-        .o_base_reg_is_present                         (o_dec_base_reg_is_present),
-        .o_base_reg_index                              (o_dec_base_reg_index),
-        .o_index_reg_is_present                        (o_dec_index_reg_is_present),
-        .o_index_reg_index                             (o_dec_index_reg_index),
-        .o_segment_reg_index                           (o_dec_segment_reg_index),
-        .o_sib_scale_factor                            (o_dec_sib_scale_factor),
-        .o_dbg_modrm_mod                               (o_dec_modrm_mod),
-        .o_consume_bytes                               (o_consume_bytes),
-        .o_error                                       (o_decode_error)
-    );
+    // TODO: Instantiate actual decoder modules when available
+    // stage_2_dec_decode_unit u_stage_2_dec_unit (
+    //     .i_instruction          (i_instruction),
+    //     .i_default_operand_size (i_default_operand_size),
+    //     ...
+    // );
 
+    // Temporary: assign all opcode outputs to 0
+    assign o_opcode_aaa = 1'b0;
+    assign o_opcode_aad = 1'b0;
+    assign o_opcode_aam = 1'b0;
+    assign o_opcode_aas = 1'b0;
+    assign o_opcode_adc_reg_to_reg_mem = 1'b0;
+    assign o_opcode_adc_reg_mem_to_reg = 1'b0;
+    assign o_opcode_adc_imm_to_reg_mem = 1'b0;
+    assign o_opcode_adc_imm_to_acc = 1'b0;
+    assign o_opcode_add_reg_to_reg_mem = 1'b0;
+    assign o_opcode_add_reg_mem_to_reg = 1'b0;
+    assign o_opcode_add_imm_to_reg_mem = 1'b0;
+    assign o_opcode_add_imm_to_acc = 1'b0;
+    assign o_opcode_and_reg_to_reg_mem = 1'b0;
+    assign o_opcode_and_reg_mem_to_reg = 1'b0;
+    assign o_opcode_and_imm_to_reg_mem = 1'b0;
+    assign o_opcode_and_imm_to_acc = 1'b0;
+    assign o_opcode_arpl = 1'b0;
+    assign o_opcode_bound = 1'b0;
+    assign o_opcode_bsf = 1'b0;
+    assign o_opcode_bsr = 1'b0;
+    assign o_opcode_bswap = 1'b0;
+    assign o_opcode_bt_imm = 1'b0;
+    assign o_opcode_bt_reg = 1'b0;
+    assign o_opcode_btc_imm = 1'b0;
+    assign o_opcode_btc_reg = 1'b0;
+    assign o_opcode_btr_imm = 1'b0;
+    assign o_opcode_btr_reg = 1'b0;
+    assign o_opcode_bts_imm = 1'b0;
+    assign o_opcode_bts_reg = 1'b0;
+    assign o_opcode_call_near_direct = 1'b0;
+    assign o_opcode_call_near_indirect = 1'b0;
+    assign o_opcode_call_far_direct = 1'b0;
+    assign o_opcode_call_far_indirect = 1'b0;
+    assign o_opcode_cbw = 1'b0;
+    assign o_opcode_cdq = 1'b0;
+    assign o_opcode_clc = 1'b0;
+    assign o_opcode_cld = 1'b0;
+    assign o_opcode_cli = 1'b0;
+    assign o_opcode_clts = 1'b0;
+    assign o_opcode_cmc = 1'b0;
+    assign o_opcode_cmp_mem_reg = 1'b0;
+    assign o_opcode_cmp_reg_mem = 1'b0;
+    assign o_opcode_cmp_imm_reg_mem = 1'b0;
+    assign o_opcode_cmp_imm_acc = 1'b0;
+    assign o_opcode_cmps = 1'b0;
+    assign o_opcode_cmpxchg = 1'b0;
+    assign o_opcode_cpuid = 1'b0;
+    assign o_opcode_cwd = 1'b0;
+    assign o_opcode_cwde = 1'b0;
+    assign o_opcode_daa = 1'b0;
+    assign o_opcode_das = 1'b0;
+    assign o_opcode_dec_reg_mem = 1'b0;
+    assign o_opcode_dec_reg = 1'b0;
+    assign o_opcode_div = 1'b0;
+    assign o_opcode_hlt = 1'b0;
+    assign o_opcode_idiv = 1'b0;
+    assign o_opcode_imul_acc = 1'b0;
+    assign o_opcode_imul_reg = 1'b0;
+    assign o_opcode_imul_imm = 1'b0;
+    assign o_opcode_in_fixed = 1'b0;
+    assign o_opcode_in_var = 1'b0;
+    assign o_opcode_inc_reg_mem = 1'b0;
+    assign o_opcode_inc_reg = 1'b0;
+    assign o_opcode_ins = 1'b0;
+    assign o_opcode_int_n = 1'b0;
+    assign o_opcode_int_3 = 1'b0;
+    assign o_opcode_int_4 = 1'b0;
+    assign o_opcode_invd = 1'b0;
+    assign o_opcode_invlpg = 1'b0;
+    assign o_opcode_invpcid = 1'b0;
+    assign o_opcode_iret = 1'b0;
+    assign o_opcode_jcc_short = 1'b0;
+    assign o_opcode_jcc_near = 1'b0;
+    assign o_opcode_jcxz = 1'b0;
+    assign o_opcode_jmp_short = 1'b0;
+    assign o_opcode_jmp_near_direct = 1'b0;
+    assign o_opcode_jmp_near_indirect = 1'b0;
+    assign o_opcode_jmp_far_direct = 1'b0;
+    assign o_opcode_jmp_far_indirect = 1'b0;
+    assign o_opcode_lahf = 1'b0;
+    assign o_opcode_lar = 1'b0;
+    assign o_opcode_lds = 1'b0;
+    assign o_opcode_lea = 1'b0;
+    assign o_opcode_leave = 1'b0;
+    assign o_opcode_les = 1'b0;
+    assign o_opcode_lfs = 1'b0;
+    assign o_opcode_lgdt = 1'b0;
+    assign o_opcode_lgs = 1'b0;
+    assign o_opcode_lidt = 1'b0;
+    assign o_opcode_lldt = 1'b0;
+    assign o_opcode_lmsw = 1'b0;
+    assign o_opcode_lods = 1'b0;
+    assign o_opcode_loop = 1'b0;
+    assign o_opcode_loopz = 1'b0;
+    assign o_opcode_loopnz = 1'b0;
+    assign o_opcode_lsl = 1'b0;
+    assign o_opcode_lss = 1'b0;
+    assign o_opcode_ltr = 1'b0;
+    assign o_opcode_mov_reg_to_reg_mem = 1'b0;
+    assign o_opcode_mov_reg_mem_to_reg = 1'b0;
+    assign o_opcode_mov_imm_to_reg_mem = 1'b0;
+    assign o_opcode_mov_imm_to_reg = 1'b0;
+    assign o_opcode_mov_mem_to_acc = 1'b0;
+    assign o_opcode_mov_acc_to_mem = 1'b0;
+    assign o_opcode_mov_cr_from_reg = 1'b0;
+    assign o_opcode_mov_reg_from_cr = 1'b0;
+    assign o_opcode_mov_dr_from_reg = 1'b0;
+    assign o_opcode_mov_reg_from_dr = 1'b0;
+    assign o_opcode_mov_tr_from_reg = 1'b0;
+    assign o_opcode_mov_reg_from_tr = 1'b0;
+    assign o_opcode_mov_reg_mem_to_sreg = 1'b0;
+    assign o_opcode_mov_sreg_to_reg_mem = 1'b0;
+    assign o_opcode_movbe_mem_reg = 1'b0;
+    assign o_opcode_movbe_reg_mem = 1'b0;
+    assign o_opcode_movs = 1'b0;
+    assign o_opcode_movsx = 1'b0;
+    assign o_opcode_movzx = 1'b0;
+    assign o_opcode_mul = 1'b0;
+    assign o_opcode_neg = 1'b0;
+    assign o_opcode_nop = 1'b0;
+    assign o_opcode_nop_multibyte = 1'b0;
+    assign o_opcode_not = 1'b0;
+    assign o_opcode_or_reg_to_reg_mem = 1'b0;
+    assign o_opcode_or_reg_mem_to_reg = 1'b0;
+    assign o_opcode_or_imm_to_reg_mem = 1'b0;
+    assign o_opcode_or_imm_to_acc = 1'b0;
+    assign o_opcode_out_fixed = 1'b0;
+    assign o_opcode_out_var = 1'b0;
+    assign o_opcode_outs = 1'b0;
+    assign o_opcode_pop_reg_mem = 1'b0;
+    assign o_opcode_pop_reg = 1'b0;
+    assign o_opcode_pop_sreg_2 = 1'b0;
+    assign o_opcode_pop_sreg_3 = 1'b0;
+    assign o_opcode_popa = 1'b0;
+    assign o_opcode_popf = 1'b0;
+    assign o_opcode_push_reg_mem = 1'b0;
+    assign o_opcode_push_reg = 1'b0;
+    assign o_opcode_push_sreg_2 = 1'b0;
+    assign o_opcode_push_sreg_3 = 1'b0;
+    assign o_opcode_push_imm = 1'b0;
+    assign o_opcode_pusha = 1'b0;
+    assign o_opcode_pushf = 1'b0;
+    assign o_opcode_rcl_1 = 1'b0;
+    assign o_opcode_rcl_cl = 1'b0;
+    assign o_opcode_rcl_imm = 1'b0;
+    assign o_opcode_rcr_1 = 1'b0;
+    assign o_opcode_rcr_cl = 1'b0;
+    assign o_opcode_rcr_imm = 1'b0;
+    assign o_opcode_rdmsr = 1'b0;
+    assign o_opcode_rdpmc = 1'b0;
+    assign o_opcode_rdtsc = 1'b0;
+    assign o_opcode_rdtscp = 1'b0;
+    assign o_opcode_ret_near = 1'b0;
+    assign o_opcode_ret_near_imm = 1'b0;
+    assign o_opcode_ret_far = 1'b0;
+    assign o_opcode_ret_far_imm = 1'b0;
+    assign o_opcode_rol_1 = 1'b0;
+    assign o_opcode_rol_cl = 1'b0;
+    assign o_opcode_rol_imm = 1'b0;
+    assign o_opcode_ror_1 = 1'b0;
+    assign o_opcode_ror_cl = 1'b0;
+    assign o_opcode_ror_imm = 1'b0;
+    assign o_opcode_rsm = 1'b0;
+    assign o_opcode_sahf = 1'b0;
+    assign o_opcode_sar_1 = 1'b0;
+    assign o_opcode_sar_cl = 1'b0;
+    assign o_opcode_sar_imm = 1'b0;
+    assign o_opcode_sbb_reg_to_reg_mem = 1'b0;
+    assign o_opcode_sbb_reg_mem_to_reg = 1'b0;
+    assign o_opcode_sbb_imm_to_reg_mem = 1'b0;
+    assign o_opcode_sbb_imm_to_acc = 1'b0;
+    assign o_opcode_scas = 1'b0;
+    assign o_opcode_setcc = 1'b0;
+    assign o_opcode_sgdt = 1'b0;
+    assign o_opcode_shl_1 = 1'b0;
+    assign o_opcode_shl_cl = 1'b0;
+    assign o_opcode_shl_imm = 1'b0;
+    assign o_opcode_shld_imm = 1'b0;
+    assign o_opcode_shld_cl = 1'b0;
+    assign o_opcode_shr_1 = 1'b0;
+    assign o_opcode_shr_cl = 1'b0;
+    assign o_opcode_shr_imm = 1'b0;
+    assign o_opcode_shrd_imm = 1'b0;
+    assign o_opcode_shrd_cl = 1'b0;
+    assign o_opcode_sidt = 1'b0;
+    assign o_opcode_sldt = 1'b0;
+    assign o_opcode_smsw = 1'b0;
+    assign o_opcode_stc = 1'b0;
+    assign o_opcode_std = 1'b0;
+    assign o_opcode_sti = 1'b0;
+    assign o_opcode_stos = 1'b0;
+    assign o_opcode_str = 1'b0;
+    assign o_opcode_sub_reg_to_reg_mem = 1'b0;
+    assign o_opcode_sub_reg_mem_to_reg = 1'b0;
+    assign o_opcode_sub_imm_to_reg_mem = 1'b0;
+    assign o_opcode_sub_imm_to_acc = 1'b0;
+    assign o_opcode_test_reg_mem = 1'b0;
+    assign o_opcode_test_imm_reg_mem = 1'b0;
+    assign o_opcode_test_imm_acc = 1'b0;
+    assign o_opcode_ud0 = 1'b0;
+    assign o_opcode_ud1 = 1'b0;
+    assign o_opcode_ud2 = 1'b0;
+    assign o_opcode_verr = 1'b0;
+    assign o_opcode_verw = 1'b0;
+    assign o_opcode_wait = 1'b0;
+    assign o_opcode_wbinvd = 1'b0;
+    assign o_opcode_wrmsr = 1'b0;
+    assign o_opcode_xadd = 1'b0;
+    assign o_opcode_xchg_reg_mem = 1'b0;
+    assign o_opcode_xchg_acc = 1'b0;
+    assign o_opcode_xlat = 1'b0;
+    assign o_opcode_xor_reg_to_reg_mem = 1'b0;
+    assign o_opcode_xor_reg_mem_to_reg = 1'b0;
+    assign o_opcode_xor_imm_to_reg_mem = 1'b0;
+    assign o_opcode_xor_imm_to_acc = 1'b0;
+    assign o_opcode_x87_esc = 1'b0;
+    assign o_tttn = 4'b0;
+    assign o_eee = 3'b0;
+    assign o_dec_displacement = 32'b0;
+    assign o_dec_immediate = 32'b0;
+    assign o_dec_base_reg_is_present = 1'b0;
+    assign o_dec_base_reg_index = 3'b0;
+    assign o_dec_index_reg_is_present = 1'b0;
+    assign o_dec_index_reg_index = 3'b0;
+    assign o_dec_segment_reg_index = 3'b0;
+    assign o_dec_sib_scale_factor = 2'b0;
+    assign o_dec_modrm_mod = 2'b0;
+    assign o_decode_error = 1'b0;
+    assign o_consume_bytes = 4'b0;
 
 endmodule

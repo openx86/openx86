@@ -180,7 +180,7 @@ module openx86_soc_top #(
     assign sdio_dat_in = io_sdio_dat;
 
     bus_controller #(
-        .P_USE_SDIO_DISK (P_USE_SDIO_DISK)
+        .USE_SDIO_DISK (P_USE_SDIO_DISK)
     ) u_bus_controller (
         .i_bus_valid        (bus_valid),
         .o_bus_ready        (bus_ready),

@@ -100,21 +100,21 @@ module vga_graphics_adapter (
     // simple dual-port RAM instance: write port for CPU, read port for VGA
     // ============================================================
     simple_dual_port_ram #(
-        .DATA_WIDTH ( 8                ),
-        .ADDR_WIDTH ( VRAM_ADDR_WIDTH  ),
-        .DEPTH      ( VRAM_DEPTH       )
+        .P_DATA_WIDTH ( 8                ),
+        .P_ADDR_WIDTH ( VRAM_ADDR_WIDTH  ),
+        .P_DEPTH      ( VRAM_DEPTH       )
     ) vram_inst (
         // 写端口（CPU）
-        .we    ( mem_en_w        ),
-        .waddr ( vram_wr_addr    ),
-        .wdata ( mem_data_w      ),
+        .i_we    ( mem_en_w        ),
+        .i_waddr ( vram_wr_addr    ),
+        .i_wdata ( mem_data_w      ),
         // 读端口（VGA）
-        .re    ( 1'b1            ),  // VGA 持续读取
-        .raddr ( vram_rd_addr    ),
-        .rdata ( vram_rd_data    ),
+        .i_re    ( 1'b1            ),  // VGA 持续读取
+        .i_raddr ( vram_rd_addr    ),
+        .o_rdata ( vram_rd_data    ),
         // 时钟与复位
-        .clk ( clk           ),
-        .rst_n ( rst_n         )
+        .clk     ( clk             ),
+        .rst_n   ( rst_n           )
     );
 
     // ------------------------------------------------------------------------

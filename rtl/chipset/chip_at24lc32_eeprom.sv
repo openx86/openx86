@@ -126,7 +126,7 @@ module chip_at24lc32_eeprom #(
         logic [ 6: 0] a7;
         begin
             a7 = ctrl[ 7:  1];
-            is_ctrl_match = (a7[ 6:  3] == DEV_TYPE) && (a7[ 2: 0] == A_PINS);
+            is_ctrl_match = (a7[ 6:  3] == DEV_TYPE) && (a7[ 2: 0] == P_A_PINS);
         end
     endfunction
 
@@ -174,12 +174,12 @@ module chip_at24lc32_eeprom #(
                                 state           <= ST_ACK_AH;
                             end else if (state == ST_RECV_AL) begin
                                 word_addr[ 7: 0] <= {shreg[ 7:  1], i_sda};
-                                write_base <= {word_addr[15:  8], {shreg[ 7:  1], i_sda}} & ~(PAGE_BYTES-1);
+                                write_base <= {word_addr[15:  8], {shreg[ 7:  1], i_sda}} & ~(P_PAGE_BYTES-1);
                                 state      <= ST_ACK_AL;
                             end else begin
                                 if (addr_match) begin
                                     mem[word_addr[AW-1:0]] <= {shreg[ 7:  1], i_sda};
-                                    if (((word_addr + 1) & (PAGE_BYTES-1)) == 0)
+                                    if (((word_addr + 1) & (P_PAGE_BYTES-1)) == 0)
                                         word_addr <= write_base;
                                     else
                                         word_addr <= word_addr + 1;

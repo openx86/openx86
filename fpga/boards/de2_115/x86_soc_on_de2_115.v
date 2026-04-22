@@ -217,7 +217,7 @@ always @(posedge CLOCK_50)
 
 // DE2-115 SD 插座：SDIO CLK/CMD/DAT0..3（IDE 盘体走 SD 时使用 USE_SDIO_DISK）
 openx86_soc_top #(
-    .USE_SDIO_DISK ( 1'b1 )
+    .P_USE_SDIO_DISK ( 1'b1 )
 ) u_openx86_soc (
     .clk                ( CLOCK_50 ),
     .rst_n              ( KEY[0] ),

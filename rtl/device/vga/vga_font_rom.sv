@@ -50,14 +50,14 @@ module vga_font_rom (
     // font ROM instance
     // ============================================================
     single_port_rom #(
-        .DATA_WIDTH ( 8      ),
-        .ADDR_WIDTH ( 12     ),
-        .DEPTH      ( 4096   )
+        .P_DATA_WIDTH ( 8      ),
+        .P_ADDR_WIDTH ( 12     ),
+        .P_DEPTH      ( 4096   )
     ) font_rom_inst (
-        .addr   ( font_addr  ),
-        .rdata  ( font_data  ),
-        .clk  ( clk      ),
-        .rst_n  ( rst_n    )
+        .i_addr  ( font_addr  ),
+        .o_rdata ( font_data  ),
+        .clk     ( clk        ),
+        .rst_n   ( rst_n      )
     );
 
 endmodule
