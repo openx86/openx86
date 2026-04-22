@@ -181,134 +181,134 @@ module i486_cpu_core (
     // general purpose register file
     // ============================================================
     rf_x86_general_purpose u_rf_gpr (
-        .write_enable ( wrb_write_enable ),
-        .write_index ( wrb_write_index ),
-        .write_data ( wrb_write_data ),
-        .read__8 ( GPR_read__8 ),
-        .read_16 ( GPR_read_16 ),
-        .read_32 ( GPR_read_32 ),
-        .clk ( clk ),
-        .rst_n ( rst_n )
+        .write_enable (wrb_write_enable),
+        .write_index   (wrb_write_index),
+        .write_data    (wrb_write_data),
+        .read__8       (GPR_read__8),
+        .read_16       (GPR_read_16),
+        .read_32       (GPR_read_32),
+        .clk           (clk),
+        .rst_n         (rst_n)
     );
 
     // ============================================================
     // segment register file
     // ============================================================
     rf_x86_segment u_rf_sreg (
-        .write_enable ( wrb_SREG_write_enable ),
-        .write_index ( wrb_SREG_write_index ),
-        .write_selector ( wrb_SREG_write_selector ),
-        .write_descriptor ( wrb_SREG_write_descriptor ),
-        .segment_selector ( segment_selector ),
-        .descriptor_cache ( descriptor_cache ),
-        .clk ( clk ),
-        .rst_n ( rst_n )
+        .write_enable    (wrb_SREG_write_enable),
+        .write_index     (wrb_SREG_write_index),
+        .write_selector  (wrb_SREG_write_selector),
+        .write_descriptor(wrb_SREG_write_descriptor),
+        .segment_selector(segment_selector),
+        .descriptor_cache(descriptor_cache),
+        .clk             (clk),
+        .rst_n           (rst_n)
     );
 
     // ============================================================
     // flags register file
     // ============================================================
     rf_x86_flags u_rf_flags (
-        .write_enable ( wrb_FLAGS_write_enable ),
-        .write_data ( wrb_FLAGS_write_data ),
-        .CF ( CF ),
-        .PF ( PF ),
-        .AF ( AF ),
-        .ZF ( ZF ),
-        .SF ( SF ),
-        .TF ( TF ),
-        .IF ( IF ),
-        .DF ( DF ),
-        .OF ( OF ),
-        .IOPL ( iOPL ),
-        .NT ( NT ),
-        .RF ( RF ),
-        .VM ( VM ),
-        .EFLAGS ( EFLAGS ),
-        .FLAGS ( FLAGS ),
-        .clk ( clk ),
-        .rst_n ( rst_n )
+        .write_enable(wrb_FLAGS_write_enable),
+        .write_data   (wrb_FLAGS_write_data),
+        .CF           (CF),
+        .PF           (PF),
+        .AF           (AF),
+        .ZF           (ZF),
+        .SF           (SF),
+        .TF           (TF),
+        .IF           (IF),
+        .DF           (DF),
+        .OF           (OF),
+        .IOPL         (iOPL),
+        .NT           (NT),
+        .RF           (RF),
+        .VM           (VM),
+        .EFLAGS       (EFLAGS),
+        .FLAGS        (FLAGS),
+        .clk          (clk),
+        .rst_n        (rst_n)
     );
 
     // ============================================================
     // instruction pointer register file
     // ============================================================
     rf_x86_instruction_pointer u_rf_ip (
-        .write_enable ( wrb_IP_write_enable ),
-        .write_data ( wrb_IP_write_data ),
-        .IP ( IP ),
-        .EIP ( EIP ),
-        .clk ( clk ),
-        .rst_n ( rst_n )
+        .write_enable(wrb_IP_write_enable),
+        .write_data   (wrb_IP_write_data),
+        .IP           (IP),
+        .EIP          (EIP),
+        .clk          (clk),
+        .rst_n        (rst_n)
     );
 
     // ============================================================
     // control register file
     // ============================================================
     rf_x86_control u_rf_cr (
-        .write_enable ( wrb_CR_write_enable ),
-        .write_index ( wrb_CR_write_index ),
-        .write_data ( wrb_CR_write_data ),
-        .CR ( CR ),
-        .PE ( PE ),
-        .MP ( MP ),
-        .EM ( EM ),
-        .TS ( TS ),
-        .R ( R ),
-        .PG ( PG ),
-        .page_directory_base ( page_directory_base ),
-        .clk ( clk ),
-        .rst_n ( rst_n )
+        .write_enable       (wrb_CR_write_enable),
+        .write_index        (wrb_CR_write_index),
+        .write_data         (wrb_CR_write_data),
+        .CR                 (CR),
+        .PE                 (PE),
+        .MP                 (MP),
+        .EM                 (EM),
+        .TS                 (TS),
+        .R                  (R),
+        .PG                 (PG),
+        .page_directory_base(page_directory_base),
+        .clk                (clk),
+        .rst_n              (rst_n)
     );
 
     // ============================================================
     // debug register file
     // ============================================================
     rf_x86_debug u_rf_dr (
-        .write_enable ( wrb_DR_write_enable ),
-        .write_index ( wrb_DR_write_index ),
-        .write_data ( wrb_DR_write_data ),
-        .DR ( DR ),
-        .clk ( clk ),
-        .rst_n ( rst_n )
+        .write_enable(wrb_DR_write_enable),
+        .write_index (wrb_DR_write_index),
+        .write_data  (wrb_DR_write_data),
+        .DR          (DR),
+        .clk         (clk),
+        .rst_n       (rst_n)
     );
 
     // ============================================================
     // test register file
     // ============================================================
     rf_x86_test u_rf_tr (
-        .write_enable ( wrb_TR_write_enable ),
-        .write_index ( wrb_TR_write_index ),
-        .write_data ( wrb_TR_write_data ),
-        .TR ( TR ),
-        .clk ( clk ),
-        .rst_n ( rst_n )
+        .write_enable(wrb_TR_write_enable),
+        .write_index (wrb_TR_write_index),
+        .write_data  (wrb_TR_write_data),
+        .TR          (TR),
+        .clk         (clk),
+        .rst_n       (rst_n)
     );
 
     // ============================================================
     // GDTR register file
     // ============================================================
     rf_x86_gdtr u_rf_gdtr (
-        .gdtr_write_enable ( 1'b0 ),
-        .gdtr_write_data_limit ( 16'd0 ),
-        .gdtr_write_data_base ( 32'd0 ),
-        .gdtr_limit ( GDTR_limit ),
-        .gdtr_base ( GDTR_base ),
-        .clk ( clk ),
-        .rst_n ( rst_n )
+        .gdtr_write_enable    (1'b0),
+        .gdtr_write_data_limit (16'd0),
+        .gdtr_write_data_base  (32'd0),
+        .gdtr_limit           (GDTR_limit),
+        .gdtr_base            (GDTR_base),
+        .clk                  (clk),
+        .rst_n                (rst_n)
     );
 
     // ============================================================
     // IDTR register file
     // ============================================================
     rf_x86_idtr u_rf_idtr (
-        .idtr_write_enable ( 1'b0 ),
-        .idtr_write_data_limit ( 16'd0 ),
-        .idtr_write_data_base ( 32'd0 ),
-        .idtr_limit ( IDTR_limit ),
-        .idtr_base ( IDTR_base ),
-        .clk ( clk ),
-        .rst_n ( rst_n )
+        .idtr_write_enable   (1'b0),
+        .idtr_write_data_limit(16'd0),
+        .idtr_write_data_base (32'd0),
+        .idtr_limit          (IDTR_limit),
+        .idtr_base           (IDTR_base),
+        .clk                (clk),
+        .rst_n              (rst_n)
     );
 
 endmodule

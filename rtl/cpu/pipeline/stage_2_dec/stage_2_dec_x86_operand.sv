@@ -549,9 +549,9 @@ stage_2_dec_x86_operand_field u_field (
     .i_opcode_x86_SIDT_store_interrupt_desciptor_table_register (i_opcode_x86_SIDT_store_interrupt_desciptor_table_register),
     .i_opcode_x86_SLDT_store_local_desciptor_table_register (i_opcode_x86_SLDT_store_local_desciptor_table_register),
     .i_opcode_x86_SMSW_store_machine_status_word (i_opcode_x86_SMSW_store_machine_status_word),
-    .i_opcode_x86_STC_carry      (i_opcode_x86_STC_carry),
-    .i_opcode_x86_STD_dir  (i_opcode_x86_STD_dir),
-    .i_opcode_x86_STI_int_en (i_opcode_x86_STI_int_en)
+    .i_opcode_x86_STC_carry               (i_opcode_x86_STC_carry),
+    .i_opcode_x86_STD_dir                 (i_opcode_x86_STD_dir),
+    .i_opcode_x86_STI_int_en              (i_opcode_x86_STI_int_en),
     .i_opcode_x86_STOS_store_string_data  (i_opcode_x86_STOS_store_string_data),
     .i_opcode_x86_STR_store_task_register (i_opcode_x86_STR_store_task_register),
     .i_opcode_x86_SUB_reg_to_reg_mem       (i_opcode_x86_SUB_reg_to_reg_mem),
@@ -617,7 +617,7 @@ stage_2_dec_x86_operand_mod_rm u_modrm (
     .o_index_reg_index  (modrm_index_reg_index),
     .o_gpr_reg_valid    (modrm_gpr_reg_valid),
     .o_gpr_reg_index    (modrm_gpr_reg_index),
-    .o_gpr_reg_bit_width(modrm_gpr_reg_bit_width),
+    .o_gpr_reg_bit_width (modrm_gpr_reg_bit_width),
     .o_disp_present     (modrm_disp_present),
     .o_disp_size_8b     (modrm_disp_size_8b),
     .o_disp_size_16b    (modrm_disp_size_16b),
@@ -678,7 +678,7 @@ stage_2_dec_x86_operand_disp_imm u_disp_imm (
     .i_imm_size_full    (imm_size_full),
     .o_disp_value       (disp_imm_disp_value),
     .o_imm_value        (disp_imm_imm_value),
-    .o_consume_byte_count(disp_imm_consume_byte_count),
+    .o_consume_byte_count (disp_imm_consume_byte_count),
     .o_decode_error     (disp_imm_decode_error)
 );
 

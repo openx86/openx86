@@ -24,9 +24,9 @@ module shf_execute_shift_left_tb;
     logic [31: 0] op, cnt, y;
 
     shf_execute_shift_left u_dut (
-        .operand(op),
-        .count(cnt),
-        .result(y)
+        .operand (op),
+        .count   (cnt),
+        .result  (y)
     );
 
     initial begin

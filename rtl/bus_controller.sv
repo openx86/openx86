@@ -445,16 +445,16 @@ chip_ns16550_com u_chip_com1 (
     .i_a      (chip_io_addr[2: 0]),
     .i_d      (i_bus_data_write[7: 0]),
     .o_d      (r_com),
-    .i_rx_push(1'b0),
-    .i_rx_data(8'h0)
+    .i_rx_push (1'b0),
+    .i_rx_data (8'h0)
 );
 
 chip_centronics_lpt u_chip_lpt1 (
     .clk   (clk),
     .rst_n (rst_n),
-    .i_cs_n(cs_lpt_n),
-    .i_rd_n(rd_lpt_n),
-    .i_wr_n(wr_lpt_n),
+    .i_cs_n (cs_lpt_n),
+    .i_rd_n (rd_lpt_n),
+    .i_wr_n (wr_lpt_n),
     .i_a   (chip_io_addr[2: 0]),
     .i_d   (i_bus_data_write[7: 0]),
     .o_d   (r_lpt)

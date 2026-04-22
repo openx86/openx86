@@ -24,8 +24,8 @@ module log_execute_logic_not_tb;
     logic [31: 0] a, y;
 
     log_execute_logic_not u_dut (
-        .operand_1(a),
-        .result(y)
+        .operand_1 (a),
+        .result    (y)
     );
 
     initial begin

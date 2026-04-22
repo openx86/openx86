@@ -24,9 +24,9 @@ module ari_execute_arithmetic_sub_tb;
     logic [31: 0] a, b, y;
 
     ari_execute_arithmetic_sub u_dut (
-        .operand_1(a),
-        .operand_2(b),
-        .result(y)
+        .operand_1 (a),
+        .operand_2 (b),
+        .result    (y)
     );
 
     initial begin

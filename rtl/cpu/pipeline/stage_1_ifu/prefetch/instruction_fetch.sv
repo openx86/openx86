@@ -88,27 +88,27 @@ module instruction_fetch (
 memory_management_unit #(
     .read_from_fetch (1'b1)
 ) instruction_fetch_memory_management_unit (
-    .i_valid             (mmu_valid),
-    .o_ready             (mmu_ready),
-    .i_protected_mode    (i_protected_mode),
-    .i_segment_selector  (i_segment_selector),
-    .i_segment_descriptor(i_segment_descriptor),
-    .i_current_privilege_level (i_current_privilege_level),
-    .i_segment_index     (`sreg_index_CS),
-    .i_effective_address (i_eip),
-    .i_write_enable      (1'b0),
-    .i_paging_enable     (i_paging_enable),
-    .i_page_directory_base (i_page_directory_base),
-    .o_physical_address  (o_code_address),
-    .o_segment_fault     (seg_fault),
-    .o_bus_valid         (o_mmu_bus_valid),
-    .i_bus_ready         (i_mmu_bus_ready),
-    .o_bus_write_enable  (mmu_bus_we),
-    .o_bus_address       (o_mmu_bus_addr),
-    .i_bus_data_read     (i_mmu_bus_rdata),
-    .o_bus_data_write    (mmu_bus_wdata),
-    .clk                 (clk),
-    .rst_n               (rst_n)
+    .i_valid                (mmu_valid),
+    .o_ready                (mmu_ready),
+    .i_protected_mode       (i_protected_mode),
+    .i_segment_selector     (i_segment_selector),
+    .i_segment_descriptor   (i_segment_descriptor),
+    .i_current_privilege_level(i_current_privilege_level),
+    .i_segment_index        (`sreg_index_CS),
+    .i_effective_address    (i_eip),
+    .i_write_enable         (1'b0),
+    .i_paging_enable        (i_paging_enable),
+    .i_page_directory_base  (i_page_directory_base),
+    .o_physical_address     (o_code_address),
+    .o_segment_fault        (seg_fault),
+    .o_bus_valid            (o_mmu_bus_valid),
+    .i_bus_ready            (i_mmu_bus_ready),
+    .o_bus_write_enable     (mmu_bus_we),
+    .o_bus_address          (o_mmu_bus_addr),
+    .i_bus_data_read        (i_mmu_bus_rdata),
+    .o_bus_data_write       (mmu_bus_wdata),
+    .clk                    (clk),
+    .rst_n                  (rst_n)
 );
 
     assign o_segment_fault = seg_fault;

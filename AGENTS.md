@@ -26,7 +26,7 @@
 // ============================================================================
 ```
 
-**Ports:** all `logic`; `i_`/`o_`/`b_`; PHY: `{dir}_{module}_phy_{name}`; last ports always `clk`, `rst_n` (exact names); bus widths `[31: 0]` style (spaces around `:`); align columns (dir, logic, width, name); one port/connection per line; align `.(...)`.
+**Ports:** all `logic`; `i_`/`o_`/`b_`; PHY: `{dir}_{module}_phy_{name}`; last ports always `clk`, `rst_n` (exact names); bus widths `[31: 0]` style (spaces around `:`); align columns (dir, logic, width, name); one port/connection per line; port connections must use `.port_name (signal)` format with space before `(` and align `(` brackets vertically **within the same module instantiation**.
 
 **Internals:** `logic` only (no `wire`/`reg`); FSM `typedef enum logic [...]`; same-name continuous drive → single `logic x = expr;` (no split `assign`).
 

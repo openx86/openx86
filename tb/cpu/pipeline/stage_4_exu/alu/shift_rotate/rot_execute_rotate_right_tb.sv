@@ -24,9 +24,9 @@ module rot_execute_rotate_right_tb;
     logic [31: 0] op, cnt, y;
 
     rot_execute_rotate_right u_dut (
-        .operand(op),
-        .count(cnt),
-        .result(y)
+        .operand (op),
+        .count   (cnt),
+        .result  (y)
     );
 
     initial begin

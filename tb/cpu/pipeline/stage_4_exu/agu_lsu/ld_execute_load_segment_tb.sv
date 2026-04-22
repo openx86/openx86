@@ -36,18 +36,18 @@ module ld_execute_load_segment_tb;
     logic        ready;
 
     ld_execute_load_segment u_dut (
-        .protected_mode_enable(protected_mode_enable),
-        .index_segment_register(index_segment_register),
-        .index_general_register(index_general_register),
-        .greg__8(greg__8),
-        .greg_16(greg_16),
-        .greg_32(greg_32),
-        .write_enable(write_enable),
-        .write_index(write_index),
-        .write_selector(write_selector),
-        .write_descriptor(write_descriptor),
-        .valid(valid),
-        .ready(ready)
+        .protected_mode_enable (protected_mode_enable),
+        .index_segment_register (index_segment_register),
+        .index_general_register (index_general_register),
+        .greg__8               (greg__8),
+        .greg_16               (greg_16),
+        .greg_32               (greg_32),
+        .write_enable          (write_enable),
+        .write_index           (write_index),
+        .write_selector        (write_selector),
+        .write_descriptor      (write_descriptor),
+        .valid                 (valid),
+        .ready                 (ready)
     );
 
     initial begin

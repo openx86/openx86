@@ -25,10 +25,10 @@ module ari_execute_arithmetic_adc_tb;
     logic        cf;
 
     ari_execute_arithmetic_adc u_dut (
-        .operand_1(a),
-        .operand_2(b),
-        .carry_flag(cf),
-        .result(y)
+        .operand_1 (a),
+        .operand_2 (b),
+        .carry_flag (cf),
+        .result    (y)
     );
 
     initial begin

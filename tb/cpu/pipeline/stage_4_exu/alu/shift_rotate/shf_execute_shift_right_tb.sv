@@ -24,10 +24,10 @@ module shf_execute_shift_right_tb;
     logic [31: 0] op, cnt, is_signed, y;
 
     shf_execute_shift_right u_dut (
-        .operand(op),
-        .count(cnt),
-        .is_signed(is_signed),
-        .result(y)
+        .operand   (op),
+        .count     (cnt),
+        .is_signed (is_signed),
+        .result    (y)
     );
 
     initial begin
