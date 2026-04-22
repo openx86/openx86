@@ -40,6 +40,8 @@ sim/*
 
 .idea
 
+*.log
+
 # Build outputs
 build/
 
