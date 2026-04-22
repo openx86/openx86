@@ -13,15 +13,16 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : stage_4_exu.sv
+//  File        : stage_5_exu.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : Execute unit — receives micro_op_t, decodes uop to sub-unit
-//                control signals, dispatches to ALU/branch/muldiv/FPU/AGU/LSU
+//  Description : Execute unit — receives micro_op_t and operand data from
+//                stage_4_reg, decodes uop to sub-unit control signals,
+//                dispatches to ALU/branch/muldiv/FPU/AGU/LSU
 // ============================================================================
 
 `include "openx86_defs.h.sv"
 
-module stage_4_exu (
+module stage_5_exu (
     // =========================
     // Pipeline handshake
     // =========================
@@ -37,19 +38,13 @@ module stage_4_exu (
     input  logic                i_flush,
 
     // =========================
-    // GPR read data (from register file)
+    // Operand data from stage_4_reg
     // =========================
-    input  logic [31: 0]        i_gpr_eax,
-    input  logic [31: 0]        i_gpr_ebx,
-    input  logic [31: 0]        i_gpr_ecx,
-    input  logic [31: 0]        i_gpr_edx,
-    input  logic [31: 0]        i_gpr_esp,
-    input  logic [31: 0]        i_gpr_ebp,
-    input  logic [31: 0]        i_gpr_esi,
-    input  logic [31: 0]        i_gpr_edi,
+    input  logic [31: 0]        i_src1_data,
+    input  logic [31: 0]        i_src2_data,
 
     // =========================
-    // Flags (from EFLAGS register)
+    // Flags (from stage_4_reg)
     // =========================
     input  logic                i_flag_cf,
     input  logic                i_flag_pf,
@@ -141,18 +136,6 @@ module stage_4_exu (
     logic [31: 0] operand_a;    // dest reg value / src1
     logic [31: 0] operand_b;    // src2 reg value or immediate
     logic [31: 0] operand_count; // shift/rotate count
-
-    // GPR read mux based on register index
-    logic [31: 0] gpr_by_idx [0: 7];
-
-    assign gpr_by_idx[0] = i_gpr_eax;
-    assign gpr_by_idx[1] = i_gpr_ecx;
-    assign gpr_by_idx[2] = i_gpr_edx;
-    assign gpr_by_idx[3] = i_gpr_ebx;
-    assign gpr_by_idx[4] = i_gpr_esp;
-    assign gpr_by_idx[5] = i_gpr_ebp;
-    assign gpr_by_idx[6] = i_gpr_esi;
-    assign gpr_by_idx[7] = i_gpr_edi;
 
     // ============================================================
     // Internal signals — sub-unit results
@@ -421,11 +404,11 @@ module stage_4_exu (
     // ============================================================
     // Operand selection
     // ============================================================
-    assign operand_a = gpr_by_idx[i_uop.uop_dest_reg];
+    assign operand_a = i_src1_data;
     assign operand_b = i_uop.uop_has_imm ? i_uop.uop_immediate :
-                       gpr_by_idx[i_uop.uop_src1_reg];
+                       i_src2_data;
     assign operand_count = i_uop.uop_has_imm ? i_uop.uop_immediate[4:0] :
-                           gpr_by_idx[i_uop.uop_src1_reg][4:0];
+                           i_src2_data[4:0];
 
     // ============================================================
     // ALU — Integer arithmetic/logic/shift/bitmanip
@@ -513,7 +496,7 @@ module stage_4_exu (
     alu_misc_misc_movzx    u_misc_movzx    (.a (operand_a), .width (2'b10), .y (alu_movzx_y));
     alu_misc_misc_bswap    u_misc_bswap    (.a (operand_a), .y (alu_bswap_y));
     alu_misc_misc_xadd     u_misc_xadd     (.a (operand_a), .b (operand_b), .y (alu_xadd_y));
-    alu_misc_misc_cmpxchg  u_misc_cmpxchg  (.acc (i_gpr_eax), .dst (operand_a), .src (operand_b), .y (alu_cmpxchg_y), .zf (alu_cmpxchg_zf));
+    alu_misc_misc_cmpxchg  u_misc_cmpxchg  (.acc (operand_a), .dst (operand_a), .src (operand_b), .y (alu_cmpxchg_y), .zf (alu_cmpxchg_zf));
     alu_misc_misc_setcc    u_misc_setcc    (.flags ({21'd0, i_flag_of, 1'b0, i_flag_sf, 1'b0, i_flag_zf, 1'b0, i_flag_af, 1'b0, i_flag_pf, 1'b1, i_flag_cf}), .tttn (i_uop.uop_tttn), .y (alu_setcc_y));
 
     // ============================================================
@@ -631,8 +614,8 @@ module stage_4_exu (
     i486_execute_unit u_ext (
         .insn_fire          ( insn_fire           ),
         .op_cpuid           ( i_op_cpuid          ),
-        .gpr_eax            ( i_gpr_eax           ),
-        .gpr_ecx            ( i_gpr_ecx           ),
+        .gpr_eax            ( i_src1_data        ),
+        .gpr_ecx            ( i_src2_data        ),
         .cpuid_busy         ( cpuid_busy_r        ),
         .gpr_wr_en          ( o_cpuid_gpr_wr      ),
         .gpr_wr_idx         ( o_cpuid_gpr_idx     ),

@@ -13,12 +13,12 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : ari_execute_arithmetic_add.sv
+//  File        : alu_arithmetic_ari_adc.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : ari_execute_arithmetic_add module
+//  Description : alu_arithmetic_ari_adc module
 // ============================================================================
 
-module alu_arithmetic_ari_add #(
+module alu_arithmetic_adc #(
     parameter BIT_WIDTH = 32
 ) (
     // =========================
@@ -26,6 +26,7 @@ module alu_arithmetic_ari_add #(
     // =========================
     input  logic [BIT_WIDTH-1: 0] a,
     input  logic [BIT_WIDTH-1: 0] b,
+    input  logic                  cf,
 
     // =========================
     // output
@@ -36,6 +37,6 @@ module alu_arithmetic_ari_add #(
 // ============================================================
 // combinational logic: continuous assignment
 // ============================================================
-assign y = a + b;
+assign y = a + b + BIT_WIDTH'(cf);
 
 endmodule

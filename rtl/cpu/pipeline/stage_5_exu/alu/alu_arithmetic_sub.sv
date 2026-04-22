@@ -18,7 +18,7 @@
 //  Description : ari_execute_arithmetic_sub module
 // ============================================================================
 
-module alu_arithmetic_ari_sub #(
+module alu_arithmetic_sub #(
     parameter BIT_WIDTH = 32
 ) (
     // =========================

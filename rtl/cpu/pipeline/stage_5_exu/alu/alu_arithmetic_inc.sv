@@ -18,7 +18,7 @@
 //  Description : ari_inc module
 // ============================================================================
 
-module alu_arithmetic_ari_inc (
+module alu_arithmetic_inc (
     // =========================
     // operand
     // =========================

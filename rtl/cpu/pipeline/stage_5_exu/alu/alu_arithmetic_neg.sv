@@ -13,30 +13,24 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : ari_execute_arithmetic_sbb.sv
+//  File        : ari_neg.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : ari_execute_arithmetic_sbb module
+//  Description : ari_neg module
 // ============================================================================
 
-module alu_arithmetic_ari_sbb #(
-    parameter BIT_WIDTH = 32
-) (
+module alu_arithmetic_neg (
     // =========================
-    // operands
+    // operand
     // =========================
-    input  logic [BIT_WIDTH-1: 0] a,
-    input  logic [BIT_WIDTH-1: 0] b,
-    input  logic                  cf,
+    input  logic [31: 0]  a,
 
     // =========================
     // output
     // =========================
-    output logic [BIT_WIDTH-1: 0] y
+    output logic [31: 0] y
 );
-
     // ============================================================
     // combinational logic: continuous assignment
     // ============================================================
-    assign y = a - b - BIT_WIDTH'(cf);
-
+    assign y = (~a) + 32'd1;
 endmodule

@@ -13,12 +13,12 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : stage_5_mem.sv
+//  File        : stage_6_mem.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : stage_5_mem module
+//  Description : stage_6_mem module
 // ============================================================================
 
-module stage_5_mem (
+module stage_6_mem (
     input  logic          i_stage3_valid,
     output logic          o_stage3_ready,
 

@@ -1,4 +1,4 @@
-        // ============================================================================
+// ============================================================================
 //  Copyright (c) 2026 Chang Wei
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -13,24 +13,30 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : ari_dec.sv
+//  File        : ari_execute_arithmetic_sbb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : ari_dec module
+//  Description : ari_execute_arithmetic_sbb module
 // ============================================================================
 
-module alu_arithmetic_ari_dec (
+module alu_arithmetic_sbb #(
+    parameter BIT_WIDTH = 32
+) (
     // =========================
-    // operand
+    // operands
     // =========================
-    input  logic [31: 0]  a,
+    input  logic [BIT_WIDTH-1: 0] a,
+    input  logic [BIT_WIDTH-1: 0] b,
+    input  logic                  cf,
 
     // =========================
     // output
     // =========================
-    output logic [31: 0] y
+    output logic [BIT_WIDTH-1: 0] y
 );
+
     // ============================================================
     // combinational logic: continuous assignment
     // ============================================================
-    assign y = a - 32'd1;
+    assign y = a - b - BIT_WIDTH'(cf);
+
 endmodule

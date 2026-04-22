@@ -262,7 +262,7 @@ module stage_3_uop (
     output logic                o_stage_valid,
 
     // =========================
-    // Micro-op outputs to stage_4_exu
+    // Micro-op outputs to stage_4_reg_read
     // =========================
     output micro_op_t           o_uop,
 
@@ -578,7 +578,7 @@ module stage_3_uop (
     assign queue_valid = ~queue_empty;
 
     // ============================================================
-    // Pipeline register: uop_to_exu (stage 3 → stage 4)
+    // Pipeline register: uop_to_exu (stage 3 → stage 4_reg_read)
     // ============================================================
     uop_to_exu u_pipe_reg (
         .i_uop_valid   ( queue_valid          ),

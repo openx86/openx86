@@ -1,4 +1,4 @@
-// ============================================================================
+        // ============================================================================
 //  Copyright (c) 2026 Chang Wei
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -13,30 +13,24 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : alu_arithmetic_ari_adc.sv
+//  File        : ari_dec.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : alu_arithmetic_ari_adc module
+//  Description : ari_dec module
 // ============================================================================
 
-module alu_arithmetic_ari_adc #(
-    parameter BIT_WIDTH = 32
-) (
+module alu_arithmetic_dec (
     // =========================
-    // operands
+    // operand
     // =========================
-    input  logic [BIT_WIDTH-1: 0] a,
-    input  logic [BIT_WIDTH-1: 0] b,
-    input  logic                  cf,
+    input  logic [31: 0]  a,
 
     // =========================
     // output
     // =========================
-    output logic [BIT_WIDTH-1: 0] y
+    output logic [31: 0] y
 );
-
-// ============================================================
-// combinational logic: continuous assignment
-// ============================================================
-assign y = a + b + BIT_WIDTH'(cf);
-
+    // ============================================================
+    // combinational logic: continuous assignment
+    // ============================================================
+    assign y = a - 32'd1;
 endmodule

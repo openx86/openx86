@@ -13,12 +13,12 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : stage_6_wbu.sv
+//  File        : stage_7_wbu.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : stage_6_wbu module
+//  Description : stage_7_wbu module
 // ============================================================================
 
-module stage_6_wbu (
+module stage_7_wbu (
     input  logic          i_stage4_valid,
     output logic          o_stage_valid,
     input  logic          i_stage5_ready,
