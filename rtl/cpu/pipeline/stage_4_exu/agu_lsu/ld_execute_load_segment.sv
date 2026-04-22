@@ -1,22 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements ld_execute_load_segment.
-*/
 // ============================================================================
-// execute_load_segment
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// 处理将段选择子/描述符装载到段寄存器的执行路径（如 MOV Sreg, r/m16 等）。
-//
-// 端口提示（按当前实现命名）：
-// - 输入提供：模式位 `protected_mode_enable`、目的段寄存器索引、源通用寄存器索引、
-//   以及 8/16/32 位通用寄存器读数（由上层根据操作数宽度选择）。
-// - 输出给寄存器文件：`write_enable/write_index/write_selector/write_descriptor`
-// - `valid/ready`：本子模块与上层执行控制之间的握手
-//
-// 备注：段装载在保护模式下需要做权限检查与描述符解析；若当前实现为 bring-up，
-// 可能只覆盖最小可运行路径，未实现全部异常语义。
+//  File        : ld_execute_load_segment.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : ld_execute_load_segment module
 // ============================================================================
 
 `include "openx86_defs.h.sv"

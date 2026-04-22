@@ -1,106 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements bus_controller.
-*/
 // ============================================================================
-// Bus Controller Module
-// 根据 IBM PC 兼容机标准和 Intel 标准实现总线控制器
-// 负责地址解码和外设路由
-// ============================================================================
-
-// ----------------------------------------------------------------------------
-// bus_controller
-// ----------------------------------------------------------------------------
-// Pure address decode + device integration. This module contains no CPU-side
-// sequencing beyond combinational ready/data selection.
+//  Copyright (c) 2026 Chang Wei
 //
-// It is wrapped by `bus_controller` to keep a stable top-level bus port
-// interface while allowing the device-side to evolve.
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-module bus_controller #(
-    parameter bit  USE_REAL_PS2  = 1'b0,
-    parameter int  PS2_CLK_HZ    = 50_000_000,
-    parameter bit  USE_SDIO_DISK = 1'b0
-) (
-    // CPU 总线接口
-    input  logic         i_bus_valid,          // CPU 总线事务有效
-    output logic         o_bus_ready,          // 从设备就绪（本拍可完成）
-    output logic         o_bus_busy,           // SDRAM 等多周期外设忙
-    input  logic         i_bus_write_enable,   // 1=写，0=读
-    input  logic         i_bus_io_access,      // 1=I/O 端口访问，0=存储器（类 M/IO#）
-    input  logic [31: 0] i_bus_address,        // 地址（I/O 时用低 16 位）
-    output logic [31: 0] o_bus_data_read,      // 读回数据
-    input  logic [31: 0] i_bus_data_write,     // 写出数据
-
-    // VGA 内存访问接口（VRAM窗口 0xA0000-0xBFFFF）
-    // 注意：VGA VRAM 通常是只写的（从CPU角度），VGA控制器自己读取显示
-    output logic         o_vga_mem_en_w,       // 输出信号
-    output logic [19: 0] o_vga_mem_addr,       // 输出信号
-    output logic [ 7: 0] o_vga_mem_data_w,     // 输出信号
-
-    // VGA I/O 端口接口（0x03C0-0x03DF）
-    output logic         o_vga_io_en_w,        // 输出信号
-    output logic         o_vga_io_en_r,        // 输出信号
-    output logic [15: 0] o_vga_io_addr,        // 输出信号
-    output logic [ 7: 0] o_vga_io_data_w,      // 输出信号
-    input  logic [ 7: 0] i_vga_io_data_r,      // 输入信号
-
-    // BIOS ROM 接口（系统 BIOS 64KB）
-    // 使用简单的ROM接口：addr, rdata
-    output logic [15: 0] o_bios_addr,          // 输出信号
-    input  logic [31: 0] i_bios_rdata,         // 输入信号
-
-    // 扩展 BIOS ROM 接口（128KB）
-    output logic [16: 0] o_ext_bios_addr,      // 输出信号
-    input  logic [31: 0] i_ext_bios_rdata,     // 输入信号
-
-    // SDRAM：640KB 常规内存 + 16MB 窗口（0x0100_0000）共用 sdram_controller
-    output logic         o_sdram_en,           // 输出信号
-    output logic         o_sdram_we,           // 输出信号
-    output logic [23: 0] o_sdram_addr_off,     // 输出信号
-    output logic [31: 0] o_sdram_wdata,        // 输出信号
-    input  logic [31: 0] i_sdram_rdata,        // 输入信号
-    input  logic         i_sdram_ready,        // 输入信号
-    input  logic         i_sdram_busy,         // 输入信号
-
-    // PS/2 键盘与鼠标（8042）：开漏驱动 + 总线回读；未用 PHY 时可上拉输入为 1
-    output logic         o_ps2_kbd_clk_out,    // 键盘时钟驱动
-    output logic         o_ps2_kbd_clk_oe,     // 键盘时钟 OE
-    input  logic         i_ps2_kbd_clk_in,     // 键盘时钟回读
-    output logic         o_ps2_kbd_dat_out,    // 输出信号
-    output logic         o_ps2_kbd_dat_oe,     // 输出信号
-    input  logic         i_ps2_kbd_dat_in,     // 输入信号
-
-    output logic         o_ps2_aux_clk_out,    // 鼠标时钟驱动
-    output logic         o_ps2_aux_clk_oe,     // 时钟信号
-    input  logic         i_ps2_aux_clk_in,     // 时钟信号
-    output logic         o_ps2_aux_dat_out,    // 输出信号
-    output logic         o_ps2_aux_dat_oe,     // 输出信号
-    input  logic         i_ps2_aux_dat_in,     // 输入信号
-
-    // SDIO / SD 4-bit（由 ide_controller → sdcard_controller 驱动；USE_SDIO_DISK=0 时为空闲电平）
-    output logic         o_sdio_clk,           // SDIO 时钟至 PHY/卡
-    output logic         o_sdio_cmd_o,         // CMD 线主机驱动数据
-    output logic         o_sdio_cmd_oe,        // CMD 输出使能
-    input  logic         i_sdio_cmd_i,         // CMD 总线回读
-    output logic [ 3: 0] o_sdio_dat_o,         // DAT[3: 0] 主机驱动
-    output logic         o_sdio_dat_oe,        // DAT 输出使能
-    input  logic [ 3: 0] i_sdio_dat_i,         // DAT 总线回读
-
-    // PIC 主片中断输出（接 CPU INTR）
-    output logic         o_pic_intr,           // 主片 INTR（高有效）
-
-    // Chipset（IBM PC/AT I/O：各 chip_* 模块由 bus_controller 直连例化；未命中时读回 0xFF）
-
-    // 公共时钟与复位
-    input  logic          clk,                  // 系统时钟
-    input  logic          rst_n                 // 异步低有效复位
-);
-
-// ============================================================================
-// IBM PC 兼容机标准地址映射定义
+//  File        : bus_controller.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : Module
 // ============================================================================
 
 // 内存地址范围定义（32位地址空间）

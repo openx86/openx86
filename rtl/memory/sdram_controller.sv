@@ -1,26 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements sdram_controller.
-*/
 // ============================================================================
-// SDRAM Controller (real PHY) — minimal bring-up @ 50MHz
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// - Host side: 32-bit word access with valid/ready/busy style handshake
-// - SDRAM side: 16-bit SDR SDRAM (x16), single data rate
-//
-// This controller is intentionally minimal:
-// - Fixed timing parameters suitable for a typical 50MHz board bring-up
-// - Burst length = 2 (x16) so one READ/WRITE transfers one 32-bit word
-// - Auto-refresh is supported with a simple periodic counter
-//
-// NOTE:
-// - Address mapping assumes 16MB window and a simplified geometry:
-//     row[12: 0] = halfword_addr[22: 10]
-//     bank[ 1: 0] = halfword_addr[ 9:  8]
-//     col[ 8: 0]  = {1'b0, halfword_addr[ 7: 0]}
-// - This maps exactly 16MB: 2^13 rows * 4 banks * 256 cols * 2 bytes = 16MB
+//  File        : sdram_controller.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : sdram_controller module
 // ============================================================================
 
 module sdram_controller #(

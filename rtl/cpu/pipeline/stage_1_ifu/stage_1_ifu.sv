@@ -1,16 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: stage_1_ifu with local 16-byte FIFO and handshake to stage_2_dec.
-*/
 // ============================================================================
-// stage_1_ifu
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// Stage 1 IFU:
-// - fetches instruction words from code bus
-// - buffers bytes in a local FIFO
-// - handshakes with stage_2_dec using consume-bytes feedback
+//  File        : stage_1_ifu.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : stage_1_ifu module
 // ============================================================================
 
 module stage_1_ifu (
@@ -204,11 +209,6 @@ module stage_1_ifu (
 
 endmodule
 
-// ============================================================================
-// stage_1_ifu_fifo
-// ----------------------------------------------------------------------------
-// Stage-1 local 16-byte FIFO.
-// ============================================================================
 module stage_1_ifu_fifo #(
     parameter int P_DEPTH      = 16,
     parameter int P_DATA_WIDTH = 8

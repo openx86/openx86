@@ -1,9 +1,23 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements vga_text_color.
-*/
+// ============================================================================
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : vga_text_color.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : vga_text_color module
+// ============================================================================
+
 // VGA 彩色文本模式
 // 支持 80x25 字符，16 色前景 + 8 色背景
 // 属性字节格式：[7:闪烁][6:4背景色][3:0前景色]

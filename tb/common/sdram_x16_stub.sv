@@ -1,9 +1,23 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements sdram_x16_stub.
-*/
+// ============================================================================
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : sdram_x16_stub.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : sdram_x16_stub module
+// ============================================================================
+
 // ============================================================================
 // 16-bit SDRAM 阵列仿真模型（与 sdram_controller 配套）
 // - 写：根据 ACT 锁存行，在 WR AP 后随 host_dq_oe 两拍写入 {memory[lin], memory[lin+1]}

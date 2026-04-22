@@ -1,17 +1,23 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements i486_cpu.
-*/
 // ============================================================================
-// i486_cpu
-// ----------------------------------------------------------------------------
-// CPU 顶层封装：对外提供统一的简化 SoC bus 接口（valid/ready）。
+//  Copyright (c) 2026 Chang Wei
 //
-// 说明：
-// - 实例化 `i486_cpu_core` 作为 CPU 核实现，并在核外封装 `bus_interface_unit`。
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : i486_cpu.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : i486_cpu module
 // ============================================================================
+
 module i486_cpu (
     // 以下为历史 80386 风格总线信号（保留注释，未接线）
     // input  logic        next_address_n,

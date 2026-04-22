@@ -1,15 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: SD / BRAM disk backend for IDE — byte read + async sector load handshake.
-*/
 // ============================================================================
-// sdcard_controller
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// P_USE_SDIO_DISK=0: async byte read from internal image[].
-// P_USE_SDIO_DISK=1: sdcard_native_host_4bit fills sector_buf; sector_ready pulses
-//   when load completes; data valid for i_disk_raddr in loaded LBA until next load.
+//  File        : sdcard_controller.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : sdcard_controller module
 // ============================================================================
 
 module sdcard_controller #(

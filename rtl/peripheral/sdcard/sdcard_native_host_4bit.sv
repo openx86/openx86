@@ -1,14 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: Minimal SD native 4-bit host — CMD17 single-block read for RTL + sd_mmc_card_model_native.
-*/
 // ============================================================================
-// sdcard_native_host_4bit
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// i_start: one-shot or pulse to read one 512B block at i_lba (argument field).
-// Card model does not validate CRC; bit count and data token path matter.
+//  File        : sdcard_native_host_4bit.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : sdcard_native_host_4bit module
 // ============================================================================
 
 module sdcard_native_host_4bit (

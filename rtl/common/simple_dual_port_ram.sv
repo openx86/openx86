@@ -1,20 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements simple_dual_port_ram.
-*/
 // ============================================================================
-// simple_dual_port_ram
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// 简单双口 RAM（1x write + 1x read）。
-//
-// - 写：`we` 为 1 时在 posedge clk 将 `wdata` 写入 `waddr`
-// - 读：`re` 为 1 时在 posedge clk 将 `raddr` 对应数据输出到 `rdata`
-// - 复位：清零 `rdata`（不清 RAM 内容）
-//
-// 适用场景：小容量寄存/缓存/测试用存储模型。对综合成 block RAM 的行为，
-// 取决于综合器/器件推断规则与端口时序写法。
+//  File        : simple_dual_port_ram.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : simple_dual_port_ram module
 // ============================================================================
 
 module simple_dual_port_ram #(

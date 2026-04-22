@@ -1,9 +1,23 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements openx86_soc_top.
-*/
+// ============================================================================
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : openx86_soc_top.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : openx86_soc_top module
+// ============================================================================
+
 // ============================================================================
 // 最小 SoC：i486_cpu 仅接 bus_controller；SDRAM/ROM/VGA/chipset 由总线控制器译码驱动
 // ============================================================================

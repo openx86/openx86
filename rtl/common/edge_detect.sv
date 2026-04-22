@@ -1,19 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements edge_detect.
-*/
 // ============================================================================
-// edge_detect
-// ----------------------------------------------------------------------------
-// 对输入 `signal` 做边沿检测，输出单周期脉冲：
-// - `pos_edge`：检测到 0->1 上升沿时拉高 1 个 clk 周期
-// - `neg_edge`：检测到 1->0 下降沿时拉高 1 个 clk 周期
+//  Copyright (c) 2026 Chang Wei
 //
-// 设计要点：
-// - 通过寄存 `signal_prev` 与当前 `signal` 比较得到边沿。
-// - 异步复位（negedge rst_n）将输出与 `signal_prev` 清零。
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : edge_detect.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : edge_detect module
 // ============================================================================
 
 module edge_detect (

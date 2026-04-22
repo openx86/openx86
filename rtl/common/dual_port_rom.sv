@@ -1,19 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements dual_port_rom.
-*/
 // ============================================================================
-// dual_port_rom
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// 双端口只读存储器（2x read port），用于仿真/综合中的 ROM 建模。
-//
-// - **内容初始化**：不在本模块内装载；仿真由 testbench 层次化写入阵列，
-//   上板请使用 ROM IP 或工程级 memory init。
-// - **时序**：两路读口均为 **同步读**（posedge clk 更新输出）。
-//
-// Reset 行为：复位时把读数据输出清零（不影响 ROM 内容）。
+//  File        : dual_port_rom.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : dual_port_rom module
 // ============================================================================
 
 module dual_port_rom #(

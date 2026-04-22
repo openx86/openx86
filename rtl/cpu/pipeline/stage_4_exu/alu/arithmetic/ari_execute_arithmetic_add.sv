@@ -1,17 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements ari_execute_arithmetic_add.
-*/
 // ============================================================================
-// execute_arithmetic_add
-// ----------------------------------------------------------------------------
-// 执行单元算术子模块：ADD（无进位加法）。
+//  Copyright (c) 2026 Chang Wei
 //
-// 语义：
-// - `result = operand_1 + operand_2`
-// - 本文件仅输出加法结果；标志位更新通常由上层统一实现。
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : ari_execute_arithmetic_add.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : ari_execute_arithmetic_add module
 // ============================================================================
 
 module ari_execute_arithmetic_add #(    BIT_WIDTH = 32

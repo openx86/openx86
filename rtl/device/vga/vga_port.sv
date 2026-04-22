@@ -1,25 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements vga_port.
-*/
 // ============================================================================
-// vga_port
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// VGA 时序/像素输出端口模块。
-//
-// 职责：
-// - 产生 VGA HSYNC/VSYNC 与 RGB 信号（当前为 4:4:4 低位宽输出）
-// - 根据当前扫描位置，从 VRAM/字符 ROM 等读取显示数据
-//
-// 接口说明（摘要）：
-// - `vram_rd_addr/vram_rd_data`：VRAM 读取端口（通常接双口 RAM 的读口）
-// - `vga_*`：物理输出信号
-//
-// 备注：
-// - VGA 像素时钟、行场参数（可见区/前后沿/同步脉冲）由内部参数或常量定义；
-//   上板时需要与目标显示模式匹配。
+//  File        : vga_port.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : vga_port module
 // ============================================================================
 
 module vga_port #(

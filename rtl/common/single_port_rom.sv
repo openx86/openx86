@@ -1,18 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements single_port_rom.
-*/
 // ============================================================================
-// single_port_rom
-// ----------------------------------------------------------------------------
-// 单端口 ROM（同步读），用于仿真/综合中的 ROM 建模。
+//  Copyright (c) 2026 Chang Wei
 //
-// - **内容初始化**：不在本模块内装载；仿真时由 testbench 通过层次化引用
-//   写入内部阵列，或使用厂商 ROM IP / 工程脚本做上板初始化。
-// - **读时序**：posedge clk 更新 `rdata`（同步读）。
-// - **复位**：将 `rdata` 清零（ROM 内容不变）。
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : single_port_rom.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : single_port_rom module
 // ============================================================================
 
 module single_port_rom #(

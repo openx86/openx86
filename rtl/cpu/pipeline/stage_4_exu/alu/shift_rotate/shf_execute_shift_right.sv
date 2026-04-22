@@ -1,14 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements shf_execute_shift_right.
-*/
 // ============================================================================
-// execute_shift_right
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// 执行单元移位子模块：右移（SHR/SAR）。
-// - `is_signed` 用于选择逻辑右移(0)或算术右移(1)的行为（高位填充 0 或符号位）。
+//  File        : shf_execute_shift_right.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : shf_execute_shift_right module
 // ============================================================================
 
 module shf_execute_shift_right #(    BIT_WIDTH = 32

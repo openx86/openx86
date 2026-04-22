@@ -1,17 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements ari_execute_arithmetic_adc.
-*/
 // ============================================================================
-// execute_arithmetic_adc
-// ----------------------------------------------------------------------------
-// 执行单元算术子模块：ADC（Add with Carry）。
+//  Copyright (c) 2026 Chang Wei
 //
-// 语义：
-// - `result = operand_1 + operand_2 + carry_flag`
-// - 该文件当前仅输出加法结果；标志位（CF/OF/...）若需要应由上层统一计算。
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : ari_execute_arithmetic_adc.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : ari_execute_arithmetic_adc module
 // ============================================================================
 
 module ari_execute_arithmetic_adc #(    BIT_WIDTH = 32

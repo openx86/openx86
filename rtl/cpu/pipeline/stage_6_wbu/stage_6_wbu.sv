@@ -1,15 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: stage_6_wbu wrapper for write_back_stage commit path.
-*/
 // ============================================================================
-// stage_6_wbu
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// Stage 6 WBU:
-// - forwards writeback controls/data to architectural register file ports
-// - forwards memory commit bundle to external core bus channel
+//  File        : stage_6_wbu.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : stage_6_wbu module
 // ============================================================================
 
 module stage_6_wbu (

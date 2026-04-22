@@ -1,15 +1,22 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements memory_stage.
-*/
 // ============================================================================
-// memory_stage
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// Stage 4 (MEM / memory): wraps LSU memory access sequencing.
+//  File        : memory_stage.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : memory_stage module
 // ============================================================================
-
 
 module memory_stage (
     input  logic          i_stage3_valid,   // 上游 EXE 阶段有效（与 MEM 流水对齐）

@@ -1,21 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements single_port_ram.
-*/
 // ============================================================================
-// single_port_ram
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// 单端口 RAM（读写共用同一地址端口）。
-//
-// - 写：`we` 为 1 时在 posedge clk 写入 `addr`
-// - 读：在 posedge clk 读出 `addr` 对应数据到 `rdata`（同步读）
-//
-// 注意：
-// - 读写同地址同周期的行为（write-first/read-first/no-change）依赖综合器推断；
-//   如需明确行为，建议在工程层使用器件 IP（如 Quartus RAM IP）。
-// - reset 只影响输出/控制，不主动清零存储阵列（更贴近真实 BRAM 行为）。
+//  File        : single_port_ram.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : single_port_ram module
 // ============================================================================
 
 module single_port_ram #(

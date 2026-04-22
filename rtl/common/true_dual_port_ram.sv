@@ -1,21 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements true_dual_port_ram.
-*/
 // ============================================================================
-// true_dual_port_ram
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// 真双口 RAM（2x read/write port），常用于“CPU 写入 + VGA/外设并行读取”等场景。
-//
-// - 端口 A/B 均支持同步写、同步读（posedge clk）。
-// - 复位：清零读数据输出（不清 RAM 内容）。
-//
-// 冲突说明：
-// - 双口同周期访问同地址（尤其是同时写）时的最终内容与读出的数据，
-//   依赖综合器/器件 RAM primitive 的定义；若系统依赖确定行为，建议采用
-//   厂商 IP 并显式配置 read-during-write 模式。
+//  File        : true_dual_port_ram.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : true_dual_port_ram module
 // ============================================================================
 
 module true_dual_port_ram #(

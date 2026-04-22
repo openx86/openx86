@@ -1,14 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: IBM PC primary IDE ATA PIO disk — inlined ATA + sdcard_controller backend.
-*/
 // ============================================================================
-// ide_controller
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// Host side: nCS/nRD/nWR + 16b ISA address (0x1F0–0x1F7, 0x3F6 decode above).
-// Storage: sdcard_controller (BRAM image or SDIO sector buffer).
+//  File        : ide_controller.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : ide_controller module
 // ============================================================================
 
 module ide_controller #(

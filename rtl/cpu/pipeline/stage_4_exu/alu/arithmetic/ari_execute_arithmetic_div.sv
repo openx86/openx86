@@ -1,17 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: This module implements ari_execute_arithmetic_div.
-*/
 // ============================================================================
-// execute_arithmetic_div
-// ----------------------------------------------------------------------------
-// 执行单元算术子模块：DIV（无符号除法）结果计算。
+//  Copyright (c) 2026 Chang Wei
 //
-// 风险提示：
-// - 除以 0、溢出等在 x86 中应触发异常；本文件可能只提供数学结果，不含异常机制。
-// - 综合时除法器资源开销大；真实实现通常使用多周期除法或共享乘除单元。
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : ari_execute_arithmetic_div.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : ari_execute_arithmetic_div module
 // ============================================================================
 
 module ari_execute_arithmetic_div #(    BIT_WIDTH = 32

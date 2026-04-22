@@ -1,13 +1,21 @@
-/*
-project: openx86
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/openx86
-description: SDIO 4-bit pad transceiver — host digital side to board inout CMD/DAT.
-*/
 // ============================================================================
-// sdcard_4bit_phy
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
 // ----------------------------------------------------------------------------
-// Maps internal out/oe signals to external SD CMD / DAT[3: 0] bidirectional pins.
+//  File        : sdcard_4bit_phy.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : sdcard_4bit_phy module
 // ============================================================================
 
 module sdcard_4bit_phy (

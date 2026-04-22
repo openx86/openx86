@@ -2,7 +2,29 @@
 
 **Scope:** `rtl/**/*.sv` synthesizable SV; `tb/**/*.sv` TBs.
 
-**File header (required top of every `*.sv`):** `project: openx86`, `author: Chang Wei<changwei1006@gmail.com>`, `repo: https://github.com/openx86/openx86`, `description: <concise>`.
+**File header (required top of every `*.sv`):** MIT license format with copyright notice, permission text, file metadata, and description:
+
+```systemverilog
+// ============================================================================
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : <filename>.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : <concise module description>
+// ============================================================================
+```
 
 **Ports:** all `logic`; `i_`/`o_`/`b_`; PHY: `{dir}_{module}_phy_{name}`; last ports always `clk`, `rst_n` (exact names); bus widths `[31: 0]` style (spaces around `:`); align columns (dir, logic, width, name); one port/connection per line; align `.(...)`.
 
