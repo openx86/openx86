@@ -50,26 +50,34 @@ segment
 
 
 module segment_descriptor_decode (
-    // 8 字节代码/数据段描述符字段展开（非系统段路径）
-    output logic [31: 0] o_base,                                // 输出信号
-    output logic [19: 0] o_limit,                               // 输出信号
-    output logic          o_date_or_code_present,                // 输出信号
-    output logic [ 1: 0] o_date_or_code_privilege_level,        // 输出信号
-    output logic          o_available_field,                     // 输出信号
-    output logic          o_segment_type,                        // 输出信号
-    output logic          o_date_or_code_granularity,            // 输出信号
-    output logic          o_date_or_code_default_operation_size, // 输出信号
-    output logic          o_date_or_code_executable,             // 输出信号
-    output logic          o_data_expansion_direction,            // 输出信号
-    output logic          o_data_writeable,                      // 输出信号
-    output logic          o_code_conforming,                     // 输出信号
-    output logic          o_code_readable,                       // 输出信号
-    output logic          o_date_or_code_accessed,               // 输出信号
-    input  logic [63: 0] i_descriptor                           // 输入信号
+    // =========================
+    // decoded descriptor fields (8-byte code/data segment descriptor)
+    // =========================
+    output logic [31: 0] o_base,
+    output logic [19: 0] o_limit,
+    output logic          o_date_or_code_present,
+    output logic [ 1: 0] o_date_or_code_privilege_level,
+    output logic          o_available_field,
+    output logic          o_segment_type,
+    output logic          o_date_or_code_granularity,
+    output logic          o_date_or_code_default_operation_size,
+    output logic          o_date_or_code_executable,
+    output logic          o_data_expansion_direction,
+    output logic          o_data_writeable,
+    output logic          o_code_conforming,
+    output logic          o_code_readable,
+    output logic          o_date_or_code_accessed,
+
+    // =========================
+    // input
+    // =========================
+    input  logic [63: 0] i_descriptor
 );
 
-// 手册中的系统段 TYPE 全集（本模块组合逻辑实际拆解的是 S=1 代码/数据段 8 字节布局）
-typedef enum logic [ 3: 0] {
+    // ============================================================
+    // system segment TYPE enumeration (from manual)
+    // ============================================================
+    typedef enum logic [ 3: 0] {
     SYS_SEG_TYPE_INVALID_80286 = 4'h0,
     SYS_SEG_TYPE_AVAILABLE_80286_TSS = 4'h1,
     SYS_SEG_TYPE_LDT = 4'h2,
@@ -88,13 +96,15 @@ typedef enum logic [ 3: 0] {
     SYS_SEG_TYPE_80386_TRAP_GATE = 4'hF
 } system_segment_type_t;
 
-// 描述符各碎片（与 Fig 4-5 位域对应）
-logic [15: 0] o_base_15__0;
-logic [ 7: 0] o_base_23_16;
-logic [ 7: 0] o_base_31_24;
+    // ============================================================
+    // descriptor field fragments (corresponding to Fig 4-5 bit fields)
+    // ============================================================
+    logic [15: 0] o_base_15__0;
+    logic [ 7: 0] o_base_23_16;
+    logic [ 7: 0] o_base_31_24;
 
-logic [15: 0] o_limit_15__0;
-logic [ 3: 0] o_limit_19_16;
+    logic [15: 0] o_limit_15__0;
+    logic [ 3: 0] o_limit_19_16;
 
 assign o_base_15__0                         = i_descriptor[63: 48];
 assign o_base_23_16                         = i_descriptor[ 7: 0];

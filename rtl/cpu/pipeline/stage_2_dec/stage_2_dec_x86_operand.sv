@@ -21,10 +21,15 @@
 `include "openx86_defs.h.sv"
 
 module stage_2_dec_x86_operand (
+    // =========================
+    // instruction inputs
+    // =========================
     input  logic [ 7: 0][ 7: 0] i_instruction_bytes,
     input  logic [ 2: 0]        i_default_op_size,
-    
-    // Opcode hit signals (passed through to field module)
+
+    // =========================
+    // opcode hit signals (passed through to field module)
+    // =========================
     input  logic                i_opcode_x86_AAA_ASCII_adjust_after_add,
     input  logic                i_opcode_x86_AAD_ASCII_AX_before_div,
     input  logic                i_opcode_x86_AAM_ASCII_AX_after_mul,

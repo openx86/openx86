@@ -22,20 +22,28 @@
 
 module single_port_rom_tb;
 
+    // ============================================================
+    // parameters
+    // ============================================================
     parameter int DATA_WIDTH = 8;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
+    // ============================================================
+    // test signals
+    // ============================================================
     logic                    clk;
     logic                    rst_n;
     logic [ADDR_WIDTH-1: 0]  addr;
     logic [DATA_WIDTH-1: 0]  rdata;
 
-    // 创建测试用的初始化数据数组
+    // test data array
     logic [DATA_WIDTH-1: 0] test_data [0:DEPTH-1];
 
-    // 初始化测试数据
-    initial begin
+    // ============================================================
+    // test data initialization
+    // ============================================================
+    initial begin : init_test_data
         for (int i = 0; i < DEPTH; i++) begin
             test_data[i] = i[ 7: 0];  // 使用地址的低8位作为数据
         end
@@ -46,6 +54,9 @@ module single_port_rom_tb;
         test_data[DEPTH-1] = 8'hFF;
     end
 
+    // ============================================================
+    // DUT instantiation
+    // ============================================================
     single_port_rom #(
         .DATA_WIDTH ( DATA_WIDTH ),
         .ADDR_WIDTH ( ADDR_WIDTH ),
@@ -57,10 +68,10 @@ module single_port_rom_tb;
         .rst_n  ( rst_n  )
     );
 
-    // 手动初始化ROM数据（用于测试）
-    // 注意：这需要在ROM模块的initial块中完成，这里只是说明
-    // 实际测试时，可以通过修改ROM模块的initial块来初始化数据
-    initial begin
+    // ============================================================
+    // ROM data initialization
+    // ============================================================
+    initial begin : init_rom_data
         // 等待ROM初始化完成
         #1;
         // 手动设置ROM数据（用于测试）
@@ -69,10 +80,15 @@ module single_port_rom_tb;
         end
     end
 
-    // 时钟生成
+    // ============================================================
+    // clock generation
+    // ============================================================
     always #5 clk = ~clk;
 
-    initial begin
+    // ============================================================
+    // test procedure
+    // ============================================================
+    initial begin : main_test
         clk = 0;
         rst_n = 1;
         addr  = '0;

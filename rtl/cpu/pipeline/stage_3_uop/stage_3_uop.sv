@@ -21,13 +21,17 @@
 `include "openx86_defs.h.sv"
 
 module stage_3_uop (
-    // Stage handshake/control from stage_2_dec
-    input  logic                i_stage2_valid, // 输入信号
-    input  logic                i_flush, // 输入信号
-    output logic                o_stage2_ready, // 输出信号
-    output logic                o_stage_valid, // 输出信号
+    // =========================
+    // stage handshake/control from stage_2_dec
+    // =========================
+    input  logic                i_stage2_valid,
+    input  logic                i_flush,
+    output logic                o_stage2_ready,
+    output logic                o_stage_valid,
 
-    // Decoded macro-instruction inputs from stage_2_dec (full instruction set)
+    // =========================
+    // decoded macro-instruction inputs from stage_2_dec (full instruction set)
+    // =========================
     input  logic                i_opcode_aaa,
     input  logic                i_opcode_aad,
     input  logic                i_opcode_aam,

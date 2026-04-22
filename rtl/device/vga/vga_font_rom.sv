@@ -25,25 +25,30 @@
 // 字体数据：仿真时在 testbench 中对 font_rom_inst.rom 做 $readmemh 等初始化。
 
 module vga_font_rom (
-    // ------------------------------------------------------------------------
-    // Font lookup interface
-    // ------------------------------------------------------------------------
-    input  logic [ 7: 0]  char_code, // 字符码（0-255）
-    input  logic [ 3: 0]  row_index, // 字符内行索引（0-15，对应字体 ROM 行）
-    output logic [ 7: 0] font_data, // 当前行 8 点宽点阵（MSB 通常对应左像素）
+    // =========================
+    // font lookup interface
+    // =========================
+    input  logic [ 7: 0]  char_code,
+    input  logic [ 3: 0]  row_index,
+    output logic [ 7: 0] font_data,
 
-    // ------------------------------------------------------------------------
-    // Clock / reset
-    // ------------------------------------------------------------------------
-    input  logic          rst_n, // 异步低有效复位（送子 ROM）
-    input  logic          clk // 字体读同步时钟
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic          rst_n,
+    input  logic          clk
 );
 
-    // 字体线性地址：{字符, 行}
+    // ============================================================
+    // font linear address: {char, row}
+    // ============================================================
     logic [11: 0] font_addr;
 
     assign font_addr = {char_code, row_index};
 
+    // ============================================================
+    // font ROM instance
+    // ============================================================
     single_port_rom #(
         .DATA_WIDTH ( 8      ),
         .ADDR_WIDTH ( 12     ),

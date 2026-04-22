@@ -20,44 +20,70 @@
 
 `include "openx86_defs.h.sv"
 module instruction_fetch (
-    // 取指总线（对 BIU/存储子系统）
-    output logic         o_code_valid,         // 输出信号
-    input  logic          i_code_ready,        // 输入信号
-    output logic [31: 0] o_code_address,       // 输出信号
-    input  logic [31: 0] i_code_data_read,     // 输入信号
-    // MMU 页表遍历总线（通常高于普通 code/data 优先级）
-    output logic         o_mmu_bus_valid,      // 输出信号
-    input  logic          i_mmu_bus_ready,      // 输入信号
-    output logic [31: 0] o_mmu_bus_addr,       // 输出信号
-    input  logic [31: 0] i_mmu_bus_rdata,      // 输入信号
-    // 段/分页上下文（来自 CPU 寄存器侧）
-    input  logic          i_protected_mode,     // 输入信号
-    input  logic [ 5: 0][15: 0] i_segment_selector,   // 输入信号
-    input  logic [ 5: 0][63: 0] i_segment_descriptor, // 输入信号
-    input  logic [ 1: 0]        i_current_privilege_level, // 输入信号
-    input  logic                 i_paging_enable,        // 输入信号
-    input  logic [31: 0]        i_page_directory_base,  // 输入信号
-    // 执行单元：IP 更新完成后再取下一批
-    input  logic                 i_IP_valid,             // 输入信号
-    // 输出到译码：16B 指令缓冲
-    output logic [15: 0][ 7: 0] o_instruction,          // 输出信号
-    output logic                 o_instruction_ready,    // 输出信号
-    output logic                 o_segment_fault,        // 输出信号
-    // 指令指针
-    input  logic [31: 0]        i_eip,                 // 输入信号
-    input  logic                 clk,                   // 时钟信号
-    input  logic                 rst_n                  // 复位信号
+    // =========================
+    // instruction fetch bus (to BIU/memory subsystem)
+    // =========================
+    output logic         o_code_valid,
+    input  logic          i_code_ready,
+    output logic [31: 0] o_code_address,
+    input  logic [31: 0] i_code_data_read,
+
+    // =========================
+    // MMU page table walk bus (higher priority than normal code/data)
+    // =========================
+    output logic         o_mmu_bus_valid,
+    input  logic          i_mmu_bus_ready,
+    output logic [31: 0] o_mmu_bus_addr,
+    input  logic [31: 0] i_mmu_bus_rdata,
+
+    // =========================
+    // segment/paging context (from CPU register side)
+    // =========================
+    input  logic          i_protected_mode,
+    input  logic [ 5: 0][15: 0] i_segment_selector,
+    input  logic [ 5: 0][63: 0] i_segment_descriptor,
+    input  logic [ 1: 0]        i_current_privilege_level,
+    input  logic                 i_paging_enable,
+    input  logic [31: 0]        i_page_directory_base,
+
+    // =========================
+    // execution unit: fetch next batch after IP update completes
+    // =========================
+    input  logic                 i_IP_valid,
+
+    // =========================
+    // output to decode: 16B instruction buffer
+    // =========================
+    output logic [15: 0][ 7: 0] o_instruction,
+    output logic                 o_instruction_ready,
+    output logic                 o_segment_fault,
+
+    // =========================
+    // instruction pointer
+    // =========================
+    input  logic [31: 0]        i_eip,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic                 clk,
+    input  logic                 rst_n
 );
 
-logic        mmu_valid;         // MMU 请求门控（与 IP 有效对齐）
-logic        mmu_ready;         // MMU 完成（本模块当前未扇出使用）
-logic        mmu_bus_we;        // 取指路径不写内存（恒 0 语义由 MMU 封装）
-logic [31: 0] mmu_bus_wdata;    // 写数据占位
-logic        seg_fault;         // 段单元报告的 fault
+    // ============================================================
+    // MMU request gating and signals
+    // ============================================================
+    logic        mmu_valid;
+    logic        mmu_ready;
+    logic        mmu_bus_we;
+    logic [31: 0] mmu_bus_wdata;
+    logic        seg_fault;
 
-assign mmu_valid = i_IP_valid;
+    assign mmu_valid = i_IP_valid;
 
-// 请求段转换：在 IP 有效时根据当前 EIP 计算物理取指地址
+    // ============================================================
+    // segment translation: compute physical fetch address when IP valid
+    // ============================================================
 
 memory_management_unit #(
     .read_from_fetch (1'b1)
@@ -85,16 +111,20 @@ memory_management_unit #(
     .rst_n               (rst_n)
 );
 
-assign o_segment_fault = seg_fault;
+    assign o_segment_fault = seg_fault;
 
-// 取指小状态机：等 EIP 有效 → 拉取 4×32b 并拼装 16B → 再回等 IP
-enum logic {
-    STATE_WAIT_FOR_CODE_DATA_READY = 1'h1, // 等待存储返回并收齐 16 字节
-    STATE_WAIT_FOR_IP_VALID = 1'h0         // 等待执行侧给出有效 IP
-} state;
+    // ============================================================
+    // fetch small state machine: wait for EIP valid → fetch 4×32b and assemble 16B → wait for IP again
+    // ============================================================
+    enum logic {
+        STATE_WAIT_FOR_CODE_DATA_READY = 1'h1,
+        STATE_WAIT_FOR_IP_VALID = 1'h0
+    } state;
 
-// 状态转移：与 bytes_index 配合完成 4 次 32b 读
-always_ff @(posedge clk or negedge rst_n) begin
+    // ============================================================
+    // state transition: complete 4×32b reads with bytes_index
+    // ============================================================
+    always_ff @(posedge clk or negedge rst_n) begin : ff_fetch_state
     if (~rst_n) begin
         state <= STATE_WAIT_FOR_IP_VALID;
     end else begin

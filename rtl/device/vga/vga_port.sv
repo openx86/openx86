@@ -21,34 +21,41 @@
 module vga_port #(
     parameter int P_VRAM_ADDR_WIDTH = 19
 ) (
-    // VRAM 读接口
-    output logic [P_VRAM_ADDR_WIDTH-1: 0] vram_rd_addr, // 当前像素对应的 VRAM 字节线性地址
-    input  logic [ 7: 0]                   vram_rd_data, // VRAM 同步读回数据
+    // =========================
+    // VRAM read interface
+    // =========================
+    output logic [P_VRAM_ADDR_WIDTH-1: 0] vram_rd_addr,
+    input  logic [ 7: 0]                   vram_rd_data,
 
-    
-    // VGA 物理信号输出
-    output logic                   vga_hsync, // 行同步（低有效区间见时序块）
-    output logic                   vga_vsync, // 场同步
-    output logic [ 3: 0]           vga_r, // RGB 各 4 位（图形调色展开）
-    output logic [ 3: 0]           vga_g, // 输出信号
-    output logic [ 3: 0]           vga_b, // 输出信号
-    
-    // 时序输出（供其他模块使用）
-    output logic [$clog2(800)-1: 0] h_count, // 行内像素计数 0..799
-    output logic [$clog2(525)-1: 0] v_count, // 行计数 0..524
-    output logic                   video_active, // 可见像素窗口内为 1
-    
-    // 时钟和复位（放在末尾）
-    input  logic                    rst_n, // 异步低有效复位
-    input  logic                    clk // 像素时钟
+    // =========================
+    // VGA physical signal outputs
+    // =========================
+    output logic                   vga_hsync,
+    output logic                   vga_vsync,
+    output logic [ 3: 0]           vga_r,
+    output logic [ 3: 0]           vga_g,
+    output logic [ 3: 0]           vga_b,
+
+    // =========================
+    // timing outputs (for other modules)
+    // =========================
+    output logic [$clog2(800)-1: 0] h_count,
+    output logic [$clog2(525)-1: 0] v_count,
+    output logic                   video_active,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic                    rst_n,
+    input  logic                    clk
 );
 
-    // ------------------------------------------------------------------------
-    // 常量与参数（基于 IBM VGA 640x480@60Hz 标准时序）
-    // ------------------------------------------------------------------------
-    // 640x480 @ 60Hz, 像素时钟 25.175MHz，对应的典型时序参数如下：
-    //  - 水平：可见 640, 前沿 16, 同步 96, 后沿 48 → 总计 800
-    //  - 垂直：可见 480, 前沿 10, 同步 2,  后沿 33 → 总计 525
+    // ============================================================
+    // constants and parameters (based on IBM VGA 640x480@60Hz standard timing)
+    // ============================================================
+    // 640x480 @ 60Hz, pixel clock 25.175MHz, typical timing parameters:
+    // - horizontal: visible 640, front porch 16, sync 96, back porch 48 → total 800
+    // - vertical: visible 480, front porch 10, sync 2, back porch 33 → total 525
 
     localparam int H_VISIBLE   = 640;
     localparam int H_FRONT_POR = 16;
@@ -65,21 +72,23 @@ module vga_port #(
     localparam int W_H_CNT     = $clog2(H_TOTAL);
     localparam int W_V_CNT     = $clog2(V_TOTAL);
 
-    // ------------------------------------------------------------------------
-    // VGA 时序发生器（640x480@60Hz）
-    // ------------------------------------------------------------------------
+    // ============================================================
+    // VGA timing generator (640x480@60Hz)
+    // ============================================================
 
-    // h_count 和 v_count 现在是输出端口
-
-    // 行列可见区标志（不含消隐）
+    // ============================================================
+    // row/column visible area flags (excluding blanking)
+    // ============================================================
     logic h_visible;
     logic v_visible;
 
     assign h_visible = (h_count < W_H_CNT'(H_VISIBLE));
     assign v_visible = (v_count < W_V_CNT'(V_VISIBLE));
 
-    // 像素/行/帧计数：800x525 扫描计数器
-    always_ff @(posedge clk or negedge rst_n) begin
+    // ============================================================
+    // pixel/row/frame counter: 800x525 scan counter
+    // ============================================================
+    always_ff @(posedge clk or negedge rst_n) begin : ff_scan_counter
         if (~rst_n) begin
             h_count <= '0;
             v_count <= '0;
@@ -97,7 +106,9 @@ module vga_port #(
         end
     end
 
-    // 可见区域
+    // ============================================================
+    // visible area
+    // ============================================================
     assign video_active = (rst_n) && h_visible && v_visible;
 
     // 产生负极性 HSYNC/VSYNC 脉冲窗口

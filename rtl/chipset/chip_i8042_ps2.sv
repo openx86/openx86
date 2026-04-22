@@ -31,72 +31,112 @@ module chip_i8042_ps2 #(
     parameter bit  P_USE_REAL_PS2 = 1'b0,   // 1：接真实 PS/2 PHY；0：仿真注入/引脚空闲模型
     parameter int  P_CLK_HZ        = 50_000_000  // PHY 位时序参考时钟频率
 ) (
-    input  logic         i_cs_n,              // 低有效片选
-    input  logic         i_rd_n,              // 低有效读
-    input  logic         i_wr_n,              // 低有效写
-    input  logic         i_a0,                // 0=数据口 0x60，1=状态/命令 0x64
-    input  logic [ 7: 0] i_d,                // 写数据
-    output logic [ 7: 0] o_d,                // 读数据
-    input  logic         i_kbd_push,          // 仿真：键盘 FIFO 注入脉冲
-    input  logic [ 7: 0] i_kbd_data,          // 仿真：键盘注入字节
-    input  logic         i_aux_push,          // 仿真：AUX FIFO 注入脉冲
-    input  logic [ 7: 0] i_aux_data,          // 仿真：AUX 注入字节
-    output logic         o_kbd_irq,           // 键盘 OBF 中断请求
-    output logic         o_aux_irq,           // AUX OBF 中断请求
-    output logic         o_ps2_kbd_clk_out,   // 键盘时钟线驱动数据（开漏模型）
-    output logic         o_ps2_kbd_clk_oe,    // 键盘时钟输出使能（1=拉低驱动）
-    input  logic         i_ps2_kbd_clk_in,    // 键盘时钟总线回读
-    output logic         o_ps2_kbd_dat_out,   // 键盘数据线驱动数据
-    output logic         o_ps2_kbd_dat_oe,    // 键盘数据输出使能
-    input  logic         i_ps2_kbd_dat_in,    // 键盘数据总线回读
-    output logic         o_ps2_aux_clk_out,   // 鼠标时钟线驱动
-    output logic         o_ps2_aux_clk_oe,    // 时钟信号
-    input  logic         i_ps2_aux_clk_in,    // 时钟信号
-    output logic         o_ps2_aux_dat_out,   // 输出信号
-    output logic         o_ps2_aux_dat_oe,    // 输出信号
-    input  logic         i_ps2_aux_dat_in,    // 鼠标数据总线回读
-    input  logic         clk,                 // 系统时钟
-    input  logic         rst_n                // 异步低有效复位
+    // =========================
+    // CPU bus interface
+    // =========================
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic         i_a0,
+    input  logic [ 7: 0] i_d,
+    output logic [ 7: 0] o_d,
+
+    // =========================
+    // simulation injection interface
+    // =========================
+    input  logic         i_kbd_push,
+    input  logic [ 7: 0] i_kbd_data,
+    input  logic         i_aux_push,
+    input  logic [ 7: 0] i_aux_data,
+
+    // =========================
+    // interrupt outputs
+    // =========================
+    output logic         o_kbd_irq,
+    output logic         o_aux_irq,
+
+    // =========================
+    // PS/2 keyboard interface
+    // =========================
+    output logic         o_ps2_kbd_clk_out,
+    output logic         o_ps2_kbd_clk_oe,
+    input  logic         i_ps2_kbd_clk_in,
+    output logic         o_ps2_kbd_dat_out,
+    output logic         o_ps2_kbd_dat_oe,
+    input  logic         i_ps2_kbd_dat_in,
+
+    // =========================
+    // PS/2 auxiliary (mouse) interface
+    // =========================
+    output logic         o_ps2_aux_clk_out,
+    output logic         o_ps2_aux_clk_oe,
+    input  logic         i_ps2_aux_clk_in,
+    output logic         o_ps2_aux_dat_out,
+    output logic         o_ps2_aux_dat_oe,
+    input  logic         i_ps2_aux_dat_in,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
+    // ============================================================
+    // bus transaction signals
+    // ============================================================
     logic wr;
     logic rd;
 
     assign wr = !i_cs_n && !i_wr_n;
     assign rd = !i_cs_n && !i_rd_n;
 
-    localparam int LP_KBD_D = 16;  // 键盘输出 FIFO 深度
-    localparam int LP_AUX_D = 16;  // AUX 输出 FIFO 深度
-    // 与计数器同宽，避免与 int 型 localparam 比较时触发 Verilator WIDTHEXPAND
+    // ============================================================
+    // FIFO depth parameters
+    // ============================================================
+    localparam int LP_KBD_D = 16;
+    localparam int LP_AUX_D = 16;
     localparam logic [ 4: 0] LP_KBD_D_W = 5'(LP_KBD_D);
     localparam logic [ 4: 0] LP_AUX_D_W = 5'(LP_AUX_D);
 
+    // ============================================================
+    // keyboard and AUX FIFOs
+    // ============================================================
     logic [ 7: 0] kbd_fifo [0:LP_KBD_D-1];
     logic [ 7: 0] aux_fifo [0:LP_AUX_D-1];
-    logic [ 3: 0] kbd_wptr, kbd_rptr;  // 环形索引 0..15
-    logic [ 4: 0] kbd_count;          // 占用计数 0..16（需 5 位）
+    logic [ 3: 0] kbd_wptr, kbd_rptr;
+    logic [ 4: 0] kbd_count;
     logic [ 3: 0] aux_wptr, aux_rptr;
     logic [ 4: 0] aux_count;
-    logic       use_aux_out;  // 双端口均有数据时优先读出侧选择
+    logic       use_aux_out;
 
-    logic kbd_obf;  // 键盘输出缓冲满标志
+    // ============================================================
+    // output buffer full flags
+    // ============================================================
+    logic kbd_obf;
     logic aux_obf;
 
     assign kbd_obf = (kbd_count != 5'h0);
     assign aux_obf = (aux_count != 5'h0);
 
-    logic kbd_if_en;     // 键盘口接口使能（命令 AE/AD）
+    // ============================================================
+    // interface enable and control signals
+    // ============================================================
+    logic kbd_if_en;
     logic aux_if_en;
-    logic kbd_irq_en;    // 键盘 OBF 中断允许（简化常开缺省）
+    logic kbd_irq_en;
     logic aux_irq_en;
-    logic last_wr_cmd;   // 上一拍写是否命中命令口
-    logic next_wr_to_aux;// D4 后下一字节发往 AUX
-    logic cmd_d2_pending;// D2：写入键盘控制器缓冲
-    logic cmd_d3_pending;// D3：写入 AUX 设备缓冲
+    logic last_wr_cmd;
+    logic next_wr_to_aux;
+    logic cmd_d2_pending;
+    logic cmd_d3_pending;
     logic kbd_parity_err;
     logic aux_parity_err;
 
-    logic        kbd_tx_req;   // 发往键盘 PHY 的发送请求
+    // ============================================================
+    // PHY transmit interface
+    // ============================================================
+    logic        kbd_tx_req;
     logic [ 7: 0]  kbd_tx_byte;
     logic         kbd_tx_busy;
     logic         kbd_rx_str;  // 键盘接收选通

@@ -19,6 +19,9 @@
 // ============================================================================
 
 module stage_2_dec_mmx_opcode (
+    // =========================
+    // MMX opcode outputs
+    // =========================
     output logic                o_opcode_mmx_MOVQ_move_64_bit,
     output logic                o_opcode_mmx_MOVD_move_32_bit,
     output logic                o_opcode_mmx_PADDB_add_packed_8_bit,
@@ -74,11 +77,17 @@ module stage_2_dec_mmx_opcode (
     output logic                o_opcode_mmx_PUNPCKLWD_unpack_low_packed_16_to_32,
     output logic                o_opcode_mmx_PUNPCKLDQ_unpack_low_packed_32_to_64,
     output logic                o_opcode_mmx_EMMS_empty_MMX_state,
+
+    // =========================
+    // input
+    // =========================
     input  logic [ 3: 0][ 7: 0] i_instruction
 );
 
-// Instantiate MMX sub-modules
-stage_2_dec_mmx_opcode_data u_data (
+    // ============================================================
+    // MMX sub-modules instantiation
+    // ============================================================
+    stage_2_dec_mmx_opcode_data u_data (
     .i_instruction                              (i_instruction),
     .o_opcode_mmx_MOVQ_move_64_bit              (o_opcode_mmx_MOVQ_move_64_bit),
     .o_opcode_mmx_MOVD_move_32_bit              (o_opcode_mmx_MOVD_move_32_bit)

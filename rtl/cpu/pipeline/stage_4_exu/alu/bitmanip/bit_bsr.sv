@@ -18,12 +18,22 @@
 //  Description : bit_bsr module
 // ============================================================================
 
-module bit_bsr (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    output logic [31: 0] y, // 结果输出
-    output logic         zf // 零标志
+module bit_bsr (
+    // =========================
+    // operand
+    // =========================
+    input  logic [31: 0]  a,
+
+    // =========================
+    // outputs
+    // =========================
+    output logic [31: 0] y,
+    output logic         zf
 );
-    // 组合逻辑：推导输出
-    always_comb begin
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_bit_scan_reverse
         y = 32'd0;
         zf = 1'b1;
         for (int i = 0; i < 32; i++) begin

@@ -24,21 +24,36 @@
 // 用于 ModR/M、SIB 寻址；段基址/分页在 MMU 侧叠加
 // ============================================================================
 
-module address_generation_unit (    input  logic [31: 0] i_base,  // 基址
-    input  logic [31: 0] i_index, // 变址
-    input  logic [ 1: 0]   i_scale, // 比例因子编码
-    input  logic [31: 0] i_disp, // 位移（符号扩展）
-    output logic [31: 0] o_effective_address // 有效地址
+module address_generation_unit (
+    // =========================
+    // address generation inputs
+    // =========================
+    input  logic [31: 0] i_base,
+    input  logic [31: 0] i_index,
+    input  logic [ 1: 0]   i_scale,
+    input  logic [31: 0] i_disp,
+
+    // =========================
+    // output
+    // =========================
+    output logic [31: 0] o_effective_address
 );
 
-    logic [63: 0] scaled;  // index×scale 的 64 位项
-    logic [63: 0] sum;  // base + scaled + disp（截断前）
+    // ============================================================
+    // intermediate signals
+    // ============================================================
+    logic [63: 0] scaled;
+    logic [63: 0] sum;
 
-    // 组合逻辑：连续赋值
+    // ============================================================
+    // combinational logic: continuous assignment
+    // ============================================================
     assign sum = {32'h0, i_base} + scaled + {{32{i_disp[31]}}, i_disp};
 
-    // 组合逻辑：推导输出
-    always_comb begin
+    // ============================================================
+    // combinational logic: derive output
+    // ============================================================
+    always_comb begin : comb_scale
         // SIB.scale：0/1/2/3 → ×1/×2/×4/×8
         unique case (i_scale)
             2'd0: scaled = {32'h0, i_index} * 64'd1;
@@ -48,7 +63,9 @@ module address_generation_unit (    input  logic [31: 0] i_base,  // 基址
         endcase
     end
 
-    // 组合逻辑：连续赋值
+    // ============================================================
+    // combinational logic: continuous assignment
+    // ============================================================
     assign o_effective_address = sum[31: 0];
 
 endmodule

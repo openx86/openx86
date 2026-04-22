@@ -18,11 +18,21 @@
 //  Description : misc_cdq module
 // ============================================================================
 
-module misc_cdq (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    output logic [31: 0] y // 结果输出
+module misc_cdq (
+    // =========================
+    // Port Group: Operand
+    // =========================
+    input  logic [31: 0]  a,
+
+    // =========================
+    // Port Group: Output
+    // =========================
+    output logic [31: 0] y
 );
-    // 组合逻辑：推导输出
-    always_comb begin
+    // ============================================================
+    // Combinational Logic: Derive Outputs
+    // ============================================================
+    always_comb begin : comb_cdq
         y = a[31] ? 32'hFFFF_FFFF : 32'h0000_0000;
     end
 

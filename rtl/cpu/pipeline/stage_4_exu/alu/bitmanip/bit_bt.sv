@@ -18,13 +18,23 @@
 //  Description : bit_bt module
 // ============================================================================
 
-module bit_bt (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    input  logic [31: 0]  bit_index, // 位测试索引
-    output logic [31: 0] y, // 结果输出
-    output logic         cf // 进位标志
+module bit_bt (
+    // =========================
+    // operands
+    // =========================
+    input  logic [31: 0]  a,
+    input  logic [31: 0]  bit_index,
+
+    // =========================
+    // outputs
+    // =========================
+    output logic [31: 0] y,
+    output logic         cf
 );
-    // 组合逻辑：推导输出
-    always_comb begin
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_bit_test
         y = a;
         cf = a[bit_index[ 4: 0]];
     end

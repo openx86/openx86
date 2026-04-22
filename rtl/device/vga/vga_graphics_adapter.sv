@@ -20,42 +20,51 @@
 
 // VGA Graphics Adapter — VRAM window 0xA0000–0xBFFFF + VGA I/O 0x03C0–0x03DF
 module vga_graphics_adapter (
-    // bus
-
+    // =========================
     // CPU I/O port access
-    input  logic          io_en_w, // I/O 写选通（已译码到 VGA 窗口）
-    input  logic          io_en_r, // I/O 读选通
-    input  logic [15: 0] io_addr, // I/O 地址（如 03C0/03C2/03DA）
-    input  logic [ 7: 0] io_data_w, // I/O 写数据
-    output logic [ 7: 0] io_data_r, // I/O 读数据
+    // =========================
+    input  logic          io_en_w,
+    input  logic          io_en_r,
+    input  logic [15: 0] io_addr,
+    input  logic [ 7: 0] io_data_w,
+    output logic [ 7: 0] io_data_r,
 
+    // =========================
     // CPU memory access (VRAM window)
-    input  logic          mem_en_w, // VRAM 窗口写使能
-    input  logic [19: 0]  mem_addr, // VRAM 字节地址（高位由映射决定）
-    input  logic [ 7: 0]  mem_data_w, // VRAM 写数据
+    // =========================
+    input  logic          mem_en_w,
+    input  logic [19: 0]  mem_addr,
+    input  logic [ 7: 0]  mem_data_w,
 
+    // =========================
     // VGA physical signals
-    output logic         vga_hsync, // 行同步（负极性约定由 vga_port 产生）
-    output logic         vga_vsync, // 场同步
-    output logic [ 3: 0] vga_r, // 像素红分量
-    output logic [ 3: 0] vga_g, // 输出信号
-    output logic [ 3: 0] vga_b, // 输出信号
+    // =========================
+    output logic         vga_hsync,
+    output logic         vga_vsync,
+    output logic [ 3: 0] vga_r,
+    output logic [ 3: 0] vga_g,
+    output logic [ 3: 0] vga_b,
 
-    // common
-    input  logic          rst_n, // 异步低有效复位
-    input  logic          clk // 像素域主时钟
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic          rst_n,
+    input  logic          clk
 );
 
-    // VGA VRAM：一帧 640×480 字节线性缓冲（与 vga_port 线性读地址一致）
+    // ============================================================
+    // VGA VRAM: one frame 640×480 byte linear buffer
+    // ============================================================
     localparam int VRAM_SIZE_BYTES = 640 * 480;
     localparam int VRAM_ADDR_WIDTH = $clog2(VRAM_SIZE_BYTES);
     localparam int VRAM_DEPTH      = VRAM_SIZE_BYTES;
 
-    // 简化的 I/O 端口定义（参考 IBM VGA 端口，但只实现子集）
-    // 我们实现几个常用寄存器示意：
-    //   - 0x03C2: MISC 输出寄存器（只实现最低 3bit，用于启用/关闭显示等）
-    //   - 0x03DA: 输入状态寄存器 1（只实现 VSYNC/HSYNC 状态位）
-    // 其他端口留待将来扩展。
+    // ============================================================
+    // simplified I/O port definitions (referencing IBM VGA ports, subset implementation)
+    // Implemented registers:
+    //   - 0x03C2: MISC output register (lower 3 bits for display enable/disable)
+    //   - 0x03DA: input status register 1 (VSYNC/HSYNC status bits)
+    // Other ports reserved for future expansion.
 
     localparam logic [15: 0] PORT_MISC_OUT  = 16'h03C2;
     localparam logic [15: 0] PORT_STATUS1   = 16'h03DA;
@@ -66,28 +75,30 @@ module vga_graphics_adapter (
     localparam logic [ 1: 0] MODE_TEXT_COLOR = 2'b01;  // 彩色文本模式
     localparam logic [ 1: 0] MODE_TEXT_INTENSE = 2'b10;  // 淡色文本模式
 
-    // MISC 输出寄存器（简化：低几位控制显示相关开关）
+    // ============================================================
+    // MISC output register (lower bits control display-related switches)
+    // ============================================================
     logic [ 7: 0] misc_out_reg;
-    
-    // 当前显示模式：图形 / 彩色文本 / 高亮文本
+
+    // ============================================================
+    // current display mode: graphics / color text / intense text
+    // ============================================================
     logic [ 1: 0] vga_mode;
 
-    // ------------------------------------------------------------------------
-    // VRAM：使用读写信号分离的RAM，CPU 写入 + VGA 读取
-    // ------------------------------------------------------------------------
-
-    // VGA 读 VRAM 接口（连接到 vga_port 读口）
+    // ============================================================
+    // VRAM: using read/write separated RAM, CPU write + VGA read
+    // ============================================================
     logic [VRAM_ADDR_WIDTH-1: 0] vram_rd_addr;
     logic [ 7: 0]                 vram_rd_data;
 
-    // CPU 写地址截断到 VRAM 深度（避免越界综合）
+    // CPU write address truncated to VRAM depth (avoid out-of-bounds synthesis)
     logic [VRAM_ADDR_WIDTH-1: 0] vram_wr_addr;
 
     assign vram_wr_addr = mem_addr[VRAM_ADDR_WIDTH-1:0];
 
-    // 地址截断逻辑
-
-    // 简单双口RAM实例：写端口给CPU，读端口给VGA
+    // ============================================================
+    // simple dual-port RAM instance: write port for CPU, read port for VGA
+    // ============================================================
     simple_dual_port_ram #(
         .DATA_WIDTH ( 8                ),
         .ADDR_WIDTH ( VRAM_ADDR_WIDTH  ),

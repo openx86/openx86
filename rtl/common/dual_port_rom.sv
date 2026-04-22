@@ -23,24 +23,34 @@ module dual_port_rom #(
     parameter int P_ADDR_WIDTH = 10,   // 地址位宽（深度 = 2^ADDR_WIDTH）
     parameter int P_DEPTH      = 1 << P_ADDR_WIDTH  // 显式深度参数（可选）
 ) (
-    // 读端口A
-    input  logic [P_ADDR_WIDTH - 1: 0] i_addra,  // A 口读地址
-    output logic [P_DATA_WIDTH - 1: 0] o_rdataa, // A 口同步读数据
+    // =========================
+    // read port A
+    // =========================
+    input  logic [P_ADDR_WIDTH - 1: 0] i_addra,
+    output logic [P_DATA_WIDTH - 1: 0] o_rdataa,
 
-    // 读端口B
-    input  logic [P_ADDR_WIDTH - 1: 0] i_addrb,  // B 口读地址
-    output logic [P_DATA_WIDTH - 1: 0] o_rdatab, // B 口同步读数据
+    // =========================
+    // read port B
+    // =========================
+    input  logic [P_ADDR_WIDTH - 1: 0] i_addrb,
+    output logic [P_DATA_WIDTH - 1: 0] o_rdatab,
 
-    // 时钟和复位
-    input  logic                      clk,       // 两读口共享时钟
-    input  logic                      rst_n      // 低有效：两路输出清零
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic                      clk,
+    input  logic                      rst_n
 );
 
-    // 双读口共享 ROM 体（内容由外部初始化）
+    // ============================================================
+    // dual-port shared ROM body (initialized externally)
+    // ============================================================
     logic [P_DATA_WIDTH-1: 0] rom [0:P_DEPTH-1];
 
-    // A 口同步读
-    always_ff @(posedge clk) begin
+    // ============================================================
+    // port A synchronous read
+    // ============================================================
+    always_ff @(posedge clk) begin : ff_port_a_read
         if (~rst_n) begin
             o_rdataa <= '0;
         end else begin
@@ -48,8 +58,10 @@ module dual_port_rom #(
         end
     end
 
-    // B 口同步读
-    always_ff @(posedge clk) begin
+    // ============================================================
+    // port B synchronous read
+    // ============================================================
+    always_ff @(posedge clk) begin : ff_port_b_read
         if (~rst_n) begin
             o_rdatab <= '0;
         end else begin

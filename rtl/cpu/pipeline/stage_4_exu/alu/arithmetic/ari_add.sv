@@ -18,10 +18,21 @@
 //  Description : ari_add module
 // ============================================================================
 
-module ari_add (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    input  logic [31: 0]  b, // 操作数 / 源 2
-    output logic [31: 0] y // 结果输出
+module ari_add (
+    // =========================
+    // operands
+    // =========================
+    input  logic [31: 0]  a,
+    input  logic [31: 0]  b,
+
+    // =========================
+    // output
+    // =========================
+    output logic [31: 0] y
 );
+    // ============================================================
+    // ADD implementation
+    // ============================================================
     ari_execute_arithmetic_add u_impl (
         .operand_1 ( a ),
         .operand_2 ( b ),

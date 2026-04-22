@@ -24,34 +24,45 @@
 `include "openx86_defs.h.sv"
 
 module i486_cpu_core (
-    // MMU 通道：向 BIU/MMU 发起线性地址翻译或取数
-    output logic         o_mmu_vaild,     // MMU 请求有效（与 i_mmu_ready 握手）
-    input  logic          i_mmu_ready,    // MMU 可接收或已完成当前事务
-    output logic [31: 0] o_mmu_address,  // 发往 MMU 的线性/物理侧地址
-    input  logic [31: 0] i_mmu_data_read, // MMU 读回数据
+    // =========================
+    // MMU channel
+    // =========================
+    output logic         o_mmu_vaild,
+    input  logic          i_mmu_ready,
+    output logic [31: 0] o_mmu_address,
+    input  logic [31: 0] i_mmu_data_read,
 
-    // 指令取指通道：向 I-cache/BIU 取指字节流
-    output logic         o_code_vaild,   // 取指请求有效
-    input  logic          i_code_ready,  // 取指侧可接受或已返回当前拍数据
-    output logic [31: 0] o_code_address, // 取指线性地址
-    input  logic [31: 0] i_code_data_read, // 取指返回的指令字
+    // =========================
+    // instruction fetch channel
+    // =========================
+    output logic         o_code_vaild,
+    input  logic          i_code_ready,
+    output logic [31: 0] o_code_address,
+    input  logic [31: 0] i_code_data_read,
 
-    // 数据访存通道：向 D-cache/BIU 发起 load/store
-    output logic         o_data_vaild,       // 数据访问请求有效
-    input  logic          i_data_ready,      // 数据总线可完成当前事务
-    output logic         o_data_write_enable, // 1=写事务，0=读事务
-    output logic         o_data_io_access,   // 本 core 固定为内存访问（非 IO）
-    output logic [31: 0] o_data_address,    // 数据访问地址
-    input  logic [31: 0] i_data_data_read,  // load 读回数据
-    output logic [31: 0] o_data_data_write, // store 写出数据
+    // =========================
+    // data access channel
+    // =========================
+    output logic         o_data_vaild,
+    input  logic          i_data_ready,
+    output logic         o_data_write_enable,
+    output logic         o_data_io_access,
+    output logic [31: 0] o_data_address,
+    input  logic [31: 0] i_data_data_read,
+    output logic [31: 0] o_data_data_write,
 
-    input  logic          clk,    // 核心时钟
-    input  logic          rst_n   // 异步低有效复位
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic          clk,
+    input  logic          rst_n
 );
     // 译码子模块 .* 互连线：必须放在模块内，避免在编译单元顶层声明而与子模块端口同名（VARHIDDEN）
 `include "iu_decode_outputs_decl.svh"
-    // --- GPR / 段 / 标志 / EIP / 控制寄存器 ---
-    // 组合级写口（本拍译码/执行结果）；wrb_* 为 WRB 级打拍后真正写入 RF 的信号
+
+    // ============================================================
+    // GPR write ports (combinational and WRB stage)
+    // ============================================================
     logic        write_enable;
     logic [ 2: 0] write_index;
     logic [31: 0] write_data;
@@ -59,6 +70,9 @@ module i486_cpu_core (
     logic [ 2: 0] wrb_write_index;
     logic [31: 0] wrb_write_data;
 
+    // ============================================================
+    // segment register write ports
+    // ============================================================
     logic        SREG_write_enable;
     logic [ 2: 0] SREG_write_index;
     logic [15: 0] SREG_write_selector;
@@ -68,16 +82,25 @@ module i486_cpu_core (
     logic [15: 0] wrb_SREG_write_selector;
     logic [63: 0] wrb_SREG_write_descriptor;
 
+    // ============================================================
+    // flags register write ports
+    // ============================================================
     logic         FLAGS_write_enable;
     logic [31: 0]  FLAGS_write_data;
     logic         wrb_FLAGS_write_enable;
     logic [31: 0]  wrb_FLAGS_write_data;
 
+    // ============================================================
+    // EIP write ports
+    // ============================================================
     logic        IP_write_enable;
     logic [31: 0] IP_write_data;
     logic        wrb_IP_write_enable;
     logic [31: 0] wrb_IP_write_data;
 
+    // ============================================================
+    // control registers write ports
+    // ============================================================
     logic         CR_write_enable;
     logic [ 2: 0] CR_write_index;
     logic [31: 0] CR_write_data;
@@ -85,6 +108,9 @@ module i486_cpu_core (
     logic [ 2: 0] wrb_CR_write_index;
     logic [31: 0] wrb_CR_write_data;
 
+    // ============================================================
+    // debug registers write ports
+    // ============================================================
     logic         DR_write_enable;
     logic [ 2: 0] DR_write_index;
     logic [31: 0] DR_write_data;
@@ -92,6 +118,9 @@ module i486_cpu_core (
     logic [ 2: 0] wrb_DR_write_index;
     logic [31: 0] wrb_DR_write_data;
 
+    // ============================================================
+    // test registers write ports
+    // ============================================================
     logic         TR_write_enable;
     logic [ 2: 0] TR_write_index;
     logic [31: 0] TR_write_data;
@@ -99,31 +128,58 @@ module i486_cpu_core (
     logic [ 2: 0] wrb_TR_write_index;
     logic [31: 0] wrb_TR_write_data;
 
-    // GPR 读出口：按 8/16/32 位视图广播给译码与 EU
+    // ============================================================
+    // GPR read ports (8/16/32-bit views broadcast to decode and EU)
+    // ============================================================
     logic [ 7: 0][31: 0] GPR_read__8;
     logic [ 7: 0][31: 0] GPR_read_16;
     logic [ 7: 0][31: 0] GPR_read_32;
-    // 6 个段寄存器：选择子 + 段描述符 cache（供 AGU/保护检查）
+
+    // ============================================================
+    // segment registers (selector + descriptor cache)
+    // ============================================================
     logic [ 5: 0][15: 0] segment_selector;
     logic [ 5: 0][63: 0] descriptor_cache;
+
+    // ============================================================
+    // flags register
+    // ============================================================
     logic         CF, PF, AF, ZF, SF, TF, IF, DF, OF;
     logic [ 1: 0] iOPL;
     logic         NT, RF, VM;
     logic [31: 0]  EFLAGS;
     logic [15: 0]  FLAGS;
+
+    // ============================================================
+    // instruction pointer
+    // ============================================================
     logic [15: 0] IP;
     logic [31: 0] EIP;
+
+    // ============================================================
+    // control registers
+    // ============================================================
     logic [ 7: 0][31: 0] CR;
     logic         PE, MP, EM, TS, R, PG;
     logic [19: 0] page_directory_base;
+
+    // ============================================================
+    // debug and test registers
+    // ============================================================
     logic [ 7: 0][31: 0] DR;
     logic [ 7: 0][31: 0] TR;
-    // GDTR/IDTR：当前实现写死为 0，仅用于 SGDT/SIDT 类指令读回占位
+
+    // ============================================================
+    // GDTR/IDTR (hardwired to 0 for SGDT/SIDT instruction placeholders)
+    // ============================================================
     logic [15: 0] GDTR_limit;
     logic [31: 0] GDTR_base;
     logic [15: 0] IDTR_limit;
     logic [31: 0] IDTR_base;
 
+    // ============================================================
+    // general purpose register file
+    // ============================================================
     rf_x86_general_purpose u_rf_gpr (
         .write_enable ( wrb_write_enable ),
         .write_index ( wrb_write_index ),
@@ -135,6 +191,9 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
+    // ============================================================
+    // segment register file
+    // ============================================================
     rf_x86_segment u_rf_sreg (
         .write_enable ( wrb_SREG_write_enable ),
         .write_index ( wrb_SREG_write_index ),
@@ -146,6 +205,9 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
+    // ============================================================
+    // flags register file
+    // ============================================================
     rf_x86_flags u_rf_flags (
         .write_enable ( wrb_FLAGS_write_enable ),
         .write_data ( wrb_FLAGS_write_data ),
@@ -168,6 +230,9 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
+    // ============================================================
+    // instruction pointer register file
+    // ============================================================
     rf_x86_instruction_pointer u_rf_ip (
         .write_enable ( wrb_IP_write_enable ),
         .write_data ( wrb_IP_write_data ),
@@ -177,6 +242,9 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
+    // ============================================================
+    // control register file
+    // ============================================================
     rf_x86_control u_rf_cr (
         .write_enable ( wrb_CR_write_enable ),
         .write_index ( wrb_CR_write_index ),
@@ -193,6 +261,9 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
+    // ============================================================
+    // debug register file
+    // ============================================================
     rf_x86_debug u_rf_dr (
         .write_enable ( wrb_DR_write_enable ),
         .write_index ( wrb_DR_write_index ),
@@ -202,6 +273,9 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
+    // ============================================================
+    // test register file
+    // ============================================================
     rf_x86_test u_rf_tr (
         .write_enable ( wrb_TR_write_enable ),
         .write_index ( wrb_TR_write_index ),
@@ -211,6 +285,9 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
+    // ============================================================
+    // GDTR register file
+    // ============================================================
     rf_x86_gdtr u_rf_gdtr (
         .gdtr_write_enable ( 1'b0 ),
         .gdtr_write_data_limit ( 16'd0 ),
@@ -221,6 +298,9 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
+    // ============================================================
+    // IDTR register file
+    // ============================================================
     rf_x86_idtr u_rf_idtr (
         .idtr_write_enable ( 1'b0 ),
         .idtr_write_data_limit ( 16'd0 ),
@@ -231,11 +311,14 @@ module i486_cpu_core (
         .rst_n ( rst_n )
     );
 
-    // CPL = CS.RPL
+    // ============================================================
+    // current privilege level (CPL = CS.RPL)
+    // ============================================================
     logic [ 1: 0] current_privilege_level;
 
-    // --- Core-side memory request channels (BIU is instantiated in i486_cpu) ---
-    // 与顶层 i_mmu_* / o_mmu_* 之间的 core 内 MMU 事务线
+    // ============================================================
+    // core-side memory request channels (BIU instantiated in i486_cpu)
+    // ============================================================
     logic        mmu_bus_vaild;
     logic        mmu_bus_ready;
     logic [31: 0] mmu_bus_addr;
@@ -246,7 +329,9 @@ module i486_cpu_core (
     logic [31: 0] code_address;
     logic [31: 0] code_data_read;
 
-    // 数据总线侧影子信号：经 WRB 打拍后与 o_data_* 对齐到外部 BIU
+    // ============================================================
+    // data bus shadow signals (WRB stage aligned with external BIU)
+    // ============================================================
     logic        data_vaild;
     logic        data_ready;
     logic        data_write_enable;
@@ -278,8 +363,9 @@ module i486_cpu_core (
     assign o_data_address      = data_address;
     assign o_data_data_write   = data_data_write;
 
-    // --- 取指 ---
-    // IF：stage_1 输出的定长指令字节窗口与就绪、段故障指示（经 stage_1_2 接至译码）
+    // ============================================================
+    // instruction fetch
+    // ============================================================
     logic [15: 0][ 7: 0] if_instruction;
     logic        if_instruction_ready;
     logic        if_segment_fault_from_if;
@@ -289,7 +375,9 @@ module i486_cpu_core (
     logic        s12_ifu_ready;
     logic        s12_dec_ready;
 
-    // 执行背压：stall 时暂停向 IF 提交有效 EIP 推进
+    // ============================================================
+    // execution backpressure (stall pauses EIP advancement to IF)
+    // ============================================================
     logic         exec_stall;
     logic         ip_valid_to_fetch;
     logic        s23_exe_ready;

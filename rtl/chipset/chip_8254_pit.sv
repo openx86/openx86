@@ -27,17 +27,28 @@
 // ============================================================================
 
 module chip_8254_pit (
-    input  logic         i_cs_n,  // 低有效片选
-    input  logic         i_rd_n,  // 低有效读
-    input  logic         i_wr_n,  // 低有效写
-    input  logic [ 1: 0] i_a,     // 2'b11=控制字，其它=通道 0..2
-    input  logic [ 7: 0] i_d,     // 写数据
-    output logic [ 7: 0] o_d,     // 读数据
-    output logic         o_out0,  // 通道 0 OUT（常用接 IRQ0）
-    output logic         o_out1,  // 通道 1 OUT
-    output logic         o_out2,  // 通道 2 OUT
-    input  logic         clk,     // 系统时钟（计数在此域递减）
-    input  logic         rst_n    // 异步低有效复位
+    // =========================
+    // CPU bus interface
+    // =========================
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic [ 1: 0] i_a,
+    input  logic [ 7: 0] i_d,
+    output logic [ 7: 0] o_d,
+
+    // =========================
+    // counter outputs
+    // =========================
+    output logic         o_out0,
+    output logic         o_out1,
+    output logic         o_out2,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
     localparam logic [ 2: 0] LP_MODE0 = 3'd0;
@@ -47,29 +58,38 @@ module chip_8254_pit (
     localparam logic [ 2: 0] LP_MODE4 = 3'd4;
     localparam logic [ 2: 0] LP_MODE5 = 3'd5;
 
-    logic [16: 0] reload          [0: 2];  // 有效重装载值（含 0→65536）
-    logic [16: 0] count           [0: 2];  // 当前计数值
-    logic [16: 0] latch_count     [0: 2];  // 锁存读快照
-    logic [ 2: 0] mode            [0: 2];  // 工作方式 0..5
-    logic [ 1: 0] rw_fmt          [0: 2];  // 读写格式（LSB/MSB/先后）
-    logic          bcd_en         [0: 2];  // 1=BCD 计数
-    logic [ 7: 0] pending_lsb     [0: 2];  // 16 位写时的低字节暂存
-    logic          write_wait_msb [0: 2];  // 尚缺 MSB 的半字写状态
-    logic          load_pending   [0: 2];  // 下一拍装入 reload→count
-    logic          run_en         [0: 2];  // 计数运行使能
-    logic          out_r          [0: 2];  // 通道 OUT 寄存
-    logic          latch_valid    [0: 2];  // 锁存读有效
-    logic          read_msb_phase [0: 2];  // 先后读时当前为高/低字节相位
+    // ============================================================
+    // counter registers
+    // ============================================================
+    logic [16: 0] reload          [0: 2];
+    logic [16: 0] count           [0: 2];
+    logic [16: 0] latch_count     [0: 2];
+    logic [ 2: 0] mode            [0: 2];
+    logic [ 1: 0] rw_fmt          [0: 2];
+    logic          bcd_en         [0: 2];
+    logic [ 7: 0] pending_lsb     [0: 2];
+    logic          write_wait_msb [0: 2];
+    logic          load_pending   [0: 2];
+    logic          run_en         [0: 2];
+    logic          out_r          [0: 2];
+    logic          latch_valid    [0: 2];
+    logic          read_msb_phase [0: 2];
 
-    logic          mode2_low_pulse [0: 2];   // 方式 2 低脉宽相位
-    logic          mode45_low_pulse [0: 2];  // 方式 4/5 低脉宽相位
-    logic          mode3_phase_high [0: 2];  // 方式 3 方波高半周标志
+    // ============================================================
+    // mode-specific timing signals
+    // ============================================================
+    logic          mode2_low_pulse [0: 2];
+    logic          mode45_low_pulse [0: 2];
+    logic          mode3_phase_high [0: 2];
     logic [16: 0] mode3_high_ticks [0: 2];
     logic [16: 0] mode3_low_ticks  [0: 2];
     logic [16: 0] mode3_phase_ticks [0: 2];
 
-    logic wr;  // 写事务
-    logic rd;  // 读事务
+    // ============================================================
+    // bus transaction signals
+    // ============================================================
+    logic wr;
+    logic rd;
 
     assign wr     = (!i_cs_n) && (!i_wr_n);
     assign rd     = (!i_cs_n) && (!i_rd_n);

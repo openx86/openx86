@@ -24,10 +24,16 @@
 
 module single_port_ram_tb;
 
+    // ============================================================
+    // parameters
+    // ============================================================
     parameter int DATA_WIDTH = 8;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
+    // ============================================================
+    // test signals
+    // ============================================================
     logic                    clk;
     logic rst_n;
     logic                    we;
@@ -35,23 +41,31 @@ module single_port_ram_tb;
     logic [DATA_WIDTH-1: 0]  wdata;
     logic [DATA_WIDTH-1: 0]  rdata;
 
+    // ============================================================
+    // DUT instantiation
+    // ============================================================
     single_port_ram #(
         .DATA_WIDTH ( DATA_WIDTH ),
         .ADDR_WIDTH ( ADDR_WIDTH ),
         .DEPTH      ( DEPTH      )
     ) dut (
-        .clk  ( clk  ),
-        .rst_n  ( rst_n ),
-        .we     ( we     ),
-        .addr   ( addr   ),
-        .wdata  ( wdata  ),
-        .rdata  ( rdata  )
+        .clk   ( clk   ),
+        .rst_n ( rst_n ),
+        .we    ( we    ),
+        .addr  ( addr  ),
+        .wdata ( wdata ),
+        .rdata ( rdata )
     );
 
-    // 时钟生成
+    // ============================================================
+    // clock generation
+    // ============================================================
     always #5 clk = ~clk;
 
-    initial begin
+    // ============================================================
+    // test procedure
+    // ============================================================
+    initial begin : main_test
         clk = 0;
         rst_n = 1;
         we    = 0;

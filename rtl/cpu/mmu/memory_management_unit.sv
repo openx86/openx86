@@ -30,54 +30,60 @@ description: memory_management_unit
 module memory_management_unit #(
     parameter bit read_from_fetch = 1'b0
 ) (
-    // ------------------------------------------------------------------------
-    // Handshake（与上游地址请求握手）
-    // ------------------------------------------------------------------------
-    input  logic          i_valid,                      // 一次地址翻译请求有效
-    output logic          o_ready,                      // 翻译完成，o_physical_address 可用
+    // =========================
+    // handshake with upstream address request
+    // =========================
+    input  logic          i_valid,
+    output logic          o_ready,
 
-    // ------------------------------------------------------------------------
-    // Address translation context（段 + 分页输入）
-    // ------------------------------------------------------------------------
-    input  logic          i_protected_mode,             // CR0.PE
-    input  logic [ 5: 0][15: 0] i_segment_selector,     // 段选择子
-    input  logic [ 5: 0][63: 0] i_segment_descriptor,   // 段描述符缓存
-    input  logic [ 1: 0]        i_current_privilege_level, // CPL
-    input  logic [ 2: 0]        i_segment_index,         // 访问哪个段（CS/DS/...）
-    input  logic [31: 0]        i_effective_address,      // 段内有效地址/偏移
-    input  logic                 i_write_enable,          // 写访问（取指路径为 0）
-    input  logic                 i_paging_enable,         // CR0.PG
-    input  logic [31: 0]        i_page_directory_base,   // CR3：页目录物理基址
-    output logic [31: 0]        o_physical_address,      // 最终物理地址
-    output logic                 o_segment_fault,         // 段保护 fault
+    // =========================
+    // address translation context (segment + paging inputs)
+    // =========================
+    input  logic          i_protected_mode,
+    input  logic [ 5: 0][15: 0] i_segment_selector,
+    input  logic [ 5: 0][63: 0] i_segment_descriptor,
+    input  logic [ 1: 0]        i_current_privilege_level,
+    input  logic [ 2: 0]        i_segment_index,
+    input  logic [31: 0]        i_effective_address,
+    input  logic                 i_write_enable,
+    input  logic                 i_paging_enable,
+    input  logic [31: 0]        i_page_directory_base,
+    output logic [31: 0]        o_physical_address,
+    output logic                 o_segment_fault,
 
-    // ------------------------------------------------------------------------
-    // Bus for paging walks (used only when paging enabled)（两级页表读）
-    // ------------------------------------------------------------------------
-    output logic                 o_bus_valid,             // 输出信号
-    input  logic                 i_bus_ready,             // 输入信号
-    output logic                 o_bus_write_enable,      // 输出信号
-    output logic [31: 0]        o_bus_address,           // 输出信号
-    input  logic [31: 0]        i_bus_data_read,         // 输入信号
-    output logic [31: 0]        o_bus_data_write,        // 输出信号
+    // =========================
+    // bus for paging walks (two-level page table reads)
+    // =========================
+    output logic                 o_bus_valid,
+    input  logic                 i_bus_ready,
+    output logic                 o_bus_write_enable,
+    output logic [31: 0]        o_bus_address,
+    input  logic [31: 0]        i_bus_data_read,
+    output logic [31: 0]        o_bus_data_write,
 
-    // ------------------------------------------------------------------------
-    // Clock / reset
-    // ------------------------------------------------------------------------
-    input  logic                 clk,                     // 时钟信号
-    input  logic                 rst_n                    // 复位信号
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic                 clk,
+    input  logic                 rst_n
 );
 
-logic [31: 0] linear_address;   // 段单元输出线性地址
-logic [31: 0] physical_address; // 分页单元输出物理页基 + 页内偏移合成前保存在此
+    // ============================================================
+    // intermediate signals
+    // ============================================================
+    logic [31: 0] linear_address;
+    logic [31: 0] physical_address;
 
-logic         paging_valid;     // 启动分页 walk
-logic         paging_ready;     // 分页 walk 完成
-logic         seg_priv_err;     // 段检查失败
+    logic         paging_valid;
+    logic         paging_ready;
+    logic         seg_priv_err;
 
-segmentation_unit #(
-    .read_from_fetch (read_from_fetch)
-) segmentation_unit (
+    // ============================================================
+    // segmentation unit
+    // ============================================================
+    segmentation_unit #(
+        .read_from_fetch (read_from_fetch)
+    ) segmentation_unit (
     .i_protected_mode           (i_protected_mode),
     .i_segment_selector         (i_segment_selector),
     .i_segment_descriptor       (i_segment_descriptor),
@@ -91,9 +97,10 @@ segmentation_unit #(
     .rst_n                      (rst_n)
 );
 
-assign o_segment_fault = seg_priv_err;
-
-paging_unit paging_unit (
+    // ============================================================
+    // paging unit
+    // ============================================================
+    paging_unit paging_unit (
     .i_valid             (paging_valid),
     .o_ready             (paging_ready),
     .i_linear_address    (linear_address),

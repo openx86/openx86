@@ -19,47 +19,63 @@
 // ============================================================================
 
 module stage_1_ifu (
-    // Instruction fetch bus interface
-    output logic                 o_code_valid,         // 输出信号
-    input  logic                 i_code_ready,        // 输入信号
-    output logic [31: 0]        o_code_address,      // 输出信号
-    input  logic [31: 0]        i_code_data_read,    // 输入信号
+    // =========================
+    // instruction fetch bus interface
+    // =========================
+    output logic                 o_code_valid,
+    input  logic                 i_code_ready,
+    output logic [31: 0]        o_code_address,
+    input  logic [31: 0]        i_code_data_read,
 
+    // =========================
     // MMU backend bus interface
-    output logic                 o_mmu_bus_valid,     // 输出信号
-    input  logic                 i_mmu_bus_ready,     // 输入信号
-    output logic [31: 0]        o_mmu_bus_addr,      // 输出信号
-    input  logic [31: 0]        i_mmu_bus_rdata,     // 输入信号
+    // =========================
+    output logic                 o_mmu_bus_valid,
+    input  logic                 i_mmu_bus_ready,
+    output logic [31: 0]        o_mmu_bus_addr,
+    input  logic [31: 0]        i_mmu_bus_rdata,
 
+    // =========================
     // CPU execution context
-    input  logic                 i_protected_mode,    // 输入信号
-    input  logic [ 5: 0][15: 0] i_segment_selector,  // 输入信号
-    input  logic [ 5: 0][63: 0] i_segment_descriptor,// 输入信号
-    input  logic [ 1: 0]        i_current_privilege_level, // 输入信号
-    input  logic                 i_paging_enable,     // 输入信号
-    input  logic [31: 0]        i_page_directory_base,   // 输入信号
+    // =========================
+    input  logic                 i_protected_mode,
+    input  logic [ 5: 0][15: 0] i_segment_selector,
+    input  logic [ 5: 0][63: 0] i_segment_descriptor,
+    input  logic [ 1: 0]        i_current_privilege_level,
+    input  logic                 i_paging_enable,
+    input  logic [31: 0]        i_page_directory_base,
 
+    // =========================
     // IFU control
-    input  logic                 i_start,             // 输入信号
-    input  logic [31: 0]        i_initial_eip,       // 输入信号
-    input  logic                 i_reload_eip,         // 输入信号
-    input  logic [31: 0]        i_reload_eip_value,  // 输入信号
+    // =========================
+    input  logic                 i_start,
+    input  logic [31: 0]        i_initial_eip,
+    input  logic                 i_reload_eip,
+    input  logic [31: 0]        i_reload_eip_value,
 
-    // IFU -> DEC handshake
-    output logic [15: 0][ 7: 0] o_instruction,       // 输出信号
-    output logic                 o_instruction_valid,  // 输出信号
-    output logic                 o_segment_fault,     // 输出信号
-    output logic [ 4: 0]        o_fifo_count,        // 输出信号
-    output logic [31: 0]        o_eip,                // 输出信号
-    input  logic                 i_dec_ready,         // 输入信号
-    input  logic                 i_dec_fire,          // 输入信号
-    input  logic [ 3: 0]        i_dec_consume_bytes, // 输入信号
-    input  logic                 i_dec_error,         // 输入信号
+    // =========================
+    // IFU to DEC handshake
+    // =========================
+    output logic [15: 0][ 7: 0] o_instruction,
+    output logic                 o_instruction_valid,
+    output logic                 o_segment_fault,
+    output logic [ 4: 0]        o_fifo_count,
+    output logic [31: 0]        o_eip,
+    input  logic                 i_dec_ready,
+    input  logic                 i_dec_fire,
+    input  logic [ 3: 0]        i_dec_consume_bytes,
+    input  logic                 i_dec_error,
 
-    input  logic                 clk,                 // 时钟信号
-    input  logic                 rst_n                // 复位信号
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic                 clk,
+    input  logic                 rst_n
 );
 
+    // ============================================================
+    // IFU state registers
+    // ============================================================
     logic [31: 0] eip_r;
     logic         started_r;
     logic         fetch_active_r;
@@ -67,12 +83,18 @@ module stage_1_ifu (
     logic         fetch_instruction_ready_r;
     logic         segment_fault_r;
 
+    // ============================================================
+    // fetch control signals
+    // ============================================================
     logic         fetch_request;
 
     logic [15: 0][ 7: 0] fetch_instruction;
     logic                fetch_instruction_ready;
     logic                fetch_segment_fault;
 
+    // ============================================================
+    // FIFO signals
+    // ============================================================
     logic [15: 0][ 7: 0] fifo_window;
     logic [ 4: 0]        fifo_count;
     logic                fifo_push_ready;
@@ -80,21 +102,30 @@ module stage_1_ifu (
     logic                fifo_full;
     logic                fifo_empty;
 
+    // ============================================================
+    // decode interface signals
+    // ============================================================
     logic                ifu_valid;
     logic [ 4: 0]        dec_consume_bytes_ext;
 
+    // ============================================================
+    // fetch control assignments
+    // ============================================================
     assign fetch_request           = started_r & i_start & ~fetch_active_r & fifo_empty;
     assign fetch_instruction_ready = fetch_instruction_ready_r;
     assign fetch_segment_fault     = 1'b0;
 
-    // IFU 取指总线由本地简化拼包状态机驱动（每次抓 4×32b 组成 16B 窗口）。
+    // IFU fetch bus driven by local simplified packing state machine (fetches 4×32b to form 16B window)
     assign o_code_valid            = fetch_active_r;
     assign o_code_address          = eip_r + {28'h0, fetch_word_idx_r, 2'b00};
 
-    // 该局部 IFU 不直接发起 MMU 后端访问，端口保留以兼容上层接口。
+    // This local IFU does not directly initiate MMU backend access, ports reserved for upper interface compatibility
     assign o_mmu_bus_valid         = 1'b0;
     assign o_mmu_bus_addr          = 32'h0000_0000;
 
+    // ============================================================
+    // decode interface assignments
+    // ============================================================
     assign dec_consume_bytes_ext = {1'b0, i_dec_consume_bytes};
     assign ifu_valid             =
         ~fifo_empty &

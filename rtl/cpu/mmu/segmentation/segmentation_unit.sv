@@ -30,48 +30,57 @@ description: segmentation_unit
 module segmentation_unit #(
     parameter bit read_from_fetch = 1'b0
 ) (
-    // ------------------------------------------------------------------------
-    // Segmentation context inputs（段式地址：选择子 + 描述符 + 偏移）
-    // ------------------------------------------------------------------------
-    input  logic          i_protected_mode,            // CR0.PE
-    input  logic [ 5: 0][15: 0] i_segment_selector,    // 段寄存器侧选择子
-    input  logic [ 5: 0][63: 0] i_segment_descriptor,  // 描述符缓存（与选择子对应）
-    input  logic [ 2: 0]        i_segment_index,         // 本次访问使用哪一段
-    input  logic [ 1: 0]        i_current_privilege_level, // CPL
-    input  logic [31: 0]        i_effective_address,     // 段内有效地址
-    input  logic                 i_write_enable,          // 1=写，0=读/取指
+    // =========================
+    // segmentation context inputs (selector + descriptor + offset)
+    // =========================
+    input  logic          i_protected_mode,
+    input  logic [ 5: 0][15: 0] i_segment_selector,
+    input  logic [ 5: 0][63: 0] i_segment_descriptor,
+    input  logic [ 2: 0]        i_segment_index,
+    input  logic [ 1: 0]        i_current_privilege_level,
+    input  logic [31: 0]        i_effective_address,
+    input  logic                 i_write_enable,
 
-    // ------------------------------------------------------------------------
-    // Segmentation outputs（输出线性地址或 fault）
-    // ------------------------------------------------------------------------
-    output logic [31: 0]        o_linear_address,         // 送分页单元
-    output logic                 o_segment_privilege_error, // 段检查失败聚合
+    // =========================
+    // segmentation outputs (linear address or fault)
+    // =========================
+    output logic [31: 0]        o_linear_address,
+    output logic                 o_segment_privilege_error,
 
-    // ------------------------------------------------------------------------
-    // Clock / reset
-    // ------------------------------------------------------------------------
-    input  logic                 clk,                     // 时钟信号
-    input  logic                 rst_n                    // 复位信号
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic                 clk,
+    input  logic                 rst_n
 );
 
-logic  [63: 0] segment_descriptor; // 当前段描述符（按 index 选取）
+    // ============================================================
+    // current segment descriptor (selected by index)
+    // ============================================================
+    logic  [63: 0] segment_descriptor;
 
-logic [31: 0] base;
-logic [19: 0] limit;
-logic        date_or_code_present;
-logic [ 1: 0] date_or_code_privilege_level;
-logic        available_field;
-logic        segment_type;
-logic        date_or_code_granularity;
-logic        date_or_code_default_operation_size;
-logic        date_or_code_executable;
-logic        data_expansion_direction;
-logic        data_writeable;
-logic        code_conforming;
-logic        code_readable;
-logic        date_or_code_accessed;
+    // ============================================================
+    // decoded descriptor fields
+    // ============================================================
+    logic [31: 0] base;
+    logic [19: 0] limit;
+    logic        date_or_code_present;
+    logic [ 1: 0] date_or_code_privilege_level;
+    logic        available_field;
+    logic        segment_type;
+    logic        date_or_code_granularity;
+    logic        date_or_code_default_operation_size;
+    logic        date_or_code_executable;
+    logic        data_expansion_direction;
+    logic        data_writeable;
+    logic        code_conforming;
+    logic        code_readable;
+    logic        date_or_code_accessed;
 
-segment_descriptor_decode u_segment_descriptor_decode (
+    // ============================================================
+    // segment descriptor decode
+    // ============================================================
+    segment_descriptor_decode u_segment_descriptor_decode (
     .o_base                                (base),
     .o_limit                               (limit),
     .o_date_or_code_present                (date_or_code_present),
@@ -89,15 +98,19 @@ segment_descriptor_decode u_segment_descriptor_decode (
     .i_descriptor                          (segment_descriptor)
 );
 
-logic is_index_CS; // 当前访问是否为 CS
+    // ============================================================
+    // segment type detection
+    // ============================================================
+    logic is_index_CS;
+    logic is_data_segment;
+    logic is_read;
+    logic is_write;
 
-logic is_data_segment; // 数据段
-
-logic is_read;
-logic is_write;
-
-logic is_granularity_byte; // G=0：字节粒度 limit
-logic is_granularity_page; // G=1：页粒度，limit 左移 12
+    // ============================================================
+    // granularity detection
+    // ============================================================
+    logic is_granularity_byte;
+    logic is_granularity_page;
 
 // 越界检查：字节/页粒度下 offset 与 limit 关系（实现待与手册严格对齐）
 logic exception_limit;

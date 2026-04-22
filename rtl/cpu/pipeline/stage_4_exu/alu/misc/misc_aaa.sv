@@ -18,17 +18,30 @@
 //  Description : misc_aaa module
 // ============================================================================
 
-module misc_aaa (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    input  logic          af_in, // 输入信号
-    output logic [31: 0] y, // 结果输出
-    output logic         af_out, // 输出信号
-    output logic         cf_out // 输出进位
+module misc_aaa (
+    // =========================
+    // operands
+    // =========================
+    input  logic [31: 0]  a,
+    input  logic          af_in,
+
+    // =========================
+    // outputs
+    // =========================
+    output logic [31: 0] y,
+    output logic         af_out,
+    output logic         cf_out
 );
+    // ============================================================
+    // intermediate signals
+    // ============================================================
     logic [ 7: 0] al;
     logic [ 7: 0] ah;
 
-    // 组合逻辑：推导输出
-    always_comb begin
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_aaa
         al = a[ 7: 0];
         ah = a[15:  8];
 

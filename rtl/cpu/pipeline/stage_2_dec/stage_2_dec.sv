@@ -19,20 +19,31 @@
 // ============================================================================
 
 module stage_2_dec (
-    input  logic [15: 0][ 7: 0] i_instruction,          // 输入信号
-    input  logic                i_instruction_valid,      // 输入信号
-    input  logic                i_default_operand_size,  // 输入信号
+    // =========================
+    // instruction input
+    // =========================
+    input  logic [15: 0][ 7: 0] i_instruction,
+    input  logic                i_instruction_valid,
+    input  logic                i_default_operand_size,
 
-    input  logic                i_exu_ready,               // 输入信号
-    input  logic                i_flush,                   // 输入信号
-    output logic                o_ifu_ready,               // 输出信号
-    output logic                o_instruction_fire,       // 输出信号
-    output logic                o_stage_valid,             // 输出信号
+    // =========================
+    // pipeline handshake
+    // =========================
+    input  logic                i_exu_ready,
+    input  logic                i_flush,
+    output logic                o_ifu_ready,
+    output logic                o_instruction_fire,
+    output logic                o_stage_valid,
 
-    output logic [ 3: 0]        o_consume_bytes,           // 输出信号
-    output logic                o_decode_error,            // 输出信号
+    // =========================
+    // decode outputs
+    // =========================
+    output logic [ 3: 0]        o_consume_bytes,
+    output logic                o_decode_error,
 
-    // Decoded opcode outputs (full instruction set)
+    // =========================
+    // decoded opcode outputs (full instruction set)
+    // =========================
     output logic                o_opcode_aaa,
     output logic                o_opcode_aad,
     output logic                o_opcode_aam,

@@ -26,16 +26,27 @@
 // ============================================================================
 
 module chip_ns16550_com (
-    input  logic         i_cs_n,    // 低有效片选
-    input  logic         i_rd_n,    // 低有效读
-    input  logic         i_wr_n,    // 低有效写
-    input  logic [ 2: 0] i_a,       // 寄存器偏移（相对 0x3F8）
-    input  logic [ 7: 0] i_d,       // 写数据
-    output logic [ 7: 0] o_d,       // 读数据
-    input  logic         i_rx_push, // 仿真/注入：推入一字节到接收缓冲
-    input  logic [ 7: 0] i_rx_data, // 注入数据
-    input  logic         clk,       // 系统时钟
-    input  logic         rst_n      // 异步低有效复位
+    // =========================
+    // CPU bus interface
+    // =========================
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic [ 2: 0] i_a,
+    input  logic [ 7: 0] i_d,
+    output logic [ 7: 0] o_d,
+
+    // =========================
+    // simulation injection interface
+    // =========================
+    input  logic         i_rx_push,
+    input  logic [ 7: 0] i_rx_data,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
     localparam int LP_FIFO_D = 16;
@@ -46,21 +57,30 @@ module chip_ns16550_com (
     localparam logic [ 3: 0] LP_IIR_THRE = 4'b0010;
     localparam logic [ 3: 0] LP_IIR_RDA  = 4'b0100;
 
-    logic [ 2: 0] off;  // 当前寄存器索引
+    // ============================================================
+    // register index
+    // ============================================================
+    logic [ 2: 0] off;
 
     assign off = i_a;
 
-    logic [ 7: 0] rbr;         // 接收缓冲（读）
-    logic         rbr_valid;   // RBR 有数据
-    logic [ 7: 0] ier;         // 中断允许
-    logic [ 7: 0] fcr;         // FIFO 控制（简化模型）
-    logic [ 7: 0] lcr;         // 线路控制（含 DLAB）
-    logic [ 7: 0] mcr;         // 调制解调器控制（含回环）
-    logic [ 7: 0] scr;         // 暂存寄存器
-    logic [ 7: 0] dll;         // 除数锁存低字节
-    logic [ 7: 0] dlm;         // 除数锁存高字节
+    // ============================================================
+    // UART registers
+    // ============================================================
+    logic [ 7: 0] rbr;
+    logic         rbr_valid;
+    logic [ 7: 0] ier;
+    logic [ 7: 0] fcr;
+    logic [ 7: 0] lcr;
+    logic [ 7: 0] mcr;
+    logic [ 7: 0] scr;
+    logic [ 7: 0] dll;
+    logic [ 7: 0] dlm;
 
-    logic         dlab;  // 除数锁存访问位
+    // ============================================================
+    // control signals
+    // ============================================================
+    logic         dlab;
     logic         wr;
     logic         rd;
 
@@ -68,26 +88,38 @@ module chip_ns16550_com (
     assign wr   = !i_cs_n && !i_wr_n;
     assign rd   = !i_cs_n && !i_rd_n;
 
-    logic         thr_empty;         // THR 空（简化 TX）
-    logic         tx_empty;          // 发送移位路径空
-    logic         tx_drain_pending;  // 写 THR 后一拍排空
-    logic         thre_irq_pending;  // THRE 中断挂起
+    // ============================================================
+    // transmit status
+    // ============================================================
+    logic         thr_empty;
+    logic         tx_empty;
+    logic         tx_drain_pending;
+    logic         thre_irq_pending;
 
-    logic [ 3: 0] msr_status;       // MSR 高半字节（状态）
-    logic [ 3: 0] msr_status_prev;  // 上一拍状态（边沿检测）
-    logic [ 3: 0] msr_delta;        // MSR 低半字节（变化锁存）
+    // ============================================================
+    // modem status register
+    // ============================================================
+    logic [ 3: 0] msr_status;
+    logic [ 3: 0] msr_status_prev;
+    logic [ 3: 0] msr_delta;
     logic [ 7: 0] msr;
 
     assign msr = {msr_status, msr_delta};
 
-    logic         irq_rda;       // 接收数据可用中断条件
-    logic         irq_thre;      // THRE 中断条件
-    logic         irq_ms;        // 调制解调器状态中断条件
-    logic [ 3: 0] iir_code;      // IIR 优先级编码结果
-    logic [ 1: 0] iir_fifo_bits; // IIR 中 FIFO 使能位占位
+    // ============================================================
+    // interrupt conditions
+    // ============================================================
+    logic         irq_rda;
+    logic         irq_thre;
+    logic         irq_ms;
+    logic [ 3: 0] iir_code;
+    logic [ 1: 0] iir_fifo_bits;
     logic [ 7: 0] iir;
 
-    logic [ 7: 0] lsr;  // 线路状态（简化）
+    // ============================================================
+    // line status register
+    // ============================================================
+    logic [ 7: 0] lsr;
 
     assign irq_rda       = ier[0] && rbr_valid;
     assign irq_thre      = ier[1] && thre_irq_pending;

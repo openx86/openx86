@@ -25,29 +25,47 @@
 // ============================================================================
 
 module chip_centronics_lpt (
-    input  logic         i_cs_n,  // 低有效片选
-    input  logic         i_rd_n,  // 低有效读
-    input  logic         i_wr_n,  // 低有效写
-    input  logic [ 2: 0] i_a,     // 寄存器偏移（相对 0x378）
-    input  logic [ 7: 0] i_d,     // 写数据
-    output logic [ 7: 0] o_d,     // 读数据
-    input  logic         clk,     // 系统时钟
-    input  logic         rst_n    // 异步低有效复位
+    // =========================
+    // CPU bus interface
+    // =========================
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic [ 2: 0] i_a,
+    input  logic [ 7: 0] i_d,
+    output logic [ 7: 0] o_d,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
-    logic [ 2: 0] off;  // 与 i_a 相同的寄存器索引
+    // ============================================================
+    // register index
+    // ============================================================
+    logic [ 2: 0] off;
 
     assign off = i_a;
 
-    logic [ 7: 0] data_reg;   // 数据寄存器（写后送“打印机”侧）
-    logic [ 7: 0] ctrl_reg;   // 控制寄存器
+    // ============================================================
+    // data and control registers
+    // ============================================================
+    logic [ 7: 0] data_reg;
+    logic [ 7: 0] ctrl_reg;
 
-    logic wr;  // 片内写选通
+    // ============================================================
+    // write strobe
+    // ============================================================
+    logic wr;
 
     assign wr = !i_cs_n && !i_wr_n;
 
-    // 仅数据/控制寄存器可写；其余偏移忽略写。
-    always_ff @(posedge clk or negedge rst_n) begin
+    // ============================================================
+    // write data/control registers
+    // ============================================================
+    always_ff @(posedge clk or negedge rst_n) begin : ff_register_write
         if (~rst_n) begin
             data_reg <= 8'h0;
             ctrl_reg <= 8'h0C;
@@ -60,7 +78,9 @@ module chip_centronics_lpt (
         end
     end
 
-    // 固定“空闲/就绪”状态编码（Busy 等为反相有效，与常见 PC BIOS 期望一致）。
+    // ============================================================
+    // fixed idle/ready status encoding
+    // ============================================================
     logic [ 7: 0] status_read = {
         1'b0,
         1'b1,
@@ -72,12 +92,17 @@ module chip_centronics_lpt (
         1'b1
     };
 
-    logic rd;  // 片内读选通
+    // ============================================================
+    // read strobe
+    // ============================================================
+    logic rd;
 
     assign rd = !i_cs_n && !i_rd_n;
 
-    // 读：数据/状态/控制口；未实现寄存器返回 0xFF。
-    always_comb begin
+    // ============================================================
+    // read data/status/control ports
+    // ============================================================
+    always_comb begin : comb_register_read
         o_d = 8'hFF;
         if (rd) begin
             unique case (off)

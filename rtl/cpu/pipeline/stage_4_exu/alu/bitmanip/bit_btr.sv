@@ -18,15 +18,28 @@
 //  Description : bit_btr module
 // ============================================================================
 
-module bit_btr (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    input  logic [31: 0]  bit_index, // 位测试索引
-    output logic [31: 0] y, // 结果输出
-    output logic         cf // 进位标志
+module bit_btr (
+    // =========================
+    // operands
+    // =========================
+    input  logic [31: 0]  a,
+    input  logic [31: 0]  bit_index,
+
+    // =========================
+    // outputs
+    // =========================
+    output logic [31: 0] y,
+    output logic         cf
 );
+    // ============================================================
+    // intermediate signals
+    // ============================================================
     logic [31: 0] mask;
 
-    // 组合逻辑：推导输出
-    always_comb begin
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_bit_reset
         mask = 32'h1 << bit_index[ 4: 0];
         cf = a[bit_index[ 4: 0]];
         y = a & ~mask;

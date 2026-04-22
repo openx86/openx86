@@ -22,22 +22,34 @@ module fifo #(
     parameter int P_DEPTH      = 16,
     parameter int P_DATA_WIDTH = 8
 ) (
-    input  logic                                  i_push_valid,   // 输入信号
-    input  logic [P_DEPTH - 1: 0][P_DATA_WIDTH - 1: 0] i_push_data,   // 输入信号
-    input  logic [$clog2(P_DEPTH + 1) - 1: 0]     i_push_bytes,   // 输入信号
-    output logic                                  o_push_ready,   // 输出信号
+    // =========================
+    // push interface
+    // =========================
+    input  logic                                  i_push_valid,
+    input  logic [P_DEPTH - 1: 0][P_DATA_WIDTH - 1: 0] i_push_data,
+    input  logic [$clog2(P_DEPTH + 1) - 1: 0]     i_push_bytes,
+    output logic                                  o_push_ready,
 
-    input  logic                                  i_pop_valid,    // 输入信号
-    input  logic [$clog2(P_DEPTH + 1) - 1: 0]     i_pop_bytes,    // 输入信号
-    output logic                                  o_pop_ready,    // 输出信号
+    // =========================
+    // pop interface
+    // =========================
+    input  logic                                  i_pop_valid,
+    input  logic [$clog2(P_DEPTH + 1) - 1: 0]     i_pop_bytes,
+    output logic                                  o_pop_ready,
 
-    output logic [P_DEPTH - 1: 0][P_DATA_WIDTH - 1: 0] o_window_data, // 输出信号
-    output logic [$clog2(P_DEPTH + 1) - 1: 0]     o_count,        // 输出信号
-    output logic                                  o_full,         // 输出信号
-    output logic                                  o_empty,        // 输出信号
+    // =========================
+    // status interface
+    // =========================
+    output logic [P_DEPTH - 1: 0][P_DATA_WIDTH - 1: 0] o_window_data,
+    output logic [$clog2(P_DEPTH + 1) - 1: 0]     o_count,
+    output logic                                  o_full,
+    output logic                                  o_empty,
 
-    input  logic                                  clk,            // 时钟信号
-    input  logic                                  rst_n           // 复位信号
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic                                  clk,
+    input  logic                                  rst_n
 );
 
     localparam int LP_ADDR_WIDTH  = $clog2(P_DEPTH);
@@ -45,11 +57,17 @@ module fifo #(
 
     localparam logic [LP_COUNT_WIDTH - 1: 0] LP_DEPTH_W = LP_COUNT_WIDTH'(P_DEPTH);
 
+    // ============================================================
+    // FIFO storage and pointers
+    // ============================================================
     logic [P_DATA_WIDTH - 1: 0] fifo_mem [0: P_DEPTH - 1];
     logic [LP_ADDR_WIDTH - 1: 0] head_ptr;
     logic [LP_ADDR_WIDTH - 1: 0] tail_ptr;
     logic [LP_COUNT_WIDTH - 1: 0] count;
 
+    // ============================================================
+    // control signals
+    // ============================================================
     logic [LP_COUNT_WIDTH - 1: 0] free_count;
     logic                         do_push;
     logic                         do_pop;
@@ -82,8 +100,10 @@ module fifo #(
     assign o_empty      = (count == LP_COUNT_WIDTH'(0));
     assign o_full       = (count == LP_DEPTH_W);
 
-    // 组合逻辑块
-    always_comb begin
+    // ============================================================
+    // window data generation
+    // ============================================================
+    always_comb begin : comb_window_data
         for (int i = 0; i < P_DEPTH; i++) begin
             if (LP_COUNT_WIDTH'(i) < count) begin
                 o_window_data[i] = fifo_mem[f_wrap_index(head_ptr, LP_COUNT_WIDTH'(i))];
@@ -93,8 +113,10 @@ module fifo #(
         end
     end
 
-    // 时序逻辑块
-    always_ff @(posedge clk or negedge rst_n) begin
+    // ============================================================
+    // sequential logic
+    // ============================================================
+    always_ff @(posedge clk or negedge rst_n) begin : ff_fifo_control
         if (~rst_n) begin
             head_ptr <= '0;
             tail_ptr <= '0;

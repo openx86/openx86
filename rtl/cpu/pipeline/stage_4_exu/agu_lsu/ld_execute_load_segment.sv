@@ -20,40 +20,59 @@
 
 `include "openx86_defs.h.sv"
 
-module ld_execute_load_segment (    input  logic          protected_mode_enable,  // 1=保护模式
-    input  logic [15: 0] index_segment_register, // 目标段寄存器索引
-    input  logic [15: 0] index_general_register, // 源通用寄存器索引
-    input  logic [ 7: 0]   greg__8, // 8 位源操作数
-    input  logic [15: 0]  greg_16, // 16 位源操作数（选择子）
-    input  logic [31: 0]  greg_32, // 32 位源操作数
-    output logic [15: 0] write_enable, // 段寄存器写使能掩码
-    output logic [15: 0] write_index, // 写回段寄存器索引
-    output logic [15: 0] write_selector, // 写回选择子
-    output logic [63: 0] write_descriptor, // 写回 64 位描述符缓存
-    input  logic          valid, // 上游握手：有效
-    output logic         ready // 本子模块就绪（恒 1）
+module ld_execute_load_segment (
+    // =========================
+    // execution inputs
+    // =========================
+    input  logic          protected_mode_enable,
+    input  logic [15: 0] index_segment_register,
+    input  logic [15: 0] index_general_register,
+    input  logic [ 7: 0]   greg__8,
+    input  logic [15: 0]  greg_16,
+    input  logic [31: 0]  greg_32,
+
+    // =========================
+    // writeback outputs
+    // =========================
+    output logic [15: 0] write_enable,
+    output logic [15: 0] write_index,
+    output logic [15: 0] write_selector,
+    output logic [63: 0] write_descriptor,
+
+    // =========================
+    // handshake
+    // =========================
+    input  logic          valid,
+    output logic         ready
 );
 
-// 当前装载是否针对 CS
-logic is_code_segment_index;
+    // ============================================================
+    // check if current load targets CS
+    // ============================================================
+    logic is_code_segment_index;
 
-// 组合逻辑：连续赋值
-assign is_code_segment_index = index_segment_register == 16'(`sreg_index_CS);
+    assign is_code_segment_index = index_segment_register == 16'(`sreg_index_CS);
 
-logic [31: 0] encode_base;
-logic [19: 0] encode_limit;
-logic        encode_present;
-logic [ 1: 0] encode_privilege_level;
-logic        encode_available_field;
-logic        encode_descriptor_type;
-logic        encode_date_or_code_granularity;
-logic        encode_date_or_code_default_operation_size;
-logic        encode_date_or_code_executable;
-logic        encode_data_expansion_direction_code_conforming;
-logic        encode_data_writeable_code_readable;
-logic        encode_date_or_code_accessed;
+    // ============================================================
+    // segment descriptor encode fields
+    // ============================================================
+    logic [31: 0] encode_base;
+    logic [19: 0] encode_limit;
+    logic        encode_present;
+    logic [ 1: 0] encode_privilege_level;
+    logic        encode_available_field;
+    logic        encode_descriptor_type;
+    logic        encode_date_or_code_granularity;
+    logic        encode_date_or_code_default_operation_size;
+    logic        encode_date_or_code_executable;
+    logic        encode_data_expansion_direction_code_conforming;
+    logic        encode_data_writeable_code_readable;
+    logic        encode_date_or_code_accessed;
 
-function automatic logic [63: 0] f_encode_segment_descriptor (
+    // ============================================================
+    // segment descriptor encode function
+    // ============================================================
+    function automatic logic [63: 0] f_encode_segment_descriptor (
     input logic [31: 0] i_base,
     input logic [19: 0] i_limit,
     input logic        i_present,
@@ -89,8 +108,10 @@ function automatic logic [63: 0] f_encode_segment_descriptor (
     end
 endfunction
 
-// 组合逻辑：推导输出
-always_comb begin
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_encode
     write_enable   = 16'b0;
     write_index    = index_segment_register;
     write_selector = greg_16;

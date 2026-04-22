@@ -18,14 +18,24 @@
 //  Description : ari_execute_arithmetic_sub module
 // ============================================================================
 
-module ari_execute_arithmetic_sub #(    BIT_WIDTH = 32
+module ari_execute_arithmetic_sub #(
+    parameter BIT_WIDTH = 32
 ) (
-    input  logic [BIT_WIDTH-1: 0] operand_1, // 第一操作数
-    input  logic [BIT_WIDTH-1: 0] operand_2, // 第二操作数
-    output logic [BIT_WIDTH-1: 0] result // 无借位差
+    // =========================
+    // operands
+    // =========================
+    input  logic [BIT_WIDTH-1: 0] operand_1,
+    input  logic [BIT_WIDTH-1: 0] operand_2,
+
+    // =========================
+    // output
+    // =========================
+    output logic [BIT_WIDTH-1: 0] result
 );
 
-    // 组合逻辑：连续赋值
+    // ============================================================
+    // combinational logic: continuous assignment
+    // ============================================================
     assign result = operand_1 - operand_2;
 
 endmodule

@@ -50,24 +50,32 @@ segment
 
 
 module segment_descriptor_encode (
-    // 将结构化属性打包回 64b 描述符（写回/构造路径）
-    input  logic [31: 0] i_base,                              // 输入信号
-    input  logic [19: 0] i_limit,                             // 输入信号
-    input  logic          i_present,                           // 输入信号
-    input  logic [ 1: 0] i_privilege_level,                   // 输入信号
-    input  logic          i_available_field,                  // 输入信号
-    input  logic          i_descriptor_type,                   // 输入信号
-    input  logic          i_date_or_code_granularity,          // 输入信号
-    input  logic          i_date_or_code_default_operation_size, // 输入信号
-    input  logic          i_date_or_code_executable,           // 输入信号
-    input  logic          i_data_expansion_direction_code_conforming, // 输入信号
-    input  logic          i_data_writeable_code_readable,      // 输入信号
-    input  logic          i_date_or_code_accessed,             // 输入信号
-    output logic [63: 0] o_descriptor                         // 输出信号
+    // =========================
+    // structured attributes to pack into 64-bit descriptor
+    // =========================
+    input  logic [31: 0] i_base,
+    input  logic [19: 0] i_limit,
+    input  logic          i_present,
+    input  logic [ 1: 0] i_privilege_level,
+    input  logic          i_available_field,
+    input  logic          i_descriptor_type,
+    input  logic          i_date_or_code_granularity,
+    input  logic          i_date_or_code_default_operation_size,
+    input  logic          i_date_or_code_executable,
+    input  logic          i_data_expansion_direction_code_conforming,
+    input  logic          i_data_writeable_code_readable,
+    input  logic          i_date_or_code_accessed,
+
+    // =========================
+    // output
+    // =========================
+    output logic [63: 0] o_descriptor
 );
 
-// 按手册位序拼接（含 AVL/G/D/B 等属性位）
-assign o_descriptor = {
+    // ============================================================
+    // pack according to manual bit order (including AVL/G/D/B attribute bits)
+    // ============================================================
+    assign o_descriptor = {
     i_base[15: 0],
     i_limit[15: 0],
     i_base[31: 24],

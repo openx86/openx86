@@ -52,7 +52,7 @@
 
 **CDC:** approved sync; 1-bit ≥2 flops; multi-bit handshake/FIFO/gray; no deep combo on async inputs.
 
-**TB:** under `tb/`; path/name mirrors `rtl/` + `_tb.sv` suffix; each RTL module should have a TB; non-synth constructs only in `tb/`.
+**TB:** under `tb/`; path/name mirrors `rtl/` + `_tb.sv` suffix; each RTL module should have a TB; non-synth constructs only in `tb/`. Testbench file naming must be `{module_name}_tb.sv` where `module_name` exactly matches the RTL module name. The directory structure in `tb/` must mirror the directory structure in `rtl/` exactly.
 
 **Quality:** lint + TB regressions + no meaningful new synth warnings; assertions for invariants; deterministic TB reset/startup.
 

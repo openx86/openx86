@@ -33,15 +33,26 @@
 module chip_mc146818_rtc #(
     parameter int P_CLK_HZ = 8_000  // 日历推进与分频器参考频率（仿真可放低）
 ) (
-    input  logic         i_cs_n,    // 低有效片选
-    input  logic         i_rd_n,    // 低有效读
-    input  logic         i_wr_n,    // 低有效写
-    input  logic         i_a0,      // 0=索引口 0x70，1=数据口 0x71
-    input  logic [ 7: 0] i_d,       // 写数据
-    output logic [ 7: 0] o_d,       // 读数据
-    output logic         o_rtc_irq, // 寄存器 C 中 IRQF 聚合输出
-    input  logic         clk,       // 系统时钟
-    input  logic         rst_n      // 异步低有效复位
+    // =========================
+    // CPU bus interface
+    // =========================
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic         i_a0,
+    input  logic [ 7: 0] i_d,
+    output logic [ 7: 0] o_d,
+
+    // =========================
+    // interrupt output
+    // =========================
+    output logic         o_rtc_irq,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
     localparam int UIP_CYC = ((P_CLK_HZ * 244) / 1_000_000) > 0 ? ((P_CLK_HZ * 244) / 1_000_000) : 1;
@@ -49,21 +60,30 @@ module chip_mc146818_rtc #(
     localparam logic [CW-1: 0] SUB_LAST = CW'(P_CLK_HZ - 1);
     localparam logic [CW-1: 0] UIP_START = (P_CLK_HZ > UIP_CYC) ? CW'(P_CLK_HZ - UIP_CYC) : CW'(0);
 
+    // ============================================================
+    // bus transaction signals
+    // ============================================================
     logic wr;
     logic rd;
 
     assign wr = !i_cs_n && !i_wr_n;
     assign rd = !i_cs_n && !i_rd_n;
 
-    logic [ 7: 0] index_reg;           // 当前 CMOS 索引（含 NMI 屏蔽位存储）
-    logic [ 7: 0] cmos_ram [ 0: 127];   // 128 字节 CMOS RAM
+    // ============================================================
+    // CMOS RAM and index register
+    // ============================================================
+    logic [ 7: 0] index_reg;
+    logic [ 7: 0] cmos_ram [ 0: 127];
 
-    logic dm_bin;      // 1=二进制时间格式
-    logic mode_24h;    // 1=24 小时制
-    logic set_stop;    // SET=1 时冻结日历更新
-    logic pie_en;      // 周期中断允许
-    logic aie_en;      // 闹钟中断允许
-    logic uie_en;      // 更新结束中断允许
+    // ============================================================
+    // mode configuration bits
+    // ============================================================
+    logic dm_bin;
+    logic mode_24h;
+    logic set_stop;
+    logic pie_en;
+    logic aie_en;
+    logic uie_en;
 
     assign dm_bin   = cmos_ram[11][2];
     assign mode_24h = cmos_ram[11][1];
@@ -72,6 +92,9 @@ module chip_mc146818_rtc #(
     assign aie_en   = cmos_ram[11][5];
     assign uie_en   = cmos_ram[11][4];
 
+    // ============================================================
+    // binary time values
+    // ============================================================
     logic [ 5: 0] sec_bin, min_bin;
     logic [ 4: 0] hour_bin;
     logic [ 2: 0] dow_bin;
@@ -79,23 +102,37 @@ module chip_mc146818_rtc #(
     logic [ 3: 0] month_bin;
     logic [ 7: 0] year_bin;
 
-    logic [CW-1: 0] sub_sec;  // 秒内子计数
-    logic          uip_phase; // 更新进行中（近似 UIP）
+    // ============================================================
+    // update timing
+    // ============================================================
+    logic [CW-1: 0] sub_sec;
+    logic          uip_phase;
 
-    logic reg_c_pf, reg_c_af, reg_c_uf, reg_c_irqf;  // 寄存器 C 标志位
+    // ============================================================
+    // register C flags
+    // ============================================================
+    logic reg_c_pf, reg_c_af, reg_c_uf, reg_c_irqf;
 
-    logic [23: 0] pie_div;       // 周期中断分频器
-    logic [23: 0] pie_reload_q;  // 分频器重装载（由 RegA RS 编码）
-    logic        alarm_match_d;  // 闹钟匹配延迟一拍
+    // ============================================================
+    // periodic interrupt divider
+    // ============================================================
+    logic [23: 0] pie_div;
+    logic [23: 0] pie_reload_q;
 
-    logic read_c_pulse;  // 读 Reg C 脉冲
-    logic read_c_d1;     // 读 Reg C 后一拍清标志
-    logic rstn_i;        // 复位同步/整形（兼容 X）
+    // ============================================================
+    // alarm and read control
+    // ============================================================
+    logic        alarm_match_d;
+    logic read_c_pulse;
+    logic read_c_d1;
+    logic rstn_i;
 
     assign read_c_pulse = rd && i_a0 && (index_reg[ 6: 0] == 7'h0C);
     assign rstn_i = (rst_n === 1'b0) ? 1'b0 : 1'b1;
 
-    // Power-up defaults mirror reset defaults for deterministic startup behavior.
+    // ============================================================
+    // power-up initialization
+    // ============================================================
     initial begin
         index_reg = '0;
         for (int i = 0; i < 128; i++)

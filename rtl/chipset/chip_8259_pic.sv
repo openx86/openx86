@@ -30,24 +30,38 @@
 // ============================================================================
 
 module chip_8259_pic (
-    input  logic         i_cs_n,  // 低有效片选
-    input  logic         i_rd_n,  // 低有效读
-    input  logic         i_wr_n,  // 低有效写
-    input  logic         i_a0,    // 0=命令口，1=数据口
-    input  logic [ 7: 0] i_d,     // 写数据
-    output logic [ 7: 0] o_d,     // 读数据
-    input  logic [ 7: 0] i_ir,    // 中断请求输入 IR7..IR0
-    output logic         o_intr,  // 向 CPU 输出的中断请求
-    input  logic         clk,     // 系统时钟
-    input  logic         rst_n    // 异步低有效复位
+    // =========================
+    // CPU bus interface
+    // =========================
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic         i_a0,
+    input  logic [ 7: 0] i_d,
+    output logic [ 7: 0] o_d,
+
+    // =========================
+    // interrupt interface
+    // =========================
+    input  logic [ 7: 0] i_ir,
+    output logic         o_intr,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
+    // ============================================================
+    // PIC initialization state machine
+    // ============================================================
     typedef enum logic [ 2: 0] {
-        ST_RESET,  // 等待 ICW1
-        ST_ICW2,   // 收 ICW2（向量基址）
-        ST_ICW3,   // 收 ICW3（级联/从片标识）
-        ST_ICW4,   // 收 ICW4（模式位）
-        ST_READY   // 运行态：数据口写 OCW1(IMR)
+        ST_RESET,  // waiting for ICW1
+        ST_ICW2,   // receive ICW2 (vector base)
+        ST_ICW3,   // receive ICW3 (cascade/slave ID)
+        ST_ICW4,   // receive ICW4 (mode bits)
+        ST_READY   // running state: data port writes OCW1(IMR)
     } pic_state_e;
 
     function automatic logic [ 2: 0] f_highest_prio_idx(input logic [ 7: 0] i_vec);
@@ -65,35 +79,47 @@ module chip_8259_pic (
         end
     endfunction
 
-    pic_state_e          state, state_n;       // 初始化 FSM 现态/次态
-    logic                need_icw3, need_icw3_n;  // 是否需要 ICW3
-    logic                need_icw4, need_icw4_n;  // 是否需要 ICW4
-    logic                ltim, ltim_n;       // 1=电平触发，0=边沿触发
-    logic                aeoi, aeoi_n;       // 自动 EOI
-    logic                read_isr, read_isr_n; // 0 读 IRR，1 读 ISR
+    // ============================================================
+    // initialization FSM state and configuration
+    // ============================================================
+    pic_state_e          state, state_n;
+    logic                need_icw3, need_icw3_n;
+    logic                need_icw4, need_icw4_n;
+    logic                ltim, ltim_n;
+    logic                aeoi, aeoi_n;
+    logic                read_isr, read_isr_n;
     logic [ 7: 0]        icw1, icw1_n;
-    logic [ 7: 0]        icw2_vec, icw2_vec_n; // 中断向量基址（高 5 位等）
+    logic [ 7: 0]        icw2_vec, icw2_vec_n;
     logic [ 7: 0]        icw3, icw3_n;
     logic [ 7: 0]        icw4, icw4_n;
-    logic [ 7: 0]        imr, imr_n;           // 中断屏蔽
-    logic [ 7: 0]        irr, irr_n;           // 请求寄存器
-    logic [ 7: 0]        isr, isr_n;           // 服务寄存器
-    logic [ 7: 0]        ir_prev, ir_prev_n;  // IR 前一拍（边沿检测）
 
+    // ============================================================
+    // interrupt registers
+    // ============================================================
+    logic [ 7: 0]        imr, imr_n;
+    logic [ 7: 0]        irr, irr_n;
+    logic [ 7: 0]        isr, isr_n;
+    logic [ 7: 0]        ir_prev, ir_prev_n;
+
+    // ============================================================
+    // interrupt priority and eligibility
+    // ============================================================
     logic                wr;
     logic                rd;
-    logic [ 7: 0]        masked_irr, masked_irr_n;  // 屏蔽后的 IRR
-    logic                pending_valid, pending_valid_n;  // 存在未屏蔽请求
-    logic [ 2: 0]        pending_idx, pending_idx_n;      // 当前最高优先级请求索引
-    logic                isr_valid, isr_valid_n;          // ISR 非空
-    logic [ 2: 0]        isr_idx, isr_idx_n;                // 正在服务的中断索引
-    logic                irq_eligible, irq_eligible_n;    // 可拉 INTR（含嵌套规则）
+    logic [ 7: 0]        masked_irr, masked_irr_n;
+    logic                pending_valid, pending_valid_n;
+    logic [ 2: 0]        pending_idx, pending_idx_n;
+    logic                isr_valid, isr_valid_n;
+    logic [ 2: 0]        isr_idx, isr_idx_n;
+    logic                irq_eligible, irq_eligible_n;
 
     assign wr          = !i_cs_n && !i_wr_n;
     assign rd          = !i_cs_n && !i_rd_n;
 
-    // 屏蔽 IRR、优先级索引与 INTR 条件（基于现态寄存器）。
-    always_comb begin
+    // ============================================================
+    // masked IRR, priority index, and INTR condition
+    // ============================================================
+    always_comb begin : comb_priority_logic
         masked_irr    = irr & ~imr;
         pending_valid = |masked_irr;
         pending_idx   = f_highest_prio_idx(masked_irr);

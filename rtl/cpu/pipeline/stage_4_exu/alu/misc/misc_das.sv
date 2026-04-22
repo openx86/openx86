@@ -18,18 +18,31 @@
 //  Description : misc_das module
 // ============================================================================
 
-module misc_das (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    input  logic          af_in, // 输入 AF
-    input  logic          cf_in, // 输入进位
-    output logic [31: 0] y, // 结果输出
-    output logic         af_out, // 输出 AF
-    output logic         cf_out // 输出进位
-);
-    logic [ 7: 0] al;  // 调整中的 AL
-    logic [ 7: 0] orig_al;  // 原始 AL（用于高位越界判定）
+module misc_das (
+    // =========================
+    // operands
+    // =========================
+    input  logic [31: 0]  a,
+    input  logic          af_in,
+    input  logic          cf_in,
 
-    // 组合逻辑：推导输出
-    always_comb begin
+    // =========================
+    // outputs
+    // =========================
+    output logic [31: 0] y,
+    output logic         af_out,
+    output logic         cf_out
+);
+    // ============================================================
+    // intermediate signals
+    // ============================================================
+    logic [ 7: 0] al;
+    logic [ 7: 0] orig_al;
+
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_das
         orig_al = a[ 7: 0];
         al = orig_al;
         af_out = af_in;

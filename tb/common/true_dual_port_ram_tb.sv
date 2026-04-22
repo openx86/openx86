@@ -24,32 +24,41 @@
 
 module true_dual_port_ram_tb;
 
+    // ============================================================
+    // parameters
+    // ============================================================
     parameter int DATA_WIDTH = 8;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
+    // ============================================================
+    // test signals
+    // ============================================================
     logic                    clk;
     logic rst_n;
-    
-    // 端口A
+
+    // port A
     logic                    wea;
     logic [ADDR_WIDTH-1: 0]  addra;
     logic [DATA_WIDTH-1: 0]  wdataa;
     logic [DATA_WIDTH-1: 0]  rdataa;
-    
-    // 端口B
+
+    // port B
     logic                    web;
     logic [ADDR_WIDTH-1: 0]  addrb;
     logic [DATA_WIDTH-1: 0]  wdatab;
     logic [DATA_WIDTH-1: 0]  rdatab;
 
+    // ============================================================
+    // DUT instantiation
+    // ============================================================
     true_dual_port_ram #(
         .DATA_WIDTH ( DATA_WIDTH ),
         .ADDR_WIDTH ( ADDR_WIDTH ),
         .DEPTH      ( DEPTH      )
     ) dut (
-        .clk  ( clk  ),
-        .rst_n  ( rst_n ),
+        .clk    ( clk    ),
+        .rst_n  ( rst_n  ),
         .wea    ( wea    ),
         .addra  ( addra  ),
         .wdataa ( wdataa ),
@@ -60,10 +69,15 @@ module true_dual_port_ram_tb;
         .rdatab ( rdatab )
     );
 
-    // 时钟生成
+    // ============================================================
+    // clock generation
+    // ============================================================
     always #5 clk = ~clk;
 
-    initial begin
+    // ============================================================
+    // test procedure
+    // ============================================================
+    initial begin : main_test
         clk  = 0;
         rst_n  = 1;
         wea    = 0;

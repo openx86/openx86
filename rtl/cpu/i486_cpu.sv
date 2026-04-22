@@ -19,60 +19,56 @@
 // ============================================================================
 
 module i486_cpu (
-    // 以下为历史 80386 风格总线信号（保留注释，未接线）
-    // input  logic        next_address_n,
-    // input  logic        bus_ready_n,
-    // input  logic        bus_size_16_n,
-    // input  logic        bus_hold_request,
-    // output logic        bus_hold_acknowledge,
-    // input  logic        busy_n,
-    // input  logic        error_n,
-    // input  logic        precessor_extension_request,
-    // input  logic        interrupt_request,
-    // input  logic        non_maskable_interrupt_request,
-    // inout  logic [31: 0] data,
-    // output logic [31:  2] address,
-    // output logic [ 3: 0] byte_enables_n,
-    // output logic        write_read_n,
-    // output logic        data_control_n,
-    // output logic        memory_io_n,
-    // output logic        bus_lock_n,
-    // output logic        address_status_n,
-    output logic         bus_vaild,      // 对外总线事务请求有效（拼写沿用 legacy）
-    input  logic          bus_ready,     // 从设备就绪（完成）
-    input  logic          bus_busy,      // 总线忙（与 ready 相与后送入 BIU）
-    output logic         bus_write_enable, // 写/读指示
-    output logic         bus_io_access, // 存储器或 I/O 映射访问
-    output logic [31: 0] bus_address,   // 地址
-    input  logic [31: 0] bus_read_data, // 读数据
-    output logic [31: 0] bus_write_data, // 写数据
-    input  logic          clk,           // 时钟信号
-    input  logic          rst_n          // 复位信号
+    // =========================
+    // SoC bus interface
+    // =========================
+    output logic         bus_vaild,
+    input  logic          bus_ready,
+    input  logic          bus_busy,
+    output logic         bus_write_enable,
+    output logic         bus_io_access,
+    output logic [31: 0] bus_address,
+    input  logic [31: 0] bus_read_data,
+    output logic [31: 0] bus_write_data,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic          clk,
+    input  logic          rst_n
 );
 
-// core → BIU：MMU（页表遍历）端口
-logic        mmu_vaild;
-logic        mmu_ready;
-logic [31: 0] mmu_address;
-logic [31: 0] mmu_data_read;
+    // ============================================================
+    // core to BIU: MMU (page table walk) port
+    // ============================================================
+    logic        mmu_vaild;
+    logic        mmu_ready;
+    logic [31: 0] mmu_address;
+    logic [31: 0] mmu_data_read;
 
-// core → BIU：指令取指端口
-logic        code_vaild;
-logic        code_ready;
-logic [31: 0] code_address;
-logic [31: 0] code_data_read;
+    // ============================================================
+    // core to BIU: instruction fetch port
+    // ============================================================
+    logic        code_vaild;
+    logic        code_ready;
+    logic [31: 0] code_address;
+    logic [31: 0] code_data_read;
 
-// core → BIU：数据 load/store 端口
-logic        data_vaild;
-logic        data_ready;
-logic        data_write_enable;
-logic        data_io_access;
-logic [31: 0] data_address;
-logic [31: 0] data_data_read;
-logic [31: 0] data_data_write;
+    // ============================================================
+    // core to BIU: data load/store port
+    // ============================================================
+    logic        data_vaild;
+    logic        data_ready;
+    logic        data_write_enable;
+    logic        data_io_access;
+    logic [31: 0] data_address;
+    logic [31: 0] data_data_read;
+    logic [31: 0] data_data_write;
 
-// 具体 CPU 微架构实现（MMU/取指/数据三主端口出核）
-i486_cpu_core cpu_core_0 (
+    // ============================================================
+    // CPU microarchitecture implementation (MMU/fetch/data three main ports)
+    // ============================================================
+    i486_cpu_core cpu_core_0 (
     .o_mmu_vaild        ( mmu_vaild ),
     .i_mmu_ready        ( mmu_ready ),
     .o_mmu_address      ( mmu_address ),
@@ -92,8 +88,10 @@ i486_cpu_core cpu_core_0 (
     .rst_n              ( rst_n )
 );
 
-// 总线接口单元：仲裁并折叠到单一 valid/ready SoC 总线
-bus_interface_unit biu_0 (
+    // ============================================================
+    // bus interface unit: arbitrate and collapse to single valid/ready SoC bus
+    // ============================================================
+    bus_interface_unit biu_0 (
     .i_mmu_vaild        ( mmu_vaild ),
     .o_mmu_ready        ( mmu_ready ),
     .i_mmu_address      ( mmu_address ),

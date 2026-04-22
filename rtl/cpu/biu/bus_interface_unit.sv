@@ -19,53 +19,75 @@
 // ============================================================================
 
 module bus_interface_unit (
-    input  logic         i_mmu_valid,     // MMU/页表遍历请求有效
-    output logic         o_mmu_ready,     // MMU 事务完成握手
-    input  logic [31: 0] i_mmu_address,   // MMU 访存地址
-    output logic [31: 0] o_mmu_data_read,  // MMU 读回数据（来自总线）
+    // =========================
+    // MMU channel
+    // =========================
+    input  logic         i_mmu_valid,
+    output logic         o_mmu_ready,
+    input  logic [31: 0] i_mmu_address,
+    output logic [31: 0] o_mmu_data_read,
 
-    input  logic         i_code_valid,    // 取指请求有效
-    output logic         o_code_ready,    // 取指完成握手
-    input  logic [31: 0] i_code_address,  // 指令取址
-    output logic [31: 0] o_code_data_read, // 指令读回数据
+    // =========================
+    // instruction fetch channel
+    // =========================
+    input  logic         i_code_valid,
+    output logic         o_code_ready,
+    input  logic [31: 0] i_code_address,
+    output logic [31: 0] o_code_data_read,
 
-    input  logic         i_data_valid,    // 数据访存请求有效
-    output logic         o_data_ready,    // 数据事务完成握手
-    input  logic         i_data_write_enable, // 数据写使能（store）
-    input  logic         i_data_io_access,   // I/O 空间访问（与存储器访问区分）
-    input  logic [31: 0] i_data_address,     // 数据地址
-    output logic [31: 0] o_data_data_read,  // 数据读回
-    input  logic [31: 0] i_data_data_write, // 数据写数据
+    // =========================
+    // data access channel
+    // =========================
+    input  logic         i_data_valid,
+    output logic         o_data_ready,
+    input  logic         i_data_write_enable,
+    input  logic         i_data_io_access,
+    input  logic [31: 0] i_data_address,
+    output logic [31: 0] o_data_data_read,
+    input  logic [31: 0] i_data_data_write,
 
-    output logic         o_bus_valid,        // 对外总线请求有效
-    input  logic         i_bus_ready,       // 总线从设备就绪（完成一拍）
-    input  logic         i_bus_busy,        // 总线忙（与 ready 组合使用）
-    output logic         o_bus_write_enable, // 总线写使能
-    output logic         o_bus_io_access,    // 总线 I/O 访问指示
-    output logic [31: 0] o_bus_address,      // 总线地址
-    input  logic [31: 0] i_bus_data_read,    // 总线读数据输入
-    output logic [31: 0] o_bus_data_write,   // 总线写数据输出
+    // =========================
+    // SoC bus interface
+    // =========================
+    output logic         o_bus_valid,
+    input  logic         i_bus_ready,
+    input  logic         i_bus_busy,
+    output logic         o_bus_write_enable,
+    output logic         o_bus_io_access,
+    output logic [31: 0] o_bus_address,
+    input  logic [31: 0] i_bus_data_read,
+    output logic [31: 0] o_bus_data_write,
 
-    input  logic         clk,               // 时钟信号
-    input  logic         rst_n              // 复位信号
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
-// 三主端口共享同一读数据总线（当前实现为直连广播）
-assign o_mmu_data_read   = i_bus_data_read;
-assign o_code_data_read  = i_bus_data_read;
-assign o_data_data_read  = i_bus_data_read;
+    // ============================================================
+    // three master ports share same read data bus (direct broadcast)
+    // ============================================================
+    assign o_mmu_data_read   = i_bus_data_read;
+    assign o_code_data_read  = i_bus_data_read;
+    assign o_data_data_read  = i_bus_data_read;
 
-typedef enum logic [ 2: 0] {
-    S_IDLE,   // 空闲：仲裁下一请求
-    S_MMU,    // MMU 事务进行中
-    S_CODE,   // 取指事务进行中
-    S_DATA    // 数据事务进行中
-} biu_state_e;
+    // ============================================================
+    // BIU arbitration state machine
+    // ============================================================
+    typedef enum logic [ 2: 0] {
+        S_IDLE,
+        S_MMU,
+        S_CODE,
+        S_DATA
+    } biu_state_e;
 
-biu_state_e state;  // BIU 仲裁/握手状态
+    biu_state_e state;
 
-// 固定优先级仲裁 + 单事务握手：完成返回各通道 ready
-always_ff @(posedge clk or negedge rst_n) begin
+    // ============================================================
+    // fixed priority arbitration with single-transaction handshake
+    // ============================================================
+    always_ff @(posedge clk or negedge rst_n) begin : ff_biu_arbiter
     if (~rst_n) begin  // 异步复位：状态空闲，总线与各 ready 无效
         state <= S_IDLE;
         o_bus_vaild <= 1'b0;

@@ -19,6 +19,9 @@
 // ============================================================================
 
 module uop_to_exu (
+    // =========================
+    // uop to exu handshake
+    // =========================
     input  logic i_uop_valid,
     input  logic i_exu_ready,
     input  logic i_flush,

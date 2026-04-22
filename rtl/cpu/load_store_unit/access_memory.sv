@@ -21,23 +21,37 @@
 // MEM 子模块薄封装：将 stage_4 接口转发到 EXE 阶段 LSU，复用既有 load/store 时序
 
 module access_memory (
-    input  logic          i_start,          // 启动访存
-    input  logic          i_is_store,       // store/load 选择
-    input  logic [31: 0] i_addr,           // 访存地址
-    input  logic [31: 0] i_wdata,          // store 数据
-    output logic [31: 0] o_rdata,          // load 结果
-    output logic          o_done,           // 事务完成
-    output logic          o_busy,           // 事务进行中
-    output logic          o_mem_valid,      // 下游 memory 端口：请求有效
-    output logic          o_mem_we,         // 下游 memory 端口：写使能
-    output logic [31: 0] o_mem_addr,       // 下游 memory 端口：地址
-    output logic [31: 0] o_mem_wdata,      // 下游 memory 端口：写数据
-    input  logic [31: 0] i_mem_rdata,      // 下游 memory 端口：读数据
-    input  logic          i_mem_ready,      // 下游 memory 端口：就绪
-    input  logic          clk,              // 时钟信号
-    input  logic          rst_n             // 复位信号
+    // =========================
+    // access interface
+    // =========================
+    input  logic          i_start,
+    input  logic          i_is_store,
+    input  logic [31: 0] i_addr,
+    input  logic [31: 0] i_wdata,
+    output logic [31: 0] o_rdata,
+    output logic          o_done,
+    output logic          o_busy,
+
+    // =========================
+    // downstream memory port
+    // =========================
+    output logic          o_mem_valid,
+    output logic          o_mem_we,
+    output logic [31: 0] o_mem_addr,
+    output logic [31: 0] o_mem_wdata,
+    input  logic [31: 0] i_mem_rdata,
+    input  logic          i_mem_ready,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic          clk,
+    input  logic          rst_n
 );
 
+    // ============================================================
+    // access memory state machine
+    // ============================================================
     typedef enum logic [1: 0] {
         S_IDLE,
         S_WAIT
@@ -47,8 +61,10 @@ module access_memory (
 
     assign o_busy = (state == S_WAIT) || ((state == S_IDLE) && i_start);
 
-    // 时序逻辑块：将 MEM 子模块保持为独立可综合状态机，不跨目录实例化 LSU。
-    always_ff @(posedge clk or negedge rst_n) begin
+    // ============================================================
+    // sequential logic: keep MEM submodule as independent synthesizable state machine
+    // ============================================================
+    always_ff @(posedge clk or negedge rst_n) begin : ff_access_memory
         if (~rst_n) begin
             state        <= S_IDLE;
             o_done       <= 1'b0;

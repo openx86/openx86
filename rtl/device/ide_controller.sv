@@ -23,45 +23,71 @@ module ide_controller #(
     parameter int P_SECTOR_COUNT   = 2048,
     parameter bit P_USE_SDIO_DISK  = 1'b0
 ) (
-    input  logic         i_cs_n,        // 片选#：低有效时本译码窗口内端口访问有效
-    input  logic         i_rd_n,        // 读选通#（与 i_cs_n 组合）
-    input  logic         i_wr_n,        // 写选通#
-    input  logic [15: 0] i_addr,        // ISA 风格字地址（1F0h 等由上层译码）
-    input  logic [ 7: 0] i_wdata,       // 写数据（寄存器/命令口）
-    output logic [ 7: 0] o_rdata,       // 读数据（数据口/状态口复用）
-    output logic         o_sdio_clk,    // 下至 sdcard_controller / PHY 的 SD 时钟
-    output logic         o_sdio_cmd_out, // 输出信号
-    output logic         o_sdio_cmd_oe, // 输出信号
-    input  logic         i_sdio_cmd_in, // 输入信号
-    output logic [ 3: 0] o_sdio_dat_out, // 输出信号
-    output logic         o_sdio_dat_oe, // 输出信号
-    input  logic [ 3: 0] i_sdio_dat_in, // 输入信号
-    input  logic         clk,           // 控制器时钟
-    input  logic         rst_n          // 异步低有效复位
+    // =========================
+    // ISA-style interface
+    // =========================
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic [15: 0] i_addr,
+    input  logic [ 7: 0] i_wdata,
+    output logic [ 7: 0] o_rdata,
+
+    // =========================
+    // SDIO PHY interface
+    // =========================
+    output logic         o_sdio_clk,
+    output logic         o_sdio_cmd_out,
+    output logic         o_sdio_cmd_oe,
+    input  logic         i_sdio_cmd_in,
+    output logic [ 3: 0] o_sdio_dat_out,
+    output logic         o_sdio_dat_oe,
+    input  logic [ 3: 0] i_sdio_dat_in,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
+    // ============================================================
+    // ATA PIO read transaction state machine
+    // ============================================================
     typedef enum logic [ 2: 0] {
-        ST_IDLE,         // 空闲：可接受新命令，数据口无效
-        ST_WAIT_SECTOR,  // SDIO 异步：等待磁盘后端扇区缓冲就绪
-        ST_DRQ           // 数据请求：可从数据口流式读扇区
+        ST_IDLE,
+        ST_WAIT_SECTOR,
+        ST_DRQ
     } ide_state_t;
 
-    // ATA PIO 读盘事务状态
     ide_state_t state;
 
-    logic [ 7: 0] sector_cnt; // 扇区计数寄存器镜像
-    logic [ 7: 0] lba_lo, lba_mid, lba_hi; // LBA 28 中的低 24 位
-    logic [ 7: 0] drv_head;   // 驱动器/磁头寄存器（简化模型）
-    logic [ 7: 0] status_r;   // 读状态字节
-    logic [ 8: 0] buf_ptr;    // 扇区内字节指针（与数据口读同步递增）
-    logic [31: 0] mem_off;    // 当前事务起始 LBA（由命令口写入）
-    logic         rd_data_d;  // 上一拍是否执行了数据口读（用于边沿式推进 buf_ptr）
+    // ============================================================
+    // ATA register mirrors
+    // ============================================================
+    logic [ 7: 0] sector_cnt;
+    logic [ 7: 0] lba_lo, lba_mid, lba_hi;
+    logic [ 7: 0] drv_head;
+    logic [ 7: 0] status_r;
 
-    logic [31: 0] disk_raddr;       // 线性字节地址送 sdcard_controller
-    logic [ 7: 0] disk_rdata;       // 从磁盘后端读回字节
-    logic         disk_sector_ready; // 扇区已在后端就绪
-    logic         disk_sector_req;   // 请求后端加载当前 LBA 扇区（SDIO 模式）
+    // ============================================================
+    // data path signals
+    // ============================================================
+    logic [ 8: 0] buf_ptr;
+    logic [31: 0] mem_off;
+    logic         rd_data_d;
 
+    // ============================================================
+    // disk backend interface
+    // ============================================================
+    logic [31: 0] disk_raddr;
+    logic [ 7: 0] disk_rdata;
+    logic         disk_sector_ready;
+    logic         disk_sector_req;
+
+    // ============================================================
+    // localparams and address calculation
+    // ============================================================
     localparam logic [ 7: 0] LP_ST_RDY = 8'h40;
     localparam logic [ 7: 0] LP_ST_DRQ  = 8'h08;
     localparam logic [ 7: 0] LP_ST_BSY  = 8'h80;
@@ -86,7 +112,9 @@ module ide_controller #(
     assign rd = !i_cs_n && !i_rd_n;
 
 
-    // 磁盘后端：BRAM 映像或 SDIO 扇区缓冲
+    // ============================================================
+    // disk backend: BRAM image or SDIO sector buffer
+    // ============================================================
     sdcard_controller #(
         .P_BYTE_DEPTH    ( LP_DISK_BYTES ),
         .P_USE_SDIO_DISK ( P_USE_SDIO_DISK )

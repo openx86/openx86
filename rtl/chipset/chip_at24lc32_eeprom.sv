@@ -42,18 +42,18 @@ module chip_at24lc32_eeprom #(
     parameter int         P_NUM_BYTES  = 4096,
     parameter int         P_PAGE_BYTES = 32
 ) (
-    // ------------------------------------------------------------------------
-    // I2C 总线引脚
-    // ------------------------------------------------------------------------
-    input  logic i_scl,    // I2C 串行时钟（输入采样）
-    input  logic i_sda,    // I2C 串行数据
-    output logic o_sda_oe, // 1=开漏拉低 SDA，0=释放由上拉决定
+    // =========================
+    // I2C bus pins
+    // =========================
+    input  logic i_scl,
+    input  logic i_sda,
+    output logic o_sda_oe,
 
-    // ------------------------------------------------------------------------
-    // 仿真/集成用系统时钟与复位
-    // ------------------------------------------------------------------------
-    input  logic clk,     // 模块采样时钟
-    input  logic rst_n    // 异步低有效复位
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic clk,
+    input  logic rst_n
 );
 
     localparam int AW = $clog2(P_NUM_BYTES);
@@ -62,9 +62,11 @@ module chip_at24lc32_eeprom #(
     (* ramstyle = "M9K" *)
     logic [ 7: 0] mem[0:P_NUM_BYTES-1];
 
-    logic scl_q, sda_q;  // SCL/SDA 输入同步寄存
-    // 同步 I2C 输入，滤毛刺意图由外部保证。
-    always_ff @(posedge clk) begin
+    // ============================================================
+    // I2C input synchronization registers
+    // ============================================================
+    logic scl_q, sda_q;
+    always_ff @(posedge clk) begin : ff_i2c_sync
         if (~rst_n) begin
             scl_q <= 1'b1;
             sda_q <= 1'b1;
@@ -80,23 +82,28 @@ module chip_at24lc32_eeprom #(
     logic start_cond;  // START 条件
     logic stop_cond;   // STOP 条件
 
-    // 边沿与起停条件（相对同步后的前一拍）。
-    always_comb begin
+    // ============================================================
+    // edge and start/stop condition detection
+    // ============================================================
+    always_comb begin : comb_edge_detection
         scl_rise   = (scl_q == 1'b0) && (i_scl == 1'b1);
         scl_fall   = (scl_q == 1'b1) && (i_scl == 1'b0);
         start_cond = (sda_q == 1'b1) && (i_sda == 1'b0) && (i_scl == 1'b1);
         stop_cond  = (sda_q == 1'b0) && (i_sda == 1'b1) && (i_scl == 1'b1);
     end
 
+    // ============================================================
+    // I2C state machine
+    // ============================================================
     typedef enum logic [ 3: 0] {
-        ST_IDLE,       // 空闲
-        ST_RECV_CTRL,  // 收器件地址+RW
-        ST_ACK_CTRL,   // 控制字节 ACK 相位
-        ST_RECV_AH,    // 收字地址高字节
-        ST_ACK_AH,     // 高地址字节 ACK
-        ST_RECV_AL,    // 收字地址低字节
-        ST_ACK_AL,     // 低地址字节 ACK
-        ST_RECV_DATA,  // 页写字节
+        ST_IDLE,       // idle
+        ST_RECV_CTRL,  // receive device address + RW
+        ST_ACK_CTRL,   // control byte ACK phase
+        ST_RECV_AH,    // receive word address high byte
+        ST_ACK_AH,     // high address byte ACK
+        ST_RECV_AL,    // receive word address low byte
+        ST_ACK_AL,     // low address byte ACK
+        ST_RECV_DATA,  // page write byte
         ST_ACK_DATA,
         ST_SEND_DATA,  // 读数据位移位输出
         ST_RECV_MACK   // 读字节后收主机 ACK

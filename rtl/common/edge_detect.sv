@@ -19,19 +19,29 @@
 // ============================================================================
 
 module edge_detect (
-    // ports
-    input  logic i_signal,   // 待检测的单比特输入（建议已同步到本域）
-    output logic o_pos_edge, // 上升沿脉冲：0→1 后维持 1 个 clk
-    output logic o_neg_edge, // 下降沿脉冲：1→0 后维持 1 个 clk
-    input  logic clk,        // 采样时钟
-    input  logic rst_n       // 异步低有效复位：清零输出与上一拍寄存
+    // =========================
+    // signal detection interface
+    // =========================
+    input  logic i_signal,
+    output logic o_pos_edge,
+    output logic o_neg_edge,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic clk,
+    input  logic rst_n
 );
 
-// 上一拍输入，用于与当前 signal 比较得到边沿
-logic signal_prev;
+    // ============================================================
+    // previous cycle input register (for edge detection)
+    // ============================================================
+    logic signal_prev;
 
-// 寄存上一拍输入并产生单周期边沿脉冲
-always_ff @(posedge clk or negedge rst_n) begin
+    // ============================================================
+    // edge detection logic
+    // ============================================================
+    always_ff @(posedge clk or negedge rst_n) begin : ff_edge_detect
     if (~rst_n) begin
         o_pos_edge    <= 1'b0;
         o_neg_edge    <= 1'b0;

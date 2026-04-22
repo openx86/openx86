@@ -56,32 +56,50 @@ Lookaside Buffer).
 */
 
 module paging_unit (
-    // 与 MMU 上级握手
-    input  logic         i_valid,              // 输入信号
-    output logic         o_ready,              // 输出信号
-    // 线性地址与页目录基址（CR3）
-    input  logic [31: 0] i_linear_address,     // 输入信号
-    input  logic [31: 0] i_page_directory_base, // 输入信号
-    output logic [31: 0] o_physical_address,   // 输出信号
-    // 外部总线：读页目录项 / 页表项
-    output logic         o_bus_valid,          // 输出信号
-    input  logic         i_bus_ready,          // 输入信号
-    output logic         o_bus_write_enable,   // 输出信号
-    output logic [31: 0] o_bus_address,        // 输出信号
-    input  logic [31: 0] i_bus_data_read,      // 输入信号
-    output logic [31: 0] o_bus_data_write,     // 输出信号
-    input  logic          clk,                  // 时钟信号
-    input  logic          rst_n                 // 复位信号
+    // =========================
+    // handshake with MMU
+    // =========================
+    input  logic         i_valid,
+    output logic         o_ready,
+
+    // =========================
+    // linear address and page directory base (CR3)
+    // =========================
+    input  logic [31: 0] i_linear_address,
+    input  logic [31: 0] i_page_directory_base,
+    output logic [31: 0] o_physical_address,
+
+    // =========================
+    // external bus for reading page directory/table entries
+    // =========================
+    output logic         o_bus_valid,
+    input  logic         i_bus_ready,
+    output logic         o_bus_write_enable,
+    output logic [31: 0] o_bus_address,
+    input  logic [31: 0] i_bus_data_read,
+    output logic [31: 0] o_bus_data_write,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic          clk,
+    input  logic          rst_n
 );
 
-logic  [ 9: 0] page_directory_index; // 线性地址 [31: 22]
-logic  [ 9: 0] page_table_index;     // 线性地址 [21: 12]
-logic  [11: 0] page_frame_offset;    // 线性地址 [11: 0]
+    // ============================================================
+    // page index fields from linear address
+    // ============================================================
+    logic  [ 9: 0] page_directory_index;
+    logic  [ 9: 0] page_table_index;
+    logic  [11: 0] page_frame_offset;
 
-logic  [31: 0] page_directory_offset;   // 页目录项地址
-logic [31: 0] page_table_base;           // 页目录项内容：页表物理基
-logic  [31: 0] page_table_address_offset;// 页表项地址
-logic [31: 0] page_frame_address_offset; // 页表项内容：页帧物理基（低 12b 清 0 由读回数据决定）
+    // ============================================================
+    // address calculation signals
+    // ============================================================
+    logic  [31: 0] page_directory_offset;
+    logic [31: 0] page_table_base;
+    logic  [31: 0] page_table_address_offset;
+    logic [31: 0] page_frame_address_offset;
 
 assign page_directory_index = i_linear_address[31: 22];
 assign page_table_index = i_linear_address[21: 12];
@@ -90,14 +108,18 @@ assign page_directory_offset = i_page_directory_base + (32'(page_directory_index
 assign page_table_address_offset = page_table_base + (32'(page_table_index) << 12);
 assign o_physical_address = page_frame_address_offset + 32'(page_frame_offset);
 
-// 两级页表读 FSM：PDE → PTE → 拼物理地址
-enum logic [ 1: 0] {
-    STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY = 2'h1, // 等页目录项
-    STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID = 2'h2, // 等页表项
-    STATE_WAIT_FOR_VAILD = 2'h0                 // 空闲
-} state;
+    // ============================================================
+    // two-level page table read FSM: PDE → PTE → physical address
+    // ============================================================
+    enum logic [ 1: 0] {
+        STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY = 2'h1,
+        STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID = 2'h2,
+        STATE_WAIT_FOR_VAILD = 2'h0
+    } state;
 
-// 时序逻辑块
+    // ============================================================
+    // sequential logic
+    // ============================================================
 always_ff @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
         state <= STATE_WAIT_FOR_VAILD;

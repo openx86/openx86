@@ -18,11 +18,21 @@
 //  Description : misc_bswap module
 // ============================================================================
 
-module misc_bswap (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    output logic [31: 0] y // 结果输出
+module misc_bswap (
+    // =========================
+    // operand
+    // =========================
+    input  logic [31: 0]  a,
+
+    // =========================
+    // output
+    // =========================
+    output logic [31: 0] y
 );
-    // 组合逻辑：推导输出
-    always_comb begin
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_bswap
         y = { a[ 7: 0], a[15:  8], a[23: 16], a[31: 24] };
     end
 endmodule

@@ -38,14 +38,21 @@
 // ============================================================================
 
 module chip_8237_dma (
-    input  logic         i_cs_n,  // 低有效片选（命中 DMA/页寄存器/16 位窗口之一）
-    input  logic         i_rd_n,  // 低有效读
-    input  logic         i_wr_n,  // 低有效写
-    input  logic [15: 0] i_addr,  // I/O 地址（16 位）
-    input  logic [ 7: 0] i_d,     // 写数据
-    output logic [ 7: 0] o_d,     // 读数据
-    input  logic         clk,     // 系统时钟
-    input  logic         rst_n    // 异步低有效复位
+    // =========================
+    // CPU bus interface
+    // =========================
+    input  logic         i_cs_n,
+    input  logic         i_rd_n,
+    input  logic         i_wr_n,
+    input  logic [15: 0] i_addr,
+    input  logic [ 7: 0] i_d,
+    output logic [ 7: 0] o_d,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
     localparam logic [ 3: 0] LP_REG_COMMAND   = 4'h8;
@@ -57,36 +64,50 @@ module chip_8237_dma (
     localparam logic [ 3: 0] LP_REG_CLR_MASK  = 4'hE;
     localparam logic [ 3: 0] LP_REG_ALL_MASK  = 4'hF;
 
-    logic [15: 0] ch_curr_addr  [ 0: 3];  // 通道当前地址
-    logic [15: 0] ch_curr_count [ 0: 3];  // 通道当前计数
+    // ============================================================
+    // channel registers
+    // ============================================================
+    logic [15: 0] ch_curr_addr  [ 0: 3];
+    logic [15: 0] ch_curr_count [ 0: 3];
 
-    logic [ 7: 0] reg_temp;        // 占位/保留读
-    logic [ 7: 0] reg_mode_last;   // 最近一次写入的模式字节
-    logic [ 3: 0] reg_request;     // 软件请求位（每通道）
-    logic [ 3: 0] reg_mask;        // 通道屏蔽
-    logic [ 3: 0] reg_tc;          // 终端计数位（读状态清）
-    logic         first_last_ff;   // 先/后字节触发器
+    // ============================================================
+    // control registers
+    // ============================================================
+    logic [ 7: 0] reg_temp;
+    logic [ 7: 0] reg_mode_last;
+    logic [ 3: 0] reg_request;
+    logic [ 3: 0] reg_mask;
+    logic [ 3: 0] reg_tc;
+    logic         first_last_ff;
 
-    logic [ 7: 0] page_reg   [ 0: 15];  // 0x80–0x8F 页寄存器
-    logic [ 7: 0] dma16_stub [ 0: 31];  // 0xC0–0xDF 占位
+    // ============================================================
+    // page registers and DMA16 stub
+    // ============================================================
+    logic [ 7: 0] page_reg   [ 0: 15];
+    logic [ 7: 0] dma16_stub [ 0: 31];
 
-    logic         hit_lo;           // 命中 0x00–0x0F
-    logic         hit_page;         // 命中页寄存器窗口
-    logic         hit_hi;           // 命中 16 位 DMA 占位窗口
-    logic         wr;               // 写事务有效
-    logic         rd;               // 读事务有效
-    logic [ 3: 0] lo_idx;           // 低窗口寄存器索引
-    logic [ 1: 0] ch_sel;           // 当前地址对应的通道号
-    logic         is_count_reg;     // 1=计数寄存器，0=地址寄存器
-    logic [ 3: 0] page_idx;         // 页寄存器索引
-    logic [ 4: 0] hi_idx;           // 高位窗口线性索引
-    logic         rd_status;        // 读状态寄存器（同时清 TC）
-    logic         wr_addr_count;    // 写地址/计数字节
-    logic         wr_master_clear;  // 主清除
-    logic         wr_clear_ff;      // 清除先/后触发器
+    // ============================================================
+    // address decode and control signals
+    // ============================================================
+    logic         hit_lo;
+    logic         hit_page;
+    logic         hit_hi;
+    logic         wr;
+    logic         rd;
+    logic [ 3: 0] lo_idx;
+    logic [ 1: 0] ch_sel;
+    logic         is_count_reg;
+    logic [ 3: 0] page_idx;
+    logic [ 4: 0] hi_idx;
+    logic         rd_status;
+    logic         wr_addr_count;
+    logic         wr_master_clear;
+    logic         wr_clear_ff;
 
-    // 地址窗口与片选/读写微操作译码。
-    always_comb begin
+    // ============================================================
+    // address window and CS/RD/WR decode
+    // ============================================================
+    always_comb begin : comb_address_decode
         hit_lo          = (i_addr <= 16'h000F);
         hit_page        = (i_addr >= 16'h0080) && (i_addr <= 16'h008F);
         hit_hi          = (i_addr >= 16'h00C0) && (i_addr <= 16'h00DF);

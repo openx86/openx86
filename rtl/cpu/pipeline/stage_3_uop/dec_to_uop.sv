@@ -19,6 +19,9 @@
 // ============================================================================
 
 module dec_to_uop (
+    // =========================
+    // decode to uop handshake
+    // =========================
     input  logic i_dec_ready,
     input  logic i_uop_ready,
     input  logic i_flush,

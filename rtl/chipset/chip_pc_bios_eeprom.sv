@@ -21,15 +21,28 @@
 // 24LC32 后端镜像：扩展 ROM（128KB）与系统 BIOS（64KB）线性寻址后按 4KiB 取模映射到同一物理阵列。
 
 module chip_pc_bios_eeprom (
-    input  logic [15: 0] i_sys_bios_byte_off, // 系统 BIOS 窗口内字偏移（0x0000–0x0FFF）
-    input  logic [16: 0] i_ext_bios_byte_off, // 扩展 ROM 窗口内字节偏移（0x00000–0x1FFFF）
-    output logic [31: 0] o_sys_bios_rdata,    // 系统 BIOS 窗口读回数据（字对齐）
-    output logic [31: 0] o_ext_bios_rdata,    // 扩展 ROM 窗口读回数据
-    input  logic         clk,                 // 时钟信号
-    input  logic         rst_n                // 复位信号
+    // =========================
+    // system BIOS window interface
+    // =========================
+    input  logic [15: 0] i_sys_bios_byte_off,
+    output logic [31: 0] o_sys_bios_rdata,
+
+    // =========================
+    // extended ROM window interface
+    // =========================
+    input  logic [16: 0] i_ext_bios_byte_off,
+    output logic [31: 0] o_ext_bios_rdata,
+
+    // =========================
+    // clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
 );
 
-	// EEPROM 物理深度与扩展 ROM 线性尺寸（镜像用）
+	// ============================================================
+	// EEPROM physical depth and address mapping
+	// ============================================================
 	localparam int unsigned EEPROM_BYTES   = 4096;
 
 	logic [ 7: 0] mem [0:EEPROM_BYTES-1];
@@ -42,8 +55,10 @@ module chip_pc_bios_eeprom (
 	logic [11: 0] sys_a2;
 	logic [11: 0] sys_a3;
 
-	// 组合读：扩展 ROM / 系统 BIOS 都按 4KiB 物理深度回绕映射。
-	always_comb begin
+	// ============================================================
+	// combinational read: both windows wrap to 4KiB physical depth
+	// ============================================================
+	always_comb begin : comb_address_mapping
 		ext_a0 = i_ext_bios_byte_off[11: 0];
 		ext_a1 = i_ext_bios_byte_off[11: 0] + 12'd1;
 		ext_a2 = i_ext_bios_byte_off[11: 0] + 12'd2;
@@ -58,8 +73,10 @@ module chip_pc_bios_eeprom (
 		o_sys_bios_rdata = {mem[sys_a3], mem[sys_a2], mem[sys_a1], mem[sys_a0]};
 	end
 
+	// ============================================================
+	// power-up initialization to erased state
+	// ============================================================
 	integer i;
-	// 上电默认擦除态（可由 TB 再写入镜像）。
 	initial begin
 		for (i = 0; i < EEPROM_BYTES; i = i + 1)
 			mem[i] = 8'hFF;

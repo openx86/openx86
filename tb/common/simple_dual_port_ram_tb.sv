@@ -24,23 +24,32 @@
 
 module simple_dual_port_ram_tb;
 
+    // ============================================================
+    // parameters
+    // ============================================================
     parameter int DATA_WIDTH = 8;
     parameter int ADDR_WIDTH = 10;
     parameter int DEPTH      = 1 << ADDR_WIDTH;
 
+    // ============================================================
+    // test signals
+    // ============================================================
     logic                    clk;
     logic rst_n;
-    
-    // 写端口
+
+    // write port
     logic                    we;
     logic [ADDR_WIDTH-1: 0]  waddr;
     logic [DATA_WIDTH-1: 0]  wdata;
-    
-    // 读端口
+
+    // read port
     logic                    re;
     logic [ADDR_WIDTH-1: 0]  raddr;
     logic [DATA_WIDTH-1: 0]  rdata;
 
+    // ============================================================
+    // DUT instantiation
+    // ============================================================
     simple_dual_port_ram #(
         .DATA_WIDTH ( DATA_WIDTH ),
         .ADDR_WIDTH ( ADDR_WIDTH ),
@@ -52,14 +61,19 @@ module simple_dual_port_ram_tb;
         .re    ( re    ),
         .raddr ( raddr ),
         .rdata ( rdata ),
-        .clk ( clk ),
+        .clk   ( clk ),
         .rst_n ( rst_n )
     );
 
-    // 时钟生成
+    // ============================================================
+    // clock generation
+    // ============================================================
     always #5 clk = ~clk;
 
-    initial begin
+    // ============================================================
+    // test procedure
+    // ============================================================
+    initial begin : main_test
         clk  = 0;
         rst_n  = 1;
         we     = 0;

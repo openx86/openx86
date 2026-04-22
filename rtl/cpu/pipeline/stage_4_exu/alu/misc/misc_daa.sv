@@ -18,17 +18,30 @@
 //  Description : misc_daa module
 // ============================================================================
 
-module misc_daa (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    input  logic          af_in, // 输入信号
-    input  logic          cf_in, // 输入进位
-    output logic [31: 0] y, // 结果输出
-    output logic         af_out, // 输出信号
-    output logic         cf_out // 输出进位
-);
-    logic [ 7: 0] al;  // 调整中的 AL
+module misc_daa (
+    // =========================
+    // operands
+    // =========================
+    input  logic [31: 0]  a,
+    input  logic          af_in,
+    input  logic          cf_in,
 
-    // 组合逻辑：推导输出
-    always_comb begin
+    // =========================
+    // outputs
+    // =========================
+    output logic [31: 0] y,
+    output logic         af_out,
+    output logic         cf_out
+);
+    // ============================================================
+    // intermediate signals
+    // ============================================================
+    logic [ 7: 0] al;
+
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_daa
         al = a[ 7: 0];
         af_out = af_in;
         cf_out = cf_in;

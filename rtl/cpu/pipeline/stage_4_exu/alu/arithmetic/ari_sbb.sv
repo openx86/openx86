@@ -18,11 +18,22 @@
 //  Description : ari_sbb module
 // ============================================================================
 
-module ari_sbb (    input  logic [31: 0]  a,  // 操作数 / 源 1
-    input  logic [31: 0]  b, // 操作数 / 源 2
-    input  logic          cf, // 进位标志
-    output logic [31: 0] y // 结果输出
+module ari_sbb (
+    // =========================
+    // operands
+    // =========================
+    input  logic [31: 0]  a,
+    input  logic [31: 0]  b,
+    input  logic          cf,
+
+    // =========================
+    // output
+    // =========================
+    output logic [31: 0] y
 );
+    // ============================================================
+    // SBB implementation
+    // ============================================================
     ari_execute_arithmetic_sbb u_impl (
         .operand_1  ( a  ),
         .operand_2  ( b  ),

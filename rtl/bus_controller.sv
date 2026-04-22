@@ -18,51 +18,56 @@
 //  Description : Module
 // ============================================================================
 
-// 内存地址范围定义（32位地址空间）
-localparam logic [31: 0] MEM_BASE_RAM        = 32'h0000_0000;  // 常规内存起始
-localparam logic [31: 0] MEM_END_RAM         = 32'h0009_FFFF;  // 常规内存结束 (640KB)
-localparam logic [31: 0] MEM_BASE_VRAM       = 32'h000A_0000;  // VGA VRAM 起始
-localparam logic [31: 0] MEM_END_VRAM        = 32'h000B_FFFF;  // VGA VRAM 结束 (128KB)
-localparam logic [31: 0] MEM_BASE_EXT_BIOS   = 32'h000C_0000;  // 扩展 BIOS 起始
-localparam logic [31: 0] MEM_END_EXT_BIOS    = 32'h000D_FFFF;  // 扩展 BIOS 结束 (128KB)
-localparam logic [31: 0] MEM_BASE_RESERVED   = 32'h000E_0000;  // 保留区域起始
-localparam logic [31: 0] MEM_END_RESERVED    = 32'h000E_FFFF;  // 保留区域结束 (64KB)
-localparam logic [31: 0] MEM_BASE_SYS_BIOS   = 32'h000F_0000;  // 系统 BIOS 起始
-localparam logic [31: 0] MEM_END_SYS_BIOS    = 32'h000F_FFFF;  // 系统 BIOS 结束 (64KB)
-localparam logic [31: 0] MEM_BASE_SDRAM      = 32'h0100_0000;  // SDRAM 窗口起始（16MB）
-localparam logic [31: 0] MEM_END_SDRAM       = 32'h01FF_FFFF;  // SDRAM 窗口结束
+    // ============================================================
+    // memory address range definitions (32-bit address space)
+    // ============================================================
+    localparam logic [31: 0] MEM_BASE_RAM        = 32'h0000_0000;
+    localparam logic [31: 0] MEM_END_RAM         = 32'h0009_FFFF;
+    localparam logic [31: 0] MEM_BASE_VRAM       = 32'h000A_0000;
+    localparam logic [31: 0] MEM_END_VRAM        = 32'h000B_FFFF;
+    localparam logic [31: 0] MEM_BASE_EXT_BIOS   = 32'h000C_0000;
+    localparam logic [31: 0] MEM_END_EXT_BIOS    = 32'h000D_FFFF;
+    localparam logic [31: 0] MEM_BASE_RESERVED   = 32'h000E_0000;
+    localparam logic [31: 0] MEM_END_RESERVED    = 32'h000E_FFFF;
+    localparam logic [31: 0] MEM_BASE_SYS_BIOS   = 32'h000F_0000;
+    localparam logic [31: 0] MEM_END_SYS_BIOS    = 32'h000F_FFFF;
+    localparam logic [31: 0] MEM_BASE_SDRAM      = 32'h0100_0000;
+    localparam logic [31: 0] MEM_END_SDRAM       = 32'h01FF_FFFF;
 
-// I/O 端口地址范围定义（16位地址空间）
-localparam logic [15: 0] IO_BASE_MOTHERBOARD = 16'h0000;  // 主板 I/O 起始
-localparam logic [15: 0] IO_END_MOTHERBOARD  = 16'h00FF;  // 主板 I/O 结束
-localparam logic [15: 0] IO_BASE_EXTENDED    = 16'h0100;  // 扩展 I/O 起始
-localparam logic [15: 0] IO_END_EXTENDED     = 16'h03FF;  // 扩展 I/O 结束
-localparam logic [15: 0] IO_BASE_VGA         = 16'h03C0;  // VGA I/O 起始
-localparam logic [15: 0] IO_END_VGA          = 16'h03DF;  // VGA I/O 结束
-localparam logic [15: 0] IO_BASE_COM1        = 16'h03F8;  // COM1 串口起始
-localparam logic [15: 0] IO_END_COM1         = 16'h03FF;  // COM1 串口结束
+    // ============================================================
+    // I/O port address range definitions (16-bit address space)
+    // ============================================================
+    localparam logic [15: 0] IO_BASE_MOTHERBOARD = 16'h0000;
+    localparam logic [15: 0] IO_END_MOTHERBOARD  = 16'h00FF;
+    localparam logic [15: 0] IO_BASE_EXTENDED    = 16'h0100;
+    localparam logic [15: 0] IO_END_EXTENDED     = 16'h03FF;
+    localparam logic [15: 0] IO_BASE_VGA         = 16'h03C0;
+    localparam logic [15: 0] IO_END_VGA          = 16'h03DF;
+    localparam logic [15: 0] IO_BASE_COM1        = 16'h03F8;
+    localparam logic [15: 0] IO_END_COM1         = 16'h03FF;
 
-// 地址解码信号
-logic is_memory_access;
-logic is_io_access;
-logic is_ram_access;
-logic is_vram_access;
-logic is_ext_bios_access;
-logic is_sys_bios_access;
-logic is_sdram_access;
-logic is_vga_io_access;
-logic is_other_io_access;
-logic is_chipset_io;
+    // ============================================================
+    // address decode signals
+    // ============================================================
+    logic is_memory_access;
+    logic is_io_access;
+    logic is_ram_access;
+    logic is_vram_access;
+    logic is_ext_bios_access;
+    logic is_sys_bios_access;
+    logic is_sdram_access;
+    logic is_vga_io_access;
+    logic is_other_io_access;
+    logic is_chipset_io;
 
-// ============================================================================
-// 地址解码逻辑
-// ============================================================================
-
-// 判断是内存访问还是 I/O 访问
-// 在 x86 架构中，I/O 访问通过 IN/OUT 指令，使用专门的 I/O 地址空间
-// CPU 通过 i_bus_io_access 信号来区分：
-// - i_bus_io_access = 0: 内存访问
-// - i_bus_io_access = 1: I/O 端口访问（地址的低16位是I/O端口地址）
+    // ============================================================
+    // address decode logic
+    // ============================================================
+    // Distinguish memory access from I/O access
+    // In x86 architecture, I/O access uses IN/OUT instructions with dedicated I/O address space
+    // CPU distinguishes via i_bus_io_access signal:
+    // - i_bus_io_access = 0: memory access
+    // - i_bus_io_access = 1: I/O port access (lower 16 bits are I/O port address)
 
 assign is_memory_access   = !i_bus_io_access;
 assign is_ram_access      = is_memory_access && (i_bus_address <= MEM_END_RAM);
@@ -90,13 +95,15 @@ assign is_chipset_io = is_other_io_access && (
     ((i_bus_address[15: 0] >= 16'h0378) && (i_bus_address[15: 0] <= 16'h037F)) ||
     ((i_bus_address[15: 0] >= 16'h03F8) && (i_bus_address[15: 0] <= 16'h03FF))
 );
-logic [ 7: 0] chipset_io_rdata;  // 片选 I/O 字节读 MUX 结果
-logic         chipset_io_hit;  // 当前事务命中某片内 chipset 从设备
+    logic [ 7: 0] chipset_io_rdata;
+    logic         chipset_io_hit;
 
-// 数据选择信号
-logic [31: 0] bios_data_selected;
-logic [31: 0] ext_bios_data_selected;
-logic [31: 0] io_data_selected;
+    // ============================================================
+    // data selection signals
+    // ============================================================
+    logic [31: 0] bios_data_selected;
+    logic [31: 0] ext_bios_data_selected;
+    logic [31: 0] io_data_selected;
 
 // 就绪信号
 logic vram_ready_internal;

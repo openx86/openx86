@@ -18,11 +18,21 @@
 //  Description : misc_clts module
 // ============================================================================
 
-module misc_clts (    input  logic [31: 0]  cr0,  // CR0 相关
-    output logic [31: 0] y // 结果输出
+module misc_clts (
+    // =========================
+    // operand
+    // =========================
+    input  logic [31: 0]  cr0,
+
+    // =========================
+    // output
+    // =========================
+    output logic [31: 0] y
 );
-    // 组合逻辑：推导输出
-    always_comb begin
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_clts
         y = cr0 & 32'hFFFF_FFF7;
     end
 endmodule

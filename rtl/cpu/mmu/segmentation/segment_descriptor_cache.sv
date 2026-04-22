@@ -30,44 +30,60 @@ description: segment_descriptor_cache
 `include "openx86_defs.h.sv"
 
 module segment_descriptor_cache (
-    input  logic         i_protect_enable,       // 1=保护模式：走描述符译码
-    input  logic [15: 0] i_segment_selector,    // 输入信号
-    input  logic [63: 0] i_segment_descriptor,  // 输入信号
-    input  logic         i_is_code_segment,     // 实模式简化路径：是否代码语义
-    input  logic [15: 0] i_write_data,          // 输入信号
-    input  logic         i_write_enable,         // 输入信号
-    output logic         o_read_data,            // 输出信号
-    output logic [31: 0] o_base,                 // 输出信号
-    output logic [31: 0] o_limit,                // 输出信号
-    output logic [ 1: 0] o_present,              // 输出信号
-    output logic         o_privilege_level,      // 输出信号
-    output logic         o_accessed,             // 输出信号
-    output logic         o_granularity,          // 输出信号
-    output logic         o_expansion_direction,  // 输出信号
-    output logic         o_readable,             // 输出信号
-    output logic         o_writeable,            // 输出信号
-    output logic         o_executable,           // 输出信号
-    output logic         o_stack_size,           // 输出信号
-    output logic         o_conforming_privilege   // 输出信号
+    // =========================
+    // protection mode inputs
+    // =========================
+    input  logic         i_protect_enable,
+    input  logic [15: 0] i_segment_selector,
+    input  logic [63: 0] i_segment_descriptor,
+    input  logic         i_is_code_segment,
+
+    // =========================
+    // write interface
+    // =========================
+    input  logic [15: 0] i_write_data,
+    input  logic         i_write_enable,
+
+    // =========================
+    // decoded attributes output
+    // =========================
+    output logic         o_read_data,
+    output logic [31: 0] o_base,
+    output logic [31: 0] o_limit,
+    output logic [ 1: 0] o_present,
+    output logic         o_privilege_level,
+    output logic         o_accessed,
+    output logic         o_granularity,
+    output logic         o_expansion_direction,
+    output logic         o_readable,
+    output logic         o_writeable,
+    output logic         o_executable,
+    output logic         o_stack_size,
+    output logic         o_conforming_privilege
 );
 
-// 子译码器输出（保护模式）
-logic [31: 0] dec_base;
-logic [19: 0] dec_limit;
-logic        dec_present;
-logic [ 1: 0] dec_privilege_level;
-logic        dec_available_field;
-logic        dec_segment_type;
-logic        dec_granularity;
-logic        dec_default_operation_size;
-logic        dec_executable;
-logic        dec_data_expansion_direction;
-logic        dec_data_writeable;
-logic        dec_code_conforming;
-logic        dec_code_readable;
-logic        dec_accessed;
+    // ============================================================
+    // sub-decoder outputs (protected mode)
+    // ============================================================
+    logic [31: 0] dec_base;
+    logic [19: 0] dec_limit;
+    logic        dec_present;
+    logic [ 1: 0] dec_privilege_level;
+    logic        dec_available_field;
+    logic        dec_segment_type;
+    logic        dec_granularity;
+    logic        dec_default_operation_size;
+    logic        dec_executable;
+    logic        dec_data_expansion_direction;
+    logic        dec_data_writeable;
+    logic        dec_code_conforming;
+    logic        dec_code_readable;
+    logic        dec_accessed;
 
-segment_descriptor_decode u_segment_descriptor_decode (
+    // ============================================================
+    // segment descriptor decode
+    // ============================================================
+    segment_descriptor_decode u_segment_descriptor_decode (
     .o_base                                (dec_base),
     .o_limit                               (dec_limit),
     .o_date_or_code_present                (dec_present),
@@ -85,8 +101,10 @@ segment_descriptor_decode u_segment_descriptor_decode (
     .i_descriptor                          (i_segment_descriptor)
 );
 
-// 保护/实模式两套属性展开：实模式用段寄存器左移拼“基址”，limit 固定 64K
-always_comb begin
+    // ============================================================
+    // protected/real mode attribute expansion: real mode uses register shifted for base, limit fixed at 64K
+    // ============================================================
+    always_comb begin : comb_attribute_expansion
     if (i_protect_enable) begin
         o_base                 = dec_base;
         o_limit                = {12'h0, dec_limit};

@@ -18,14 +18,24 @@
 //  Description : ari_execute_arithmetic_div module
 // ============================================================================
 
-module ari_execute_arithmetic_div #(    BIT_WIDTH = 32
+module ari_execute_arithmetic_div #(
+    parameter BIT_WIDTH = 32
 ) (
-    input  logic [BIT_WIDTH-1: 0] operand_1, // 被除数
-    input  logic [BIT_WIDTH-1: 0] operand_2, // 除数
-    output logic [BIT_WIDTH-1: 0] result // 商（余数由乘除单元处理）
+    // =========================
+    // operands
+    // =========================
+    input  logic [BIT_WIDTH-1: 0] operand_1,
+    input  logic [BIT_WIDTH-1: 0] operand_2,
+
+    // =========================
+    // output
+    // =========================
+    output logic [BIT_WIDTH-1: 0] result
 );
 
-// 组合逻辑：连续赋值
+// ============================================================
+// combinational logic: continuous assignment
+// ============================================================
 assign result = operand_1 / operand_2;
 
 endmodule
