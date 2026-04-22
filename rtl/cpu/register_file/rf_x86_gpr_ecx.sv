@@ -15,15 +15,24 @@
 // ----------------------------------------------------------------------------
 //  File        : rf_x86_gpr_ecx.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : ECX register module
+//  Description : ECX register module with named read ports (ecx/cx/ch/cl) and separate write enables
 // ============================================================================
 
 module rf_x86_gpr_ecx (
-    input  logic         i_write_enable,
-    input  logic [31: 0] i_write_data,
-    output logic [ 7: 0] o_read__8,
-    output logic [ 7: 0] o_read_16,
-    output logic [31: 0] o_read_32,
+    // Write ports
+    input  logic         i_write_enable_ECX,
+    input  logic         i_write_enable_CX,
+    input  logic         i_write_enable_CL,
+    input  logic         i_write_enable_CH,
+    input  logic [31: 0] i_write_data_ECX,
+    input  logic [15: 0] i_write_data_CX,
+    input  logic [ 7: 0] i_write_data_CL,
+    input  logic [ 7: 0] i_write_data_CH,
+    // Read ports (natural widths)
+    output logic [31: 0] o_ECX,
+    output logic [15: 0] o_CX,
+    output logic [ 7: 0] o_CH,
+    output logic [ 7: 0] o_CL,
     input  logic         clk,
     input  logic         rst_n
 );
@@ -33,13 +42,22 @@ logic [31: 0] register;
 always_ff @(posedge clk or negedge rst_n) begin : ff_register
     if (~rst_n) begin
         register <= 32'h0;
-    end else if (i_write_enable) begin
-        register <= i_write_data;
+    end else begin
+        if (i_write_enable_ECX) begin
+            register <= i_write_data_ECX;
+        end else if (i_write_enable_CX) begin
+            register[15: 0] <= i_write_data_CX;
+        end else if (i_write_enable_CL) begin
+            register[ 7: 0] <= i_write_data_CL;
+        end else if (i_write_enable_CH) begin
+            register[15: 8] <= i_write_data_CH;
+        end
     end
 end
 
-assign o_read_32 = register;
-assign o_read_16 = {16'h0, register[15: 0]};
-assign o_read__8 = {24'h0, register[ 7: 0]};
+assign o_ECX = register;
+assign o_CX  = register[15: 0];
+assign o_CH  = register[15: 8];
+assign o_CL  = register[ 7: 0];
 
 endmodule

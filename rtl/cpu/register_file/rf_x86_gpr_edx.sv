@@ -15,15 +15,24 @@
 // ----------------------------------------------------------------------------
 //  File        : rf_x86_gpr_edx.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : EDX register module
+//  Description : EDX register module with named read ports (edx/dx/dh/dl) and separate write enables
 // ============================================================================
 
 module rf_x86_gpr_edx (
-    input  logic         i_write_enable,
-    input  logic [31: 0] i_write_data,
-    output logic [ 7: 0] o_read__8,
-    output logic [ 7: 0] o_read_16,
-    output logic [31: 0] o_read_32,
+    // Write ports
+    input  logic         i_write_enable_EDX,
+    input  logic         i_write_enable_DX,
+    input  logic         i_write_enable_DL,
+    input  logic         i_write_enable_DH,
+    input  logic [31: 0] i_write_data_EDX,
+    input  logic [15: 0] i_write_data_DX,
+    input  logic [ 7: 0] i_write_data_DL,
+    input  logic [ 7: 0] i_write_data_DH,
+    // Read ports (natural widths)
+    output logic [31: 0] o_EDX,
+    output logic [15: 0] o_DX,
+    output logic [ 7: 0] o_DH,
+    output logic [ 7: 0] o_DL,
     input  logic         clk,
     input  logic         rst_n
 );
@@ -33,13 +42,22 @@ logic [31: 0] register;
 always_ff @(posedge clk or negedge rst_n) begin : ff_register
     if (~rst_n) begin
         register <= 32'h0;
-    end else if (i_write_enable) begin
-        register <= i_write_data;
+    end else begin
+        if (i_write_enable_EDX) begin
+            register <= i_write_data_EDX;
+        end else if (i_write_enable_DX) begin
+            register[15: 0] <= i_write_data_DX;
+        end else if (i_write_enable_DL) begin
+            register[ 7: 0] <= i_write_data_DL;
+        end else if (i_write_enable_DH) begin
+            register[15: 8] <= i_write_data_DH;
+        end
     end
 end
 
-assign o_read_32 = register;
-assign o_read_16 = {16'h0, register[15: 0]};
-assign o_read__8 = {24'h0, register[ 7: 0]};
+assign o_EDX = register;
+assign o_DX  = register[15: 0];
+assign o_DH  = register[15: 8];
+assign o_DL  = register[ 7: 0];
 
 endmodule

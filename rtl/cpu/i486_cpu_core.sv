@@ -61,17 +61,59 @@ module i486_cpu_core (
 `include "iu_decode_outputs_decl.svh"
 
     // ============================================================
-    // GPR write ports (individual write enables)
+    // GPR write ports (individual write enables using register names)
     // ============================================================
-    logic wrb_gpr_eax_write_enable = 1'b0;
-    logic wrb_gpr_ecx_write_enable = 1'b0;
-    logic wrb_gpr_edx_write_enable = 1'b0;
-    logic wrb_gpr_ebx_write_enable = 1'b0;
-    logic wrb_gpr_esp_write_enable = 1'b0;
-    logic wrb_gpr_ebp_write_enable = 1'b0;
-    logic wrb_gpr_esi_write_enable = 1'b0;
-    logic wrb_gpr_edi_write_enable = 1'b0;
-    logic [31: 0] wrb_gpr_write_data = 32'b0;
+    // EAX/EBX/ECX/EDX (with byte/word aliases)
+    logic wrb_gpr_write_enable_EAX = 1'b0;
+    logic wrb_gpr_write_enable_AX  = 1'b0;
+    logic wrb_gpr_write_enable_AL  = 1'b0;
+    logic wrb_gpr_write_enable_AH  = 1'b0;
+    logic wrb_gpr_write_enable_EBX = 1'b0;
+    logic wrb_gpr_write_enable_BX  = 1'b0;
+    logic wrb_gpr_write_enable_BL  = 1'b0;
+    logic wrb_gpr_write_enable_BH  = 1'b0;
+    logic wrb_gpr_write_enable_ECX = 1'b0;
+    logic wrb_gpr_write_enable_CX  = 1'b0;
+    logic wrb_gpr_write_enable_CL  = 1'b0;
+    logic wrb_gpr_write_enable_CH  = 1'b0;
+    logic wrb_gpr_write_enable_EDX = 1'b0;
+    logic wrb_gpr_write_enable_DX  = 1'b0;
+    logic wrb_gpr_write_enable_DL  = 1'b0;
+    logic wrb_gpr_write_enable_DH  = 1'b0;
+    // ESP/EBP/ESI/EDI (pointer/index registers, 16-bit aliases)
+    logic wrb_gpr_write_enable_ESP = 1'b0;
+    logic wrb_gpr_write_enable_SP  = 1'b0;
+    logic wrb_gpr_write_enable_EBP = 1'b0;
+    logic wrb_gpr_write_enable_BP  = 1'b0;
+    logic wrb_gpr_write_enable_ESI = 1'b0;
+    logic wrb_gpr_write_enable_SI  = 1'b0;
+    logic wrb_gpr_write_enable_EDI = 1'b0;
+    logic wrb_gpr_write_enable_DI  = 1'b0;
+    // Write data for different registers
+    logic [31: 0] wrb_gpr_write_data_EAX = 32'b0;
+    logic [15: 0] wrb_gpr_write_data_AX  = 16'b0;
+    logic [ 7: 0] wrb_gpr_write_data_AL  =  8'b0;
+    logic [ 7: 0] wrb_gpr_write_data_AH  =  8'b0;
+    logic [31: 0] wrb_gpr_write_data_EBX = 32'b0;
+    logic [15: 0] wrb_gpr_write_data_BX  = 16'b0;
+    logic [ 7: 0] wrb_gpr_write_data_BL  =  8'b0;
+    logic [ 7: 0] wrb_gpr_write_data_BH  =  8'b0;
+    logic [31: 0] wrb_gpr_write_data_ECX = 32'b0;
+    logic [15: 0] wrb_gpr_write_data_CX  = 16'b0;
+    logic [ 7: 0] wrb_gpr_write_data_CL  =  8'b0;
+    logic [ 7: 0] wrb_gpr_write_data_CH  =  8'b0;
+    logic [31: 0] wrb_gpr_write_data_EDX = 32'b0;
+    logic [15: 0] wrb_gpr_write_data_DX  = 16'b0;
+    logic [ 7: 0] wrb_gpr_write_data_DL  =  8'b0;
+    logic [ 7: 0] wrb_gpr_write_data_DH  =  8'b0;
+    logic [31: 0] wrb_gpr_write_data_ESP = 32'b0;
+    logic [15: 0] wrb_gpr_write_data_SP  = 16'b0;
+    logic [31: 0] wrb_gpr_write_data_EBP = 32'b0;
+    logic [15: 0] wrb_gpr_write_data_BP  = 16'b0;
+    logic [31: 0] wrb_gpr_write_data_ESI = 32'b0;
+    logic [15: 0] wrb_gpr_write_data_SI  = 16'b0;
+    logic [31: 0] wrb_gpr_write_data_EDI = 32'b0;
+    logic [15: 0] wrb_gpr_write_data_DI  = 16'b0;
 
     // ============================================================
     // segment register write ports (individual write enables)
@@ -141,19 +183,30 @@ module i486_cpu_core (
     logic [31: 0] wrb_tr_write_data = 32'b0;
 
     // ============================================================
-    // GPR read ports (8/16/32-bit views broadcast to decode and EU)
+    // GPR read ports (individual named signals with natural widths)
     // ============================================================
-    logic [ 7: 0][31: 0] GPR_read__8;
-    logic [ 7: 0][31: 0] GPR_read_16;
-    logic [ 7: 0][31: 0] GPR_read_32;
-    logic [31: 0] gpr_eax_read_32;
-    logic [31: 0] gpr_ecx_read_32;
-    logic [31: 0] gpr_edx_read_32;
-    logic [31: 0] gpr_ebx_read_32;
-    logic [31: 0] gpr_esp_read_32;
-    logic [31: 0] gpr_ebp_read_32;
-    logic [31: 0] gpr_esi_read_32;
-    logic [31: 0] gpr_edi_read_32;
+    // EAX/EBX/ECX/EDX (with byte/word aliases)
+    logic [31: 0] o_EAX;
+    logic [15: 0] o_AX;
+    logic [ 7: 0] o_AH;
+    logic [ 7: 0] o_AL;
+    logic [31: 0] o_EBX;
+    logic [15: 0] o_BX;
+    logic [ 7: 0] o_BH;
+    logic [ 7: 0] o_BL;
+    logic [31: 0] o_ECX;
+    logic [15: 0] o_CX;
+    logic [ 7: 0] o_CH;
+    logic [ 7: 0] o_CL;
+    logic [31: 0] o_EDX;
+    logic [15: 0] o_DX;
+    logic [ 7: 0] o_DH;
+    logic [ 7: 0] o_DL;
+    // ESP/EBP/ESI/EDI (pointer/index registers, 32-bit only)
+    logic [31: 0] o_ESP;
+    logic [31: 0] o_EBP;
+    logic [31: 0] o_ESI;
+    logic [31: 0] o_EDI;
 
     // ============================================================
     // segment registers (selector + descriptor cache)
@@ -234,83 +287,111 @@ module i486_cpu_core (
     // general purpose registers (individual modules)
     // ============================================================
     rf_x86_gpr_eax u_rf_gpr_eax (
-        .i_write_enable (wrb_gpr_eax_write_enable),
-        .i_write_data   (wrb_gpr_write_data),
-        .o_read__8      (GPR_read__8[0]),
-        .o_read_16      (GPR_read_16[0]),
-        .o_read_32      (GPR_read_32[0]),
-        .clk            (clk),
-        .rst_n          (rst_n)
+        .i_write_enable_EAX (wrb_gpr_write_enable_EAX),
+        .i_write_enable_AX  (wrb_gpr_write_enable_AX),
+        .i_write_enable_AL  (wrb_gpr_write_enable_AL),
+        .i_write_enable_AH  (wrb_gpr_write_enable_AH),
+        .i_write_data_EAX   (wrb_gpr_write_data_EAX),
+        .i_write_data_AX    (wrb_gpr_write_data_AX),
+        .i_write_data_AL    (wrb_gpr_write_data_AL),
+        .i_write_data_AH    (wrb_gpr_write_data_AH),
+        .o_EAX             (o_EAX),
+        .o_AX              (o_AX),
+        .o_AH              (o_AH),
+        .o_AL              (o_AL),
+        .clk               (clk),
+        .rst_n             (rst_n)
     );
 
     rf_x86_gpr_ecx u_rf_gpr_ecx (
-        .i_write_enable (wrb_gpr_ecx_write_enable),
-        .i_write_data   (wrb_gpr_write_data),
-        .o_read__8      (GPR_read__8[1]),
-        .o_read_16      (GPR_read_16[1]),
-        .o_read_32      (GPR_read_32[1]),
-        .clk            (clk),
-        .rst_n          (rst_n)
+        .i_write_enable_ECX (wrb_gpr_write_enable_ECX),
+        .i_write_enable_CX  (wrb_gpr_write_enable_CX),
+        .i_write_enable_CL  (wrb_gpr_write_enable_CL),
+        .i_write_enable_CH  (wrb_gpr_write_enable_CH),
+        .i_write_data_ECX   (wrb_gpr_write_data_ECX),
+        .i_write_data_CX    (wrb_gpr_write_data_CX),
+        .i_write_data_CL    (wrb_gpr_write_data_CL),
+        .i_write_data_CH    (wrb_gpr_write_data_CH),
+        .o_ECX             (o_ECX),
+        .o_CX              (o_CX),
+        .o_CH              (o_CH),
+        .o_CL              (o_CL),
+        .clk               (clk),
+        .rst_n             (rst_n)
     );
 
     rf_x86_gpr_edx u_rf_gpr_edx (
-        .i_write_enable (wrb_gpr_edx_write_enable),
-        .i_write_data   (wrb_gpr_write_data),
-        .o_read__8      (GPR_read__8[2]),
-        .o_read_16      (GPR_read_16[2]),
-        .o_read_32      (GPR_read_32[2]),
-        .clk            (clk),
-        .rst_n          (rst_n)
+        .i_write_enable_EDX (wrb_gpr_write_enable_EDX),
+        .i_write_enable_DX  (wrb_gpr_write_enable_DX),
+        .i_write_enable_DL  (wrb_gpr_write_enable_DL),
+        .i_write_enable_DH  (wrb_gpr_write_enable_DH),
+        .i_write_data_EDX   (wrb_gpr_write_data_EDX),
+        .i_write_data_DX    (wrb_gpr_write_data_DX),
+        .i_write_data_DL    (wrb_gpr_write_data_DL),
+        .i_write_data_DH    (wrb_gpr_write_data_DH),
+        .o_EDX             (o_EDX),
+        .o_DX              (o_DX),
+        .o_DH              (o_DH),
+        .o_DL              (o_DL),
+        .clk               (clk),
+        .rst_n             (rst_n)
     );
 
     rf_x86_gpr_ebx u_rf_gpr_ebx (
-        .i_write_enable (wrb_gpr_ebx_write_enable),
-        .i_write_data   (wrb_gpr_write_data),
-        .o_read__8      (GPR_read__8[3]),
-        .o_read_16      (GPR_read_16[3]),
-        .o_read_32      (GPR_read_32[3]),
-        .clk            (clk),
-        .rst_n          (rst_n)
+        .i_write_enable_EBX (wrb_gpr_write_enable_EBX),
+        .i_write_enable_BX  (wrb_gpr_write_enable_BX),
+        .i_write_enable_BL  (wrb_gpr_write_enable_BL),
+        .i_write_enable_BH  (wrb_gpr_write_enable_BH),
+        .i_write_data_EBX   (wrb_gpr_write_data_EBX),
+        .i_write_data_BX    (wrb_gpr_write_data_BX),
+        .i_write_data_BL    (wrb_gpr_write_data_BL),
+        .i_write_data_BH    (wrb_gpr_write_data_BH),
+        .o_EBX             (o_EBX),
+        .o_BX              (o_BX),
+        .o_BH              (o_BH),
+        .o_BL              (o_BL),
+        .clk               (clk),
+        .rst_n             (rst_n)
     );
 
     rf_x86_gpr_esp u_rf_gpr_esp (
-        .i_write_enable (wrb_gpr_esp_write_enable),
-        .i_write_data   (wrb_gpr_write_data),
-        .o_read__8      (GPR_read__8[4]),
-        .o_read_16      (GPR_read_16[4]),
-        .o_read_32      (GPR_read_32[4]),
-        .clk            (clk),
-        .rst_n          (rst_n)
+        .i_write_enable_ESP (wrb_gpr_write_enable_ESP),
+        .i_write_enable_SP  (wrb_gpr_write_enable_SP),
+        .i_write_data_ESP   (wrb_gpr_write_data_ESP),
+        .i_write_data_SP    (wrb_gpr_write_data_SP),
+        .o_ESP             (o_ESP),
+        .clk               (clk),
+        .rst_n             (rst_n)
     );
 
     rf_x86_gpr_ebp u_rf_gpr_ebp (
-        .i_write_enable (wrb_gpr_ebp_write_enable),
-        .i_write_data   (wrb_gpr_write_data),
-        .o_read__8      (GPR_read__8[5]),
-        .o_read_16      (GPR_read_16[5]),
-        .o_read_32      (GPR_read_32[5]),
-        .clk            (clk),
-        .rst_n          (rst_n)
+        .i_write_enable_EBP (wrb_gpr_write_enable_EBP),
+        .i_write_enable_BP  (wrb_gpr_write_enable_BP),
+        .i_write_data_EBP   (wrb_gpr_write_data_EBP),
+        .i_write_data_BP    (wrb_gpr_write_data_BP),
+        .o_EBP             (o_EBP),
+        .clk               (clk),
+        .rst_n             (rst_n)
     );
 
     rf_x86_gpr_esi u_rf_gpr_esi (
-        .i_write_enable (wrb_gpr_esi_write_enable),
-        .i_write_data   (wrb_gpr_write_data),
-        .o_read__8      (GPR_read__8[6]),
-        .o_read_16      (GPR_read_16[6]),
-        .o_read_32      (GPR_read_32[6]),
-        .clk            (clk),
-        .rst_n          (rst_n)
+        .i_write_enable_ESI (wrb_gpr_write_enable_ESI),
+        .i_write_enable_SI  (wrb_gpr_write_enable_SI),
+        .i_write_data_ESI   (wrb_gpr_write_data_ESI),
+        .i_write_data_SI    (wrb_gpr_write_data_SI),
+        .o_ESI             (o_ESI),
+        .clk               (clk),
+        .rst_n             (rst_n)
     );
 
     rf_x86_gpr_edi u_rf_gpr_edi (
-        .i_write_enable (wrb_gpr_edi_write_enable),
-        .i_write_data   (wrb_gpr_write_data),
-        .o_read__8      (GPR_read__8[7]),
-        .o_read_16      (GPR_read_16[7]),
-        .o_read_32      (GPR_read_32[7]),
-        .clk            (clk),
-        .rst_n          (rst_n)
+        .i_write_enable_EDI (wrb_gpr_write_enable_EDI),
+        .i_write_enable_DI  (wrb_gpr_write_enable_DI),
+        .i_write_data_EDI   (wrb_gpr_write_data_EDI),
+        .i_write_data_DI    (wrb_gpr_write_data_DI),
+        .o_EDI             (o_EDI),
+        .clk               (clk),
+        .rst_n             (rst_n)
     );
 
     // ============================================================

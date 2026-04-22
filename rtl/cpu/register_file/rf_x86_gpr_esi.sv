@@ -15,15 +15,17 @@
 // ----------------------------------------------------------------------------
 //  File        : rf_x86_gpr_esi.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : ESI register module
+//  Description : ESI register module with named read port (esi) and separate write enables for 32/16-bit writes
 // ============================================================================
 
 module rf_x86_gpr_esi (
-    input  logic         i_write_enable,
-    input  logic [31: 0] i_write_data,
-    output logic [ 7: 0] o_read__8,
-    output logic [ 7: 0] o_read_16,
-    output logic [31: 0] o_read_32,
+    // Write ports
+    input  logic         i_write_enable_ESI,
+    input  logic         i_write_enable_SI,
+    input  logic [31: 0] i_write_data_ESI,
+    input  logic [15: 0] i_write_data_SI,
+    // Read port (natural width)
+    output logic [31: 0] o_ESI,
     input  logic         clk,
     input  logic         rst_n
 );
@@ -33,13 +35,15 @@ logic [31: 0] register;
 always_ff @(posedge clk or negedge rst_n) begin : ff_register
     if (~rst_n) begin
         register <= 32'h0;
-    end else if (i_write_enable) begin
-        register <= i_write_data;
+    end else begin
+        if (i_write_enable_ESI) begin
+            register <= i_write_data_ESI;
+        end else if (i_write_enable_SI) begin
+            register[15: 0] <= i_write_data_SI;
+        end
     end
 end
 
-assign o_read_32 = register;
-assign o_read_16 = {16'h0, register[15: 0]};
-assign o_read__8 = {24'h0, register[ 7: 0]};
+assign o_ESI = register;
 
 endmodule

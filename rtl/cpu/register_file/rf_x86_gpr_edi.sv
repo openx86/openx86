@@ -15,15 +15,17 @@
 // ----------------------------------------------------------------------------
 //  File        : rf_x86_gpr_edi.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : EDI register module
+//  Description : EDI register module with named read port (edi) and separate write enables for 32/16-bit writes
 // ============================================================================
 
 module rf_x86_gpr_edi (
-    input  logic         i_write_enable,
-    input  logic [31: 0] i_write_data,
-    output logic [ 7: 0] o_read__8,
-    output logic [ 7: 0] o_read_16,
-    output logic [31: 0] o_read_32,
+    // Write ports
+    input  logic         i_write_enable_EDI,
+    input  logic         i_write_enable_DI,
+    input  logic [31: 0] i_write_data_EDI,
+    input  logic [15: 0] i_write_data_DI,
+    // Read port (natural width)
+    output logic [31: 0] o_EDI,
     input  logic         clk,
     input  logic         rst_n
 );
@@ -33,13 +35,15 @@ logic [31: 0] register;
 always_ff @(posedge clk or negedge rst_n) begin : ff_register
     if (~rst_n) begin
         register <= 32'h0;
-    end else if (i_write_enable) begin
-        register <= i_write_data;
+    end else begin
+        if (i_write_enable_EDI) begin
+            register <= i_write_data_EDI;
+        end else if (i_write_enable_DI) begin
+            register[15: 0] <= i_write_data_DI;
+        end
     end
 end
 
-assign o_read_32 = register;
-assign o_read_16 = {16'h0, register[15: 0]};
-assign o_read__8 = {24'h0, register[ 7: 0]};
+assign o_EDI = register;
 
 endmodule

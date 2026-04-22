@@ -15,15 +15,17 @@
 // ----------------------------------------------------------------------------
 //  File        : rf_x86_gpr_ebp.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : EBP register module
+//  Description : EBP register module with named read port (ebp) and separate write enables for 32/16-bit writes
 // ============================================================================
 
 module rf_x86_gpr_ebp (
-    input  logic         i_write_enable,
-    input  logic [31: 0] i_write_data,
-    output logic [ 7: 0] o_read__8,
-    output logic [ 7: 0] o_read_16,
-    output logic [31: 0] o_read_32,
+    // Write ports
+    input  logic         i_write_enable_EBP,
+    input  logic         i_write_enable_BP,
+    input  logic [31: 0] i_write_data_EBP,
+    input  logic [15: 0] i_write_data_BP,
+    // Read port (natural width)
+    output logic [31: 0] o_EBP,
     input  logic         clk,
     input  logic         rst_n
 );
@@ -33,13 +35,15 @@ logic [31: 0] register;
 always_ff @(posedge clk or negedge rst_n) begin : ff_register
     if (~rst_n) begin
         register <= 32'h0;
-    end else if (i_write_enable) begin
-        register <= i_write_data;
+    end else begin
+        if (i_write_enable_EBP) begin
+            register <= i_write_data_EBP;
+        end else if (i_write_enable_BP) begin
+            register[15: 0] <= i_write_data_BP;
+        end
     end
 end
 
-assign o_read_32 = register;
-assign o_read_16 = {16'h0, register[15: 0]};
-assign o_read__8 = {24'h0, register[ 7: 0]};
+assign o_EBP = register;
 
 endmodule
