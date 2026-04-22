@@ -251,20 +251,20 @@ module stage_3_uop (
     input  logic [ 3: 0]        i_tttn,
     input  logic [ 2: 0]        i_eee,
 
-    input  logic [31: 0]        i_dec_displacement, // 输入信号
-    input  logic [31: 0]        i_dec_immediate, // 输入信号
-    input  logic                i_dec_base_reg_is_present, // 输入信号
-    input  logic [ 2: 0]        i_dec_base_reg_index, // 输入信号
-    input  logic                i_dec_index_reg_is_present, // 输入信号
-    input  logic [ 2: 0]        i_dec_index_reg_index, // 输入信号
-    input  logic [ 2: 0]        i_dec_segment_reg_index, // 输入信号
-    input  logic [ 1: 0]        i_dec_sib_scale_factor, // 输入信号
-    input  logic [ 1: 0]        i_dec_modrm_mod, // 输入信号
+    input  logic [31: 0]        i_dec_displacement,
+    input  logic [31: 0]        i_dec_immediate,
+    input  logic                i_dec_base_reg_is_present,
+    input  logic [ 2: 0]        i_dec_base_reg_index,
+    input  logic                i_dec_index_reg_is_present,
+    input  logic [ 2: 0]        i_dec_index_reg_index,
+    input  logic [ 2: 0]        i_dec_segment_reg_index,
+    input  logic [ 1: 0]        i_dec_sib_scale_factor,
+    input  logic [ 1: 0]        i_dec_modrm_mod,
 
     // Micro-op outputs to stage_4_exu
-    output micro_op_t           o_uop, // 输出信号
+    output micro_op_t           o_uop,
 
-    input  logic                i_stage4_ready, // 输入信号
+    input  logic                i_stage4_ready,
 
     input  logic                clk, // 时钟信号
     input  logic                rst_n // 复位信号

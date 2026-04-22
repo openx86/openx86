@@ -24,14 +24,14 @@
 `include "openx86_defs.h.sv"
 
 module cpuid (
-    input  logic          insn_fire, // 输入信号
-    input  logic          op_cpuid, // 输入信号
-    input  logic [31: 0]  gpr_eax, // 输入信号
-    output logic         o_cpuid_busy, // 输出信号
-    output logic         o_gpr_wr_en, // 输出信号
-    output logic [ 2: 0] o_gpr_wr_idx, // 输出信号
-    output logic [31: 0] o_gpr_wr_data, // 输出信号
-    output logic         o_cpuid_done_pulse, // 输出信号
+    input  logic          insn_fire,
+    input  logic          op_cpuid,
+    input  logic [31: 0]  gpr_eax,
+    output logic         o_cpuid_busy,
+    output logic         o_gpr_wr_en,
+    output logic [ 2: 0] o_gpr_wr_idx,
+    output logic [31: 0] o_gpr_wr_data,
+    output logic         o_cpuid_done_pulse,
     input  logic          clk, // 时钟信号
     input  logic          rst_n // 复位信号
 );

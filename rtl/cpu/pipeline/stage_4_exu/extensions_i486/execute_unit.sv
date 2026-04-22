@@ -24,21 +24,21 @@
 
 module execute_unit (
     input  logic          insn_fire,
-    input  logic          op_cpuid, // 输入信号
-    input  logic [31: 0]  gpr_eax, // 输入信号
-    input  logic [31: 0]  gpr_ecx, // 输入信号
-    output logic         cpuid_busy, // 输出信号
-    output logic         gpr_wr_en, // 输出信号
-    output logic [ 2: 0] gpr_wr_idx, // 输出信号
-    output logic [31: 0] gpr_wr_data, // 输出信号
-    output logic         cpuid_done_pulse, // 输出信号
-    input  logic          op_invd, // 输入信号
-    input  logic          op_wbinvd, // 输入信号
-    input  logic          op_invlpg, // 输入信号
-    input  logic [31: 0] invlpg_ea, // 输入信号
-    output logic         cache_flush_pulse, // 输出信号
-    output logic         invlpg_pulse, // 输出信号
-    output logic [31: 0] invlpg_linear_addr, // 输出信号
+    input  logic          op_cpuid,
+    input  logic [31: 0]  gpr_eax,
+    input  logic [31: 0]  gpr_ecx,
+    output logic         cpuid_busy,
+    output logic         gpr_wr_en,
+    output logic [ 2: 0] gpr_wr_idx,
+    output logic [31: 0] gpr_wr_data,
+    output logic         cpuid_done_pulse,
+    input  logic          op_invd,
+    input  logic          op_wbinvd,
+    input  logic          op_invlpg,
+    input  logic [31: 0] invlpg_ea,
+    output logic         cache_flush_pulse,
+    output logic         invlpg_pulse,
+    output logic [31: 0] invlpg_linear_addr,
     input  logic          clk, // 时钟信号
     input  logic          rst_n // 复位信号
 );

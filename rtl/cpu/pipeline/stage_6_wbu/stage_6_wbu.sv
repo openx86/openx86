@@ -19,66 +19,66 @@
 // ============================================================================
 
 module stage_6_wbu (
-    input  logic          i_stage4_valid, // 输入信号
-    output logic          o_stage_valid, // 输出信号
-    input  logic          i_stage5_ready, // 输入信号
-    output logic          o_stage4_ready, // 输出信号
+    input  logic          i_stage4_valid,
+    output logic          o_stage_valid,
+    input  logic          i_stage5_ready,
+    output logic          o_stage4_ready,
 
-    input  logic          i_gpr_write_enable, // 输入信号
-    input  logic [ 2: 0]  i_gpr_write_index, // 输入信号
-    input  logic [31: 0]  i_gpr_write_data, // 输入信号
-    output logic          o_gpr_write_enable, // 输出信号
-    output logic [ 2: 0]  o_gpr_write_index, // 输出信号
-    output logic [31: 0]  o_gpr_write_data, // 输出信号
+    input  logic          i_gpr_write_enable,
+    input  logic [ 2: 0]  i_gpr_write_index,
+    input  logic [31: 0]  i_gpr_write_data,
+    output logic          o_gpr_write_enable,
+    output logic [ 2: 0]  o_gpr_write_index,
+    output logic [31: 0]  o_gpr_write_data,
 
-    input  logic          i_sreg_write_enable, // 输入信号
-    input  logic [ 2: 0]  i_sreg_write_index, // 输入信号
-    input  logic [15: 0]  i_sreg_write_selector, // 输入信号
-    input  logic [63: 0]  i_sreg_write_descriptor, // 输入信号
-    output logic          o_sreg_write_enable, // 输出信号
-    output logic [ 2: 0]  o_sreg_write_index, // 输出信号
-    output logic [15: 0]  o_sreg_write_selector, // 输出信号
-    output logic [63: 0]  o_sreg_write_descriptor, // 输出信号
+    input  logic          i_sreg_write_enable,
+    input  logic [ 2: 0]  i_sreg_write_index,
+    input  logic [15: 0]  i_sreg_write_selector,
+    input  logic [63: 0]  i_sreg_write_descriptor,
+    output logic          o_sreg_write_enable,
+    output logic [ 2: 0]  o_sreg_write_index,
+    output logic [15: 0]  o_sreg_write_selector,
+    output logic [63: 0]  o_sreg_write_descriptor,
 
-    input  logic          i_flags_write_enable, // 输入信号
-    input  logic [31: 0]  i_flags_write_data, // 输入信号
-    output logic          o_flags_write_enable, // 输出信号
-    output logic [31: 0]  o_flags_write_data, // 输出信号
+    input  logic          i_flags_write_enable,
+    input  logic [31: 0]  i_flags_write_data,
+    output logic          o_flags_write_enable,
+    output logic [31: 0]  o_flags_write_data,
 
-    input  logic          i_ip_write_enable, // 输入信号
-    input  logic [31: 0]  i_ip_write_data, // 输入信号
-    output logic          o_ip_write_enable, // 输出信号
-    output logic [31: 0]  o_ip_write_data, // 输出信号
+    input  logic          i_ip_write_enable,
+    input  logic [31: 0]  i_ip_write_data,
+    output logic          o_ip_write_enable,
+    output logic [31: 0]  o_ip_write_data,
 
-    input  logic          i_cr_write_enable, // 输入信号
-    input  logic [ 2: 0]  i_cr_write_index, // 输入信号
-    input  logic [31: 0]  i_cr_write_data, // 输入信号
-    output logic          o_cr_write_enable, // 输出信号
-    output logic [ 2: 0]  o_cr_write_index, // 输出信号
-    output logic [31: 0]  o_cr_write_data, // 输出信号
+    input  logic          i_cr_write_enable,
+    input  logic [ 2: 0]  i_cr_write_index,
+    input  logic [31: 0]  i_cr_write_data,
+    output logic          o_cr_write_enable,
+    output logic [ 2: 0]  o_cr_write_index,
+    output logic [31: 0]  o_cr_write_data,
 
-    input  logic          i_dr_write_enable, // 输入信号
-    input  logic [ 2: 0]  i_dr_write_index, // 输入信号
-    input  logic [31: 0]  i_dr_write_data, // 输入信号
-    output logic          o_dr_write_enable, // 输出信号
-    output logic [ 2: 0]  o_dr_write_index, // 输出信号
-    output logic [31: 0]  o_dr_write_data, // 输出信号
+    input  logic          i_dr_write_enable,
+    input  logic [ 2: 0]  i_dr_write_index,
+    input  logic [31: 0]  i_dr_write_data,
+    output logic          o_dr_write_enable,
+    output logic [ 2: 0]  o_dr_write_index,
+    output logic [31: 0]  o_dr_write_data,
 
-    input  logic          i_tr_write_enable, // 输入信号
-    input  logic [ 2: 0]  i_tr_write_index, // 输入信号
-    input  logic [31: 0]  i_tr_write_data, // 输入信号
-    output logic          o_tr_write_enable, // 输出信号
-    output logic [ 2: 0]  o_tr_write_index, // 输出信号
-    output logic [31: 0]  o_tr_write_data, // 输出信号
+    input  logic          i_tr_write_enable,
+    input  logic [ 2: 0]  i_tr_write_index,
+    input  logic [31: 0]  i_tr_write_data,
+    output logic          o_tr_write_enable,
+    output logic [ 2: 0]  o_tr_write_index,
+    output logic [31: 0]  o_tr_write_data,
 
-    input  logic          i_mem_valid, // 输入信号
-    input  logic          i_mem_write_enable, // 输入信号
-    input  logic [31: 0]  i_mem_address, // 输入信号
-    input  logic [31: 0]  i_mem_write_data, // 输入信号
-    output logic          o_mem_valid, // 输出信号
-    output logic          o_mem_write_enable, // 输出信号
-    output logic [31: 0]  o_mem_address, // 输出信号
-    output logic [31: 0]  o_mem_write_data, // 输出信号
+    input  logic          i_mem_valid,
+    input  logic          i_mem_write_enable,
+    input  logic [31: 0]  i_mem_address,
+    input  logic [31: 0]  i_mem_write_data,
+    output logic          o_mem_valid,
+    output logic          o_mem_write_enable,
+    output logic [31: 0]  o_mem_address,
+    output logic [31: 0]  o_mem_write_data,
 
     input  logic          clk, // 时钟信号
     input  logic          rst_n // 复位信号

@@ -31,21 +31,21 @@ description: decode single prefix from instruction
 // 单字节前缀译码：判定属于手册四组中的哪一类，并给出段覆盖索引
 module stage_2_dec_x86_prefix_one (
     input  logic [ 7: 0] i_instruction,                 // 当前字节
-    output logic         o_group_1_lock_bus,            // 输出信号
-    output logic         o_group_1_repeat_not_equal,   // 输出信号
-    output logic         o_group_1_repeat_equal,       // 输出信号
-    output logic         o_group_1_bound,              // 输出信号
-    output logic         o_group_2_segment_override,    // 输出信号
-    output logic         o_group_2_hint_branch_not_taken, // 输出信号
-    output logic         o_group_2_hint_branch_taken,   // 输出信号
-    output logic         o_group_3_operand_size,        // 输出信号
-    output logic         o_group_4_address_size,        // 输出信号
-    output logic         o_group_1_is_present,           // 输出信号
-    output logic         o_group_2_is_present,           // 输出信号
-    output logic         o_group_3_is_present,           // 输出信号
-    output logic         o_group_4_is_present,           // 输出信号
-    output logic         o_is_present,                  // 输出信号
-    output logic [ 2: 0] o_segment_override_index       // 输出信号
+    output logic         o_group_1_lock_bus,
+    output logic         o_group_1_repeat_not_equal,
+    output logic         o_group_1_repeat_equal,
+    output logic         o_group_1_bound,
+    output logic         o_group_2_segment_override,
+    output logic         o_group_2_hint_branch_not_taken,
+    output logic         o_group_2_hint_branch_taken,
+    output logic         o_group_3_operand_size,
+    output logic         o_group_4_address_size,
+    output logic         o_group_1_is_present,
+    output logic         o_group_2_is_present,
+    output logic         o_group_3_is_present,
+    output logic         o_group_4_is_present,
+    output logic         o_is_present,
+    output logic [ 2: 0] o_segment_override_index
 );
 
 logic segment_override_CS;

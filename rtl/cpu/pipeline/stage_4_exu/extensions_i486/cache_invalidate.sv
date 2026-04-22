@@ -23,14 +23,14 @@
 // ============================================================================
 
 module cache_invalidate (
-    input  logic          insn_fire, // 输入信号
-    input  logic          op_invd, // 输入信号
-    input  logic          op_wbinvd, // 输入信号
-    input  logic          op_invlpg, // 输入信号
-    input  logic [31: 0]  invlpg_ea, // 输入信号
-    output logic         o_cache_flush_pulse, // 输出信号
-    output logic         o_invlpg_pulse, // 输出信号
-    output logic [31: 0] o_invlpg_linear_addr, // 输出信号
+    input  logic          insn_fire,
+    input  logic          op_invd,
+    input  logic          op_wbinvd,
+    input  logic          op_invlpg,
+    input  logic [31: 0]  invlpg_ea,
+    output logic         o_cache_flush_pulse,
+    output logic         o_invlpg_pulse,
+    output logic [31: 0] o_invlpg_linear_addr,
     input  logic          clk, // 时钟信号
     input  logic          rst_n // 复位信号
 );

@@ -19,29 +19,29 @@
 // ============================================================================
 
 module stage_5_mem (
-    input  logic          i_stage3_valid, // 输入信号
-    output logic          o_stage3_ready, // 输出信号
+    input  logic          i_stage3_valid,
+    output logic          o_stage3_ready,
 
-    input  logic          i_start, // 输入信号
-    input  logic          i_is_store, // 输入信号
-    input  logic [31: 0]  i_addr, // 输入信号
-    input  logic [31: 0]  i_wdata, // 输入信号
+    input  logic          i_start,
+    input  logic          i_is_store,
+    input  logic [31: 0]  i_addr,
+    input  logic [31: 0]  i_wdata,
 
-    input  logic [31: 0]  i_mem_rdata, // 输入信号
-    input  logic          i_mem_ready, // 输入信号
+    input  logic [31: 0]  i_mem_rdata,
+    input  logic          i_mem_ready,
 
-    output logic [31: 0]  o_lsu_rdata, // 输出信号
-    output logic          o_lsu_done, // 输出信号
-    output logic          o_lsu_busy, // 输出信号
+    output logic [31: 0]  o_lsu_rdata,
+    output logic          o_lsu_done,
+    output logic          o_lsu_busy,
 
-    output logic          o_stage4_valid, // 输出信号
-    input  logic          i_wrb_ready, // 输入信号
-    output logic          o_mem_valid, // 输出信号
-    output logic          o_mem_write_enable, // 输出信号
-    output logic [31: 0]  o_mem_address, // 输出信号
-    output logic [31: 0]  o_mem_write_data, // 输出信号
+    output logic          o_stage4_valid,
+    input  logic          i_wrb_ready,
+    output logic          o_mem_valid,
+    output logic          o_mem_write_enable,
+    output logic [31: 0]  o_mem_address,
+    output logic [31: 0]  o_mem_write_data,
 
-    input  logic          i_flush, // 输入信号
+    input  logic          i_flush,
     input  logic          clk, // 时钟信号
     input  logic          rst_n // 复位信号
 );
