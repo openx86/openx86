@@ -19,7 +19,7 @@
 // ============================================================================
 
 `timescale 1ns/1ps
-`include "definition.h.sv"
+`include "openx86_defs.h.sv"
 
 module decode_opcode_x86_tb;
 

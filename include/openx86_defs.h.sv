@@ -21,6 +21,14 @@
 `ifndef OPENX86_DEFS_SVH
 `define OPENX86_DEFS_SVH
 
+// Common definitions (merged from definition.h.sv)
+`define BIT_WIDTH 32
+// segment
+`define GRANULARITY_BYTE 0
+`define GRANULARITY_4K 1
+`define DESCRIPTOR_TYPE_SYSTEM 0
+`define DESCRIPTOR_TYPE_CODE_OR_DATA 1
+
 // CPUID
 // TODO: use real cpuid_max_EAX
 `define cpuid_max_EAX (32'hFFFF_FFFF)
