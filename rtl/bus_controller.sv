@@ -18,7 +18,14 @@
 //  Description : Module
 // ============================================================================
 
-module bus_controller (
+module bus_controller #(
+    // =========================
+    // Parameters
+    // =========================
+    parameter logic       USE_REAL_PS2 = 1'b0,
+    parameter int         PS2_CLK_HZ   = 100_000,
+    parameter logic       USE_SDIO_DISK = 1'b0
+) (
     // =========================
     // CPU bus interface
     // =========================
@@ -101,13 +108,6 @@ module bus_controller (
     // Interrupt output
     // =========================
     output logic         o_pic_intr,
-
-    // =========================
-    // Parameters
-    // =========================
-    parameter logic       USE_REAL_PS2 = 1'b0,
-    parameter int         PS2_CLK_HZ   = 100_000,
-    parameter logic       USE_SDIO_DISK = 1'b0,
 
     // =========================
     // Clock and reset
