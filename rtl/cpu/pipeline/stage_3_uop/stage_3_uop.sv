@@ -270,12 +270,37 @@ module stage_3_uop (
     input  logic                rst_n // 复位信号
 );
 
-    // Micro-op pipeline register
-    micro_op_t uop_reg;
-    micro_op_t uop_next;
+    // ============================================================
+    // UOP Queue (FIFO)
+    // ============================================================
+    localparam int LP_UOP_WIDTH   = 84; // micro_op_t width
+    localparam int LP_QUEUE_DEPTH = 8;
 
-    // Stage valid/ready signals
-    logic stage_valid;
+    logic [LP_UOP_WIDTH - 1: 0] uop_data_vector;
+    logic [LP_UOP_WIDTH - 1: 0] uop_queue_data [0: LP_QUEUE_DEPTH - 1];
+    logic [LP_UOP_WIDTH - 1: 0] uop_queue_out;
+    logic                        queue_push_valid;
+    logic                        queue_push_ready;
+    logic                        queue_pop_valid;
+    logic                        queue_pop_ready;
+    logic                        queue_full;
+    logic                        queue_empty;
+    logic [$clog2(LP_QUEUE_DEPTH + 1) - 1: 0] queue_count;
+
+    // ============================================================
+    // Handshake control signals
+    // ============================================================
+    logic dec_to_uop_valid;
+    logic dec_to_uop_ready;
+    logic insn_fire;
+    logic uop_to_exu_valid;
+    logic uop_to_exu_ready;
+    logic uop_fire;
+
+    // ============================================================
+    // Micro-op conversion signals
+    // ============================================================
+    micro_op_t uop_next;
 
     // Default micro-op (NOP)
     micro_op_t uop_default;
@@ -660,23 +685,74 @@ module stage_3_uop (
         end
     end
 
-    // Pipeline register
-    always_ff @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            uop_reg <= uop_default;
-            stage_valid <= 1'b0;
-        end else if (i_flush) begin
-            uop_reg <= uop_default;
-            stage_valid <= 1'b0;
-        end else if (i_stage4_ready) begin
-            uop_reg <= uop_next;
-            stage_valid <= i_stage2_valid;
-        end
-    end
+    // ============================================================
+    // Convert micro_op_t to vector for FIFO
+    // ============================================================
+    assign uop_data_vector = uop_next;
 
+    // ============================================================
+    // dec_to_uop handshake module
+    // ============================================================
+    dec_to_uop u_dec_to_uop (
+        .i_dec_ready  ( i_stage2_valid ),
+        .i_uop_ready  ( queue_push_ready ),
+        .i_flush      ( i_flush ),
+        .o_stage2_valid( dec_to_uop_valid ),
+        .o_insn_fire  ( insn_fire )
+    );
+
+    // ============================================================
+    // uop_to_exu handshake module
+    // ============================================================
+    uop_to_exu u_uop_to_exu (
+        .i_uop_valid  ( ~queue_empty ),
+        .i_exu_ready  ( i_stage4_ready ),
+        .i_flush      ( i_flush ),
+        .o_stage3_valid( uop_to_exu_valid ),
+        .o_uop_fire   ( uop_fire )
+    );
+
+    // ============================================================
+    // UOP Queue instantiation
+    // ============================================================
+    fifo #(
+        .P_DEPTH      ( LP_QUEUE_DEPTH ),
+        .P_DATA_WIDTH ( LP_UOP_WIDTH )
+    ) u_uop_queue (
+        .i_push_valid ( insn_fire ),
+        .i_push_data  ( uop_queue_data ),
+        .i_push_bytes ( 4'd1 ),
+        .o_push_ready ( queue_push_ready ),
+        .i_pop_valid  ( uop_fire ),
+        .i_pop_bytes  ( 4'd1 ),
+        .o_pop_ready  ( queue_pop_ready ),
+        .o_window_data( uop_queue_data ),
+        .o_count      ( queue_count ),
+        .o_full       ( queue_full ),
+        .o_empty      ( queue_empty ),
+        .clk          ( clk ),
+        .rst_n        ( rst_n )
+    );
+
+    // ============================================================
+    // Queue data assignment for push
+    // ============================================================
+    assign uop_queue_data[0] = uop_data_vector;
+
+    // ============================================================
+    // Queue output assignment
+    // ============================================================
+    assign uop_queue_out = uop_queue_data[0];
+
+    // ============================================================
+    // Convert vector back to micro_op_t for output
+    // ============================================================
+    assign o_uop = uop_queue_out;
+
+    // ============================================================
     // Output assignments
-    assign o_uop = uop_reg;
-    assign o_stage_valid = stage_valid;
-    assign o_stage2_ready = i_stage4_ready;
+    // ============================================================
+    assign o_stage_valid  = uop_to_exu_valid;
+    assign o_stage2_ready = ~queue_full;
 
 endmodule
