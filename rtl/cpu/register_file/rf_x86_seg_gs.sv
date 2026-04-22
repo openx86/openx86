@@ -13,33 +13,35 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : rf_x86_instruction_pointer.sv
+//  File        : rf_x86_seg_gs.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : rf_x86_instruction_pointer module
+//  Description : GS segment register module
 // ============================================================================
 
-module rf_x86_instruction_pointer (
-    input  logic         write_enable,   // 写使能（更新 EIP）
-    input  logic [31: 0] write_data, // 完整 32 位指令指针写入值
-    output logic [15: 0] IP, // 16 位可见 IP（EIP 低 16）
-    output logic [31: 0] EIP, // 32 位 EIP
-    input  logic         clk, // 时钟信号
-    input  logic         rst_n // 复位信号
+module rf_x86_seg_gs (
+    input  logic         i_write_enable,
+    input  logic [15: 0] i_write_selector,
+    input  logic [63: 0] i_write_descriptor,
+    output logic [15: 0] o_selector,
+    output logic [63: 0] o_descriptor,
+    input  logic         clk,
+    input  logic         rst_n
 );
 
-logic [31: 0] instruction_pointer;  // 内部统一存 32 位指令指针
-
-// 复位到实模式入口附近典型初值；使能时整体更新
 always_ff @(posedge clk or negedge rst_n) begin
-    if (~rst_n) begin  // 复位：指向 0x0000FFF0
-        instruction_pointer <= 32'h0000_FFF0;
-    end else if (write_enable) begin  // 提交新的指令指针
-        instruction_pointer <= write_data;
+    if (~rst_n) begin
+        o_selector <= 16'b0;
+    end else if (i_write_enable) begin
+        o_selector <= i_write_selector;
     end
 end
 
-// 拆分输出：16/32 位视图
-assign IP  = instruction_pointer[15: 0];
-assign EIP = instruction_pointer[31: 0];
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin
+        o_descriptor <= 64'b0;
+    end else if (i_write_enable) begin
+        o_descriptor <= i_write_descriptor;
+    end
+end
 
 endmodule

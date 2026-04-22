@@ -61,72 +61,84 @@ module i486_cpu_core (
 `include "iu_decode_outputs_decl.svh"
 
     // ============================================================
-    // GPR write ports (combinational and WRB stage)
+    // GPR write ports (individual write enables)
     // ============================================================
-    logic        write_enable;
-    logic [ 2: 0] write_index;
-    logic [31: 0] write_data;
-    logic        wrb_write_enable      = 1'b0;
-    logic [ 2: 0] wrb_write_index     = 3'b0;
-    logic [31: 0] wrb_write_data      = 32'b0;
+    logic wrb_gpr_eax_write_enable = 1'b0;
+    logic wrb_gpr_ecx_write_enable = 1'b0;
+    logic wrb_gpr_edx_write_enable = 1'b0;
+    logic wrb_gpr_ebx_write_enable = 1'b0;
+    logic wrb_gpr_esp_write_enable = 1'b0;
+    logic wrb_gpr_ebp_write_enable = 1'b0;
+    logic wrb_gpr_esi_write_enable = 1'b0;
+    logic wrb_gpr_edi_write_enable = 1'b0;
+    logic [31: 0] wrb_gpr_write_data = 32'b0;
 
     // ============================================================
-    // segment register write ports
+    // segment register write ports (individual write enables)
     // ============================================================
-    logic        SREG_write_enable;
-    logic [ 2: 0] SREG_write_index;
-    logic [15: 0] SREG_write_selector;
-    logic [63: 0] SREG_write_descriptor;
-    logic        wrb_SREG_write_enable = 1'b0;
-    logic [ 2: 0] wrb_SREG_write_index    = 3'b0;
-    logic [15: 0] wrb_SREG_write_selector = 16'b0;
-    logic [63: 0] wrb_SREG_write_descriptor = 64'b0;
+    logic wrb_seg_es_write_enable = 1'b0;
+    logic wrb_seg_cs_write_enable = 1'b0;
+    logic wrb_seg_ss_write_enable = 1'b0;
+    logic wrb_seg_ds_write_enable = 1'b0;
+    logic wrb_seg_fs_write_enable = 1'b0;
+    logic wrb_seg_gs_write_enable = 1'b0;
+    logic [15: 0] wrb_seg_write_selector = 16'b0;
+    logic [63: 0] wrb_seg_write_descriptor = 64'b0;
 
     // ============================================================
     // flags register write ports
     // ============================================================
-    logic         FLAGS_write_enable;
-    logic [31: 0]  FLAGS_write_data;
-    logic         wrb_FLAGS_write_enable;
-    logic [31: 0]  wrb_FLAGS_write_data;
+    logic FLAGS_write_enable;
+    logic [31: 0] FLAGS_write_data;
+    logic wrb_FLAGS_write_enable;
+    logic [31: 0] wrb_FLAGS_write_data;
 
     // ============================================================
     // EIP write ports
     // ============================================================
-    logic        IP_write_enable;
+    logic IP_write_enable;
     logic [31: 0] IP_write_data;
-    logic        wrb_IP_write_enable;
+    logic wrb_IP_write_enable;
     logic [31: 0] wrb_IP_write_data;
 
     // ============================================================
-    // control registers write ports
+    // control registers write ports (individual write enables)
     // ============================================================
-    logic         CR_write_enable;
-    logic [ 2: 0] CR_write_index;
-    logic [31: 0] CR_write_data;
-    logic         wrb_CR_write_enable = 1'b0;
-    logic [ 2: 0] wrb_CR_write_index    = 3'b0;
-    logic [31: 0] wrb_CR_write_data     = 32'b0;
+    logic wrb_cr0_write_enable = 1'b0;
+    logic wrb_cr1_write_enable = 1'b0;
+    logic wrb_cr2_write_enable = 1'b0;
+    logic wrb_cr3_write_enable = 1'b0;
+    logic wrb_cr4_write_enable = 1'b0;
+    logic wrb_cr5_write_enable = 1'b0;
+    logic wrb_cr6_write_enable = 1'b0;
+    logic wrb_cr7_write_enable = 1'b0;
+    logic [31: 0] wrb_cr_write_data = 32'b0;
 
     // ============================================================
-    // debug registers write ports
+    // debug registers write ports (individual write enables)
     // ============================================================
-    logic         DR_write_enable;
-    logic [ 2: 0] DR_write_index;
-    logic [31: 0] DR_write_data;
-    logic         wrb_DR_write_enable = 1'b0;
-    logic [ 2: 0] wrb_DR_write_index    = 3'b0;
-    logic [31: 0] wrb_DR_write_data     = 32'b0;
+    logic wrb_dr0_write_enable = 1'b0;
+    logic wrb_dr1_write_enable = 1'b0;
+    logic wrb_dr2_write_enable = 1'b0;
+    logic wrb_dr3_write_enable = 1'b0;
+    logic wrb_dr4_write_enable = 1'b0;
+    logic wrb_dr5_write_enable = 1'b0;
+    logic wrb_dr6_write_enable = 1'b0;
+    logic wrb_dr7_write_enable = 1'b0;
+    logic [31: 0] wrb_dr_write_data = 32'b0;
 
     // ============================================================
-    // test registers write ports
+    // test registers write ports (individual write enables)
     // ============================================================
-    logic         TR_write_enable;
-    logic [ 2: 0] TR_write_index;
-    logic [31: 0] TR_write_data;
-    logic         wrb_TR_write_enable = 1'b0;
-    logic [ 2: 0] wrb_TR_write_index    = 3'b0;
-    logic [31: 0] wrb_TR_write_data     = 32'b0;
+    logic wrb_tr0_write_enable = 1'b0;
+    logic wrb_tr1_write_enable = 1'b0;
+    logic wrb_tr2_write_enable = 1'b0;
+    logic wrb_tr3_write_enable = 1'b0;
+    logic wrb_tr4_write_enable = 1'b0;
+    logic wrb_tr5_write_enable = 1'b0;
+    logic wrb_tr6_write_enable = 1'b0;
+    logic wrb_tr7_write_enable = 1'b0;
+    logic [31: 0] wrb_tr_write_data = 32'b0;
 
     // ============================================================
     // GPR read ports (8/16/32-bit views broadcast to decode and EU)
@@ -134,12 +146,32 @@ module i486_cpu_core (
     logic [ 7: 0][31: 0] GPR_read__8;
     logic [ 7: 0][31: 0] GPR_read_16;
     logic [ 7: 0][31: 0] GPR_read_32;
+    logic [31: 0] gpr_eax_read_32;
+    logic [31: 0] gpr_ecx_read_32;
+    logic [31: 0] gpr_edx_read_32;
+    logic [31: 0] gpr_ebx_read_32;
+    logic [31: 0] gpr_esp_read_32;
+    logic [31: 0] gpr_ebp_read_32;
+    logic [31: 0] gpr_esi_read_32;
+    logic [31: 0] gpr_edi_read_32;
 
     // ============================================================
     // segment registers (selector + descriptor cache)
     // ============================================================
     logic [ 5: 0][15: 0] segment_selector;
     logic [ 5: 0][63: 0] descriptor_cache;
+    logic [15: 0] seg_es_selector;
+    logic [15: 0] seg_cs_selector;
+    logic [15: 0] seg_ss_selector;
+    logic [15: 0] seg_ds_selector;
+    logic [15: 0] seg_fs_selector;
+    logic [15: 0] seg_gs_selector;
+    logic [63: 0] seg_es_descriptor;
+    logic [63: 0] seg_cs_descriptor;
+    logic [63: 0] seg_ss_descriptor;
+    logic [63: 0] seg_ds_descriptor;
+    logic [63: 0] seg_fs_descriptor;
+    logic [63: 0] seg_gs_descriptor;
 
     // ============================================================
     // flags register
@@ -159,15 +191,36 @@ module i486_cpu_core (
     // ============================================================
     // control registers
     // ============================================================
-    logic [ 7: 0][31: 0] CR;
-    logic         PE, MP, EM, TS, R, PG;
+    logic [31: 0] cr0_data;
+    logic [31: 0] cr1_data;
+    logic [31: 0] cr2_data;
+    logic [31: 0] cr3_data;
+    logic [31: 0] cr4_data;
+    logic [31: 0] cr5_data;
+    logic [31: 0] cr6_data;
+    logic [31: 0] cr7_data;
+    logic PE, MP, EM, TS, R, PG;
     logic [19: 0] page_directory_base;
 
     // ============================================================
     // debug and test registers
     // ============================================================
-    logic [ 7: 0][31: 0] DR;
-    logic [ 7: 0][31: 0] TR;
+    logic [31: 0] dr0_data;
+    logic [31: 0] dr1_data;
+    logic [31: 0] dr2_data;
+    logic [31: 0] dr3_data;
+    logic [31: 0] dr4_data;
+    logic [31: 0] dr5_data;
+    logic [31: 0] dr6_data;
+    logic [31: 0] dr7_data;
+    logic [31: 0] tr0_data;
+    logic [31: 0] tr1_data;
+    logic [31: 0] tr2_data;
+    logic [31: 0] tr3_data;
+    logic [31: 0] tr4_data;
+    logic [31: 0] tr5_data;
+    logic [31: 0] tr6_data;
+    logic [31: 0] tr7_data;
 
     // ============================================================
     // GDTR/IDTR (hardwired to 0 for SGDT/SIDT instruction placeholders)
@@ -178,111 +231,407 @@ module i486_cpu_core (
     logic [31: 0] IDTR_base;
 
     // ============================================================
-    // general purpose register file
+    // general purpose registers (individual modules)
     // ============================================================
-    rf_x86_general_purpose u_rf_gpr (
-        .write_enable (wrb_write_enable),
-        .write_index   (wrb_write_index),
-        .write_data    (wrb_write_data),
-        .read__8       (GPR_read__8),
-        .read_16       (GPR_read_16),
-        .read_32       (GPR_read_32),
-        .clk           (clk),
-        .rst_n         (rst_n)
+    rf_x86_gpr_eax u_rf_gpr_eax (
+        .i_write_enable (wrb_gpr_eax_write_enable),
+        .i_write_data   (wrb_gpr_write_data),
+        .o_read__8      (GPR_read__8[0]),
+        .o_read_16      (GPR_read_16[0]),
+        .o_read_32      (GPR_read_32[0]),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_gpr_ecx u_rf_gpr_ecx (
+        .i_write_enable (wrb_gpr_ecx_write_enable),
+        .i_write_data   (wrb_gpr_write_data),
+        .o_read__8      (GPR_read__8[1]),
+        .o_read_16      (GPR_read_16[1]),
+        .o_read_32      (GPR_read_32[1]),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_gpr_edx u_rf_gpr_edx (
+        .i_write_enable (wrb_gpr_edx_write_enable),
+        .i_write_data   (wrb_gpr_write_data),
+        .o_read__8      (GPR_read__8[2]),
+        .o_read_16      (GPR_read_16[2]),
+        .o_read_32      (GPR_read_32[2]),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_gpr_ebx u_rf_gpr_ebx (
+        .i_write_enable (wrb_gpr_ebx_write_enable),
+        .i_write_data   (wrb_gpr_write_data),
+        .o_read__8      (GPR_read__8[3]),
+        .o_read_16      (GPR_read_16[3]),
+        .o_read_32      (GPR_read_32[3]),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_gpr_esp u_rf_gpr_esp (
+        .i_write_enable (wrb_gpr_esp_write_enable),
+        .i_write_data   (wrb_gpr_write_data),
+        .o_read__8      (GPR_read__8[4]),
+        .o_read_16      (GPR_read_16[4]),
+        .o_read_32      (GPR_read_32[4]),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_gpr_ebp u_rf_gpr_ebp (
+        .i_write_enable (wrb_gpr_ebp_write_enable),
+        .i_write_data   (wrb_gpr_write_data),
+        .o_read__8      (GPR_read__8[5]),
+        .o_read_16      (GPR_read_16[5]),
+        .o_read_32      (GPR_read_32[5]),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_gpr_esi u_rf_gpr_esi (
+        .i_write_enable (wrb_gpr_esi_write_enable),
+        .i_write_data   (wrb_gpr_write_data),
+        .o_read__8      (GPR_read__8[6]),
+        .o_read_16      (GPR_read_16[6]),
+        .o_read_32      (GPR_read_32[6]),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_gpr_edi u_rf_gpr_edi (
+        .i_write_enable (wrb_gpr_edi_write_enable),
+        .i_write_data   (wrb_gpr_write_data),
+        .o_read__8      (GPR_read__8[7]),
+        .o_read_16      (GPR_read_16[7]),
+        .o_read_32      (GPR_read_32[7]),
+        .clk            (clk),
+        .rst_n          (rst_n)
     );
 
     // ============================================================
-    // segment register file
+    // segment registers (individual modules)
     // ============================================================
-    rf_x86_segment u_rf_sreg (
-        .write_enable    (wrb_SREG_write_enable),
-        .write_index     (wrb_SREG_write_index),
-        .write_selector  (wrb_SREG_write_selector),
-        .write_descriptor(wrb_SREG_write_descriptor),
-        .segment_selector(segment_selector),
-        .descriptor_cache(descriptor_cache),
-        .clk             (clk),
-        .rst_n           (rst_n)
+    rf_x86_seg_es u_rf_seg_es (
+        .i_write_enable    (wrb_seg_es_write_enable),
+        .i_write_selector  (wrb_seg_write_selector),
+        .i_write_descriptor(wrb_seg_write_descriptor),
+        .o_selector        (seg_es_selector),
+        .o_descriptor      (seg_es_descriptor),
+        .clk               (clk),
+        .rst_n             (rst_n)
     );
+
+    rf_x86_seg_cs u_rf_seg_cs (
+        .i_write_enable    (wrb_seg_cs_write_enable),
+        .i_write_selector  (wrb_seg_write_selector),
+        .i_write_descriptor(wrb_seg_write_descriptor),
+        .o_selector        (seg_cs_selector),
+        .o_descriptor      (seg_cs_descriptor),
+        .clk               (clk),
+        .rst_n             (rst_n)
+    );
+
+    rf_x86_seg_ss u_rf_seg_ss (
+        .i_write_enable    (wrb_seg_ss_write_enable),
+        .i_write_selector  (wrb_seg_write_selector),
+        .i_write_descriptor(wrb_seg_write_descriptor),
+        .o_selector        (seg_ss_selector),
+        .o_descriptor      (seg_ss_descriptor),
+        .clk               (clk),
+        .rst_n             (rst_n)
+    );
+
+    rf_x86_seg_ds u_rf_seg_ds (
+        .i_write_enable    (wrb_seg_ds_write_enable),
+        .i_write_selector  (wrb_seg_write_selector),
+        .i_write_descriptor(wrb_seg_write_descriptor),
+        .o_selector        (seg_ds_selector),
+        .o_descriptor      (seg_ds_descriptor),
+        .clk               (clk),
+        .rst_n             (rst_n)
+    );
+
+    rf_x86_seg_fs u_rf_seg_fs (
+        .i_write_enable    (wrb_seg_fs_write_enable),
+        .i_write_selector  (wrb_seg_write_selector),
+        .i_write_descriptor(wrb_seg_write_descriptor),
+        .o_selector        (seg_fs_selector),
+        .o_descriptor      (seg_fs_descriptor),
+        .clk               (clk),
+        .rst_n             (rst_n)
+    );
+
+    rf_x86_seg_gs u_rf_seg_gs (
+        .i_write_enable    (wrb_seg_gs_write_enable),
+        .i_write_selector  (wrb_seg_write_selector),
+        .i_write_descriptor(wrb_seg_write_descriptor),
+        .o_selector        (seg_gs_selector),
+        .o_descriptor      (seg_gs_descriptor),
+        .clk               (clk),
+        .rst_n             (rst_n)
+    );
+
+    assign segment_selector[0] = seg_es_selector;
+    assign segment_selector[1] = seg_cs_selector;
+    assign segment_selector[2] = seg_ss_selector;
+    assign segment_selector[3] = seg_ds_selector;
+    assign segment_selector[4] = seg_fs_selector;
+    assign segment_selector[5] = seg_gs_selector;
+    assign descriptor_cache[0] = seg_es_descriptor;
+    assign descriptor_cache[1] = seg_cs_descriptor;
+    assign descriptor_cache[2] = seg_ss_descriptor;
+    assign descriptor_cache[3] = seg_ds_descriptor;
+    assign descriptor_cache[4] = seg_fs_descriptor;
+    assign descriptor_cache[5] = seg_gs_descriptor;
 
     // ============================================================
     // flags register file
     // ============================================================
-    rf_x86_flags u_rf_flags (
-        .write_enable(wrb_FLAGS_write_enable),
-        .write_data   (wrb_FLAGS_write_data),
-        .CF           (CF),
-        .PF           (PF),
-        .AF           (AF),
-        .ZF           (ZF),
-        .SF           (SF),
-        .TF           (TF),
-        .IF           (IF),
-        .DF           (DF),
-        .OF           (OF),
-        .IOPL         (iOPL),
-        .NT           (NT),
-        .RF           (RF),
-        .VM           (VM),
-        .EFLAGS       (EFLAGS),
-        .FLAGS        (FLAGS),
-        .clk          (clk),
-        .rst_n        (rst_n)
+    rf_x86_eflags u_rf_eflags (
+        .i_write_enable(wrb_FLAGS_write_enable),
+        .i_write_data   (wrb_FLAGS_write_data),
+        .o_CF           (CF),
+        .o_PF           (PF),
+        .o_AF           (AF),
+        .o_ZF           (ZF),
+        .o_SF           (SF),
+        .o_TF           (TF),
+        .o_IF           (IF),
+        .o_DF           (DF),
+        .o_OF           (OF),
+        .o_IOPL         (iOPL),
+        .o_NT           (NT),
+        .o_RF           (RF),
+        .o_VM           (VM),
+        .o_EFLAGS       (EFLAGS),
+        .o_FLAGS        (FLAGS),
+        .clk            (clk),
+        .rst_n          (rst_n)
     );
 
     // ============================================================
     // instruction pointer register file
     // ============================================================
-    rf_x86_instruction_pointer u_rf_ip (
-        .write_enable(wrb_IP_write_enable),
-        .write_data   (wrb_IP_write_data),
-        .IP           (IP),
-        .EIP          (EIP),
-        .clk          (clk),
-        .rst_n        (rst_n)
+    rf_x86_eip u_rf_eip (
+        .i_write_enable(wrb_IP_write_enable),
+        .i_write_data   (wrb_IP_write_data),
+        .o_IP           (IP),
+        .o_EIP          (EIP),
+        .clk            (clk),
+        .rst_n          (rst_n)
     );
 
     // ============================================================
-    // control register file
+    // control registers (individual modules)
     // ============================================================
-    rf_x86_control u_rf_cr (
-        .write_enable       (wrb_CR_write_enable),
-        .write_index        (wrb_CR_write_index),
-        .write_data         (wrb_CR_write_data),
-        .CR                 (CR),
-        .PE                 (PE),
-        .MP                 (MP),
-        .EM                 (EM),
-        .TS                 (TS),
-        .R                  (R),
-        .PG                 (PG),
-        .page_directory_base(page_directory_base),
-        .clk                (clk),
-        .rst_n              (rst_n)
+    rf_x86_cr0 u_rf_cr0 (
+        .i_write_enable       (wrb_cr0_write_enable),
+        .i_write_data         (wrb_cr_write_data),
+        .o_data               (cr0_data),
+        .o_PE                 (PE),
+        .o_MP                 (MP),
+        .o_EM                 (EM),
+        .o_TS                 (TS),
+        .o_R                  (R),
+        .o_PG                 (PG),
+        .clk                  (clk),
+        .rst_n                (rst_n)
+    );
+
+    rf_x86_cr1 u_rf_cr1 (
+        .i_write_enable (wrb_cr1_write_enable),
+        .i_write_data   (wrb_cr_write_data),
+        .o_data         (cr1_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_cr2 u_rf_cr2 (
+        .i_write_enable (wrb_cr2_write_enable),
+        .i_write_data   (wrb_cr_write_data),
+        .o_data         (cr2_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_cr3 u_rf_cr3 (
+        .i_write_enable       (wrb_cr3_write_enable),
+        .i_write_data         (wrb_cr_write_data),
+        .o_data               (cr3_data),
+        .o_page_directory_base(page_directory_base),
+        .clk                  (clk),
+        .rst_n                (rst_n)
+    );
+
+    rf_x86_cr4 u_rf_cr4 (
+        .i_write_enable (wrb_cr4_write_enable),
+        .i_write_data   (wrb_cr_write_data),
+        .o_data         (cr4_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_cr5 u_rf_cr5 (
+        .i_write_enable (wrb_cr5_write_enable),
+        .i_write_data   (wrb_cr_write_data),
+        .o_data         (cr5_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_cr6 u_rf_cr6 (
+        .i_write_enable (wrb_cr6_write_enable),
+        .i_write_data   (wrb_cr_write_data),
+        .o_data         (cr6_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_cr7 u_rf_cr7 (
+        .i_write_enable (wrb_cr7_write_enable),
+        .i_write_data   (wrb_cr_write_data),
+        .o_data         (cr7_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
     );
 
     // ============================================================
-    // debug register file
+    // debug registers (individual modules)
     // ============================================================
-    rf_x86_debug u_rf_dr (
-        .write_enable(wrb_DR_write_enable),
-        .write_index (wrb_DR_write_index),
-        .write_data  (wrb_DR_write_data),
-        .DR          (DR),
-        .clk         (clk),
-        .rst_n       (rst_n)
+    rf_x86_dr0 u_rf_dr0 (
+        .i_write_enable (wrb_dr0_write_enable),
+        .i_write_data   (wrb_dr_write_data),
+        .o_data         (dr0_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_dr1 u_rf_dr1 (
+        .i_write_enable (wrb_dr1_write_enable),
+        .i_write_data   (wrb_dr_write_data),
+        .o_data         (dr1_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_dr2 u_rf_dr2 (
+        .i_write_enable (wrb_dr2_write_enable),
+        .i_write_data   (wrb_dr_write_data),
+        .o_data         (dr2_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_dr3 u_rf_dr3 (
+        .i_write_enable (wrb_dr3_write_enable),
+        .i_write_data   (wrb_dr_write_data),
+        .o_data         (dr3_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_dr4 u_rf_dr4 (
+        .i_write_enable (wrb_dr4_write_enable),
+        .i_write_data   (wrb_dr_write_data),
+        .o_data         (dr4_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_dr5 u_rf_dr5 (
+        .i_write_enable (wrb_dr5_write_enable),
+        .i_write_data   (wrb_dr_write_data),
+        .o_data         (dr5_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_dr6 u_rf_dr6 (
+        .i_write_enable (wrb_dr6_write_enable),
+        .i_write_data   (wrb_dr_write_data),
+        .o_data         (dr6_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_dr7 u_rf_dr7 (
+        .i_write_enable (wrb_dr7_write_enable),
+        .i_write_data   (wrb_dr_write_data),
+        .o_data         (dr7_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
     );
 
     // ============================================================
-    // test register file
+    // test registers (individual modules)
     // ============================================================
-    rf_x86_test u_rf_tr (
-        .write_enable(wrb_TR_write_enable),
-        .write_index (wrb_TR_write_index),
-        .write_data  (wrb_TR_write_data),
-        .TR          (TR),
-        .clk         (clk),
-        .rst_n       (rst_n)
+    rf_x86_tr0 u_rf_tr0 (
+        .i_write_enable (wrb_tr0_write_enable),
+        .i_write_data   (wrb_tr_write_data),
+        .o_data         (tr0_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_tr1 u_rf_tr1 (
+        .i_write_enable (wrb_tr1_write_enable),
+        .i_write_data   (wrb_tr_write_data),
+        .o_data         (tr1_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_tr2 u_rf_tr2 (
+        .i_write_enable (wrb_tr2_write_enable),
+        .i_write_data   (wrb_tr_write_data),
+        .o_data         (tr2_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_tr3 u_rf_tr3 (
+        .i_write_enable (wrb_tr3_write_enable),
+        .i_write_data   (wrb_tr_write_data),
+        .o_data         (tr3_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_tr4 u_rf_tr4 (
+        .i_write_enable (wrb_tr4_write_enable),
+        .i_write_data   (wrb_tr_write_data),
+        .o_data         (tr4_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_tr5 u_rf_tr5 (
+        .i_write_enable (wrb_tr5_write_enable),
+        .i_write_data   (wrb_tr_write_data),
+        .o_data         (tr5_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_tr6 u_rf_tr6 (
+        .i_write_enable (wrb_tr6_write_enable),
+        .i_write_data   (wrb_tr_write_data),
+        .o_data         (tr6_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x86_tr7 u_rf_tr7 (
+        .i_write_enable (wrb_tr7_write_enable),
+        .i_write_data   (wrb_tr_write_data),
+        .o_data         (tr7_data),
+        .clk            (clk),
+        .rst_n          (rst_n)
     );
 
     // ============================================================
