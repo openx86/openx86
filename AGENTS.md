@@ -42,7 +42,7 @@
 
 **Reset/clock:** active-low `rst_n`; `always_ff @(posedge clk or negedge rst_n)`; reset defines full arch state; avoid reset on pure datapath unless needed + documented.
 
-**Files:** one main module per `rtl/*.sv` (wrapper exceptions with review); filename ≈ module; shared defs → `rtl/common/` or `@include/`; explicit includes/packages.
+**Files:** one main module per `rtl/*.sv` (wrapper exceptions with review); filename ≈ module; shared defs → `rtl/common/` or `include/`; explicit includes/packages.
 
 **Bus vs peripheral:** `rtl/device/` = CPU-bus controllers; new bus-visible logic → controller + decode in bus integration; `rtl/peripheral/` = PHY/protocol only, never CPU-bus direct; only `rtl/bus_controller.sv` (or designated top) maps devices to CPU address space.
 

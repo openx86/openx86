@@ -2,7 +2,7 @@
 +incdir+rtl
 +incdir+rtl/cpu
 +incdir+rtl/cpu/include
-+incdir+@include
++incdir+include
 rtl/bus_controller.sv
 rtl/openx86_soc_top.sv
 rtl/chipset/chip_8237_dma.sv

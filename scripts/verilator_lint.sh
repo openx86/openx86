@@ -46,7 +46,7 @@ while IFS= read -r sv_file; do
   mkdir -p "$FILE_OBJDIR"
   
   # Run verilator lint-only on this single file
-  # -I@include for common definitions, plus all RTL subdirectories for module resolution
+  # -Iinclude for common definitions, plus all RTL subdirectories for module resolution
   if verilator \
     --lint-only \
     -Wall \
@@ -55,7 +55,7 @@ while IFS= read -r sv_file; do
     -Wno-UNUSEDPARAM \
     -Wno-SYNCASYNCNET \
     -Wno-fatal \
-    -I@include \
+    -Iinclude \
     -Irtl \
     -Irtl/chipset \
     -Irtl/common \
