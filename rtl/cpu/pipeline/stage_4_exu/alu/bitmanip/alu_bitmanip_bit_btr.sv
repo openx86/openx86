@@ -13,30 +13,35 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : bit_btr.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : bit_btr module
 // ============================================================================
 
-`timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
+module alu_bitmanip_bit_btr (
+    // =========================
+    // operands
+    // =========================
+    input  logic [31: 0]  a,
+    input  logic [31: 0]  bit_index,
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
-	);
+    // =========================
+    // outputs
+    // =========================
+    output logic [31: 0] y,
+    output logic         cf
+);
+    // ============================================================
+    // intermediate signals
+    // ============================================================
+    logic [31: 0] mask;
 
-	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
-		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
-			$finish(1);
-		end
-		$display("eu_shf_shr_tb PASS");
-		$finish;
-	end
+    // ============================================================
+    // combinational logic: derive outputs
+    // ============================================================
+    always_comb begin : comb_bit_reset
+        mask = 32'h1 << bit_index[ 4: 0];
+        cf = a[bit_index[ 4: 0]];
+        y = a & ~mask;
+    end
 endmodule

@@ -13,30 +13,30 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : eu_log_or_tb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : eu_log_or_tb module
 // ============================================================================
 
 `timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
+module log_or_tb;
+	logic [31: 0] a, b, y;
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
+	alu_logic_log_or u (
+		.a ( a ),
+		.b ( b ),
+		.y ( y )
 	);
 
 	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
+		a = 32'hF0F0_00FF;
+		b = 32'h0FF0_F00F;
 		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
+		if (y !== 32'hFFF0_F0FF) begin
+			$display("FAIL log_or");
 			$finish(1);
 		end
-		$display("eu_shf_shr_tb PASS");
+		$display("eu_log_or_tb PASS");
 		$finish;
 	end
 endmodule

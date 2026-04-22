@@ -13,30 +13,50 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : eu_misc_movzx_tb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : eu_misc_movzx_tb module
 // ============================================================================
 
 `timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
-	);
+module misc_movzx_tb;
+    logic [31: 0] a;
+    logic [ 1: 0] width;
+    logic [31: 0] y;
 
-	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
-		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
-			$finish(1);
-		end
-		$display("eu_shf_shr_tb PASS");
-		$finish;
-	end
+    alu_misc_misc_movzx u_dut (
+        .a ( a ),
+        .width ( width ),
+        .y ( y )
+    );
+
+    initial begin
+        a = 32'h0000_00FF;
+        width = 2'b01;
+        #1;
+        if (y !== 32'h0000_00FF) begin
+            $display("FAIL misc_movzx byte");
+            $finish(1);
+        end
+
+        a = 32'h0000_FF01;
+        width = 2'b10;
+        #1;
+        if (y !== 32'h0000_FF01) begin
+            $display("FAIL misc_movzx word");
+            $finish(1);
+        end
+
+        a = 32'h89AB_CDEF;
+        width = 2'b11;
+        #1;
+        if (y !== 32'h89AB_CDEF) begin
+            $display("FAIL misc_movzx dword");
+            $finish(1);
+        end
+
+        $display("eu_misc_movzx_tb PASS");
+        $finish;
+    end
 endmodule

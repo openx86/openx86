@@ -13,30 +13,43 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : eu_bit_bt_tb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : eu_bit_bt_tb module
 // ============================================================================
 
 `timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
-	);
+module bit_bt_tb;
+    logic [31: 0] a;
+    logic [31: 0] b;
+    logic [31: 0] y;
+    logic        cf;
 
-	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
-		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
-			$finish(1);
-		end
-		$display("eu_shf_shr_tb PASS");
-		$finish;
-	end
+    alu_bitmanip_bit_bt u_dut (
+        .a ( a ),
+        .bit_index ( b ),
+        .y ( y ),
+        .cf ( cf )
+    );
+
+    initial begin
+        a = 32'h0000_0020;
+        b = 32'd5;
+        #1;
+        if (cf !== 1'b1 || y !== a) begin
+            $display("FAIL bit_bt bit1");
+            $finish(1);
+        end
+
+        b = 32'd4;
+        #1;
+        if (cf !== 1'b0 || y !== a) begin
+            $display("FAIL bit_bt bit0");
+            $finish(1);
+        end
+
+        $display("eu_bit_bt_tb PASS");
+        $finish;
+    end
 endmodule

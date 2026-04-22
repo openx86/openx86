@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 //  Copyright (c) 2026 Chang Wei
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +19,7 @@
 // ============================================================================
 
 // ============================================================================
-// execute_unit �?CPUID 多周期写回冒烟（iverilog -g2012 / Verilator�?
+// execute_unit 鈥?CPUID 澶氬懆鏈熷啓鍥炲啋鐑燂紙iverilog -g2012 / Verilator锛?
 // ============================================================================
 `timescale 1ns/1ns
 
@@ -60,7 +60,7 @@ module execute_i486_cpuid_tb;
         forever #5 clk = ~clk;
     end
 
-    execute_unit_i486_ext u_dut (
+    i486_execute_unit u_dut (
         .clk ( clk ),
         .rst_n ( rst_n ),
         .insn_fire ( insn_fire ),
@@ -81,7 +81,7 @@ module execute_i486_cpuid_tb;
         .invlpg_linear_addr ( invlpg_linear_addr )
     );
 
-    // 模拟 core �?EAX �?CPUID 写回后的可见行为，避免测试与真实流水线脱节�?
+    // 妯℃嫙 core 涓?EAX 鍦?CPUID 鍐欏洖鍚庣殑鍙琛屼负锛岄伩鍏嶆祴璇曚笌鐪熷疄娴佹按绾胯劚鑺傘€?
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             gpr_eax <= 32'h0;
@@ -180,3 +180,4 @@ module execute_i486_cpuid_tb;
     end
 
 endmodule
+

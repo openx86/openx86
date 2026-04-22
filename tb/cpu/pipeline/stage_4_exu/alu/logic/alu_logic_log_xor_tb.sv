@@ -13,30 +13,30 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : eu_log_xor_tb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : eu_log_xor_tb module
 // ============================================================================
 
 `timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
+module log_xor_tb;
+	logic [31: 0] a, b, y;
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
+	alu_logic_log_xor u (
+		.a ( a ),
+		.b ( b ),
+		.y ( y )
 	);
 
 	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
+		a = 32'hF0F0_00FF;
+		b = 32'h0FF0_F00F;
 		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
+		if (y !== 32'hFF00_F0F0) begin
+			$display("FAIL log_xor");
 			$finish(1);
 		end
-		$display("eu_shf_shr_tb PASS");
+		$display("eu_log_xor_tb PASS");
 		$finish;
 	end
 endmodule

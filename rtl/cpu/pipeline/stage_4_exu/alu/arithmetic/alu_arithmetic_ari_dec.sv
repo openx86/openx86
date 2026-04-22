@@ -1,4 +1,4 @@
-// ============================================================================
+        // ============================================================================
 //  Copyright (c) 2026 Chang Wei
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -13,30 +13,24 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : ari_dec.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : ari_dec module
 // ============================================================================
 
-`timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
+module alu_arithmetic_ari_dec (
+    // =========================
+    // operand
+    // =========================
+    input  logic [31: 0]  a,
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
-	);
-
-	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
-		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
-			$finish(1);
-		end
-		$display("eu_shf_shr_tb PASS");
-		$finish;
-	end
+    // =========================
+    // output
+    // =========================
+    output logic [31: 0] y
+);
+    // ============================================================
+    // combinational logic: continuous assignment
+    // ============================================================
+    assign y = a - 32'd1;
 endmodule

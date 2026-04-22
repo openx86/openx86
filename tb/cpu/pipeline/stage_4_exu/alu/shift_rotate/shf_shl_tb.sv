@@ -22,7 +22,7 @@
 module shf_shl_tb;
 	logic [31: 0] a, c, y;
 
-	shf_shl u (
+	alu_shift_rotate_shf_shl u (
 		.a     ( a ),
 		.count ( c ),
 		.y     ( y )

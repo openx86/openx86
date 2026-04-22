@@ -13,30 +13,33 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : eu_ari_adc_tb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : eu_ari_adc_tb module
 // ============================================================================
 
 `timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
+module ari_adc_tb;
+	logic [31: 0] a, b, y;
+	logic         cf;
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
+	alu_arithmetic_ari_adc u (
+		.a  ( a  ),
+		.b  ( b  ),
+		.cf ( cf ),
+		.y  ( y  )
 	);
 
 	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
+		a  = 2;
+		b  = 3;
+		cf = 1;
 		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
+		if (y !== 6) begin
+			$display("FAIL ari_adc");
 			$finish(1);
 		end
-		$display("eu_shf_shr_tb PASS");
+		$display("eu_ari_adc_tb PASS");
 		$finish;
 	end
 endmodule

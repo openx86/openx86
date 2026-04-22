@@ -13,30 +13,23 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : misc_movsx.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : misc_movsx module
 // ============================================================================
 
-`timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
+module alu_misc_misc_movsx (    input  logic [31: 0]  a,  // 操作数 / 源 1
+    input  logic [ 1: 0]   width, // 源宽度编码
+    output logic [31: 0] y // 结果输出
+);
+    // 组合逻辑：推导输出
+    always_comb begin
+        if (width == 2'b01)
+            y = { { 24{ a[7] } }, a[ 7: 0] };
+        else if (width == 2'b10)
+            y = { { 16{ a[15] } }, a[15: 0] };
+        else
+            y = a;
+    end
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
-	);
-
-	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
-		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
-			$finish(1);
-		end
-		$display("eu_shf_shr_tb PASS");
-		$finish;
-	end
 endmodule

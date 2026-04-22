@@ -13,30 +13,17 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : misc_xchg.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : misc_xchg module
 // ============================================================================
 
-`timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
-
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
-	);
-
-	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
-		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
-			$finish(1);
-		end
-		$display("eu_shf_shr_tb PASS");
-		$finish;
-	end
+module alu_misc_misc_xchg (    input  logic [31: 0]  a,  // 操作数 / 源 1
+    input  logic [31: 0]  b, // 操作数 / 源 2
+    output logic [31: 0] y // 结果输出
+);
+    // 组合逻辑：推导输出
+    always_comb begin
+        y = b;
+    end
 endmodule

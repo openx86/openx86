@@ -22,7 +22,7 @@
 module rot_ror_tb;
 	logic [31: 0] a, c, y;
 
-	rot_ror u (
+	alu_shift_rotate_rot_ror u (
 		.a     ( a ),
 		.count ( c ),
 		.y     ( y )

@@ -22,7 +22,7 @@
 module shf_sar_tb;
 	logic [31: 0] a, c, y;
 
-	shf_sar u (
+	alu_shift_rotate_shf_sar u (
 		.a     ( a ),
 		.count ( c ),
 		.y     ( y )

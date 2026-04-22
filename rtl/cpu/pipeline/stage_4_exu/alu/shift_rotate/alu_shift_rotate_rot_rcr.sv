@@ -13,30 +13,38 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : rot_rcr.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : rot_rcr module
 // ============================================================================
 
-`timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
+module alu_shift_rotate_rot_rcr (    input  logic [31: 0]  a,  // 操作数 / 源 1
+    input  logic [31: 0]  count, // 移位或旋转计数值（低位有效）
+    input  logic          cf_in, // 输入进位
+    output logic [31: 0] y, // 结果输出
+    output logic         cf_out // 输出进位
+);
+    logic [31: 0] tmp;
+    logic [ 4: 0]  sh;
+    logic        cf;
+    logic        next_cf;
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
-	);
+    // 组合逻辑：推导输出
+    always_comb begin
+        tmp = a;
+        sh = count[ 4: 0];
+        cf = cf_in;
+        next_cf = cf_in;
 
-	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
-		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
-			$finish(1);
-		end
-		$display("eu_shf_shr_tb PASS");
-		$finish;
-	end
+        for (int i = 0; i < 32; i++) begin
+            if (i < sh) begin
+                next_cf = tmp[0];
+                tmp = { cf, tmp[31:  1] };
+                cf = next_cf;
+            end
+        end
+
+        y = tmp;
+        cf_out = cf;
+    end
 endmodule

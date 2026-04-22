@@ -26,7 +26,7 @@ module shf_shrd_tb;
     logic [31: 0] c;
     logic [31: 0] y;
 
-    shf_shrd u_dut (
+    alu_shift_rotate_shf_shrd u_dut (
         .a ( a ),
         .b ( b ),
         .count ( c ),

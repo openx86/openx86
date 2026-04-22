@@ -474,47 +474,47 @@ module stage_4_exu (
     logic [31: 0] alu_setcc_y;
 
     // Arithmetic
-    ari_add   u_ari_add   (.a (operand_a), .b (operand_b), .y (alu_add_y));
-    ari_adc   u_ari_adc   (.a (operand_a), .b (operand_b), .cf (i_flag_cf), .y (alu_adc_y));
-    ari_sub   u_ari_sub   (.a (operand_a), .b (operand_b), .y (alu_sub_y));
-    ari_sbb   u_ari_sbb   (.a (operand_a), .b (operand_b), .cf (i_flag_cf), .y (alu_sbb_y));
-    ari_inc   u_ari_inc   (.a (operand_a), .y (alu_inc_y));
-    ari_dec   u_ari_dec   (.a (operand_a), .y (alu_dec_y));
-    ari_neg   u_ari_neg   (.a (operand_a), .y (alu_neg_y));
-    log_not   u_log_not   (.a (operand_a), .y (alu_not_y));
+    alu_arithmetic_ari_add   u_ari_add   (.a (operand_a), .b (operand_b), .y (alu_add_y));
+    alu_arithmetic_ari_adc   u_ari_adc   (.a (operand_a), .b (operand_b), .cf (i_flag_cf), .y (alu_adc_y));
+    alu_arithmetic_ari_sub   u_ari_sub   (.a (operand_a), .b (operand_b), .y (alu_sub_y));
+    alu_arithmetic_ari_sbb   u_ari_sbb   (.a (operand_a), .b (operand_b), .cf (i_flag_cf), .y (alu_sbb_y));
+    alu_arithmetic_ari_inc   u_ari_inc   (.a (operand_a), .y (alu_inc_y));
+    alu_arithmetic_ari_dec   u_ari_dec   (.a (operand_a), .y (alu_dec_y));
+    alu_arithmetic_ari_neg   u_ari_neg   (.a (operand_a), .y (alu_neg_y));
+    alu_logic_log_not   u_log_not   (.a (operand_a), .y (alu_not_y));
 
     // Logic
-    log_and   u_log_and   (.a (operand_a), .b (operand_b), .y (alu_and_y));
-    log_or    u_log_or    (.a (operand_a), .b (operand_b), .y (alu_or_y));
-    log_xor   u_log_xor   (.a (operand_a), .b (operand_b), .y (alu_xor_y));
+    alu_logic_log_and   u_log_and   (.a (operand_a), .b (operand_b), .y (alu_and_y));
+    alu_logic_log_or    u_log_or    (.a (operand_a), .b (operand_b), .y (alu_or_y));
+    alu_logic_log_xor   u_log_xor   (.a (operand_a), .b (operand_b), .y (alu_xor_y));
 
     // Shift/Rotate
-    shf_shl   u_shf_shl   (.a (operand_a), .count (operand_count), .y (alu_shl_y));
-    shf_shr   u_shf_shr   (.a (operand_a), .count (operand_count), .y (alu_shr_y));
-    shf_sar   u_shf_sar   (.a (operand_a), .count (operand_count), .y (alu_sar_y));
-    rot_rol   u_rot_rol   (.a (operand_a), .count (operand_count), .y (alu_rol_y));
-    rot_ror   u_rot_ror   (.a (operand_a), .count (operand_count), .y (alu_ror_y));
-    rot_rcl   u_rot_rcl   (.a (operand_a), .count (operand_count), .cf_in (i_flag_cf), .y (alu_rcl_y), .cf_out (alu_rcl_cf));
-    rot_rcr   u_rot_rcr   (.a (operand_a), .count (operand_count), .cf_in (i_flag_cf), .y (alu_rcr_y), .cf_out (alu_rcr_cf));
-    shf_shld  u_shf_shld  (.a (operand_a), .b (operand_b), .count (operand_count), .y (alu_shld_y));
-    shf_shrd  u_shf_shrd  (.a (operand_a), .b (operand_b), .count (operand_count), .y (alu_shrd_y));
+    alu_shift_rotate_shf_shl   u_shf_shl   (.a (operand_a), .count (operand_count), .y (alu_shl_y));
+    alu_shift_rotate_shf_shr   u_shf_shr   (.a (operand_a), .count (operand_count), .y (alu_shr_y));
+    alu_shift_rotate_shf_sar   u_shf_sar   (.a (operand_a), .count (operand_count), .y (alu_sar_y));
+    alu_shift_rotate_rot_rol   u_rot_rol   (.a (operand_a), .count (operand_count), .y (alu_rol_y));
+    alu_shift_rotate_rot_ror   u_rot_ror   (.a (operand_a), .count (operand_count), .y (alu_ror_y));
+    alu_shift_rotate_rot_rcl   u_rot_rcl   (.a (operand_a), .count (operand_count), .cf_in (i_flag_cf), .y (alu_rcl_y), .cf_out (alu_rcl_cf));
+    alu_shift_rotate_rot_rcr   u_rot_rcr   (.a (operand_a), .count (operand_count), .cf_in (i_flag_cf), .y (alu_rcr_y), .cf_out (alu_rcr_cf));
+    alu_shift_rotate_shf_shld  u_shf_shld  (.a (operand_a), .b (operand_b), .count (operand_count), .y (alu_shld_y));
+    alu_shift_rotate_shf_shrd  u_shf_shrd  (.a (operand_a), .b (operand_b), .count (operand_count), .y (alu_shrd_y));
 
     // Bit manipulation
-    bit_bsf   u_bit_bsf   (.a (operand_a), .y (alu_bsf_y), .zf (alu_bsf_zf));
-    bit_bsr   u_bit_bsr   (.a (operand_a), .y (alu_bsr_y), .zf (alu_bsr_zf));
-    bit_bt    u_bit_bt    (.a (operand_a), .bit_index (operand_b), .y (alu_bt_y), .cf (alu_bt_cf));
-    bit_bts   u_bit_bts   (.a (operand_a), .bit_index (operand_b), .y (alu_bts_y), .cf (alu_bts_cf));
-    bit_btr   u_bit_btr   (.a (operand_a), .bit_index (operand_b), .y (alu_btr_y), .cf (alu_btr_cf));
-    bit_btc   u_bit_btc   (.a (operand_a), .bit_index (operand_b), .y (alu_btc_y), .cf (alu_btc_cf));
+    alu_bitmanip_bit_bsf   u_bit_bsf   (.a (operand_a), .y (alu_bsf_y), .zf (alu_bsf_zf));
+    alu_bitmanip_bit_bsr   u_bit_bsr   (.a (operand_a), .y (alu_bsr_y), .zf (alu_bsr_zf));
+    alu_bitmanip_bit_bt    u_bit_bt    (.a (operand_a), .bit_index (operand_b), .y (alu_bt_y), .cf (alu_bt_cf));
+    alu_bitmanip_bit_bts   u_bit_bts   (.a (operand_a), .bit_index (operand_b), .y (alu_bts_y), .cf (alu_bts_cf));
+    alu_bitmanip_bit_btr   u_bit_btr   (.a (operand_a), .bit_index (operand_b), .y (alu_btr_y), .cf (alu_btr_cf));
+    alu_bitmanip_bit_btc   u_bit_btc   (.a (operand_a), .bit_index (operand_b), .y (alu_btc_y), .cf (alu_btc_cf));
 
     // Misc
-    misc_xchg     u_misc_xchg     (.a (operand_a), .b (operand_b), .y (alu_xchg_y));
-    misc_movsx    u_misc_movsx    (.a (operand_a), .width (2'b10), .y (alu_movsx_y));
-    misc_movzx    u_misc_movzx    (.a (operand_a), .width (2'b10), .y (alu_movzx_y));
-    misc_bswap    u_misc_bswap    (.a (operand_a), .y (alu_bswap_y));
-    misc_xadd     u_misc_xadd     (.a (operand_a), .b (operand_b), .y (alu_xadd_y));
-    misc_cmpxchg  u_misc_cmpxchg  (.acc (i_gpr_eax), .dst (operand_a), .src (operand_b), .y (alu_cmpxchg_y), .zf (alu_cmpxchg_zf));
-    misc_setcc    u_misc_setcc    (.flags ({21'd0, i_flag_of, 1'b0, i_flag_sf, 1'b0, i_flag_zf, 1'b0, i_flag_af, 1'b0, i_flag_pf, 1'b1, i_flag_cf}), .tttn (i_uop.uop_tttn), .y (alu_setcc_y));
+    alu_misc_misc_xchg     u_misc_xchg     (.a (operand_a), .b (operand_b), .y (alu_xchg_y));
+    alu_misc_misc_movsx    u_misc_movsx    (.a (operand_a), .width (2'b10), .y (alu_movsx_y));
+    alu_misc_misc_movzx    u_misc_movzx    (.a (operand_a), .width (2'b10), .y (alu_movzx_y));
+    alu_misc_misc_bswap    u_misc_bswap    (.a (operand_a), .y (alu_bswap_y));
+    alu_misc_misc_xadd     u_misc_xadd     (.a (operand_a), .b (operand_b), .y (alu_xadd_y));
+    alu_misc_misc_cmpxchg  u_misc_cmpxchg  (.acc (i_gpr_eax), .dst (operand_a), .src (operand_b), .y (alu_cmpxchg_y), .zf (alu_cmpxchg_zf));
+    alu_misc_misc_setcc    u_misc_setcc    (.flags ({21'd0, i_flag_of, 1'b0, i_flag_sf, 1'b0, i_flag_zf, 1'b0, i_flag_af, 1'b0, i_flag_pf, 1'b1, i_flag_cf}), .tttn (i_uop.uop_tttn), .y (alu_setcc_y));
 
     // ============================================================
     // ALU result mux — select based on int_op
@@ -565,7 +565,7 @@ module stage_4_exu (
     // ============================================================
     // Branch unit
     // ============================================================
-    execute_branch_unit u_branch (
+    branch_execute_branch_unit u_branch (
         .i_is_jcc     ( is_jcc              ),
         .i_jcc_nibble ( i_uop.uop_tttn      ),
         .i_CF         ( i_flag_cf            ),
@@ -597,7 +597,7 @@ module stage_4_exu (
     // ============================================================
     // AGU (Address Generation Unit)
     // ============================================================
-    address_generation_unit u_agu (
+    agu_lsu_address_generation_unit u_agu (
         .i_base              ( operand_a                ),
         .i_index             ( gpr_by_idx[i_uop.uop_src1_reg] ),
         .i_scale             ( i_uop.uop_sib_scale       ),
@@ -628,7 +628,7 @@ module stage_4_exu (
     logic insn_fire;
     assign insn_fire = i_uop_valid & o_stage_ready & ~i_flush;
 
-    execute_unit u_ext (
+    i486_execute_unit u_ext (
         .insn_fire          ( insn_fire           ),
         .op_cpuid           ( i_op_cpuid          ),
         .gpr_eax            ( i_gpr_eax           ),

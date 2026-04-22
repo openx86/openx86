@@ -13,30 +13,28 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : eu_shf_shr_tb.sv
+//  File        : eu_ari_neg_tb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : eu_shf_shr_tb module
+//  Description : eu_ari_neg_tb module
 // ============================================================================
 
 `timescale 1ns/1ns
-module shf_shr_tb;
-	logic [31: 0] a, c, y;
+module ari_neg_tb;
+	logic [31: 0] a, y;
 
-	alu_shift_rotate_shf_shr u (
-		.a     ( a ),
-		.count ( c ),
-		.y     ( y )
+	alu_arithmetic_ari_neg u (
+		.a ( a ),
+		.y ( y )
 	);
 
 	initial begin
-		a = 32'h8000_0000;
-		c = 32'd1;
+		a = 32'd1;
 		#1;
-		if (y !== 32'h4000_0000) begin
-			$display("FAIL shf_shr");
+		if (y !== 32'hFFFF_FFFF) begin
+			$display("FAIL ari_neg");
 			$finish(1);
 		end
-		$display("eu_shf_shr_tb PASS");
+		$display("eu_ari_neg_tb PASS");
 		$finish;
 	end
 endmodule

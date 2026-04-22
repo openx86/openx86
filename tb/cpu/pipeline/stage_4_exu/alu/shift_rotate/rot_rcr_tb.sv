@@ -27,7 +27,7 @@ module rot_rcr_tb;
     logic [31: 0] y;
     logic        cf_out;
 
-    rot_rcr u_dut (
+    alu_shift_rotate_rot_rcr u_dut (
         .a ( a ),
         .count ( c ),
         .cf_in ( cf_in ),
