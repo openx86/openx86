@@ -27,29 +27,29 @@ module i486_cpu_core (
     // =========================
     // MMU channel
     // =========================
-    output logic         o_mmu_vaild,
+    output logic         o_mmu_vaild      = 1'b0,
     input  logic          i_mmu_ready,
-    output logic [31: 0] o_mmu_address,
+    output logic [31: 0] o_mmu_address     = 32'b0,
     input  logic [31: 0] i_mmu_data_read,
 
     // =========================
     // instruction fetch channel
     // =========================
-    output logic         o_code_vaild,
+    output logic         o_code_vaild     = 1'b0,
     input  logic          i_code_ready,
-    output logic [31: 0] o_code_address,
+    output logic [31: 0] o_code_address    = 32'b0,
     input  logic [31: 0] i_code_data_read,
 
     // =========================
     // data access channel
     // =========================
-    output logic         o_data_vaild,
+    output logic         o_data_vaild     = 1'b0,
     input  logic          i_data_ready,
-    output logic         o_data_write_enable,
-    output logic         o_data_io_access,
-    output logic [31: 0] o_data_address,
+    output logic         o_data_write_enable = 1'b0,
+    output logic         o_data_io_access   = 1'b0,
+    output logic [31: 0] o_data_address    = 32'b0,
     input  logic [31: 0] i_data_data_read,
-    output logic [31: 0] o_data_data_write,
+    output logic [31: 0] o_data_data_write  = 32'b0,
 
     // =========================
     // clock and reset
@@ -66,9 +66,9 @@ module i486_cpu_core (
     logic        write_enable;
     logic [ 2: 0] write_index;
     logic [31: 0] write_data;
-    logic        wrb_write_enable;
-    logic [ 2: 0] wrb_write_index;
-    logic [31: 0] wrb_write_data;
+    logic        wrb_write_enable      = 1'b0;
+    logic [ 2: 0] wrb_write_index     = 3'b0;
+    logic [31: 0] wrb_write_data      = 32'b0;
 
     // ============================================================
     // segment register write ports
@@ -77,10 +77,10 @@ module i486_cpu_core (
     logic [ 2: 0] SREG_write_index;
     logic [15: 0] SREG_write_selector;
     logic [63: 0] SREG_write_descriptor;
-    logic        wrb_SREG_write_enable;
-    logic [ 2: 0] wrb_SREG_write_index;
-    logic [15: 0] wrb_SREG_write_selector;
-    logic [63: 0] wrb_SREG_write_descriptor;
+    logic        wrb_SREG_write_enable = 1'b0;
+    logic [ 2: 0] wrb_SREG_write_index    = 3'b0;
+    logic [15: 0] wrb_SREG_write_selector = 16'b0;
+    logic [63: 0] wrb_SREG_write_descriptor = 64'b0;
 
     // ============================================================
     // flags register write ports
@@ -104,9 +104,9 @@ module i486_cpu_core (
     logic         CR_write_enable;
     logic [ 2: 0] CR_write_index;
     logic [31: 0] CR_write_data;
-    logic         wrb_CR_write_enable;
-    logic [ 2: 0] wrb_CR_write_index;
-    logic [31: 0] wrb_CR_write_data;
+    logic         wrb_CR_write_enable = 1'b0;
+    logic [ 2: 0] wrb_CR_write_index    = 3'b0;
+    logic [31: 0] wrb_CR_write_data     = 32'b0;
 
     // ============================================================
     // debug registers write ports
@@ -114,9 +114,9 @@ module i486_cpu_core (
     logic         DR_write_enable;
     logic [ 2: 0] DR_write_index;
     logic [31: 0] DR_write_data;
-    logic         wrb_DR_write_enable;
-    logic [ 2: 0] wrb_DR_write_index;
-    logic [31: 0] wrb_DR_write_data;
+    logic         wrb_DR_write_enable = 1'b0;
+    logic [ 2: 0] wrb_DR_write_index    = 3'b0;
+    logic [31: 0] wrb_DR_write_data     = 32'b0;
 
     // ============================================================
     // test registers write ports
@@ -124,9 +124,9 @@ module i486_cpu_core (
     logic         TR_write_enable;
     logic [ 2: 0] TR_write_index;
     logic [31: 0] TR_write_data;
-    logic         wrb_TR_write_enable;
-    logic [ 2: 0] wrb_TR_write_index;
-    logic [31: 0] wrb_TR_write_data;
+    logic         wrb_TR_write_enable = 1'b0;
+    logic [ 2: 0] wrb_TR_write_index    = 3'b0;
+    logic [31: 0] wrb_TR_write_data     = 32'b0;
 
     // ============================================================
     // GPR read ports (8/16/32-bit views broadcast to decode and EU)

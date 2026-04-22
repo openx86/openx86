@@ -288,8 +288,18 @@ module chip_i8042_ps2 #(
             aux_tx_hold    <= '0;
             rd_data_port_d <= 1'b0;
         end else begin
-            kbd_tx_req <= 1'b0;
-            aux_tx_req <= 1'b0;
+            kbd_tx_req     <= 1'b0;
+            aux_tx_req     <= 1'b0;
+            kbd_irq_en     <= kbd_irq_en;
+            aux_irq_en     <= aux_irq_en;
+            kbd_parity_err <= kbd_parity_err;
+            aux_parity_err <= aux_parity_err;
+            kbd_tx_byte    <= kbd_tx_byte;
+            aux_tx_byte    <= aux_tx_byte;
+            kbd_tx_pending <= kbd_tx_pending;
+            kbd_tx_hold    <= kbd_tx_hold;
+            aux_tx_pending <= aux_tx_pending;
+            aux_tx_hold    <= aux_tx_hold;
 
             if (P_USE_REAL_PS2 && kbd_rx_str && (kbd_count < LP_KBD_D_W)) begin
                 kbd_fifo[kbd_wptr] <= kbd_rx_dat;
