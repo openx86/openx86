@@ -447,6 +447,9 @@ typedef struct packed {
     logic [ 2: 0] uop_src2_reg;      // Source register 2 index
     logic [31: 0] uop_immediate;     // Immediate value
     logic [31: 0] uop_displacement;  // Displacement value
+    logic [ 3: 0] uop_tttn;          // Condition code for Jcc/SETcc
+    logic [ 2: 0] uop_eee;           // X87 sub-opcode index
+    logic [ 1: 0] uop_sib_scale;     // SIB scale factor
     logic        uop_has_imm;        // Has immediate operand
     logic        uop_has_disp;       // Has displacement operand
     logic        uop_mem_access;     // Memory access operation

@@ -15,21 +15,56 @@
 // ----------------------------------------------------------------------------
 //  File        : uop_to_exu.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : uop_to_exu module
+//  Description : Pipeline register from stage_3_uop to stage_4_exu
 // ============================================================================
+
+`include "openx86_defs.h.sv"
 
 module uop_to_exu (
     // =========================
-    // uop to exu handshake
+    // Stage 3 inputs (from FIFO output)
     // =========================
-    input  logic i_uop_valid,
-    input  logic i_exu_ready,
-    input  logic i_flush,
-    output logic o_stage3_valid,
-    output logic o_uop_fire
+    input  logic                i_uop_valid,
+    input  micro_op_t           i_uop,
+
+    // =========================
+    // Stage 4 handshake (to EXU)
+    // =========================
+    input  logic                i_exu_ready,
+    output logic                o_stage3_ready,
+    output logic                o_uop_valid,
+    output micro_op_t           o_uop,
+
+    // =========================
+    // Pipeline control
+    // =========================
+    input  logic                i_flush,
+
+    // =========================
+    // Clock and reset
+    // =========================
+    input  logic                clk,
+    input  logic                rst_n
 );
 
-    assign o_stage3_valid = i_uop_valid & ~i_flush;
-    assign o_uop_fire     = i_uop_valid & i_exu_ready & ~i_flush;
+    // ============================================================
+    // Pipeline register: latch when downstream is ready
+    // ============================================================
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            o_uop_valid <= 1'b0;
+            o_uop       <= '0;
+        end else if (i_flush) begin
+            o_uop_valid <= 1'b0;
+        end else if (i_exu_ready) begin
+            o_uop_valid <= i_uop_valid;
+            o_uop       <= i_uop;
+        end
+    end
+
+    // ============================================================
+    // Back-pressure: stage 3 can push when EXU is ready
+    // ============================================================
+    assign o_stage3_ready = i_exu_ready;
 
 endmodule
