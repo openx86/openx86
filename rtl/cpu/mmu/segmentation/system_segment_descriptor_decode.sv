@@ -37,21 +37,21 @@ segment
 
 module system_segment_descriptor_decode (
     // 系统段描述符（S=0）：基址/limit/粒度/类型等
-    output logic [31: 0] o_base, // 输出信号
-    output logic [19: 0] o_limit, // 输出信号
-    output logic         o_granularity, // 输出信号
-    output logic         o_present, // 输出信号
-    output logic         o_privilege_level, // 输出信号
-    output logic [ 3: 0] o_system_segment_type, // 输出信号
-    input  logic [63: 0] i_descriptor // 输入信号
+    output logic [31: 0] o_base,                 // 输出信号
+    output logic [19: 0] o_limit,                // 输出信号
+    output logic          o_granularity,          // 输出信号
+    output logic          o_present,              // 输出信号
+    output logic          o_privilege_level,      // 输出信号
+    output logic [ 3: 0] o_system_segment_type,  // 输出信号
+    input  logic [63: 0] i_descriptor             // 输入信号
 );
 
 // 系统段描述符：基址与 limit 非连续字节拼接
-assign o_base                = { i_descriptor[31: 24], i_descriptor[ 7: 0], i_descriptor[63: 48] };
-assign o_limit               = { i_descriptor[19: 16], i_descriptor[47: 32] };
-assign o_granularity         = i_descriptor[   23];
-assign o_present             = i_descriptor[   15];
-assign o_privilege_level     = i_descriptor[14: 13];
-assign o_system_segment_type = i_descriptor[11: 8];
+assign o_base                = {i_descriptor[31: 24], i_descriptor[ 7: 0], i_descriptor[63: 48]};
+assign o_limit               = {i_descriptor[19: 16], i_descriptor[47: 32]};
+assign o_granularity         = i_descriptor[23];
+assign o_present              = i_descriptor[15];
+assign o_privilege_level      = i_descriptor[14: 13];
+assign o_system_segment_type  = i_descriptor[11: 8];
 
 endmodule

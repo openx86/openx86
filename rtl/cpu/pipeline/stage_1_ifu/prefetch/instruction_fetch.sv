@@ -13,71 +13,71 @@ description: This module implements instruction_fetch.
 `include "openx86_defs.h.sv"
 module instruction_fetch (
     // 取指总线（对 BIU/存储子系统）
-    output logic         o_code_vaild, // 输出信号
-    input  logic          i_code_ready, // 输入信号
-    output logic [31: 0] o_code_address, // 输出信号
-    input  logic [31: 0] i_code_data_read, // 输入信号
+    output logic         o_code_valid,         // 输出信号
+    input  logic          i_code_ready,        // 输入信号
+    output logic [31: 0] o_code_address,       // 输出信号
+    input  logic [31: 0] i_code_data_read,     // 输入信号
     // MMU 页表遍历总线（通常高于普通 code/data 优先级）
-    output logic         o_mmu_bus_vaild, // 输出信号
-    input  logic          i_mmu_bus_ready, // 输入信号
-    output logic [31: 0] o_mmu_bus_addr, // 输出信号
-    input  logic [31: 0] i_mmu_bus_rdata, // 输入信号
+    output logic         o_mmu_bus_valid,      // 输出信号
+    input  logic          i_mmu_bus_ready,      // 输入信号
+    output logic [31: 0] o_mmu_bus_addr,       // 输出信号
+    input  logic [31: 0] i_mmu_bus_rdata,      // 输入信号
     // 段/分页上下文（来自 CPU 寄存器侧）
-    input  logic          i_protected_mode, // 输入信号
-    input  logic [ 5: 0][15: 0] i_segment_selector, // 输入信号
+    input  logic          i_protected_mode,     // 输入信号
+    input  logic [ 5: 0][15: 0] i_segment_selector,   // 输入信号
     input  logic [ 5: 0][63: 0] i_segment_descriptor, // 输入信号
-    input  logic [ 1: 0]   i_current_privilege_level, // 输入信号
-    input  logic          i_paging_enable, // 输入信号
-    input  logic [31: 0] i_page_directory_base, // 输入信号
+    input  logic [ 1: 0]        i_current_privilege_level, // 输入信号
+    input  logic                 i_paging_enable,        // 输入信号
+    input  logic [31: 0]        i_page_directory_base,  // 输入信号
     // 执行单元：IP 更新完成后再取下一批
-    input  logic          i_IP_vaild, // 输入信号
+    input  logic                 i_IP_valid,             // 输入信号
     // 输出到译码：16B 指令缓冲
-    output logic [15: 0][ 7: 0] o_instruction, // 输出信号
-    output logic         o_instruction_ready, // 输出信号
-    output logic         o_segment_fault, // 输出信号
+    output logic [15: 0][ 7: 0] o_instruction,          // 输出信号
+    output logic                 o_instruction_ready,    // 输出信号
+    output logic                 o_segment_fault,        // 输出信号
     // 指令指针
-    input  logic [31: 0]  EIP, // 输入信号
-    input  logic          clk, // 时钟信号
-    input  logic          rst_n // 复位信号
+    input  logic [31: 0]        i_eip,                 // 输入信号
+    input  logic                 clk,                   // 时钟信号
+    input  logic                 rst_n                  // 复位信号
 );
 
-logic        i_vaild;           // MMU 请求门控（与 IP 有效对齐）
-logic        o_ready;           // MMU 完成（本模块当前未扇出使用）
-logic        if_mmu_bus_we;     // 取指路径不写内存（恒 0 语义由 MMU 封装）
-logic [31: 0] if_mmu_bus_wdata; // 写数据占位
-logic        if_seg_fault;      // 段单元报告的 fault
+logic        mmu_valid;         // MMU 请求门控（与 IP 有效对齐）
+logic        mmu_ready;         // MMU 完成（本模块当前未扇出使用）
+logic        mmu_bus_we;        // 取指路径不写内存（恒 0 语义由 MMU 封装）
+logic [31: 0] mmu_bus_wdata;    // 写数据占位
+logic        seg_fault;         // 段单元报告的 fault
 
-assign i_vaild = i_IP_vaild;
+assign mmu_valid = i_IP_valid;
 
 // 请求段转换：在 IP 有效时根据当前 EIP 计算物理取指地址
 
 memory_management_unit #(
-    .read_from_fetch ( 1'b1 )
+    .read_from_fetch (1'b1)
 ) instruction_fetch_memory_management_unit (
-    .i_vaild ( i_vaild ),
-    .o_ready ( o_ready ),
-    .i_protected_mode ( i_protected_mode ),
-    .i_segment_selector ( i_segment_selector ),
-    .i_segment_descriptor ( i_segment_descriptor ),
-    .i_current_privilege_level ( i_current_privilege_level ),
-    .i_segment_index ( `sreg_index_CS ),
-    .i_effective_address ( EIP ),
-    .i_write_enable ( 1'b0 ),
-    .i_paging_enable ( i_paging_enable ),
-    .i_page_directory_base ( i_page_directory_base ),
-    .o_physical_address ( o_code_address ),
-    .o_segment_fault ( if_seg_fault ),
-    .o_bus_vaild ( o_mmu_bus_vaild ),
-    .i_bus_ready ( i_mmu_bus_ready ),
-    .o_bus_write_enable ( if_mmu_bus_we ),
-    .o_bus_address ( o_mmu_bus_addr ),
-    .i_bus_data_read ( i_mmu_bus_rdata ),
-    .o_bus_data_write ( if_mmu_bus_wdata ),
-    .clk ( clk ),
-    .rst_n ( rst_n )
+    .i_valid             (mmu_valid),
+    .o_ready             (mmu_ready),
+    .i_protected_mode    (i_protected_mode),
+    .i_segment_selector  (i_segment_selector),
+    .i_segment_descriptor(i_segment_descriptor),
+    .i_current_privilege_level (i_current_privilege_level),
+    .i_segment_index     (`sreg_index_CS),
+    .i_effective_address (i_eip),
+    .i_write_enable      (1'b0),
+    .i_paging_enable     (i_paging_enable),
+    .i_page_directory_base (i_page_directory_base),
+    .o_physical_address  (o_code_address),
+    .o_segment_fault     (seg_fault),
+    .o_bus_valid         (o_mmu_bus_valid),
+    .i_bus_ready         (i_mmu_bus_ready),
+    .o_bus_write_enable  (mmu_bus_we),
+    .o_bus_address       (o_mmu_bus_addr),
+    .i_bus_data_read     (i_mmu_bus_rdata),
+    .o_bus_data_write    (mmu_bus_wdata),
+    .clk                 (clk),
+    .rst_n               (rst_n)
 );
 
-assign o_segment_fault = if_seg_fault;
+assign o_segment_fault = seg_fault;
 
 // 取指小状态机：等 EIP 有效 → 拉取 4×32b 并拼装 16B → 再回等 IP
 enum logic {
@@ -92,7 +92,7 @@ always_ff @(posedge clk or negedge rst_n) begin
     end else begin
         unique case (state)
             STATE_WAIT_FOR_IP_VALID: begin
-                if (i_IP_vaild) begin
+                if (i_IP_valid) begin
                     state <= STATE_WAIT_FOR_CODE_DATA_READY;
                 end else begin
                     state <= STATE_WAIT_FOR_IP_VALID;
@@ -117,16 +117,16 @@ logic [ 1: 0] bytes_index; // 当前正在接收第几个 32b 槽（0..3）
 // 输出握手与缓冲装载：按槽把 big-endian 32b 拆入 o_instruction
 always_ff @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
-        o_code_vaild <= 1'b0;
+        o_code_valid <= 1'b0;
         bytes_index <= 2'b00;
     end else begin
         unique case (state)
             STATE_WAIT_FOR_IP_VALID: begin
-                bytes_index <= 2'b00;
-                if (i_IP_vaild) begin
-                    o_code_vaild <= 1;
+                bytes_index  <= 2'b00;
+                if (i_IP_valid) begin
+                    o_code_valid <= 1;
                 end else begin
-                    o_code_vaild <= 1'b0;
+                    o_code_valid <= 1'b0;
                 end
             end
             STATE_WAIT_FOR_CODE_DATA_READY: begin

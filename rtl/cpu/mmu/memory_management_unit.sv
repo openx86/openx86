@@ -13,85 +13,86 @@ create at: 2022-02-04 23:34:40
 description: memory_management_unit
 */
 
-module memory_management_unit #(    parameter bit read_from_fetch = 1'b0
+module memory_management_unit #(
+    parameter bit read_from_fetch = 1'b0
 ) (
     // ------------------------------------------------------------------------
     // Handshake（与上游地址请求握手）
     // ------------------------------------------------------------------------
-    input  logic          i_vaild, // 一次地址翻译请求有效
-    output logic         o_ready, // 翻译完成，o_physical_address 可用
+    input  logic          i_valid,                      // 一次地址翻译请求有效
+    output logic          o_ready,                      // 翻译完成，o_physical_address 可用
 
     // ------------------------------------------------------------------------
     // Address translation context（段 + 分页输入）
     // ------------------------------------------------------------------------
-    input  logic          i_protected_mode, // CR0.PE
-    input  logic [ 5: 0][15: 0] i_segment_selector, // 段选择子
-    input  logic [ 5: 0][63: 0] i_segment_descriptor, // 段描述符缓存
-    input  logic [ 1: 0] i_current_privilege_level, // CPL
-    input  logic [ 2: 0] i_segment_index, // 访问哪个段（CS/DS/...）
-    input  logic [31: 0] i_effective_address, // 段内有效地址/偏移
-    input  logic          i_write_enable, // 写访问（取指路径为 0）
-    input  logic          i_paging_enable, // CR0.PG
-    input  logic [31: 0] i_page_directory_base, // CR3：页目录物理基址
-    output logic [31: 0] o_physical_address, // 最终物理地址
-    output logic         o_segment_fault, // 段保护 fault
+    input  logic          i_protected_mode,             // CR0.PE
+    input  logic [ 5: 0][15: 0] i_segment_selector,     // 段选择子
+    input  logic [ 5: 0][63: 0] i_segment_descriptor,   // 段描述符缓存
+    input  logic [ 1: 0]        i_current_privilege_level, // CPL
+    input  logic [ 2: 0]        i_segment_index,         // 访问哪个段（CS/DS/...）
+    input  logic [31: 0]        i_effective_address,      // 段内有效地址/偏移
+    input  logic                 i_write_enable,          // 写访问（取指路径为 0）
+    input  logic                 i_paging_enable,         // CR0.PG
+    input  logic [31: 0]        i_page_directory_base,   // CR3：页目录物理基址
+    output logic [31: 0]        o_physical_address,      // 最终物理地址
+    output logic                 o_segment_fault,         // 段保护 fault
 
     // ------------------------------------------------------------------------
     // Bus for paging walks (used only when paging enabled)（两级页表读）
     // ------------------------------------------------------------------------
-    output logic         o_bus_vaild, // 输出信号
-    input  logic          i_bus_ready, // 输入信号
-    output logic         o_bus_write_enable, // 输出信号
-    output logic [31: 0] o_bus_address, // 输出信号
-    input  logic [31: 0] i_bus_data_read, // 输入信号
-    output logic [31: 0] o_bus_data_write, // 输出信号
+    output logic                 o_bus_valid,             // 输出信号
+    input  logic                 i_bus_ready,             // 输入信号
+    output logic                 o_bus_write_enable,      // 输出信号
+    output logic [31: 0]        o_bus_address,           // 输出信号
+    input  logic [31: 0]        i_bus_data_read,         // 输入信号
+    output logic [31: 0]        o_bus_data_write,        // 输出信号
 
     // ------------------------------------------------------------------------
     // Clock / reset
     // ------------------------------------------------------------------------
-    input  logic          clk, // 时钟信号
-    input  logic          rst_n // 复位信号
+    input  logic                 clk,                     // 时钟信号
+    input  logic                 rst_n                    // 复位信号
 );
 
 logic [31: 0] linear_address;   // 段单元输出线性地址
 logic [31: 0] physical_address; // 分页单元输出物理页基 + 页内偏移合成前保存在此
 
-logic         paging_vaild;     // 启动分页 walk
+logic         paging_valid;     // 启动分页 walk
 logic         paging_ready;     // 分页 walk 完成
 logic         seg_priv_err;     // 段检查失败
 
 segmentation_unit #(
-    .read_from_fetch ( read_from_fetch )
+    .read_from_fetch (read_from_fetch)
 ) segmentation_unit (
-    .i_protected_mode ( i_protected_mode ),
-    .i_segment_selector ( i_segment_selector ),
-    .i_segment_descriptor ( i_segment_descriptor ),
-    .i_current_privilege_level ( i_current_privilege_level ),
-    .i_segment_index ( i_segment_index ),
-    .i_effective_address ( i_effective_address ),
-    .i_write_enable ( i_write_enable ),
-    .o_linear_address ( linear_address ),
-    .o_segment_privilege_error ( seg_priv_err ),
-    .clk ( clk ),
-    .rst_n ( rst_n )
+    .i_protected_mode           (i_protected_mode),
+    .i_segment_selector         (i_segment_selector),
+    .i_segment_descriptor       (i_segment_descriptor),
+    .i_current_privilege_level  (i_current_privilege_level),
+    .i_segment_index            (i_segment_index),
+    .i_effective_address        (i_effective_address),
+    .i_write_enable             (i_write_enable),
+    .o_linear_address           (linear_address),
+    .o_segment_privilege_error  (seg_priv_err),
+    .clk                        (clk),
+    .rst_n                      (rst_n)
 );
 
 assign o_segment_fault = seg_priv_err;
 
 paging_unit paging_unit (
-    .i_vaild ( paging_vaild ),
-    .o_ready ( paging_ready ),
-    .i_linear_address ( linear_address ),
-    .i_page_directory_base ( i_page_directory_base ),
-    .o_physical_address ( physical_address ),
-    .o_bus_vaild ( o_bus_vaild ),
-    .i_bus_ready ( i_bus_ready ),
-    .o_bus_write_enable ( o_bus_write_enable ),
-    .o_bus_address ( o_bus_address ),
-    .i_bus_data_read ( i_bus_data_read ),
-    .o_bus_data_write ( o_bus_data_write ),
-    .clk ( clk ),
-    .rst_n ( rst_n )
+    .i_valid             (paging_valid),
+    .o_ready             (paging_ready),
+    .i_linear_address    (linear_address),
+    .i_page_directory_base (i_page_directory_base),
+    .o_physical_address  (physical_address),
+    .o_bus_valid         (o_bus_valid),
+    .i_bus_ready         (i_bus_ready),
+    .o_bus_write_enable  (o_bus_write_enable),
+    .o_bus_address       (o_bus_address),
+    .i_bus_data_read     (i_bus_data_read),
+    .o_bus_data_write    (o_bus_data_write),
+    .clk                 (clk),
+    .rst_n               (rst_n)
 );
 
 
@@ -110,18 +111,18 @@ always_ff @(posedge clk or negedge rst_n) begin
     end else begin
         unique case (state)
             STATE_WAIT_FOR_VAILD: begin
-                if (i_vaild) begin
-                    o_ready <= 0;
+                if (i_valid) begin
+                    o_ready       <= 0;
                     if (i_paging_enable) begin
-                        state <= STATE_WAIT_FOR_PAGING_UNIT_READY;
-                        paging_vaild <= 1;
+                        state          <= STATE_WAIT_FOR_PAGING_UNIT_READY;
+                        paging_valid   <= 1;
                     end else begin
-                        state <= STATE_OUTPUT_LINEAR_ADDRESS;
-                        paging_vaild <= 0;
+                        state          <= STATE_OUTPUT_LINEAR_ADDRESS;
+                        paging_valid   <= 0;
                     end
                 end else begin
-                    state <= STATE_WAIT_FOR_VAILD;
-                    paging_vaild <= 0;
+                    state          <= STATE_WAIT_FOR_VAILD;
+                    paging_valid   <= 0;
                 end
             end
             STATE_WAIT_FOR_PAGING_UNIT_READY: begin

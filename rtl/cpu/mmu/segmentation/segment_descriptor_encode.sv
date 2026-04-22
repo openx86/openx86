@@ -37,39 +37,39 @@ segment
 
 module segment_descriptor_encode (
     // 将结构化属性打包回 64b 描述符（写回/构造路径）
-    input  logic [31: 0]  base, // 输入信号
-    input  logic [19: 0]  limit, // 输入信号
-    input  logic          present, // 输入信号
-    input  logic [ 1: 0]   privilege_level, // 输入信号
-    input  logic          available_field, // 输入信号
-    input  logic          descriptor_type, // 输入信号
-    input  logic          date_or_code_granularity, // 输入信号
-    input  logic          date_or_code_default_operation_size, // 输入信号
-    input  logic          date_or_code_executable, // 输入信号
-    input  logic          data_expansion_direction_code_conforming, // 输入信号
-    input  logic          data_writeable_code_readable, // 输入信号
-    input  logic          date_or_code_accessed, // 输入信号
-    output logic [63: 0] descriptor // 输出信号
+    input  logic [31: 0] i_base,                              // 输入信号
+    input  logic [19: 0] i_limit,                             // 输入信号
+    input  logic          i_present,                           // 输入信号
+    input  logic [ 1: 0] i_privilege_level,                   // 输入信号
+    input  logic          i_available_field,                  // 输入信号
+    input  logic          i_descriptor_type,                   // 输入信号
+    input  logic          i_date_or_code_granularity,          // 输入信号
+    input  logic          i_date_or_code_default_operation_size, // 输入信号
+    input  logic          i_date_or_code_executable,           // 输入信号
+    input  logic          i_data_expansion_direction_code_conforming, // 输入信号
+    input  logic          i_data_writeable_code_readable,      // 输入信号
+    input  logic          i_date_or_code_accessed,             // 输入信号
+    output logic [63: 0] o_descriptor                         // 输出信号
 );
 
 // 按手册位序拼接（含 AVL/G/D/B 等属性位）
-assign descriptor = {
-    base[15: 0],
-    limit[15: 0],
-    base[31: 24],
-    date_or_code_granularity,
-    date_or_code_default_operation_size,
+assign o_descriptor = {
+    i_base[15: 0],
+    i_limit[15: 0],
+    i_base[31: 24],
+    i_date_or_code_granularity,
+    i_date_or_code_default_operation_size,
     1'b0,
-    available_field,
-    limit[19: 16],
-    present,
-    privilege_level,
-    descriptor_type,
-    date_or_code_executable,
-    data_expansion_direction_code_conforming,
-    data_writeable_code_readable,
-    date_or_code_accessed,
-    base[23: 16]
+    i_available_field,
+    i_limit[19: 16],
+    i_present,
+    i_privilege_level,
+    i_descriptor_type,
+    i_date_or_code_executable,
+    i_data_expansion_direction_code_conforming,
+    i_data_writeable_code_readable,
+    i_date_or_code_accessed,
+    i_base[23: 16]
 };
 
 endmodule

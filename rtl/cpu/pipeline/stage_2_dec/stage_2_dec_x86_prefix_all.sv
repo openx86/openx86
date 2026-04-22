@@ -58,25 +58,25 @@ Kevin McGrath and Dave Christie, "The AMD x86-64 Architecture: Extending the x86
 // 连续前缀扫描：最多 4 字节，检测每组前缀重复非法并折叠输出
 module stage_2_dec_x86_prefix_all (
     input  logic [ 3: 0][ 7: 0] i_instruction,
-    output logic                o_group_1_lock_bus, // 输出信号
-    output logic                o_group_1_repeat_not_equal, // 输出信号
-    output logic                o_group_1_repeat_equal, // 输出信号
-    output logic                o_group_1_bound, // 输出信号
-    output logic                o_group_2_segment_override, // 输出信号
+    output logic                o_group_1_lock_bus,              // 输出信号
+    output logic                o_group_1_repeat_not_equal,     // 输出信号
+    output logic                o_group_1_repeat_equal,         // 输出信号
+    output logic                o_group_1_bound,                // 输出信号
+    output logic                o_group_2_segment_override,     // 输出信号
     output logic                o_group_2_hint_branch_not_taken, // 输出信号
-    output logic                o_group_2_hint_branch_taken, // 输出信号
-    output logic                o_group_3_operand_size, // 输出信号
-    output logic                o_group_4_address_size, // 输出信号
-    output logic                o_group_1_is_present, // 输出信号
-    output logic                o_group_2_is_present, // 输出信号
-    output logic                o_group_3_is_present, // 输出信号
-    output logic                o_group_4_is_present, // 输出信号
-    output logic [ 2: 0]        o_segment_override_index, // 输出信号
-    output logic                o_consume_bytes_prefix_1, // 输出信号
-    output logic                o_consume_bytes_prefix_2, // 输出信号
-    output logic                o_consume_bytes_prefix_3, // 输出信号
-    output logic                o_consume_bytes_prefix_4, // 输出信号
-    output logic                o_error // 输出信号
+    output logic                o_group_2_hint_branch_taken,    // 输出信号
+    output logic                o_group_3_operand_size,         // 输出信号
+    output logic                o_group_4_address_size,         // 输出信号
+    output logic                o_group_1_is_present,           // 输出信号
+    output logic                o_group_2_is_present,           // 输出信号
+    output logic                o_group_3_is_present,           // 输出信号
+    output logic                o_group_4_is_present,           // 输出信号
+    output logic [ 2: 0]        o_segment_override_index,      // 输出信号
+    output logic                o_consume_bytes_prefix_1,       // 输出信号
+    output logic                o_consume_bytes_prefix_2,       // 输出信号
+    output logic                o_consume_bytes_prefix_3,       // 输出信号
+    output logic                o_consume_bytes_prefix_4,       // 输出信号
+    output logic                o_error                         // 输出信号
 );
 
 logic         group_1_lock_bus [ 0:  3];
@@ -211,79 +211,79 @@ always_comb begin
 end
 
 stage_2_dec_x86_prefix u_stage_2_dec_prefix_0 (
-    .i_instruction                   ( i_instruction                [0] ),
-    .o_group_1_lock_bus              ( group_1_lock_bus             [0] ),
-    .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [0] ),
-    .o_group_1_repeat_equal          ( group_1_repeat_equal         [0] ),
-    .o_group_1_bound                 ( group_1_bound                [0] ),
-    .o_group_2_segment_override      ( group_2_segment_override     [0] ),
-    .o_group_2_hint_branch_not_taken ( group_2_hint_branch_not_taken[0] ),
-    .o_group_2_hint_branch_taken     ( group_2_hint_branch_taken    [0] ),
-    .o_group_3_operand_size          ( group_3_operand_size         [0] ),
-    .o_group_4_address_size          ( group_4_address_size         [0] ),
-    .o_group_1_is_present            ( group_1_is_present           [0] ),
-    .o_group_2_is_present            ( group_2_is_present           [0] ),
-    .o_group_3_is_present            ( group_3_is_present           [0] ),
-    .o_group_4_is_present            ( group_4_is_present           [0] ),
-    .o_is_present                    ( is_present                   [0] ),
-    .o_segment_override_index        ( segment_override_index       [0] )
+    .i_instruction                   (i_instruction[0]),
+    .o_group_1_lock_bus              (group_1_lock_bus[0]),
+    .o_group_1_repeat_not_equal      (group_1_repeat_not_equal[0]),
+    .o_group_1_repeat_equal          (group_1_repeat_equal[0]),
+    .o_group_1_bound                 (group_1_bound[0]),
+    .o_group_2_segment_override      (group_2_segment_override[0]),
+    .o_group_2_hint_branch_not_taken (group_2_hint_branch_not_taken[0]),
+    .o_group_2_hint_branch_taken     (group_2_hint_branch_taken[0]),
+    .o_group_3_operand_size          (group_3_operand_size[0]),
+    .o_group_4_address_size          (group_4_address_size[0]),
+    .o_group_1_is_present            (group_1_is_present[0]),
+    .o_group_2_is_present            (group_2_is_present[0]),
+    .o_group_3_is_present            (group_3_is_present[0]),
+    .o_group_4_is_present            (group_4_is_present[0]),
+    .o_is_present                    (is_present[0]),
+    .o_segment_override_index        (segment_override_index[0])
 );
 
 stage_2_dec_x86_prefix u_stage_2_dec_prefix_1 (
-    .i_instruction                   ( i_instruction                [1] ),
-    .o_group_1_lock_bus              ( group_1_lock_bus             [1] ),
-    .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [1] ),
-    .o_group_1_repeat_equal          ( group_1_repeat_equal         [1] ),
-    .o_group_1_bound                 ( group_1_bound                [1] ),
-    .o_group_2_segment_override      ( group_2_segment_override     [1] ),
-    .o_group_2_hint_branch_not_taken ( group_2_hint_branch_not_taken[1] ),
-    .o_group_2_hint_branch_taken     ( group_2_hint_branch_taken    [1] ),
-    .o_group_3_operand_size          ( group_3_operand_size         [1] ),
-    .o_group_4_address_size          ( group_4_address_size         [1] ),
-    .o_group_1_is_present            ( group_1_is_present           [1] ),
-    .o_group_2_is_present            ( group_2_is_present           [1] ),
-    .o_group_3_is_present            ( group_3_is_present           [1] ),
-    .o_group_4_is_present            ( group_4_is_present           [1] ),
-    .o_is_present                    ( is_present                   [1] ),
-    .o_segment_override_index        ( segment_override_index       [1] )
+    .i_instruction                   (i_instruction[1]),
+    .o_group_1_lock_bus              (group_1_lock_bus[1]),
+    .o_group_1_repeat_not_equal      (group_1_repeat_not_equal[1]),
+    .o_group_1_repeat_equal          (group_1_repeat_equal[1]),
+    .o_group_1_bound                 (group_1_bound[1]),
+    .o_group_2_segment_override      (group_2_segment_override[1]),
+    .o_group_2_hint_branch_not_taken (group_2_hint_branch_not_taken[1]),
+    .o_group_2_hint_branch_taken     (group_2_hint_branch_taken[1]),
+    .o_group_3_operand_size          (group_3_operand_size[1]),
+    .o_group_4_address_size          (group_4_address_size[1]),
+    .o_group_1_is_present            (group_1_is_present[1]),
+    .o_group_2_is_present            (group_2_is_present[1]),
+    .o_group_3_is_present            (group_3_is_present[1]),
+    .o_group_4_is_present            (group_4_is_present[1]),
+    .o_is_present                    (is_present[1]),
+    .o_segment_override_index        (segment_override_index[1])
 );
 
 stage_2_dec_x86_prefix u_stage_2_dec_prefix_2 (
-    .i_instruction                   ( i_instruction                [2] ),
-    .o_group_1_lock_bus              ( group_1_lock_bus             [2] ),
-    .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [2] ),
-    .o_group_1_repeat_equal          ( group_1_repeat_equal         [2] ),
-    .o_group_1_bound                 ( group_1_bound                [2] ),
-    .o_group_2_segment_override      ( group_2_segment_override     [2] ),
-    .o_group_2_hint_branch_not_taken ( group_2_hint_branch_not_taken[2] ),
-    .o_group_2_hint_branch_taken     ( group_2_hint_branch_taken    [2] ),
-    .o_group_3_operand_size          ( group_3_operand_size         [2] ),
-    .o_group_4_address_size          ( group_4_address_size         [2] ),
-    .o_group_1_is_present            ( group_1_is_present           [2] ),
-    .o_group_2_is_present            ( group_2_is_present           [2] ),
-    .o_group_3_is_present            ( group_3_is_present           [2] ),
-    .o_group_4_is_present            ( group_4_is_present           [2] ),
-    .o_is_present                    ( is_present                   [2] ),
-    .o_segment_override_index        ( segment_override_index       [2] )
+    .i_instruction                   (i_instruction[2]),
+    .o_group_1_lock_bus              (group_1_lock_bus[2]),
+    .o_group_1_repeat_not_equal      (group_1_repeat_not_equal[2]),
+    .o_group_1_repeat_equal          (group_1_repeat_equal[2]),
+    .o_group_1_bound                 (group_1_bound[2]),
+    .o_group_2_segment_override      (group_2_segment_override[2]),
+    .o_group_2_hint_branch_not_taken (group_2_hint_branch_not_taken[2]),
+    .o_group_2_hint_branch_taken     (group_2_hint_branch_taken[2]),
+    .o_group_3_operand_size          (group_3_operand_size[2]),
+    .o_group_4_address_size          (group_4_address_size[2]),
+    .o_group_1_is_present            (group_1_is_present[2]),
+    .o_group_2_is_present            (group_2_is_present[2]),
+    .o_group_3_is_present            (group_3_is_present[2]),
+    .o_group_4_is_present            (group_4_is_present[2]),
+    .o_is_present                    (is_present[2]),
+    .o_segment_override_index        (segment_override_index[2])
 );
 
 stage_2_dec_x86_prefix u_stage_2_dec_prefix_3 (
-    .i_instruction                   ( i_instruction                [3] ),
-    .o_group_1_lock_bus              ( group_1_lock_bus             [3] ),
-    .o_group_1_repeat_not_equal      ( group_1_repeat_not_equal     [3] ),
-    .o_group_1_repeat_equal          ( group_1_repeat_equal         [3] ),
-    .o_group_1_bound                 ( group_1_bound                [3] ),
-    .o_group_2_segment_override      ( group_2_segment_override     [3] ),
-    .o_group_2_hint_branch_not_taken ( group_2_hint_branch_not_taken[3] ),
-    .o_group_2_hint_branch_taken     ( group_2_hint_branch_taken    [3] ),
-    .o_group_3_operand_size          ( group_3_operand_size         [3] ),
-    .o_group_4_address_size          ( group_4_address_size         [3] ),
-    .o_group_1_is_present            ( group_1_is_present           [3] ),
-    .o_group_2_is_present            ( group_2_is_present           [3] ),
-    .o_group_3_is_present            ( group_3_is_present           [3] ),
-    .o_group_4_is_present            ( group_4_is_present           [3] ),
-    .o_is_present                    ( is_present                   [3] ),
-    .o_segment_override_index        ( segment_override_index       [3] )
+    .i_instruction                   (i_instruction[3]),
+    .o_group_1_lock_bus              (group_1_lock_bus[3]),
+    .o_group_1_repeat_not_equal      (group_1_repeat_not_equal[3]),
+    .o_group_1_repeat_equal          (group_1_repeat_equal[3]),
+    .o_group_1_bound                 (group_1_bound[3]),
+    .o_group_2_segment_override      (group_2_segment_override[3]),
+    .o_group_2_hint_branch_not_taken (group_2_hint_branch_not_taken[3]),
+    .o_group_2_hint_branch_taken     (group_2_hint_branch_taken[3]),
+    .o_group_3_operand_size          (group_3_operand_size[3]),
+    .o_group_4_address_size          (group_4_address_size[3]),
+    .o_group_1_is_present            (group_1_is_present[3]),
+    .o_group_2_is_present            (group_2_is_present[3]),
+    .o_group_3_is_present            (group_3_is_present[3]),
+    .o_group_4_is_present            (group_4_is_present[3]),
+    .o_is_present                    (is_present[3]),
+    .o_segment_override_index        (segment_override_index[3])
 );
 
 endmodule

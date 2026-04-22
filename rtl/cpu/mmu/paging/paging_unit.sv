@@ -43,21 +43,21 @@ Lookaside Buffer).
 
 module paging_unit (
     // 与 MMU 上级握手
-    input  logic         i_vaild, // 输入信号
-    output logic         o_ready, // 输出信号
+    input  logic         i_valid,              // 输入信号
+    output logic         o_ready,              // 输出信号
     // 线性地址与页目录基址（CR3）
-    input  logic [31: 0] i_linear_address, // 输入信号
+    input  logic [31: 0] i_linear_address,     // 输入信号
     input  logic [31: 0] i_page_directory_base, // 输入信号
-    output logic [31: 0] o_physical_address, // 输出信号
+    output logic [31: 0] o_physical_address,   // 输出信号
     // 外部总线：读页目录项 / 页表项
-    output logic         o_bus_vaild, // 输出信号
-    input  logic         i_bus_ready, // 输入信号
-    output logic         o_bus_write_enable, // 输出信号
-    output logic [31: 0] o_bus_address, // 输出信号
-    input  logic [31: 0] i_bus_data_read, // 输入信号
-    output logic [31: 0] o_bus_data_write, // 输出信号
-    input  logic          clk, // 时钟信号
-    input  logic          rst_n // 复位信号
+    output logic         o_bus_valid,          // 输出信号
+    input  logic         i_bus_ready,          // 输入信号
+    output logic         o_bus_write_enable,   // 输出信号
+    output logic [31: 0] o_bus_address,        // 输出信号
+    input  logic [31: 0] i_bus_data_read,      // 输入信号
+    output logic [31: 0] o_bus_data_write,     // 输出信号
+    input  logic          clk,                  // 时钟信号
+    input  logic          rst_n                 // 复位信号
 );
 
 logic  [ 9: 0] page_directory_index; // 线性地址 [31: 22]
@@ -96,40 +96,40 @@ always_ff @(posedge clk or negedge rst_n) begin
         o_bus_data_write   <= '0;
         unique case (state)
             STATE_WAIT_FOR_VAILD: begin
-                o_ready <= 0;
-                if (i_vaild) begin
-                    state <= STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY;
-                    o_bus_vaild <= 1;
-                    o_bus_address <= page_directory_offset;
+                o_ready       <= 0;
+                if (i_valid) begin
+                    state              <= STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY;
+                    o_bus_valid        <= 1;
+                    o_bus_address      <= page_directory_offset;
                 end else begin
-                    state <= STATE_WAIT_FOR_VAILD;
-                    o_bus_vaild <= 0;
+                    state              <= STATE_WAIT_FOR_VAILD;
+                    o_bus_valid        <= 0;
                 end
             end
             STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY: begin
                 if (i_bus_ready) begin
                     // 取到 PDE：发起 PTE 读
-                    state <= STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID;
-                    page_table_base <= i_bus_data_read;
-                    o_bus_vaild <= 1;
-                    o_bus_address <= page_table_address_offset;
+                    state                  <= STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID;
+                    page_table_base        <= i_bus_data_read;
+                    o_bus_valid            <= 1;
+                    o_bus_address          <= page_table_address_offset;
                 end else begin
-                    state <= STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY;
-                    o_bus_vaild <= 0;
-                    o_bus_address <= o_bus_address;
+                    state              <= STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY;
+                    o_bus_valid        <= 0;
+                    o_bus_address      <= o_bus_address;
                 end
             end
             STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID: begin
                 if (i_bus_ready) begin
                     // 取到 PTE：合成物理地址并结束
-                    state <= STATE_WAIT_FOR_VAILD;
+                    state                    <= STATE_WAIT_FOR_VAILD;
                     page_frame_address_offset <= i_bus_data_read;
-                    o_bus_vaild <= 0;
-                    o_ready <= 1;
+                    o_bus_valid              <= 0;
+                    o_ready                  <= 1;
                 end else begin
-                    state <= STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID;
-                    o_bus_vaild <= 1;
-                    o_ready <= 0;
+                    state              <= STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID;
+                    o_bus_valid        <= 1;
+                    o_ready            <= 0;
                 end
             end
             default: begin

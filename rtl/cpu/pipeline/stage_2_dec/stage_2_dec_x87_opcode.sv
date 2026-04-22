@@ -44,12 +44,12 @@ module stage_2_dec_x87_opcode (
     output logic            o_opcode_x87_FCLEX,
     output logic            o_opcode_x87_FNSTSW,
 
-    input  logic [3:0][7:0] i_instruction
+    input  logic [3: 0][7: 0] i_instruction
 );
 
     // wire       esc           = (i_instruction[0] >= 8'hD8) && (i_instruction[0] <= 8'hDF);
-    logic [2:0] modrm_reg     = i_instruction[1][5:3];
-    logic [1:0] mod           = i_instruction[1][7:6];
+    logic [2: 0] modrm_reg = i_instruction[1][5: 3];
+    logic [1: 0] mod       = i_instruction[1][7: 6];
     // wire       fpu_reg_group = esc && (mod == 2'b11);
 
     assign o_opcode_x87_FADD                = (i_instruction[0] == 8'hD8 && modrm_reg == 3'b000);
@@ -64,7 +64,7 @@ module stage_2_dec_x87_opcode (
     assign o_opcode_x87_FLD_load_real       = (i_instruction[0] == 8'hD9 && modrm_reg == 3'b000);
     assign o_opcode_x87_FST_store_real      = (i_instruction[0] == 8'hD9 && modrm_reg == 3'b010);
     assign o_opcode_x87_FSTP_store_pop_real = (i_instruction[0] == 8'hD9 && modrm_reg == 3'b011);
-    assign o_opcode_x87_FLD_STi             = (i_instruction[0] == 8'hD9 && mod == 2'b11 && i_instruction[1][2:0] < 3'd8);
+    assign o_opcode_x87_FLD_STi             = (i_instruction[0] == 8'hD9 && mod == 2'b11 && i_instruction[1][2: 0] < 3'd8);
     assign o_opcode_x87_FXCH                = (i_instruction[0] == 8'hD9 && modrm_reg == 3'b001);
     assign o_opcode_x87_FINIT               = (i_instruction[0] == 8'hD9 && i_instruction[1] == 8'hE3);
     assign o_opcode_x87_FCLEX               = (i_instruction[0] == 8'hD9 && i_instruction[1] == 8'hE2);

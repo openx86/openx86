@@ -66,38 +66,38 @@ module stage_2_dec_mmx_opcode (
 
 // Instantiate MMX sub-modules
 stage_2_dec_mmx_opcode_data u_data (
-    .i_instruction(i_instruction),
-    .o_opcode_mmx_MOVQ_move_64_bit(o_opcode_mmx_MOVQ_move_64_bit),
-    .o_opcode_mmx_MOVD_move_32_bit(o_opcode_mmx_MOVD_move_32_bit)
+    .i_instruction                              (i_instruction),
+    .o_opcode_mmx_MOVQ_move_64_bit              (o_opcode_mmx_MOVQ_move_64_bit),
+    .o_opcode_mmx_MOVD_move_32_bit              (o_opcode_mmx_MOVD_move_32_bit)
 );
 
 stage_2_dec_mmx_opcode_arith u_arith (
-    .i_instruction(i_instruction),
-    .o_opcode_mmx_PADDB_add_packed_8_bit(o_opcode_mmx_PADDB_add_packed_8_bit),
-    .o_opcode_mmx_PADDW_add_packed_16_bit(o_opcode_mmx_PADDW_add_packed_16_bit),
-    .o_opcode_mmx_PADDD_add_packed_32_bit(o_opcode_mmx_PADDD_add_packed_32_bit),
-    .o_opcode_mmx_PADDSB_add_packed_8_bit_signed_saturation(o_opcode_mmx_PADDSB_add_packed_8_bit_signed_saturation),
-    .o_opcode_mmx_PADDSW_add_packed_16_bit_signed_saturation(o_opcode_mmx_PADDSW_add_packed_16_bit_signed_saturation),
-    .o_opcode_mmx_PADDUSB_add_packed_8_bit_unsigned_saturation(o_opcode_mmx_PADDUSB_add_packed_8_bit_unsigned_saturation),
-    .o_opcode_mmx_PADDUSW_add_packed_16_bit_unsigned_saturation(o_opcode_mmx_PADDUSW_add_packed_16_bit_unsigned_saturation),
-    .o_opcode_mmx_PSUBB_subtract_packed_8_bit(o_opcode_mmx_PSUBB_subtract_packed_8_bit),
-    .o_opcode_mmx_PSUBW_subtract_packed_16_bit(o_opcode_mmx_PSUBW_subtract_packed_16_bit),
-    .o_opcode_mmx_PSUBD_subtract_packed_32_bit(o_opcode_mmx_PSUBD_subtract_packed_32_bit),
-    .o_opcode_mmx_PSUBSB_subtract_packed_8_bit_signed_saturation(o_opcode_mmx_PSUBSB_subtract_packed_8_bit_signed_saturation),
-    .o_opcode_mmx_PSUBSW_subtract_packed_16_bit_signed_saturation(o_opcode_mmx_PSUBSW_subtract_packed_16_bit_signed_saturation),
-    .o_opcode_mmx_PSUBUSB_subtract_packed_8_bit_unsigned_saturation(o_opcode_mmx_PSUBUSB_subtract_packed_8_bit_unsigned_saturation),
-    .o_opcode_mmx_PSUBUSW_subtract_packed_16_bit_unsigned_saturation(o_opcode_mmx_PSUBUSW_subtract_packed_16_bit_unsigned_saturation),
-    .o_opcode_mmx_PMULLW_multiply_packed_16_bit_low(o_opcode_mmx_PMULLW_multiply_packed_16_bit_low),
-    .o_opcode_mmx_PMULHW_multiply_packed_16_bit_high(o_opcode_mmx_PMULHW_multiply_packed_16_bit_high),
-    .o_opcode_mmx_PMADDWD_multiply_and_add_packed_16_bit(o_opcode_mmx_PMADDWD_multiply_and_add_packed_16_bit)
+    .i_instruction                              (i_instruction),
+    .o_opcode_mmx_PADDB_add_packed_8_bit         (o_opcode_mmx_PADDB_add_packed_8_bit),
+    .o_opcode_mmx_PADDW_add_packed_16_bit        (o_opcode_mmx_PADDW_add_packed_16_bit),
+    .o_opcode_mmx_PADDD_add_packed_32_bit        (o_opcode_mmx_PADDD_add_packed_32_bit),
+    .o_opcode_mmx_PADDSB_add_packed_8_bit_signed_saturation (o_opcode_mmx_PADDSB_add_packed_8_bit_signed_saturation),
+    .o_opcode_mmx_PADDSW_add_packed_16_bit_signed_saturation (o_opcode_mmx_PADDSW_add_packed_16_bit_signed_saturation),
+    .o_opcode_mmx_PADDUSB_add_packed_8_bit_unsigned_saturation (o_opcode_mmx_PADDUSB_add_packed_8_bit_unsigned_saturation),
+    .o_opcode_mmx_PADDUSW_add_packed_16_bit_unsigned_saturation (o_opcode_mmx_PADDUSW_add_packed_16_bit_unsigned_saturation),
+    .o_opcode_mmx_PSUBB_subtract_packed_8_bit     (o_opcode_mmx_PSUBB_subtract_packed_8_bit),
+    .o_opcode_mmx_PSUBW_subtract_packed_16_bit    (o_opcode_mmx_PSUBW_subtract_packed_16_bit),
+    .o_opcode_mmx_PSUBD_subtract_packed_32_bit    (o_opcode_mmx_PSUBD_subtract_packed_32_bit),
+    .o_opcode_mmx_PSUBSB_subtract_packed_8_bit_signed_saturation (o_opcode_mmx_PSUBSB_subtract_packed_8_bit_signed_saturation),
+    .o_opcode_mmx_PSUBSW_subtract_packed_16_bit_signed_saturation (o_opcode_mmx_PSUBSW_subtract_packed_16_bit_signed_saturation),
+    .o_opcode_mmx_PSUBUSB_subtract_packed_8_bit_unsigned_saturation (o_opcode_mmx_PSUBUSB_subtract_packed_8_bit_unsigned_saturation),
+    .o_opcode_mmx_PSUBUSW_subtract_packed_16_bit_unsigned_saturation (o_opcode_mmx_PSUBUSW_subtract_packed_16_bit_unsigned_saturation),
+    .o_opcode_mmx_PMULLW_multiply_packed_16_bit_low (o_opcode_mmx_PMULLW_multiply_packed_16_bit_low),
+    .o_opcode_mmx_PMULHW_multiply_packed_16_bit_high (o_opcode_mmx_PMULHW_multiply_packed_16_bit_high),
+    .o_opcode_mmx_PMADDWD_multiply_and_add_packed_16_bit (o_opcode_mmx_PMADDWD_multiply_and_add_packed_16_bit)
 );
 
 stage_2_dec_mmx_opcode_compare u_compare (
-    .i_instruction(i_instruction),
-    .o_opcode_mmx_PCMPEQB_compare_packed_8_bit_equal(o_opcode_mmx_PCMPEQB_compare_packed_8_bit_equal),
-    .o_opcode_mmx_PCMPEQW_compare_packed_16_bit_equal(o_opcode_mmx_PCMPEQW_compare_packed_16_bit_equal),
-    .o_opcode_mmx_PCMPEQD_compare_packed_32_bit_equal(o_opcode_mmx_PCMPEQD_compare_packed_32_bit_equal),
-    .o_opcode_mmx_PCMPGTB_compare_packed_8_bit_greater(o_opcode_mmx_PCMPGTB_compare_packed_8_bit_greater),
+    .i_instruction                              (i_instruction),
+    .o_opcode_mmx_PCMPEQB_compare_packed_8_bit_equal (o_opcode_mmx_PCMPEQB_compare_packed_8_bit_equal),
+    .o_opcode_mmx_PCMPEQW_compare_packed_16_bit_equal (o_opcode_mmx_PCMPEQW_compare_packed_16_bit_equal),
+    .o_opcode_mmx_PCMPEQD_compare_packed_32_bit_equal (o_opcode_mmx_PCMPEQD_compare_packed_32_bit_equal),
+    .o_opcode_mmx_PCMPGTB_compare_packed_8_bit_greater (o_opcode_mmx_PCMPGTB_compare_packed_8_bit_greater),
     .o_opcode_mmx_PCMPGTW_compare_packed_16_bit_greater(o_opcode_mmx_PCMPGTW_compare_packed_16_bit_greater),
     .o_opcode_mmx_PCMPGTD_compare_packed_32_bit_greater(o_opcode_mmx_PCMPGTD_compare_packed_32_bit_greater)
 );

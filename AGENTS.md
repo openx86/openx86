@@ -8,6 +8,14 @@
 
 **Internals:** `logic` only (no `wire`/`reg`); FSM `typedef enum logic [...]`; same-name continuous drive → single `logic x = expr;` (no split `assign`).
 
+**Alignment:**
+
+- Port declarations: align columns (direction, logic, width, name) with consistent indentation
+- Bus widths: use `[31: 0]` style with spaces around the colon
+- Assignment statements: align `=` and `<=` operators vertically for related assignments
+- Module instantiation: align `.(...)` port connections vertically
+- Maintain consistent spacing and indentation throughout the file
+
 **RTL synthesizability:** no `initial` for behavior (ROM init wrappers exception with review); no `#`/`##`/fork timing in synth logic; no `force`/`assign-deassign`/DPI; `always_ff` + `<=`; `always_comb` + `=`; defaults + full branches; no ad-hoc gated clocks; clock-enable preferred.
 
 **Reset/clock:** active-low `rst_n`; `always_ff @(posedge clk or negedge rst_n)`; reset defines full arch state; avoid reset on pure datapath unless needed + documented.

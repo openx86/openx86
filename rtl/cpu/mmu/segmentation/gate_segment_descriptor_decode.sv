@@ -46,13 +46,13 @@ trap gates is that the interrupt gate disables interrupts (resets the IF bit) wh
 
 module gate_segment_descriptor_decode (
     // 门描述符：选择子 + 偏移 + 类型/DPL/P 等（调用/中断/陷阱/任务门）
-    output logic [15: 0] o_selector, // 输出信号
-    output logic [31: 0] o_offset, // 输出信号
-    output logic         o_present, // 输出信号
-    output logic [ 1: 0] o_privilege_level, // 输出信号
-    output logic         o_gate_segment_type, // 输出信号
-    output logic [ 4: 0] o_word_count, // 输出信号
-    input  logic [63: 0] i_descriptor // 输入信号
+    output logic [15: 0] o_selector,          // 输出信号
+    output logic [31: 0] o_offset,            // 输出信号
+    output logic          o_present,           // 输出信号
+    output logic [ 1: 0] o_privilege_level,   // 输出信号
+    output logic          o_gate_segment_type, // 输出信号
+    output logic [ 4: 0] o_word_count,        // 输出信号
+    input  logic [63: 0] i_descriptor           // 输入信号
 );
 
 // 门类型子集（80286/80386 门编码）
@@ -78,7 +78,7 @@ typedef enum logic [ 3: 0] {
 // 门体目标选择子、偏移、P/DPL/类型；字计数字段见手册（call gate 特权切换用）
 assign o_selector          = i_descriptor[63: 48];
 assign o_offset            = i_descriptor[47: 16];
-assign o_present           = i_descriptor[   15];
+assign o_present           = i_descriptor[15];
 assign o_privilege_level   = i_descriptor[14: 13];
 assign o_gate_segment_type = i_descriptor[11: 8];
 

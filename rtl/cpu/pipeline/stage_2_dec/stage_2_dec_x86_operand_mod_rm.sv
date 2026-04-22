@@ -63,18 +63,18 @@ module stage_2_dec_x86_operand_mod_rm (
     input  logic         i_w,
     input  logic         i_default_op_size,
     output logic [ 2: 0] o_seg_reg_index,
-    output logic        o_base_reg_valid,
+    output logic         o_base_reg_valid,
     output logic [ 2: 0] o_base_reg_index,
-    output logic        o_index_reg_valid,
+    output logic         o_index_reg_valid,
     output logic [ 2: 0] o_index_reg_index,
-    output logic        o_gpr_reg_valid,
+    output logic         o_gpr_reg_valid,
     output logic [ 2: 0] o_gpr_reg_index,
     output logic [ 2: 0] o_gpr_reg_bit_width,
-    output logic        o_disp_present,
-    output logic        o_disp_size_8b,
-    output logic        o_disp_size_16b,
-    output logic        o_disp_size_32b,
-    output logic        o_sib_present
+    output logic         o_disp_present,
+    output logic         o_disp_size_8b,
+    output logic         o_disp_size_16b,
+    output logic         o_disp_size_32b,
+    output logic         o_sib_present
 );
 
 // o_sib_present=1：32 位寻址且 rm=100 时需再读 SIB，本模块输出的 base/index/seg 仅部分有效

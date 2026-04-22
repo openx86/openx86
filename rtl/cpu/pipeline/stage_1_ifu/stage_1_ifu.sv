@@ -15,44 +15,44 @@ description: stage_1_ifu with local 16-byte FIFO and handshake to stage_2_dec.
 
 module stage_1_ifu (
     // Instruction fetch bus interface
-    output logic                o_code_vaild, // 输出信号
-    input  logic                i_code_ready, // 输入信号
-    output logic [31: 0]        o_code_address, // 输出信号
-    input  logic [31: 0]        i_code_data_read, // 输入信号
+    output logic                 o_code_valid,         // 输出信号
+    input  logic                 i_code_ready,        // 输入信号
+    output logic [31: 0]        o_code_address,      // 输出信号
+    input  logic [31: 0]        i_code_data_read,    // 输入信号
 
     // MMU backend bus interface
-    output logic                o_mmu_bus_vaild, // 输出信号
-    input  logic                i_mmu_bus_ready, // 输入信号
-    output logic [31: 0]        o_mmu_bus_addr, // 输出信号
-    input  logic [31: 0]        i_mmu_bus_rdata, // 输入信号
+    output logic                 o_mmu_bus_valid,     // 输出信号
+    input  logic                 i_mmu_bus_ready,     // 输入信号
+    output logic [31: 0]        o_mmu_bus_addr,      // 输出信号
+    input  logic [31: 0]        i_mmu_bus_rdata,     // 输入信号
 
     // CPU execution context
-    input  logic                i_protected_mode, // 输入信号
-    input  logic [ 5: 0][15: 0] i_segment_selector, // 输入信号
-    input  logic [ 5: 0][63: 0] i_segment_descriptor, // 输入信号
+    input  logic                 i_protected_mode,    // 输入信号
+    input  logic [ 5: 0][15: 0] i_segment_selector,  // 输入信号
+    input  logic [ 5: 0][63: 0] i_segment_descriptor,// 输入信号
     input  logic [ 1: 0]        i_current_privilege_level, // 输入信号
-    input  logic                i_paging_enable, // 输入信号
-    input  logic [31: 0]        i_page_directory_base, // 输入信号
+    input  logic                 i_paging_enable,     // 输入信号
+    input  logic [31: 0]        i_page_directory_base,   // 输入信号
 
     // IFU control
-    input  logic                i_start, // 输入信号
-    input  logic [31: 0]        i_initial_eip, // 输入信号
-    input  logic                i_reload_eip, // 输入信号
-    input  logic [31: 0]        i_reload_eip_value, // 输入信号
+    input  logic                 i_start,             // 输入信号
+    input  logic [31: 0]        i_initial_eip,       // 输入信号
+    input  logic                 i_reload_eip,         // 输入信号
+    input  logic [31: 0]        i_reload_eip_value,  // 输入信号
 
     // IFU -> DEC handshake
-    output logic [15: 0][ 7: 0] o_instruction, // 输出信号
-    output logic                o_instruction_valid, // 输出信号
-    output logic                o_segment_fault, // 输出信号
-    output logic [ 4: 0]        o_fifo_count, // 输出信号
-    output logic [31: 0]        o_eip, // 输出信号
-    input  logic                i_dec_ready, // 输入信号
-    input  logic                i_dec_fire, // 输入信号
+    output logic [15: 0][ 7: 0] o_instruction,       // 输出信号
+    output logic                 o_instruction_valid,  // 输出信号
+    output logic                 o_segment_fault,     // 输出信号
+    output logic [ 4: 0]        o_fifo_count,        // 输出信号
+    output logic [31: 0]        o_eip,                // 输出信号
+    input  logic                 i_dec_ready,         // 输入信号
+    input  logic                 i_dec_fire,          // 输入信号
     input  logic [ 3: 0]        i_dec_consume_bytes, // 输入信号
-    input  logic                i_dec_error, // 输入信号
+    input  logic                 i_dec_error,         // 输入信号
 
-    input  logic                clk, // 时钟信号
-    input  logic                rst_n // 复位信号
+    input  logic                 clk,                 // 时钟信号
+    input  logic                 rst_n                // 复位信号
 );
 
     logic [31: 0] eip_r;
@@ -83,11 +83,11 @@ module stage_1_ifu (
     assign fetch_segment_fault     = 1'b0;
 
     // IFU 取指总线由本地简化拼包状态机驱动（每次抓 4×32b 组成 16B 窗口）。
-    assign o_code_vaild            = fetch_active_r;
+    assign o_code_valid            = fetch_active_r;
     assign o_code_address          = eip_r + {28'h0, fetch_word_idx_r, 2'b00};
 
     // 该局部 IFU 不直接发起 MMU 后端访问，端口保留以兼容上层接口。
-    assign o_mmu_bus_vaild         = 1'b0;
+    assign o_mmu_bus_valid         = 1'b0;
     assign o_mmu_bus_addr          = 32'h0000_0000;
 
     assign dec_consume_bytes_ext = {1'b0, i_dec_consume_bytes};
@@ -174,22 +174,22 @@ module stage_1_ifu (
     end
 
     stage_1_ifu_fifo #(
-        .P_DEPTH      ( 16 ),
-        .P_DATA_WIDTH ( 8 )
+        .P_DEPTH      (16),
+        .P_DATA_WIDTH (8)
     ) u_stage_1_ifu_fifo (
-        .i_push_valid  ( fetch_instruction_ready ),
-        .i_push_data   ( fetch_instruction ),
-        .i_push_bytes  ( 5'd16 ),
-        .o_push_ready  ( fifo_push_ready ),
-        .i_pop_valid   ( i_dec_fire ),
-        .i_pop_bytes   ( dec_consume_bytes_ext ),
-        .o_pop_ready   ( fifo_pop_ready ),
-        .o_window_data ( fifo_window ),
-        .o_count       ( fifo_count ),
-        .o_full        ( fifo_full ),
-        .o_empty       ( fifo_empty ),
-        .clk           ( clk ),
-        .rst_n         ( rst_n )
+        .i_push_valid  (fetch_instruction_ready),
+        .i_push_data   (fetch_instruction),
+        .i_push_bytes  (5'd16),
+        .o_push_ready  (fifo_push_ready),
+        .i_pop_valid   (i_dec_fire),
+        .i_pop_bytes   (dec_consume_bytes_ext),
+        .o_pop_ready   (fifo_pop_ready),
+        .o_window_data (fifo_window),
+        .o_count       (fifo_count),
+        .o_full        (fifo_full),
+        .o_empty       (fifo_empty),
+        .clk           (clk),
+        .rst_n         (rst_n)
     );
 
     // Keep lint clean for currently unused status/context wires.

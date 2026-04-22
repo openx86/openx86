@@ -37,21 +37,21 @@ segment
 
 module segment_descriptor_decode (
     // 8 字节代码/数据段描述符字段展开（非系统段路径）
-    output logic [31: 0] o_base, // 输出信号
-    output logic [19: 0] o_limit, // 输出信号
-    output logic         o_date_or_code_present, // 输出信号
-    output logic [ 1: 0]  o_date_or_code_privilege_level, // 输出信号
-    output logic         o_available_field, // 输出信号
-    output logic         o_segment_type, // 输出信号
-    output logic         o_date_or_code_granularity, // 输出信号
-    output logic         o_date_or_code_default_operation_size, // 输出信号
-    output logic         o_date_or_code_executable, // 输出信号
-    output logic         o_data_expansion_direction, // 输出信号
-    output logic         o_data_writeable, // 输出信号
-    output logic         o_code_conforming, // 输出信号
-    output logic         o_code_readable, // 输出信号
-    output logic         o_date_or_code_accessed, // 输出信号
-    input  logic [63: 0] i_descriptor // 输入信号
+    output logic [31: 0] o_base,                                // 输出信号
+    output logic [19: 0] o_limit,                               // 输出信号
+    output logic          o_date_or_code_present,                // 输出信号
+    output logic [ 1: 0] o_date_or_code_privilege_level,        // 输出信号
+    output logic          o_available_field,                     // 输出信号
+    output logic          o_segment_type,                        // 输出信号
+    output logic          o_date_or_code_granularity,            // 输出信号
+    output logic          o_date_or_code_default_operation_size, // 输出信号
+    output logic          o_date_or_code_executable,             // 输出信号
+    output logic          o_data_expansion_direction,            // 输出信号
+    output logic          o_data_writeable,                      // 输出信号
+    output logic          o_code_conforming,                     // 输出信号
+    output logic          o_code_readable,                       // 输出信号
+    output logic          o_date_or_code_accessed,               // 输出信号
+    input  logic [63: 0] i_descriptor                           // 输入信号
 );
 
 // 手册中的系统段 TYPE 全集（本模块组合逻辑实际拆解的是 S=1 代码/数据段 8 字节布局）
@@ -82,14 +82,14 @@ logic [ 7: 0] o_base_31_24;
 logic [15: 0] o_limit_15__0;
 logic [ 3: 0] o_limit_19_16;
 
-assign o_base_15__0 = i_descriptor[63: 48];
-assign o_base_23_16 = i_descriptor[ 7: 0];
-assign o_base_31_24 = i_descriptor[31: 24];
-assign o_limit_15__0 = i_descriptor[47: 32];
-assign o_limit_19_16 = i_descriptor[19: 16];
+assign o_base_15__0                         = i_descriptor[63: 48];
+assign o_base_23_16                         = i_descriptor[ 7: 0];
+assign o_base_31_24                         = i_descriptor[31: 24];
+assign o_limit_15__0                        = i_descriptor[47: 32];
+assign o_limit_19_16                        = i_descriptor[19: 16];
 
-assign o_base                                = { o_base_31_24, o_base_23_16, o_base_15__0 };
-assign o_limit                               = { o_limit_19_16, o_limit_15__0 };
+assign o_base                                = {o_base_31_24, o_base_23_16, o_base_15__0};
+assign o_limit                               = {o_limit_19_16, o_limit_15__0};
 assign o_date_or_code_present                = i_descriptor[15];
 assign o_date_or_code_privilege_level        = i_descriptor[14: 13];
 assign o_available_field                     = i_descriptor[20];

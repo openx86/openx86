@@ -19,20 +19,20 @@ module stage_2_dec_x86_opcode_486 (
 
 // 80486 new instructions
 
-assign o_opcode_x86_BSWAP_byte_swap                                             = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 3] == 5'b1100_1);
+assign o_opcode_x86_BSWAP_byte_swap                                 = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 3] == 5'b1100_1);
 
-assign o_opcode_x86_CMPXCHG_compare_and_exchange                                = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 1] == 7'b1011_000);
+assign o_opcode_x86_CMPXCHG_compare_and_exchange                = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 1] == 7'b1011_000);
 
-assign o_opcode_x86_CPUID_CPU_identification                                    = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b1010_0010);
+assign o_opcode_x86_CPUID_CPU_identification                     = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 0] == 8'b1010_0010);
 
-assign o_opcode_x86_INVD_invalidate_cache                                       = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b0000_1000);
+assign o_opcode_x86_INVD_invalidate_cache                        = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 0] == 8'b0000_1000);
 
-assign o_opcode_x86_INVLPG_invalidate_TLB_entry                                 = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b0000_0001) & (i_instruction[2][ 7: 6] != 2'b11) & (i_instruction[2][ 5: 3] == 3'b111);
+assign o_opcode_x86_INVLPG_invalidate_TLB_entry                  = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 0] == 8'b0000_0001) & (i_instruction[2][7: 6] != 2'b11) & (i_instruction[2][5: 3] == 3'b111);
 
-assign o_opcode_x86_WBINVD_writeback_and_invalidate_data_cache                  = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b0000_1001);
+assign o_opcode_x86_WBINVD_writeback_and_invalidate_data_cache    = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 0] == 8'b0000_1001);
 
-assign o_opcode_x86_XADD_exchange_and_add                                       = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 1] == 7'b1100_000);
+assign o_opcode_x86_XADD_exchange_and_add                         = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 1] == 7'b1100_000);
 
-assign o_opcode_x86_UD2_undefined_instruction                                   = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b0000_1011);
+assign o_opcode_x86_UD2_undefined_instruction                     = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 0] == 8'b0000_1011);
 
 endmodule

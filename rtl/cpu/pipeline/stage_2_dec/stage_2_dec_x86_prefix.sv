@@ -16,54 +16,53 @@ description: decode prefix from instruction
 `include "openx86_defs.h.sv"
 // 单字节前缀译码：判定属于手册四组中的哪一类，并给出段覆盖索引
 module stage_2_dec_x86_prefix (
-    input  logic [ 7: 0] i_instruction,          // 当前字节
-    output logic         o_group_1_lock_bus, // 输出信号
-    output logic         o_group_1_repeat_not_equal, // 输出信号
-    output logic         o_group_1_repeat_equal, // 输出信号
-    output logic         o_group_1_bound, // 输出信号
-    output logic         o_group_2_segment_override, // 输出信号
+    input  logic [ 7: 0] i_instruction,                 // 当前字节
+    output logic         o_group_1_lock_bus,            // 输出信号
+    output logic         o_group_1_repeat_not_equal,   // 输出信号
+    output logic         o_group_1_repeat_equal,       // 输出信号
+    output logic         o_group_1_bound,              // 输出信号
+    output logic         o_group_2_segment_override,    // 输出信号
     output logic         o_group_2_hint_branch_not_taken, // 输出信号
-    output logic         o_group_2_hint_branch_taken, // 输出信号
-    output logic         o_group_3_operand_size, // 输出信号
-    output logic         o_group_4_address_size, // 输出信号
-    output logic         o_group_1_is_present, // 输出信号
-    output logic         o_group_2_is_present, // 输出信号
-    output logic         o_group_3_is_present, // 输出信号
-    output logic         o_group_4_is_present, // 输出信号
-    output logic         o_is_present, // 输出信号
-    output logic [ 2: 0] o_segment_override_index // 输出信号
+    output logic         o_group_2_hint_branch_taken,   // 输出信号
+    output logic         o_group_3_operand_size,        // 输出信号
+    output logic         o_group_4_address_size,        // 输出信号
+    output logic         o_group_1_is_present,           // 输出信号
+    output logic         o_group_2_is_present,           // 输出信号
+    output logic         o_group_3_is_present,           // 输出信号
+    output logic         o_group_4_is_present,           // 输出信号
+    output logic         o_is_present,                  // 输出信号
+    output logic [ 2: 0] o_segment_override_index       // 输出信号
 );
 
-logic   segment_override_CS;
-logic   segment_override_DS;
-logic   segment_override_ES;
-logic   segment_override_FS;
-logic   segment_override_GS;
-logic   segment_override_SS;
+logic segment_override_CS;
+logic segment_override_DS;
+logic segment_override_ES;
+logic segment_override_FS;
+logic segment_override_GS;
+logic segment_override_SS;
 
-assign segment_override_CS = i_instruction[ 7: 0] == 8'h2E;
-assign segment_override_DS = i_instruction[ 7: 0] == 8'h36;
-assign segment_override_ES = i_instruction[ 7: 0] == 8'h3E;
-assign segment_override_FS = i_instruction[ 7: 0] == 8'h26;
-assign segment_override_GS = i_instruction[ 7: 0] == 8'h64;
-assign segment_override_SS = i_instruction[ 7: 0] == 8'h65;
+assign segment_override_CS = i_instruction[7: 0] == 8'h2E;
+assign segment_override_DS = i_instruction[7: 0] == 8'h36;
+assign segment_override_ES = i_instruction[7: 0] == 8'h3E;
+assign segment_override_FS = i_instruction[7: 0] == 8'h26;
+assign segment_override_GS = i_instruction[7: 0] == 8'h64;
+assign segment_override_SS = i_instruction[7: 0] == 8'h65;
 
-assign o_group_1_lock_bus              = i_instruction[ 7: 0] == 8'hF0;
-assign o_group_1_repeat_not_equal      = i_instruction[ 7: 0] == 8'hF2;
-assign o_group_1_repeat_equal          = i_instruction[ 7: 0] == 8'hF3;
-assign o_group_1_bound                 = i_instruction[ 7: 0] == 8'hF2;
-assign o_group_2_segment_override      =
-segment_override_CS |
-segment_override_DS |
-segment_override_ES |
-segment_override_FS |
-segment_override_GS |
-segment_override_SS |
-1'b0;
-assign o_group_2_hint_branch_not_taken = i_instruction[ 7: 0] == 8'h2E;
-assign o_group_2_hint_branch_taken     = i_instruction[ 7: 0] == 8'h3E;
-assign o_group_3_operand_size          = i_instruction[ 7: 0] == 8'h66;
-assign o_group_4_address_size          = i_instruction[ 7: 0] == 8'h67;
+assign o_group_1_lock_bus            = i_instruction[7: 0] == 8'hF0;
+assign o_group_1_repeat_not_equal    = i_instruction[7: 0] == 8'hF2;
+assign o_group_1_repeat_equal        = i_instruction[7: 0] == 8'hF3;
+assign o_group_1_bound               = i_instruction[7: 0] == 8'hF2;
+assign o_group_2_segment_override   = segment_override_CS |
+                                      segment_override_DS |
+                                      segment_override_ES |
+                                      segment_override_FS |
+                                      segment_override_GS |
+                                      segment_override_SS |
+                                      1'b0;
+assign o_group_2_hint_branch_not_taken = i_instruction[7: 0] == 8'h2E;
+assign o_group_2_hint_branch_taken    = i_instruction[7: 0] == 8'h3E;
+assign o_group_3_operand_size         = i_instruction[7: 0] == 8'h66;
+assign o_group_4_address_size         = i_instruction[7: 0] == 8'h67;
 
 assign o_group_1_is_present = o_group_1_lock_bus | o_group_1_repeat_not_equal | o_group_1_repeat_equal | o_group_1_bound;
 assign o_group_2_is_present = o_group_2_segment_override | o_group_2_hint_branch_not_taken | o_group_2_hint_branch_taken;

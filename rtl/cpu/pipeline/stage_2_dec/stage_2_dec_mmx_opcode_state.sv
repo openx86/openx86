@@ -11,6 +11,6 @@ module stage_2_dec_mmx_opcode_state (
 );
 
 // State management instruction (0F 77)
-assign o_opcode_mmx_EMMS_empty_MMX_state = (i_instruction[0][ 7: 0] == 8'b0000_1111) & (i_instruction[1][ 7: 0] == 8'b0111_0111);
+assign o_opcode_mmx_EMMS_empty_MMX_state = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 0] == 8'b0111_0111);
 
 endmodule

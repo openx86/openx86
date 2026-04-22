@@ -15,56 +15,56 @@ module openx86_soc_top #(
     // ------------------------------------------------------------------------
     // VGA：RGB444 + 同步
     // ------------------------------------------------------------------------
-    output logic         o_vga_hsync, // 行同步
-    output logic         o_vga_vsync, // 场同步
-    output logic [ 3: 0] o_vga_r,    // 红基色
-    output logic [ 3: 0] o_vga_g,    // 输出信号
-    output logic [ 3: 0] o_vga_b,    // 输出信号
+    output logic         o_vga_hsync,          // 行同步
+    output logic         o_vga_vsync,          // 场同步
+    output logic [ 3: 0] o_vga_r,              // 红基色
+    output logic [ 3: 0] o_vga_g,              // 输出信号
+    output logic [ 3: 0] o_vga_b,              // 输出信号
 
     // ------------------------------------------------------------------------
     // PS/2：开漏；每线为（输出数据、输出使能、总线回读）
     // ------------------------------------------------------------------------
-    output logic         o_ps2_kbd_clk_out, // 时钟信号
-    output logic         o_ps2_kbd_clk_oe,  // 时钟信号
-    input  logic          i_ps2_kbd_clk_in,  // 时钟信号
-    output logic         o_ps2_kbd_dat_out, // 输出信号
-    output logic         o_ps2_kbd_dat_oe,  // 输出信号
-    input  logic          i_ps2_kbd_dat_in,  // 输入信号
-    output logic         o_ps2_aux_clk_out, // 时钟信号
-    output logic         o_ps2_aux_clk_oe,  // 时钟信号
-    input  logic          i_ps2_aux_clk_in,  // 时钟信号
-    output logic         o_ps2_aux_dat_out, // 输出信号
-    output logic         o_ps2_aux_dat_oe,  // 输出信号
-    input  logic          i_ps2_aux_dat_in,  // 输入信号
+    output logic         o_ps2_kbd_clk_out,   // 时钟信号
+    output logic         o_ps2_kbd_clk_oe,    // 时钟信号
+    input  logic          i_ps2_kbd_clk_in,    // 时钟信号
+    output logic         o_ps2_kbd_dat_out,   // 输出信号
+    output logic         o_ps2_kbd_dat_oe,    // 输出信号
+    input  logic          i_ps2_kbd_dat_in,    // 输入信号
+    output logic         o_ps2_aux_clk_out,   // 时钟信号
+    output logic         o_ps2_aux_clk_oe,    // 时钟信号
+    input  logic          i_ps2_aux_clk_in,    // 时钟信号
+    output logic         o_ps2_aux_dat_out,   // 输出信号
+    output logic         o_ps2_aux_dat_oe,    // 输出信号
+    input  logic          i_ps2_aux_dat_in,    // 输入信号
 
     // ------------------------------------------------------------------------
     // SDIO / SD 4-bit（IDE 通道；PHY 在片内）
     // ------------------------------------------------------------------------
-    output logic         o_sdio_clk,    // SD 时钟至卡
-    inout  logic         io_sdio_cmd,   // CMD 双向
-    inout  logic [ 3: 0] io_sdio_dat,  // DAT[3: 0] 双向
+    output logic         o_sdio_clk,           // SD 时钟至卡
+    inout  logic         io_sdio_cmd,          // CMD 双向
+    inout  logic [ 3: 0] io_sdio_dat,          // DAT[3: 0] 双向
 
     // ------------------------------------------------------------------------
     // SDRAM 物理接口（x16 器件）
     // ------------------------------------------------------------------------
-    output logic         o_sdram_clk,  // SDRAM 时钟输出
-    output logic         o_sdram_cke,  // 时钟使能
-    output logic         o_sdram_cs_n, // 片选
-    output logic         o_sdram_ras_n, // 行地址选通
-    output logic         o_sdram_cas_n, // 列地址选通
-    output logic         o_sdram_we_n, // 写使能
-    output logic [ 1: 0] o_sdram_ba,   // Bank 地址
-    output logic [12: 0] o_sdram_a,    // 地址/命令复用
-    output logic [ 1: 0] o_sdram_dqm,  // 字节掩码
-    inout  logic [15: 0] io_sdram_dq,  // 数据总线
+    output logic         o_sdram_clk,          // SDRAM 时钟输出
+    output logic         o_sdram_cke,          // 时钟使能
+    output logic         o_sdram_cs_n,         // 片选
+    output logic         o_sdram_ras_n,        // 行地址选通
+    output logic         o_sdram_cas_n,        // 列地址选通
+    output logic         o_sdram_we_n,         // 写使能
+    output logic [ 1: 0] o_sdram_ba,           // Bank 地址
+    output logic [12: 0] o_sdram_a,            // 地址/命令复用
+    output logic [ 1: 0] o_sdram_dqm,          // 字节掩码
+    inout  logic [15: 0] io_sdram_dq,          // 数据总线
 
     // ------------------------------------------------------------------------
     // 板级时钟与复位
     // ------------------------------------------------------------------------
     // clk：外部 50MHz 振荡器
     // rst_n：低有效复位（按键/POR）
-    input  logic          clk,          // 系统时钟
-    input  logic          rst_n         // 异步低有效复位
+    input  logic          clk,                  // 系统时钟
+    input  logic          rst_n                 // 异步低有效复位
 );
 
     logic        bus_valid;      // CPU 总线事务有效
@@ -126,16 +126,16 @@ module openx86_soc_top #(
 
     // W686 CPU 与总线控制器之间的主事务通道
     i486_cpu u_cpu (
-        .bus_vaild        ( bus_valid ),
-        .bus_ready        ( bus_ready ),
-        .bus_busy         ( bus_busy ),
-        .bus_write_enable ( bus_we ),
-        .bus_io_access    ( bus_io ),
-        .bus_address      ( bus_addr ),
-        .bus_read_data    ( bus_rdata ),
-        .bus_write_data   ( bus_wdata ),
-        .clk            ( clk ),
-        .rst_n            ( rst_n )
+        .bus_vaild        (bus_valid),
+        .bus_ready        (bus_ready),
+        .bus_busy         (bus_busy),
+        .bus_write_enable (bus_we),
+        .bus_io_access    (bus_io),
+        .bus_address      (bus_addr),
+        .bus_read_data    (bus_rdata),
+        .bus_write_data   (bus_wdata),
+        .clk              (clk),
+        .rst_n            (rst_n)
     );
 
     // SDRAM DQ：仅当控制器 OE 时驱动，否则高阻。
@@ -159,137 +159,137 @@ module openx86_soc_top #(
     assign sdio_dat_in = io_sdio_dat;
 
     bus_controller #(
-        .P_USE_SDIO_DISK ( P_USE_SDIO_DISK )
+        .P_USE_SDIO_DISK (P_USE_SDIO_DISK)
     ) u_bus_controller (
-        .i_bus_valid        ( bus_valid ),
-        .o_bus_ready        ( bus_ready ),
-        .o_bus_busy         ( bus_busy ),
-        .i_bus_write_enable ( bus_we ),
-        .i_bus_io_access    ( bus_io ),
-        .i_bus_address      ( bus_addr ),
-        .o_bus_data_read    ( bus_rdata ),
-        .i_bus_data_write   ( bus_wdata ),
-        .o_vga_mem_en_w     ( vga_mem_en_w ),
-        .o_vga_mem_addr     ( vga_mem_addr ),
-        .o_vga_mem_data_w   ( vga_mem_data_w ),
-        .o_vga_io_en_w      ( vga_io_en_w ),
-        .o_vga_io_en_r      ( vga_io_en_r ),
-        .o_vga_io_addr      ( vga_io_addr ),
-        .o_vga_io_data_w    ( vga_io_data_w ),
-        .i_vga_io_data_r    ( vga_io_data_r ),
-        .o_bios_addr        ( bios_addr ),
-        .i_bios_rdata       ( bios_rdata ),
-        .o_ext_bios_addr    ( ext_bios_addr ),
-        .i_ext_bios_rdata   ( ext_bios_rdata ),
-        .o_sdram_en         ( o_sdram_en ),
-        .o_sdram_we         ( o_sdram_we ),
-        .o_sdram_addr_off   ( o_sdram_addr_off ),
-        .o_sdram_wdata      ( o_sdram_wdata ),
-        .i_sdram_rdata      ( i_sdram_rdata ),
-        .i_sdram_ready      ( i_sdram_ready ),
-        .i_sdram_busy       ( i_sdram_busy ),
-        .o_ps2_kbd_clk_out ( o_ps2_kbd_clk_out ),
-        .o_ps2_kbd_clk_oe  ( o_ps2_kbd_clk_oe ),
-        .i_ps2_kbd_clk_in  ( i_ps2_kbd_clk_in ),
-        .o_ps2_kbd_dat_out ( o_ps2_kbd_dat_out ),
-        .o_ps2_kbd_dat_oe  ( o_ps2_kbd_dat_oe ),
-        .i_ps2_kbd_dat_in  ( i_ps2_kbd_dat_in ),
-        .o_ps2_aux_clk_out ( o_ps2_aux_clk_out ),
-        .o_ps2_aux_clk_oe  ( o_ps2_aux_clk_oe ),
-        .i_ps2_aux_clk_in  ( i_ps2_aux_clk_in ),
-        .o_ps2_aux_dat_out ( o_ps2_aux_dat_out ),
-        .o_ps2_aux_dat_oe  ( o_ps2_aux_dat_oe ),
-        .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in ),
-        .o_sdio_clk    ( b_sd_nat_clk ),
-        .o_sdio_cmd_o  ( b_sd_cmd_o ),
-        .o_sdio_cmd_oe ( b_sd_cmd_oe ),
-        .i_sdio_cmd_i  ( b_nat_cmd_i ),
-        .o_sdio_dat_o  ( b_sd_dat_o ),
-        .o_sdio_dat_oe ( b_sd_dat_oe ),
-        .i_sdio_dat_i  ( b_nat_dat_i ),
-        .o_pic_intr         ( pic_intr ),
-        .clk            ( clk ),
-        .rst_n            ( rst_n )
+        .i_bus_valid        (bus_valid),
+        .o_bus_ready        (bus_ready),
+        .o_bus_busy         (bus_busy),
+        .i_bus_write_enable (bus_we),
+        .i_bus_io_access    (bus_io),
+        .i_bus_address      (bus_addr),
+        .o_bus_data_read    (bus_rdata),
+        .i_bus_data_write   (bus_wdata),
+        .o_vga_mem_en_w     (vga_mem_en_w),
+        .o_vga_mem_addr     (vga_mem_addr),
+        .o_vga_mem_data_w   (vga_mem_data_w),
+        .o_vga_io_en_w      (vga_io_en_w),
+        .o_vga_io_en_r      (vga_io_en_r),
+        .o_vga_io_addr      (vga_io_addr),
+        .o_vga_io_data_w    (vga_io_data_w),
+        .i_vga_io_data_r    (vga_io_data_r),
+        .o_bios_addr        (bios_addr),
+        .i_bios_rdata       (bios_rdata),
+        .o_ext_bios_addr    (ext_bios_addr),
+        .i_ext_bios_rdata   (ext_bios_rdata),
+        .o_sdram_en         (o_sdram_en),
+        .o_sdram_we         (o_sdram_we),
+        .o_sdram_addr_off   (o_sdram_addr_off),
+        .o_sdram_wdata      (o_sdram_wdata),
+        .i_sdram_rdata      (i_sdram_rdata),
+        .i_sdram_ready      (i_sdram_ready),
+        .i_sdram_busy       (i_sdram_busy),
+        .o_ps2_kbd_clk_out (o_ps2_kbd_clk_out),
+        .o_ps2_kbd_clk_oe  (o_ps2_kbd_clk_oe),
+        .i_ps2_kbd_clk_in  (i_ps2_kbd_clk_in),
+        .o_ps2_kbd_dat_out (o_ps2_kbd_dat_out),
+        .o_ps2_kbd_dat_oe  (o_ps2_kbd_dat_oe),
+        .i_ps2_kbd_dat_in  (i_ps2_kbd_dat_in),
+        .o_ps2_aux_clk_out (o_ps2_aux_clk_out),
+        .o_ps2_aux_clk_oe  (o_ps2_aux_clk_oe),
+        .i_ps2_aux_clk_in  (i_ps2_aux_clk_in),
+        .o_ps2_aux_dat_out (o_ps2_aux_dat_out),
+        .o_ps2_aux_dat_oe  (o_ps2_aux_dat_oe),
+        .i_ps2_aux_dat_in  (i_ps2_aux_dat_in),
+        .o_sdio_clk         (b_sd_nat_clk),
+        .o_sdio_cmd_o      (b_sd_cmd_o),
+        .o_sdio_cmd_oe     (b_sd_cmd_oe),
+        .i_sdio_cmd_i      (b_nat_cmd_i),
+        .o_sdio_dat_o      (b_sd_dat_o),
+        .o_sdio_dat_oe     (b_sd_dat_oe),
+        .i_sdio_dat_i      (b_nat_dat_i),
+        .o_pic_intr         (pic_intr),
+        .clk                (clk),
+        .rst_n              (rst_n)
     );
 
     sdcard_4bit_phy u_sdio_phy (
-        .i_sd_clk       ( b_sd_nat_clk ),
-        .i_host_cmd_out ( b_sd_cmd_o ),
-        .i_host_cmd_oe  ( b_sd_cmd_oe ),
-        .o_host_cmd_in  ( b_nat_cmd_i ),
-        .i_host_dat_out ( b_sd_dat_o ),
-        .i_host_dat_oe  ( b_sd_dat_oe ),
-        .o_host_dat_in  ( b_nat_dat_i ),
-        .o_sd_clk_pin   ( o_sdio_clk ),
-        .o_sd_cmd_out   ( sdio_cmd_out ),
-        .o_sd_cmd_oe    ( sdio_cmd_oe ),
-        .i_sd_cmd_in    ( sdio_cmd_in ),
-        .o_sd_dat_out   ( sdio_dat_out ),
-        .o_sd_dat_oe    ( sdio_dat_oe ),
-        .i_sd_dat_in    ( sdio_dat_in )
+        .i_sd_clk       (b_sd_nat_clk),
+        .i_host_cmd_out (b_sd_cmd_o),
+        .i_host_cmd_oe  (b_sd_cmd_oe),
+        .o_host_cmd_in  (b_nat_cmd_i),
+        .i_host_dat_out (b_sd_dat_o),
+        .i_host_dat_oe  (b_sd_dat_oe),
+        .o_host_dat_in  (b_nat_dat_i),
+        .o_sd_clk_pin   (o_sdio_clk),
+        .o_sd_cmd_out   (sdio_cmd_out),
+        .o_sd_cmd_oe    (sdio_cmd_oe),
+        .i_sd_cmd_in    (sdio_cmd_in),
+        .o_sd_dat_out   (sdio_dat_out),
+        .o_sd_dat_oe    (sdio_dat_oe),
+        .i_sd_dat_in    (sdio_dat_in)
     );
 
     sdram_controller #(
-        .CLK_HZ          ( 50_000_000 ),
-        .T_RP            ( 2 ),
-        .T_RCD           ( 2 ),
-        .T_RFC           ( 7 ),
-        .T_MRD           ( 2 ),
-        .T_WR            ( 2 ),
-        .CAS             ( 2 ),
-        .REFRESH_CYCLES  ( 390 )
+        .CLK_HZ         (50_000_000),
+        .T_RP           (2),
+        .T_RCD          (2),
+        .T_RFC          (7),
+        .T_MRD          (2),
+        .T_WR           (2),
+        .CAS            (2),
+        .REFRESH_CYCLES (390)
     ) u_sdram (
-        .clk            ( clk ),
-        .rst_n          ( rst_n ),
-        .i_en           ( o_sdram_en ),
-        .i_we           ( o_sdram_we ),
-        .i_addr_off     ( o_sdram_addr_off ),
-        .i_wdata        ( o_sdram_wdata ),
-        .o_rdata        ( i_sdram_rdata ),
-        .o_ready        ( i_sdram_ready ),
-        .o_busy         ( i_sdram_busy ),
-        .o_sdram_clk    ( sdram_phy_clk ),
-        .o_sdram_cke    ( sdram_phy_cke ),
-        .o_sdram_cs_n   ( sdram_phy_cs_n ),
-        .o_sdram_ras_n  ( sdram_phy_ras_n ),
-        .o_sdram_cas_n  ( sdram_phy_cas_n ),
-        .o_sdram_we_n   ( sdram_phy_we_n ),
-        .o_sdram_ba     ( sdram_phy_ba ),
-        .o_sdram_a      ( sdram_phy_a ),
-        .o_sdram_dqm    ( sdram_phy_dqm ),
-        .o_sdram_dq_out ( sdram_phy_dq_out ),
-        .o_sdram_dq_oe  ( sdram_phy_dq_oe ),
-        .i_sdram_dq_in  ( io_sdram_dq )
+        .clk            (clk),
+        .rst_n          (rst_n),
+        .i_en           (o_sdram_en),
+        .i_we           (o_sdram_we),
+        .i_addr_off     (o_sdram_addr_off),
+        .i_wdata        (o_sdram_wdata),
+        .o_rdata        (i_sdram_rdata),
+        .o_ready        (i_sdram_ready),
+        .o_busy         (i_sdram_busy),
+        .o_sdram_clk    (sdram_phy_clk),
+        .o_sdram_cke    (sdram_phy_cke),
+        .o_sdram_cs_n   (sdram_phy_cs_n),
+        .o_sdram_ras_n  (sdram_phy_ras_n),
+        .o_sdram_cas_n  (sdram_phy_cas_n),
+        .o_sdram_we_n   (sdram_phy_we_n),
+        .o_sdram_ba     (sdram_phy_ba),
+        .o_sdram_a      (sdram_phy_a),
+        .o_sdram_dqm    (sdram_phy_dqm),
+        .o_sdram_dq_out (sdram_phy_dq_out),
+        .o_sdram_dq_oe  (sdram_phy_dq_oe),
+        .i_sdram_dq_in  (io_sdram_dq)
     );
 
     // VGA Graphics Adapter: bus VRAM writes + VGA I/O decode (see rtl/bus_controller.sv)
     vga_graphics_adapter u_vga (
-        .io_en_w      ( vga_io_en_w      ),
-        .io_en_r      ( vga_io_en_r      ),
-        .io_addr      ( vga_io_addr      ),
-        .io_data_w    ( vga_io_data_w    ),
-        .io_data_r    ( vga_io_data_r    ),
-        .mem_en_w     ( vga_mem_en_w     ),
-        .mem_addr     ( vga_mem_addr     ),
-        .mem_data_w   ( vga_mem_data_w   ),
-        .vga_hsync    ( o_vga_hsync      ),
-        .vga_vsync    ( o_vga_vsync      ),
-        .vga_r        ( o_vga_r          ),
-        .vga_g        ( o_vga_g          ),
-        .vga_b        ( o_vga_b          ),
-        .clk        ( clk            ),
-        .rst_n      ( rst_n          )
+        .io_en_w      (vga_io_en_w),
+        .io_en_r      (vga_io_en_r),
+        .io_addr      (vga_io_addr),
+        .io_data_w    (vga_io_data_w),
+        .io_data_r    (vga_io_data_r),
+        .mem_en_w     (vga_mem_en_w),
+        .mem_addr     (vga_mem_addr),
+        .mem_data_w   (vga_mem_data_w),
+        .vga_hsync    (o_vga_hsync),
+        .vga_vsync    (o_vga_vsync),
+        .vga_r        (o_vga_r),
+        .vga_g        (o_vga_g),
+        .vga_b        (o_vga_b),
+        .clk          (clk),
+        .rst_n        (rst_n)
     );
 
     // 系统 BIOS 0xF0000–0xFFFFF + 扩展 ROM 0xC0000–0xDFFFF → 后端 EEPROM（镜像：128KB 扩展 + 64KB 系统）
     // 使用 24LC32（4KiB）做后端：地址在 192KiB 线性镜像上取模映射到 4KiB
     chip_pc_bios_eeprom u_bios_24lc32 (
-        .clk               ( clk ),
-        .rst_n               ( rst_n ),
-        .i_sys_bios_byte_off ( bios_addr ),
-        .i_ext_bios_byte_off ( ext_bios_addr ),
-        .o_sys_bios_rdata    ( bios_rdata ),
-        .o_ext_bios_rdata    ( ext_bios_rdata )
+        .clk               (clk),
+        .rst_n             (rst_n),
+        .i_sys_bios_byte_off (bios_addr),
+        .i_ext_bios_byte_off (ext_bios_addr),
+        .o_sys_bios_rdata    (bios_rdata),
+        .o_ext_bios_rdata    (ext_bios_rdata)
     );
 
 endmodule

@@ -25,78 +25,78 @@ module bus_controller #(
     parameter bit  USE_SDIO_DISK = 1'b0
 ) (
     // CPU 总线接口
-    input  logic         i_bus_valid, // CPU 总线事务有效
-    output logic         o_bus_ready, // 从设备就绪（本拍可完成）
-    output logic         o_bus_busy, // SDRAM 等多周期外设忙
-    input  logic         i_bus_write_enable, // 1=写，0=读
-    input  logic         i_bus_io_access, // 1=I/O 端口访问，0=存储器（类 M/IO#）
-    input  logic [31: 0] i_bus_address, // 地址（I/O 时用低 16 位）
-    output logic [31: 0] o_bus_data_read, // 读回数据
-    input  logic [31: 0] i_bus_data_write, // 写出数据
+    input  logic         i_bus_valid,          // CPU 总线事务有效
+    output logic         o_bus_ready,          // 从设备就绪（本拍可完成）
+    output logic         o_bus_busy,           // SDRAM 等多周期外设忙
+    input  logic         i_bus_write_enable,   // 1=写，0=读
+    input  logic         i_bus_io_access,      // 1=I/O 端口访问，0=存储器（类 M/IO#）
+    input  logic [31: 0] i_bus_address,        // 地址（I/O 时用低 16 位）
+    output logic [31: 0] o_bus_data_read,      // 读回数据
+    input  logic [31: 0] i_bus_data_write,     // 写出数据
 
     // VGA 内存访问接口（VRAM窗口 0xA0000-0xBFFFF）
     // 注意：VGA VRAM 通常是只写的（从CPU角度），VGA控制器自己读取显示
-    output logic         o_vga_mem_en_w, // 输出信号
-    output logic [19: 0] o_vga_mem_addr, // 输出信号
-    output logic [ 7: 0] o_vga_mem_data_w, // 输出信号
+    output logic         o_vga_mem_en_w,       // 输出信号
+    output logic [19: 0] o_vga_mem_addr,       // 输出信号
+    output logic [ 7: 0] o_vga_mem_data_w,     // 输出信号
 
     // VGA I/O 端口接口（0x03C0-0x03DF）
-    output logic         o_vga_io_en_w, // 输出信号
-    output logic         o_vga_io_en_r, // 输出信号
-    output logic [15: 0] o_vga_io_addr, // 输出信号
-    output logic [ 7: 0] o_vga_io_data_w, // 输出信号
-    input  logic [ 7: 0] i_vga_io_data_r, // 输入信号
+    output logic         o_vga_io_en_w,        // 输出信号
+    output logic         o_vga_io_en_r,        // 输出信号
+    output logic [15: 0] o_vga_io_addr,        // 输出信号
+    output logic [ 7: 0] o_vga_io_data_w,      // 输出信号
+    input  logic [ 7: 0] i_vga_io_data_r,      // 输入信号
 
     // BIOS ROM 接口（系统 BIOS 64KB）
     // 使用简单的ROM接口：addr, rdata
-    output logic [15: 0] o_bios_addr, // 输出信号
-    input  logic [31: 0] i_bios_rdata, // 输入信号
+    output logic [15: 0] o_bios_addr,          // 输出信号
+    input  logic [31: 0] i_bios_rdata,         // 输入信号
 
     // 扩展 BIOS ROM 接口（128KB）
-    output logic [16: 0] o_ext_bios_addr, // 输出信号
-    input  logic [31: 0] i_ext_bios_rdata, // 输入信号
+    output logic [16: 0] o_ext_bios_addr,      // 输出信号
+    input  logic [31: 0] i_ext_bios_rdata,     // 输入信号
 
     // SDRAM：640KB 常规内存 + 16MB 窗口（0x0100_0000）共用 sdram_controller
-    output logic         o_sdram_en, // 输出信号
-    output logic         o_sdram_we, // 输出信号
-    output logic [23: 0] o_sdram_addr_off, // 输出信号
-    output logic [31: 0] o_sdram_wdata, // 输出信号
-    input  logic [31: 0] i_sdram_rdata, // 输入信号
-    input  logic         i_sdram_ready, // 输入信号
-    input  logic         i_sdram_busy, // 输入信号
+    output logic         o_sdram_en,           // 输出信号
+    output logic         o_sdram_we,           // 输出信号
+    output logic [23: 0] o_sdram_addr_off,     // 输出信号
+    output logic [31: 0] o_sdram_wdata,        // 输出信号
+    input  logic [31: 0] i_sdram_rdata,        // 输入信号
+    input  logic         i_sdram_ready,        // 输入信号
+    input  logic         i_sdram_busy,         // 输入信号
 
     // PS/2 键盘与鼠标（8042）：开漏驱动 + 总线回读；未用 PHY 时可上拉输入为 1
-    output logic         o_ps2_kbd_clk_out, // 键盘时钟驱动
-    output logic         o_ps2_kbd_clk_oe, // 键盘时钟 OE
-    input  logic         i_ps2_kbd_clk_in, // 键盘时钟回读
-    output logic         o_ps2_kbd_dat_out, // 输出信号
-    output logic         o_ps2_kbd_dat_oe, // 输出信号
-    input  logic         i_ps2_kbd_dat_in, // 输入信号
+    output logic         o_ps2_kbd_clk_out,    // 键盘时钟驱动
+    output logic         o_ps2_kbd_clk_oe,     // 键盘时钟 OE
+    input  logic         i_ps2_kbd_clk_in,     // 键盘时钟回读
+    output logic         o_ps2_kbd_dat_out,    // 输出信号
+    output logic         o_ps2_kbd_dat_oe,     // 输出信号
+    input  logic         i_ps2_kbd_dat_in,     // 输入信号
 
-    output logic         o_ps2_aux_clk_out, // 鼠标时钟驱动
-    output logic         o_ps2_aux_clk_oe, // 时钟信号
-    input  logic         i_ps2_aux_clk_in, // 时钟信号
-    output logic         o_ps2_aux_dat_out, // 输出信号
-    output logic         o_ps2_aux_dat_oe, // 输出信号
-    input  logic         i_ps2_aux_dat_in, // 输入信号
+    output logic         o_ps2_aux_clk_out,    // 鼠标时钟驱动
+    output logic         o_ps2_aux_clk_oe,     // 时钟信号
+    input  logic         i_ps2_aux_clk_in,     // 时钟信号
+    output logic         o_ps2_aux_dat_out,    // 输出信号
+    output logic         o_ps2_aux_dat_oe,     // 输出信号
+    input  logic         i_ps2_aux_dat_in,     // 输入信号
 
     // SDIO / SD 4-bit（由 ide_controller → sdcard_controller 驱动；USE_SDIO_DISK=0 时为空闲电平）
-    output logic         o_sdio_clk, // SDIO 时钟至 PHY/卡
-    output logic         o_sdio_cmd_o, // CMD 线主机驱动数据
-    output logic         o_sdio_cmd_oe, // CMD 输出使能
-    input  logic         i_sdio_cmd_i, // CMD 总线回读
-    output logic [ 3: 0] o_sdio_dat_o, // DAT[3: 0] 主机驱动
-    output logic         o_sdio_dat_oe, // DAT 输出使能
-    input  logic [ 3: 0] i_sdio_dat_i, // DAT 总线回读
+    output logic         o_sdio_clk,           // SDIO 时钟至 PHY/卡
+    output logic         o_sdio_cmd_o,         // CMD 线主机驱动数据
+    output logic         o_sdio_cmd_oe,        // CMD 输出使能
+    input  logic         i_sdio_cmd_i,         // CMD 总线回读
+    output logic [ 3: 0] o_sdio_dat_o,         // DAT[3: 0] 主机驱动
+    output logic         o_sdio_dat_oe,        // DAT 输出使能
+    input  logic [ 3: 0] i_sdio_dat_i,         // DAT 总线回读
 
     // PIC 主片中断输出（接 CPU INTR）
-    output logic         o_pic_intr, // 主片 INTR（高有效）
+    output logic         o_pic_intr,           // 主片 INTR（高有效）
 
     // Chipset（IBM PC/AT I/O：各 chip_* 模块由 bus_controller 直连例化；未命中时读回 0xFF）
 
     // 公共时钟与复位
-    input  logic          clk, // 系统时钟
-    input  logic          rst_n // 异步低有效复位
+    input  logic          clk,                  // 系统时钟
+    input  logic          rst_n                 // 异步低有效复位
 );
 
 // ============================================================================
@@ -321,145 +321,145 @@ assign ir_m[ 7:  3]  = 5'b0;
 
 
 chip_8237_dma u_chip_dma (
-    .clk    ( clk ),
-    .rst_n    ( rst_n ),
-    .i_cs_n     ( cs_dma_n ),
-    .i_rd_n     ( rd_dma_n ),
-    .i_wr_n     ( wr_dma_n ),
-    .i_addr     ( chip_io_addr ),
-    .i_d        ( i_bus_data_write[ 7: 0] ),
-    .o_d        ( r_dma )
+    .clk    (clk),
+    .rst_n  (rst_n),
+    .i_cs_n (cs_dma_n),
+    .i_rd_n (rd_dma_n),
+    .i_wr_n (wr_dma_n),
+    .i_addr (chip_io_addr),
+    .i_d    (i_bus_data_write[7: 0]),
+    .o_d    (r_dma)
 );
 
 chip_8259_pic u_chip_pic_m (
-    .clk    ( clk ),
-    .rst_n    ( rst_n ),
-    .i_cs_n     ( cs_pic_m_n ),
-    .i_rd_n     ( rd_pic_m_n ),
-    .i_wr_n     ( wr_pic_m_n ),
-    .i_a0       ( chip_io_addr[0] ),
-    .i_d        ( i_bus_data_write[ 7: 0] ),
-    .o_d        ( r_pic_m ),
-    .i_ir       ( ir_m ),
-    .o_intr     ( intr_m )
+    .clk    (clk),
+    .rst_n  (rst_n),
+    .i_cs_n (cs_pic_m_n),
+    .i_rd_n (rd_pic_m_n),
+    .i_wr_n (wr_pic_m_n),
+    .i_a0   (chip_io_addr[0]),
+    .i_d    (i_bus_data_write[7: 0]),
+    .o_d    (r_pic_m),
+    .i_ir   (ir_m),
+    .o_intr (intr_m)
 );
 
 chip_8259_pic u_chip_pic_s (
-    .clk    ( clk ),
-    .rst_n    ( rst_n ),
-    .i_cs_n     ( cs_pic_s_n ),
-    .i_rd_n     ( rd_pic_s_n ),
-    .i_wr_n     ( wr_pic_s_n ),
-    .i_a0       ( chip_io_addr[0] ),
-    .i_d        ( i_bus_data_write[ 7: 0] ),
-    .o_d        ( r_pic_s ),
-    .i_ir       ( pic_slave_ir_merged ),
-    .o_intr     ( intr_s )
+    .clk    (clk),
+    .rst_n  (rst_n),
+    .i_cs_n (cs_pic_s_n),
+    .i_rd_n (rd_pic_s_n),
+    .i_wr_n (wr_pic_s_n),
+    .i_a0   (chip_io_addr[0]),
+    .i_d    (i_bus_data_write[7: 0]),
+    .o_d    (r_pic_s),
+    .i_ir   (pic_slave_ir_merged),
+    .o_intr (intr_s)
 );
 
 logic pit_out1_unused, pit_out2_unused;
 chip_8254_pit u_chip_pit (
-    .clk    ( clk ),
-    .rst_n    ( rst_n ),
-    .i_cs_n     ( cs_pit_n ),
-    .i_rd_n     ( rd_pit_n ),
-    .i_wr_n     ( wr_pit_n ),
-    .i_a        ( chip_io_addr[ 1: 0] ),
-    .i_d        ( i_bus_data_write[ 7: 0] ),
-    .o_d        ( r_pit ),
-    .o_out0     ( pit_out0 ),
-    .o_out1     ( pit_out1_unused ),
-    .o_out2     ( pit_out2_unused )
+    .clk    (clk),
+    .rst_n  (rst_n),
+    .i_cs_n (cs_pit_n),
+    .i_rd_n (rd_pit_n),
+    .i_wr_n (wr_pit_n),
+    .i_a    (chip_io_addr[1: 0]),
+    .i_d    (i_bus_data_write[7: 0]),
+    .o_d    (r_pit),
+    .o_out0 (pit_out0),
+    .o_out1 (pit_out1_unused),
+    .o_out2 (pit_out2_unused)
 );
 
 chip_i8042_ps2 #(
-    .USE_REAL_PS2 ( USE_REAL_PS2 ),
-    .CLK_HZ       ( PS2_CLK_HZ )
+    .USE_REAL_PS2 (USE_REAL_PS2),
+    .CLK_HZ       (PS2_CLK_HZ)
 ) u_chip_ps2 (
-    .clk           ( clk ),
-    .rst_n           ( rst_n ),
-    .i_cs_n            ( cs_ps2_n ),
-    .i_rd_n            ( rd_ps2_n ),
-    .i_wr_n            ( wr_ps2_n ),
-    .i_a0              ( chip_io_addr[2] ),
-    .i_d               ( i_bus_data_write[ 7: 0] ),
-    .o_d               ( r_ps2 ),
-    .i_kbd_push        ( 1'b0 ),
-    .i_kbd_data        ( 8'h0 ),
-    .i_aux_push        ( 1'b0 ),
-    .i_aux_data        ( 8'h0 ),
-    .o_kbd_irq         ( ps2_kbd_irq ),
-    .o_aux_irq         ( ps2_aux_irq ),
-    .o_ps2_kbd_clk_out ( o_ps2_kbd_clk_out ),
-    .o_ps2_kbd_clk_oe  ( o_ps2_kbd_clk_oe ),
-    .i_ps2_kbd_clk_in  ( i_ps2_kbd_clk_in ),
-    .o_ps2_kbd_dat_out ( o_ps2_kbd_dat_out ),
-    .o_ps2_kbd_dat_oe  ( o_ps2_kbd_dat_oe ),
-    .i_ps2_kbd_dat_in  ( i_ps2_kbd_dat_in ),
-    .o_ps2_aux_clk_out ( o_ps2_aux_clk_out ),
-    .o_ps2_aux_clk_oe  ( o_ps2_aux_clk_oe ),
-    .i_ps2_aux_clk_in  ( i_ps2_aux_clk_in ),
-    .o_ps2_aux_dat_out ( o_ps2_aux_dat_out ),
-    .o_ps2_aux_dat_oe  ( o_ps2_aux_dat_oe ),
-    .i_ps2_aux_dat_in  ( i_ps2_aux_dat_in )
+    .clk               (clk),
+    .rst_n             (rst_n),
+    .i_cs_n            (cs_ps2_n),
+    .i_rd_n            (rd_ps2_n),
+    .i_wr_n            (wr_ps2_n),
+    .i_a0              (chip_io_addr[2]),
+    .i_d               (i_bus_data_write[7: 0]),
+    .o_d               (r_ps2),
+    .i_kbd_push        (1'b0),
+    .i_kbd_data        (8'h0),
+    .i_aux_push        (1'b0),
+    .i_aux_data        (8'h0),
+    .o_kbd_irq         (ps2_kbd_irq),
+    .o_aux_irq         (ps2_aux_irq),
+    .o_ps2_kbd_clk_out (o_ps2_kbd_clk_out),
+    .o_ps2_kbd_clk_oe  (o_ps2_kbd_clk_oe),
+    .i_ps2_kbd_clk_in  (i_ps2_kbd_clk_in),
+    .o_ps2_kbd_dat_out (o_ps2_kbd_dat_out),
+    .o_ps2_kbd_dat_oe  (o_ps2_kbd_dat_oe),
+    .i_ps2_kbd_dat_in  (i_ps2_kbd_dat_in),
+    .o_ps2_aux_clk_out (o_ps2_aux_clk_out),
+    .o_ps2_aux_clk_oe  (o_ps2_aux_clk_oe),
+    .i_ps2_aux_clk_in  (i_ps2_aux_clk_in),
+    .o_ps2_aux_dat_out (o_ps2_aux_dat_out),
+    .o_ps2_aux_dat_oe  (o_ps2_aux_dat_oe),
+    .i_ps2_aux_dat_in  (i_ps2_aux_dat_in)
 );
 
 chip_mc146818_rtc u_chip_rtc (
-    .clk    ( clk ),
-    .rst_n    ( rst_n ),
-    .i_cs_n     ( cs_rtc_n ),
-    .i_rd_n     ( rd_rtc_n ),
-    .i_wr_n     ( wr_rtc_n ),
-    .i_a0       ( chip_io_addr[0] ),
-    .i_d        ( i_bus_data_write[ 7: 0] ),
-    .o_d        ( r_rtc ),
-    .o_rtc_irq  ( rtc_irq )
+    .clk       (clk),
+    .rst_n     (rst_n),
+    .i_cs_n    (cs_rtc_n),
+    .i_rd_n    (rd_rtc_n),
+    .i_wr_n    (wr_rtc_n),
+    .i_a0      (chip_io_addr[0]),
+    .i_d       (i_bus_data_write[7: 0]),
+    .o_d       (r_rtc),
+    .o_rtc_irq (rtc_irq)
 );
 
 chip_ns16550_com u_chip_com1 (
-    .clk    ( clk ),
-    .rst_n    ( rst_n ),
-    .i_cs_n     ( cs_com_n ),
-    .i_rd_n     ( rd_com_n ),
-    .i_wr_n     ( wr_com_n ),
-    .i_a        ( chip_io_addr[ 2: 0] ),
-    .i_d        ( i_bus_data_write[ 7: 0] ),
-    .o_d        ( r_com ),
-    .i_rx_push  ( 1'b0 ),
-    .i_rx_data  ( 8'h0 )
+    .clk      (clk),
+    .rst_n    (rst_n),
+    .i_cs_n   (cs_com_n),
+    .i_rd_n   (rd_com_n),
+    .i_wr_n   (wr_com_n),
+    .i_a      (chip_io_addr[2: 0]),
+    .i_d      (i_bus_data_write[7: 0]),
+    .o_d      (r_com),
+    .i_rx_push(1'b0),
+    .i_rx_data(8'h0)
 );
 
 chip_centronics_lpt u_chip_lpt1 (
-    .clk    ( clk ),
-    .rst_n    ( rst_n ),
-    .i_cs_n     ( cs_lpt_n ),
-    .i_rd_n     ( rd_lpt_n ),
-    .i_wr_n     ( wr_lpt_n ),
-    .i_a        ( chip_io_addr[ 2: 0] ),
-    .i_d        ( i_bus_data_write[ 7: 0] ),
-    .o_d        ( r_lpt )
+    .clk   (clk),
+    .rst_n (rst_n),
+    .i_cs_n(cs_lpt_n),
+    .i_rd_n(rd_lpt_n),
+    .i_wr_n(wr_lpt_n),
+    .i_a   (chip_io_addr[2: 0]),
+    .i_d   (i_bus_data_write[7: 0]),
+    .o_d   (r_lpt)
 );
 
 ide_controller #(
-    .P_SECTOR_BYTES   ( 512 ),
-    .P_SECTOR_COUNT   ( CHIP_DISK_SECTOR_CNT ),
-    .P_USE_SDIO_DISK  ( USE_SDIO_DISK )
+    .P_SECTOR_BYTES  (512),
+    .P_SECTOR_COUNT  (CHIP_DISK_SECTOR_CNT),
+    .P_USE_SDIO_DISK (USE_SDIO_DISK)
 ) u_ide (
-    .i_cs_n         ( cs_ide_n ),
-    .i_rd_n         ( rd_ide_n ),
-    .i_wr_n         ( wr_ide_n ),
-    .i_addr         ( chip_io_addr ),
-    .i_wdata        ( i_bus_data_write[ 7: 0] ),
-    .o_rdata        ( r_ide ),
-    .o_sdio_clk     ( o_sdio_clk ),
-    .o_sdio_cmd_out ( o_sdio_cmd_o ),
-    .o_sdio_cmd_oe  ( o_sdio_cmd_oe ),
-    .i_sdio_cmd_in  ( i_sdio_cmd_i ),
-    .o_sdio_dat_out ( o_sdio_dat_o ),
-    .o_sdio_dat_oe  ( o_sdio_dat_oe ),
-    .i_sdio_dat_in  ( i_sdio_dat_i ),
-    .clk          ( clk ),
-    .rst_n        ( rst_n )
+    .i_cs_n        (cs_ide_n),
+    .i_rd_n        (rd_ide_n),
+    .i_wr_n        (wr_ide_n),
+    .i_addr        (chip_io_addr),
+    .i_wdata       (i_bus_data_write[7: 0]),
+    .o_rdata       (r_ide),
+    .o_sdio_clk    (o_sdio_clk),
+    .o_sdio_cmd_o  (o_sdio_cmd_o),
+    .o_sdio_cmd_oe (o_sdio_cmd_oe),
+    .i_sdio_cmd_i  (i_sdio_cmd_i),
+    .o_sdio_dat_o  (o_sdio_dat_o),
+    .o_sdio_dat_oe (o_sdio_dat_oe),
+    .i_sdio_dat_i  (i_sdio_dat_i),
+    .clk           (clk),
+    .rst_n         (rst_n)
 );
 
 // chipset 各从设备读数据优先级 MUX（DMA→…→IDE）。
