@@ -31,7 +31,7 @@
 // ============================================================================
 
 module chip_mc146818_rtc #(
-    parameter int P_CLK_HZ = 8_000  // 日历推进与分频器参考频率（仿真可放低）
+    parameter int P_CLK_HZ = 8_192  // 日历推进与分频器参考频率（仿真可放低）
 ) (
     // =========================
     // CPU bus interface
@@ -314,21 +314,21 @@ module chip_mc146818_rtc #(
     always_comb begin
         unique case (cmos_ram[10][ 3: 0])
             4'd0: pie_reload_q = 24'd0;
-            4'd1: pie_reload_q = 24'(CLK_HZ / 32768);
-            4'd2: pie_reload_q = 24'(CLK_HZ / 16384);
-            4'd3: pie_reload_q = 24'(CLK_HZ / 8192);
-            4'd4: pie_reload_q = 24'(CLK_HZ / 4096);
-            4'd5: pie_reload_q = 24'(CLK_HZ / 2048);
-            4'd6: pie_reload_q = 24'(CLK_HZ / 1024);
-            4'd7: pie_reload_q = 24'(CLK_HZ / 512);
-            4'd8: pie_reload_q = 24'(CLK_HZ / 256);
-            4'd9: pie_reload_q = 24'(CLK_HZ / 128);
-            4'd10: pie_reload_q = 24'(CLK_HZ / 64);
-            4'd11: pie_reload_q = 24'(CLK_HZ / 32);
-            4'd12: pie_reload_q = 24'(CLK_HZ / 16);
-            4'd13: pie_reload_q = 24'(CLK_HZ / 8);
-            4'd14: pie_reload_q = 24'(CLK_HZ / 4);
-            default: pie_reload_q = 24'(CLK_HZ / 2);
+            4'd1: pie_reload_q = 24'(P_CLK_HZ / 32768);
+            4'd2: pie_reload_q = 24'(P_CLK_HZ / 16384);
+            4'd3: pie_reload_q = 24'(P_CLK_HZ / 8192);
+            4'd4: pie_reload_q = 24'(P_CLK_HZ / 4096);
+            4'd5: pie_reload_q = 24'(P_CLK_HZ / 2048);
+            4'd6: pie_reload_q = 24'(P_CLK_HZ / 1024);
+            4'd7: pie_reload_q = 24'(P_CLK_HZ / 512);
+            4'd8: pie_reload_q = 24'(P_CLK_HZ / 256);
+            4'd9: pie_reload_q = 24'(P_CLK_HZ / 128);
+            4'd10: pie_reload_q = 24'(P_CLK_HZ / 64);
+            4'd11: pie_reload_q = 24'(P_CLK_HZ / 32);
+            4'd12: pie_reload_q = 24'(P_CLK_HZ / 16);
+            4'd13: pie_reload_q = 24'(P_CLK_HZ / 8);
+            4'd14: pie_reload_q = 24'(P_CLK_HZ / 4);
+            default: pie_reload_q = 24'(P_CLK_HZ / 2);
         endcase
     end
 
