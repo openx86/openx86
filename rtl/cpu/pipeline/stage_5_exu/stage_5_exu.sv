@@ -152,6 +152,24 @@ module stage_5_exu (
     logic [31: 0] mem_address;
     logic [31: 0] mem_write_data;
 
+    // Temporary variables for case statements
+    logic [15: 0] tmp_src_16;
+    logic [31: 0] tmp_sum;
+    logic [31: 0] tmp_diff;
+    logic [31: 0] tmp_res;
+    logic [31: 0] tmp_src;
+    logic [31: 0] tmp_new_esp;
+    logic [31: 0] tmp_target;
+    logic [ 4: 0] tmp_shift_count;
+    logic [31: 0] tmp_operand;
+    logic [ 4: 0] tmp_bit_index;
+    logic [32: 0] tmp_ext_src;
+    logic [63: 0] tmp_combined;
+    logic [63: 0] tmp_dividend;
+    logic signed [63: 0] tmp_dividend_signed;
+    logic [31: 0] tmp_tmp_divisor;
+    logic signed [31: 0] tmp_tmp_divisor_signed;
+
     assign src1_data = i_src1_data;
     assign src2_data = i_src2_data;
     assign immediate = i_uop.uop_immediate;
@@ -163,6 +181,36 @@ module stage_5_exu (
     assign mem_access = i_uop.uop_mem_access;
     assign is_store = i_uop.uop_is_store;
     assign uop_opcode = i_uop.uop_opcode;
+
+    // Function to compute condition based on tttn
+    function automatic logic compute_condition (
+        input logic [ 3: 0] tttn_val,
+        input logic         of_val,
+        input logic         cf_val,
+        input logic         zf_val,
+        input logic         sf_val,
+        input logic         pf_val
+    );
+        case (tttn_val)
+            4'h0: compute_condition = of_val;
+            4'h1: compute_condition = ~of_val;
+            4'h2: compute_condition = cf_val;
+            4'h3: compute_condition = ~cf_val;
+            4'h4: compute_condition = zf_val;
+            4'h5: compute_condition = ~zf_val;
+            4'h6: compute_condition = cf_val | zf_val;
+            4'h7: compute_condition = ~(cf_val | zf_val);
+            4'h8: compute_condition = sf_val;
+            4'h9: compute_condition = ~sf_val;
+            4'hA: compute_condition = pf_val;
+            4'hB: compute_condition = ~pf_val;
+            4'hC: compute_condition = sf_val ^ of_val;
+            4'hD: compute_condition = ~(sf_val ^ of_val);
+            4'hE: compute_condition = sf_val ^ of_val ^ cf_val;
+            4'hF: compute_condition = 1'b1;
+            default: compute_condition = 1'b0;
+        endcase
+    endfunction
 
     always_comb begin
         result = 32'd0;
@@ -184,57 +232,57 @@ module stage_5_exu (
         if (i_uop_valid) begin
             case (uop_opcode)
                 `UOP_ADD: begin
-                    logic [31: 0] sum = src1_data + src2_data;
-                    result = sum;
+                    tmp_sum = src1_data + src2_data;
+                    result = tmp_sum;
                     new_cf = compute_cf_add(src1_data, src2_data);
-                    new_pf = compute_pf(sum);
-                    new_zf = compute_zf(sum);
-                    new_sf = compute_sf(sum);
+                    new_pf = compute_pf(tmp_sum);
+                    new_zf = compute_zf(tmp_sum);
+                    new_sf = compute_sf(tmp_sum);
                     new_of = compute_of_add(src1_data, src2_data);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_SUB: begin
-                    logic [31: 0] diff = src1_data - src2_data;
-                    result = diff;
+                    tmp_diff = src1_data - src2_data;
+                    result = tmp_diff;
                     new_cf = compute_cf_sub(src1_data, src2_data);
-                    new_pf = compute_pf(diff);
-                    new_zf = compute_zf(diff);
-                    new_sf = compute_sf(diff);
+                    new_pf = compute_pf(tmp_diff);
+                    new_zf = compute_zf(tmp_diff);
+                    new_sf = compute_sf(tmp_diff);
                     new_of = compute_of_sub(src1_data, src2_data);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_AND: begin
-                    logic [31: 0] res = src1_data & src2_data;
-                    result = res;
+                    tmp_res = src1_data & src2_data;
+                    result = tmp_res;
                     new_cf = 1'b0;
                     new_of = 1'b0;
-                    new_pf = compute_pf(res);
-                    new_zf = compute_zf(res);
-                    new_sf = compute_sf(res);
+                    new_pf = compute_pf(tmp_res);
+                    new_zf = compute_zf(tmp_res);
+                    new_sf = compute_sf(tmp_res);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_OR: begin
-                    logic [31: 0] res = src1_data | src2_data;
-                    result = res;
+                    tmp_res = src1_data | src2_data;
+                    result = tmp_res;
                     new_cf = 1'b0;
                     new_of = 1'b0;
-                    new_pf = compute_pf(res);
-                    new_zf = compute_zf(res);
-                    new_sf = compute_sf(res);
+                    new_pf = compute_pf(tmp_res);
+                    new_zf = compute_zf(tmp_res);
+                    new_sf = compute_sf(tmp_res);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_XOR: begin
-                    logic [31: 0] res = src1_data ^ src2_data;
-                    result = res;
+                    tmp_res = src1_data ^ src2_data;
+                    result = tmp_res;
                     new_cf = 1'b0;
                     new_of = 1'b0;
-                    new_pf = compute_pf(res);
-                    new_zf = compute_zf(res);
-                    new_sf = compute_sf(res);
+                    new_pf = compute_pf(tmp_res);
+                    new_zf = compute_zf(tmp_res);
+                    new_sf = compute_sf(tmp_res);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
@@ -243,63 +291,63 @@ module stage_5_exu (
                     write_gpr = 1'b1;
                 end
                 `UOP_CMP: begin
-                    logic [31: 0] diff = src1_data - src2_data;
+                    tmp_diff = src1_data - src2_data;
                     new_cf = compute_cf_sub(src1_data, src2_data);
-                    new_pf = compute_pf(diff);
-                    new_zf = compute_zf(diff);
-                    new_sf = compute_sf(diff);
+                    new_pf = compute_pf(tmp_diff);
+                    new_zf = compute_zf(tmp_diff);
+                    new_sf = compute_sf(tmp_diff);
                     new_of = compute_of_sub(src1_data, src2_data);
                     write_flags = 1'b1;
                 end
                 `UOP_ADC: begin
-                    logic [31: 0] sum = src1_data + src2_data + i_cf;
-                    result = sum;
+                    tmp_sum = src1_data + src2_data + i_cf;
+                    result = tmp_sum;
                     new_cf = compute_cf_adc(src1_data, src2_data, i_cf);
-                    new_pf = compute_pf(sum);
-                    new_zf = compute_zf(sum);
-                    new_sf = compute_sf(sum);
+                    new_pf = compute_pf(tmp_sum);
+                    new_zf = compute_zf(tmp_sum);
+                    new_sf = compute_sf(tmp_sum);
                     new_of = compute_of_adc(src1_data, src2_data, i_cf);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_SBB: begin
-                    logic [31: 0] diff = src1_data - src2_data - i_cf;
-                    result = diff;
+                    tmp_diff = src1_data - src2_data - i_cf;
+                    result = tmp_diff;
                     new_cf = compute_cf_sbb(src1_data, src2_data, i_cf);
-                    new_pf = compute_pf(diff);
-                    new_zf = compute_zf(diff);
-                    new_sf = compute_sf(diff);
+                    new_pf = compute_pf(tmp_diff);
+                    new_zf = compute_zf(tmp_diff);
+                    new_sf = compute_sf(tmp_diff);
                     new_of = compute_of_sbb(src1_data, src2_data, i_cf);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_INC: begin
-                    logic [31: 0] res = src1_data + 32'd1;
-                    result = res;
-                    new_pf = compute_pf(res);
-                    new_zf = compute_zf(res);
-                    new_sf = compute_sf(res);
+                    tmp_res = src1_data + 32'd1;
+                    result = tmp_res;
+                    new_pf = compute_pf(tmp_res);
+                    new_zf = compute_zf(tmp_res);
+                    new_sf = compute_sf(tmp_res);
                     new_of = compute_of_inc(src1_data);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_DEC: begin
-                    logic [31: 0] res = src1_data - 32'd1;
-                    result = res;
-                    new_pf = compute_pf(res);
-                    new_zf = compute_zf(res);
-                    new_sf = compute_sf(res);
+                    tmp_res = src1_data - 32'd1;
+                    result = tmp_res;
+                    new_pf = compute_pf(tmp_res);
+                    new_zf = compute_zf(tmp_res);
+                    new_sf = compute_sf(tmp_res);
                     new_of = compute_of_dec(src1_data);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_NEG: begin
-                    logic [31: 0] res = ~src1_data + 32'd1;
-                    result = res;
+                    tmp_res = ~src1_data + 32'd1;
+                    result = tmp_res;
                     new_cf = (src1_data != 32'd0);
-                    new_pf = compute_pf(res);
-                    new_zf = compute_zf(res);
-                    new_sf = compute_sf(res);
+                    new_pf = compute_pf(tmp_res);
+                    new_zf = compute_zf(tmp_res);
+                    new_sf = compute_sf(tmp_res);
                     new_of = (src1_data == 32'h80000000);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
@@ -309,161 +357,161 @@ module stage_5_exu (
                     write_gpr = 1'b1;
                 end
                 `UOP_TEST: begin
-                    logic [31: 0] res = src1_data & src2_data;
+                    tmp_res = src1_data & src2_data;
                     new_cf = 1'b0;
                     new_of = 1'b0;
-                    new_pf = compute_pf(res);
-                    new_zf = compute_zf(res);
-                    new_sf = compute_sf(res);
+                    new_pf = compute_pf(tmp_res);
+                    new_zf = compute_zf(tmp_res);
+                    new_sf = compute_sf(tmp_res);
                     write_flags = 1'b1;
                 end
                 `UOP_SHL: begin
-                    logic [ 4: 0] shift_count = src2_data[4: 0];
-                    logic [31: 0] res = src1_data << shift_count;
-                    result = res;
-                    if (shift_count != 5'd0) begin
+                    tmp_shift_count = src2_data[4: 0];
+                    tmp_res = src1_data << tmp_shift_count;
+                    result = tmp_res;
+                    if (tmp_shift_count != 5'd0) begin
                         new_cf = (shift_count > 5'd0) ? src1_data[32'd32 - shift_count] : src1_data[0];
                         new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
-                        new_pf = compute_pf(res);
-                        new_zf = compute_zf(res);
-                        new_sf = compute_sf(res);
+                        new_pf = compute_pf(tmp_res);
+                        new_zf = compute_zf(tmp_res);
+                        new_sf = compute_sf(tmp_res);
                     end
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_SHR: begin
-                    logic [ 4: 0] shift_count = src2_data[4: 0];
-                    logic [31: 0] res = src1_data >> shift_count;
-                    result = res;
-                    if (shift_count != 5'd0) begin
+                    tmp_shift_count = src2_data[4: 0];
+                    tmp_res = src1_data >> tmp_shift_count;
+                    result = tmp_res;
+                    if (tmp_shift_count != 5'd0) begin
                         new_cf = (shift_count > 5'd0) ? src1_data[shift_count - 5'd1] : src1_data[31];
                         new_of = (shift_count == 5'd1) ? src1_data[31] : 1'b0;
-                        new_pf = compute_pf(res);
-                        new_zf = compute_zf(res);
-                        new_sf = compute_sf(res);
+                        new_pf = compute_pf(tmp_res);
+                        new_zf = compute_zf(tmp_res);
+                        new_sf = compute_sf(tmp_res);
                     end
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_SAR: begin
-                    logic [ 4: 0] shift_count = src2_data[4: 0];
-                    logic [31: 0] res = $signed(src1_data) >>> shift_count;
-                    result = res;
-                    if (shift_count != 5'd0) begin
+                    tmp_shift_count = src2_data[4: 0];
+                    tmp_res = $signed(src1_data) >>> tmp_shift_count;
+                    result = tmp_res;
+                    if (tmp_shift_count != 5'd0) begin
                         new_cf = (shift_count > 5'd0) ? src1_data[shift_count - 5'd1] : src1_data[31];
                         new_of = 1'b0;
-                        new_pf = compute_pf(res);
-                        new_zf = compute_zf(res);
-                        new_sf = compute_sf(res);
+                        new_pf = compute_pf(tmp_res);
+                        new_zf = compute_zf(tmp_res);
+                        new_sf = compute_sf(tmp_res);
                     end
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_ROL: begin
-                    logic [ 4: 0] shift_count = src2_data[4: 0];
-                    logic [31: 0] res = (src1_data << shift_count) | (src1_data >> (32'd32 - shift_count));
-                    result = res;
-                    if (shift_count != 5'd0) begin
+                    tmp_shift_count = src2_data[4: 0];
+                    tmp_res = (src1_data << tmp_shift_count) | (src1_data >> (32'd32 - shift_count));
+                    result = tmp_res;
+                    if (tmp_shift_count != 5'd0) begin
                         new_cf = (shift_count == 5'd0) ? i_cf : src1_data[32'd32 - shift_count];
                         new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
                     end
                     write_gpr = 1'b1;
                 end
                 `UOP_ROR: begin
-                    logic [ 4: 0] shift_count = src2_data[4: 0];
-                    logic [31: 0] res = (src1_data >> shift_count) | (src1_data << (32'd32 - shift_count));
-                    result = res;
-                    if (shift_count != 5'd0) begin
+                    tmp_shift_count = src2_data[4: 0];
+                    tmp_res = (src1_data >> tmp_shift_count) | (src1_data << (32'd32 - shift_count));
+                    result = tmp_res;
+                    if (tmp_shift_count != 5'd0) begin
                         new_cf = (shift_count == 5'd0) ? i_cf : src1_data[shift_count - 5'd1];
                         new_of = (shift_count == 5'd1) ? (res[31] ^ src1_data[31]) : i_of;
                     end
                     write_gpr = 1'b1;
                 end
                 `UOP_RCL: begin
-                    logic [ 4: 0] shift_count = src2_data[4: 0];
-                    logic [32: 0] ext_src = {i_cf, src1_data};
-                    logic [32: 0] res = (ext_src << shift_count) | (ext_src >> (33'd33 - shift_count));
-                    result = res[31: 0];
-                    if (shift_count != 5'd0) begin
+                    tmp_shift_count = src2_data[4: 0];
+                    tmp_tmp_ext_src = {i_cf, src1_data};
+                    tmp_res = (tmp_ext_src << tmp_shift_count) | (tmp_ext_src >> (33'd33 - shift_count));
+                    result = tmp_res[31: 0];
+                    if (tmp_shift_count != 5'd0) begin
                         new_cf = res[32];
                         new_of = (shift_count == 5'd1) ? (res[31] ^ src1_data[31]) : i_of;
                     end
                     write_gpr = 1'b1;
                 end
                 `UOP_RCR: begin
-                    logic [ 4: 0] shift_count = src2_data[4: 0];
-                    logic [32: 0] ext_src = {src1_data, i_cf};
-                    logic [32: 0] res = (ext_src >> shift_count) | (ext_src << (33'd33 - shift_count));
-                    result = res[31: 0];
-                    if (shift_count != 5'd0) begin
+                    tmp_shift_count = src2_data[4: 0];
+                    tmp_tmp_ext_src = {src1_data, i_cf};
+                    tmp_res = (tmp_ext_src >> tmp_shift_count) | (tmp_ext_src << (33'd33 - shift_count));
+                    result = tmp_res[31: 0];
+                    if (tmp_shift_count != 5'd0) begin
                         new_cf = res[0];
                         new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
                     end
                     write_gpr = 1'b1;
                 end
                 `UOP_SHLD: begin
-                    logic [ 4: 0] shift_count = src2_data[4: 0];
-                    logic [63: 0] combined = {src1_data, src2_data};
-                    logic [31: 0] res = combined[31: 0] << shift_count;
-                    result = res;
-                    if (shift_count != 5'd0) begin
+                    tmp_shift_count = src2_data[4: 0];
+                    tmp_tmp_combined = {src1_data, src2_data};
+                    tmp_res = tmp_combined[31: 0] << tmp_shift_count;
+                    result = tmp_res;
+                    if (tmp_shift_count != 5'd0) begin
                         new_cf = (shift_count > 5'd0) ? combined[32'd32 - shift_count] : combined[31];
                         new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
-                        new_pf = compute_pf(res);
-                        new_zf = compute_zf(res);
-                        new_sf = compute_sf(res);
+                        new_pf = compute_pf(tmp_res);
+                        new_zf = compute_zf(tmp_res);
+                        new_sf = compute_sf(tmp_res);
                     end
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_SHRD: begin
-                    logic [ 4: 0] shift_count = src2_data[4: 0];
-                    logic [63: 0] combined = {src1_data, src2_data};
-                    logic [31: 0] res = combined[63: 32] >> shift_count;
-                    result = res;
-                    if (shift_count != 5'd0) begin
+                    tmp_shift_count = src2_data[4: 0];
+                    tmp_tmp_combined = {src1_data, src2_data};
+                    tmp_res = tmp_combined[63: 32] >> tmp_shift_count;
+                    result = tmp_res;
+                    if (tmp_shift_count != 5'd0) begin
                         new_cf = (shift_count > 5'd0) ? combined[shift_count - 5'd1] : combined[32];
                         new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
-                        new_pf = compute_pf(res);
-                        new_zf = compute_zf(res);
-                        new_sf = compute_sf(res);
+                        new_pf = compute_pf(tmp_res);
+                        new_zf = compute_zf(tmp_res);
+                        new_sf = compute_sf(tmp_res);
                     end
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_BT: begin
-                    logic [ 4: 0] bit_index = src2_data[4: 0];
-                    new_cf = src1_data[bit_index];
+                    tmp_bit_index = src2_data[4: 0];
+                    new_cf = src1_data[tmp_bit_index];
                     write_flags = 1'b1;
                 end
                 `UOP_BTS: begin
-                    logic [ 4: 0] bit_index = src2_data[4: 0];
-                    new_cf = src1_data[bit_index];
+                    tmp_bit_index = src2_data[4: 0];
+                    new_cf = src1_data[tmp_bit_index];
                     result = src1_data;
-                    result[bit_index] = 1'b1;
+                    result[tmp_bit_index] = 1'b1;
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_BTR: begin
-                    logic [ 4: 0] bit_index = src2_data[4: 0];
-                    new_cf = src1_data[bit_index];
+                    tmp_bit_index = src2_data[4: 0];
+                    new_cf = src1_data[tmp_bit_index];
                     result = src1_data;
-                    result[bit_index] = 1'b0;
+                    result[tmp_bit_index] = 1'b0;
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_BTC: begin
-                    logic [ 4: 0] bit_index = src2_data[4: 0];
-                    new_cf = src1_data[bit_index];
+                    tmp_bit_index = src2_data[4: 0];
+                    new_cf = src1_data[tmp_bit_index];
                     result = src1_data;
-                    result[bit_index] = ~src1_data[bit_index];
+                    result[tmp_bit_index] = ~src1_data[tmp_bit_index];
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_BSF: begin
-                    logic [ 4: 0] bit_index = 5'd0;
-                    logic [31: 0] operand = src1_data;
-                    if (operand != 32'd0) begin
+                    tmp_bit_index = 5'd0;
+                    tmp_operand = src1_data;
+                    if (tmp_operand != 32'd0) begin
                         case (1'b1)
                             operand[0]:  bit_index = 5'd0;
                             operand[1]:  bit_index = 5'd1;
@@ -507,9 +555,9 @@ module stage_5_exu (
                     write_flags = 1'b1;
                 end
                 `UOP_BSR: begin
-                    logic [ 4: 0] bit_index = 5'd0;
-                    logic [31: 0] operand = src1_data;
-                    if (operand != 32'd0) begin
+                    tmp_bit_index = 5'd0;
+                    tmp_operand = src1_data;
+                    if (tmp_operand != 32'd0) begin
                         case (1'b1)
                             operand[31]: bit_index = 5'd31;
                             operand[30]: bit_index = 5'd30;
@@ -552,18 +600,14 @@ module stage_5_exu (
                     new_zf = (operand == 32'd0);
                     write_flags = 1'b1;
                 end
-                `UOP_BSWAP: begin
-                    result = {src1_data[ 7: 0], src1_data[15: 8], src1_data[23:16], src1_data[31:24]};
-                    write_gpr = 1'b1;
-                end
                 `UOP_MOVSX: begin
-                    logic [15: 0] src = has_imm ? immediate[15: 0] : src2_data[15: 0];
-                    result = {{16{src[15]}}, src};
+                    tmp_src_16 = has_imm ? immediate[15: 0] : src2_data[15: 0];
+                    result = {{16{tmp_src_16[15]}}, tmp_src_16};
                     write_gpr = 1'b1;
                 end
                 `UOP_MOVZX: begin
-                    logic [15: 0] src = has_imm ? immediate[15: 0] : src2_data[15: 0];
-                    result = {16'd0, src};
+                    tmp_src_16 = has_imm ? immediate[15: 0] : src2_data[15: 0];
+                    result = {16'd0, tmp_src_16};
                     write_gpr = 1'b1;
                 end
                 `UOP_XCHG: begin
@@ -575,22 +619,22 @@ module stage_5_exu (
                     write_gpr = 1'b1;
                 end
                 `UOP_XADD: begin
-                    logic [31: 0] sum = src1_data + src2_data;
-                    result = sum;
+                    tmp_sum = src1_data + src2_data;
+                    result = tmp_sum;
                     new_cf = compute_cf_add(src1_data, src2_data);
-                    new_pf = compute_pf(sum);
-                    new_zf = compute_zf(sum);
-                    new_sf = compute_sf(sum);
+                    new_pf = compute_pf(tmp_sum);
+                    new_zf = compute_zf(tmp_sum);
+                    new_sf = compute_sf(tmp_sum);
                     new_of = compute_of_add(src1_data, src2_data);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_CMPXCHG: begin
-                    logic [31: 0] diff = src1_data - src2_data;
+                    tmp_diff = src1_data - src2_data;
                     new_cf = compute_cf_sub(src1_data, src2_data);
-                    new_pf = compute_pf(diff);
-                    new_zf = compute_zf(diff);
-                    new_sf = compute_sf(diff);
+                    new_pf = compute_pf(tmp_diff);
+                    new_zf = compute_zf(tmp_diff);
+                    new_sf = compute_sf(tmp_diff);
                     new_of = compute_of_sub(src1_data, src2_data);
                     if (src1_data == src2_data) begin
                         result = src2_data;
@@ -601,9 +645,9 @@ module stage_5_exu (
                     write_flags = 1'b1;
                 end
                 `UOP_PUSH: begin
-                    logic [31: 0] src = has_imm ? immediate : src1_data;
-                    logic [31: 0] new_esp = src2_data - 32'd4;
-                    result = new_esp;
+                    tmp_src = has_imm ? immediate : src1_data;
+                    tmp_new_esp = src2_data - 32'd4;
+                    result = tmp_new_esp;
                     mem_address = new_esp;
                     mem_write_data = src;
                     mem_valid = 1'b1;
@@ -611,7 +655,7 @@ module stage_5_exu (
                     write_gpr = 1'b1;
                 end
                 `UOP_POP: begin
-                    logic [31: 0] new_esp = src1_data + 32'd4;
+                    tmp_new_esp = src1_data + 32'd4;
                     result = has_imm ? new_esp + immediate : src2_data;
                     mem_address = src1_data;
                     mem_valid = 1'b1;
@@ -619,36 +663,17 @@ module stage_5_exu (
                     write_gpr = 1'b1;
                 end
                 `UOP_BRANCH: begin
-                    logic [31: 0] target = has_disp ? displacement : immediate;
-                    logic         condition_met;
-                    case (tttn)
-                        4'h0: condition_met = i_of;
-                        4'h1: condition_met = ~i_of;
-                        4'h2: condition_met = i_cf;
-                        4'h3: condition_met = ~i_cf;
-                        4'h4: condition_met = i_zf;
-                        4'h5: condition_met = ~i_zf;
-                        4'h6: condition_met = i_cf | i_zf;
-                        4'h7: condition_met = ~(i_cf | i_zf);
-                        4'h8: condition_met = i_sf;
-                        4'h9: condition_met = ~i_sf;
-                        4'hA: condition_met = i_pf;
-                        4'hB: condition_met = ~i_pf;
-                        4'hC: condition_met = i_sf ^ i_of;
-                        4'hD: condition_met = ~(i_sf ^ i_of);
-                        4'hE: condition_met = i_sf ^ i_of ^ i_cf;
-                        4'hF: condition_met = 1'b1;
-                        default: condition_met = 1'b0;
-                    endcase
+                    tmp_target = has_disp ? displacement : immediate;
+                    tmp_condition_met = compute_condition(tttn, i_of, i_cf, i_zf, i_sf, i_pf);
                     if (condition_met) begin
                         ip_data = target;
                         write_ip = 1'b1;
                     end
                 end
                 `UOP_CALL: begin
-                    logic [31: 0] target = has_disp ? displacement : immediate;
-                    logic [31: 0] new_esp = src2_data - 32'd4;
-                    result = new_esp;
+                    tmp_target = has_disp ? displacement : immediate;
+                    tmp_new_esp = src2_data - 32'd4;
+                    result = tmp_new_esp;
                     mem_address = new_esp;
                     mem_write_data = src1_data;
                     mem_valid = 1'b1;
@@ -658,8 +683,8 @@ module stage_5_exu (
                     write_ip = 1'b1;
                 end
                 `UOP_RET: begin
-                    logic [31: 0] new_esp = has_imm ? (src1_data + immediate) : (src1_data + 32'd4);
-                    result = new_esp;
+                    tmp_new_esp = has_imm ? (src1_data + immediate) : (src1_data + 32'd4);
+                    result = tmp_new_esp;
                     mem_address = src1_data;
                     mem_valid = 1'b1;
                     mem_write_enable = 1'b0;
@@ -668,26 +693,7 @@ module stage_5_exu (
                     write_ip = 1'b1;
                 end
                 `UOP_SETCC: begin
-                    logic         condition_met;
-                    case (tttn)
-                        4'h0: condition_met = i_of;
-                        4'h1: condition_met = ~i_of;
-                        4'h2: condition_met = i_cf;
-                        4'h3: condition_met = ~i_cf;
-                        4'h4: condition_met = i_zf;
-                        4'h5: condition_met = ~i_zf;
-                        4'h6: condition_met = i_cf | i_zf;
-                        4'h7: condition_met = ~(i_cf | i_zf);
-                        4'h8: condition_met = i_sf;
-                        4'h9: condition_met = ~i_sf;
-                        4'hA: condition_met = i_pf;
-                        4'hB: condition_met = ~i_pf;
-                        4'hC: condition_met = i_sf ^ i_of;
-                        4'hD: condition_met = ~(i_sf ^ i_of);
-                        4'hE: condition_met = i_sf ^ i_of ^ i_cf;
-                        4'hF: condition_met = 1'b1;
-                        default: condition_met = 1'b0;
-                    endcase
+                    tmp_condition_met = compute_condition(tttn, i_of, i_cf, i_zf, i_sf, i_pf);
                     result = condition_met ? 32'd1 : 32'd0;
                     write_gpr = 1'b1;
                 end
@@ -723,18 +729,18 @@ module stage_5_exu (
                     write_flags = 1'b1;
                 end
                 `UOP_DIV: begin
-                    logic [63: 0] dividend = {src1_data, src2_data};
-                    logic [31: 0] divisor = src2_data;
-                    if (divisor != 32'd0) begin
-                        result = dividend[31: 0] / divisor;
+                    tmp_dividend = {src1_data, src2_data};
+                    tmp_divisor = src2_data;
+                    if (tmp_divisor != 32'd0) begin
+                        result = tmp_dividend[31: 0] / tmp_divisor;
                     end
                     write_gpr = 1'b1;
                 end
                 `UOP_IDIV: begin
-                    logic signed [63: 0] dividend = {src1_data, src2_data};
-                    logic signed [31: 0] divisor = src2_data;
-                    if (divisor != 32'sd0) begin
-                        result = dividend[31: 0] / divisor;
+                    tmp_dividend_signed = {src1_data, src2_data};
+                    tmp_divisor_signed = src2_data;
+                    if (tmp_divisor != 32'sd0) begin
+                        result = tmp_dividend[31: 0] / tmp_divisor;
                     end
                     write_gpr = 1'b1;
                 end

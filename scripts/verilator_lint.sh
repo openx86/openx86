@@ -39,7 +39,7 @@ fi
 # `include "iu_decode_outputs_decl.svh"` -> rtl/cpu/include/
 CMDFILE="${LINT_OBJDIR}/verilator_rtl_lint.vf"
 {
-  printf '%s\n' "-Iinclude" "-Irtl/cpu" "-Irtl/cpu/include"
+  printf '%s\n' "-Iinclude" "-Irtl/cpu" "-Irtl/cpu/include" "-Irtl/cpu/pipeline/stage_5_exu/include"
   cat "$RTL_SV_LIST"
 } >"$CMDFILE"
 

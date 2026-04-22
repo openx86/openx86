@@ -33,13 +33,15 @@ module exu_shld (
     logic [31: 0] src;
     logic [ 4: 0] shift_count;
     logic [63: 0] combined;
+    logic [63: 0] shifted;
     logic [31: 0] result;
 
     assign dest = i_src1_data;
     assign src = i_src2_data;
     assign shift_count = i_has_imm ? i_immediate[4: 0] : i_src2_data[4: 0];
     assign combined = {src, dest};
-    assign result = (combined << shift_count)[31: 0];
+    assign shifted = combined << shift_count;
+    assign result = shifted[31: 0];
 
     assign o_result.result           = result;
     assign o_result.cf               = (shift_count != 5'd0) ? (combined[32 - shift_count]) : 1'b0;

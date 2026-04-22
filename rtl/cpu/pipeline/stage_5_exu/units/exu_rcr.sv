@@ -34,11 +34,13 @@ module exu_rcr (
     logic [ 4: 0] shift_count;
     logic [31: 0] result;
     logic [32: 0] extended;
+    logic [32: 0] shifted;
 
     assign operand = i_src1_data;
     assign shift_count = i_has_imm ? i_immediate[4: 0] : i_src2_data[4: 0];
     assign extended = {i_cf, operand};
-    assign result = (extended >> shift_count)[31: 0];
+    assign shifted = extended >> shift_count;
+    assign result = shifted[31: 0];
 
     assign o_result.result           = result;
     assign o_result.cf               = (shift_count != 5'd0) ? (extended[shift_count - 1'b1]) : 1'b0;
