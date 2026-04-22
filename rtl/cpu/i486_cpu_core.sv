@@ -57,9 +57,6 @@ module i486_cpu_core (
     input  logic          clk,
     input  logic          rst_n
 );
-    // 译码子模块 .* 互连线：必须放在模块内，避免在编译单元顶层声明而与子模块端口同名（VARHIDDEN）
-`include "iu_decode_outputs_decl.svh"
-
     // ============================================================
     // GPR write ports (individual write enables using register names)
     // ============================================================
