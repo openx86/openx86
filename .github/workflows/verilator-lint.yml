@@ -32,7 +32,7 @@ jobs:
           owner_repo="${GITHUB_REPOSITORY,,}"
           echo "image=ghcr.io/${owner_repo}:verilator-5.046" >> "$GITHUB_OUTPUT"
 
-  test-ubuntu:
+  verilator-lint:
     name: verilator (Ubuntu)
     needs: verilator-image-ref
     runs-on: ubuntu-latest
