@@ -21,6 +21,7 @@
 // ============================================================================
 
 `include "openx86_defs.h.sv"
+`include "exu_common.h.sv"
 
 module stage_5_exu (
     // =========================
@@ -33,84 +34,88 @@ module stage_5_exu (
     input  logic                i_wrb_ready,
 
     // =========================
-    // Pipeline control
-    // =========================
-    input  logic                i_flush,
-
-    // =========================
     // Operand data from stage_4_reg
     // =========================
     input  logic [31: 0]        i_src1_data,
     input  logic [31: 0]        i_src2_data,
 
     // =========================
-    // GPR values (for muldiv/AGU)
+    // Flag inputs from stage_4_reg
     // =========================
-    input  logic [31: 0]        i_gpr_edx,
-    input  logic [ 7: 0][31: 0] i_gpr_by_idx,
+    input  logic                i_cf,
+    input  logic                i_pf,
+    input  logic                i_af,
+    input  logic                i_zf,
+    input  logic                i_sf,
+    input  logic                i_of,
 
     // =========================
-    // Flags (from stage_4_reg)
+    // Write-back outputs to i486_cpu_core
     // =========================
-    input  logic                i_flag_cf,
-    input  logic                i_flag_pf,
-    input  logic                i_flag_af,
-    input  logic                i_flag_zf,
-    input  logic                i_flag_sf,
-    input  logic                i_flag_of,
-
-    // =========================
-    // Instruction pointer
-    // =========================
-    input  logic [31: 0]        i_eip,
-
-    // =========================
-    // i486 extension controls
-    // =========================
-    input  logic                i_op_cpuid,
-    input  logic                i_op_invd,
-    input  logic                i_op_wbinvd,
-    input  logic                i_op_invlpg,
-    input  logic [31: 0]        i_invlpg_ea,
-    output logic                o_cpuid_busy,
-    output logic                o_cpuid_gpr_wr,
-    output logic [ 2: 0]        o_cpuid_gpr_idx,
-    output logic [31: 0]        o_cpuid_gpr_wdata,
-    output logic                o_cpuid_done_pulse,
-    output logic                o_cache_flush_pulse,
-    output logic                o_invlpg_pulse,
-    output logic [31: 0]        o_invlpg_linear_addr,
-
-    // =========================
-    // Execute result outputs
-    // =========================
-    output logic [31: 0]        o_result,
-    output logic                o_result_valid,
-    output logic [ 2: 0]        o_dest_reg,
-
-    // Branch outputs
-    output logic                o_br_taken,
-    output logic [31: 0]        o_br_target_eip,
-
-    // MulDiv outputs
-    output logic [31: 0]        o_md_lo,
-    output logic [31: 0]        o_md_hi,
-    output logic                o_md_div0,
-
-    // AGU output
-    output logic [31: 0]        o_agu_effective_addr,
-
-    // Flag update outputs
-    output logic                o_flag_cf,
-    output logic                o_flag_af,
-    output logic                o_flag_zf,
-
-    // X87 FPU outputs
-    output logic [63: 0]        o_x87_st0,
-    output logic [63: 0]        o_x87_st1,
-    output logic                o_x87_zf,
-    output logic                o_x87_pf,
-    output logic                o_x87_cf,
+    output logic                o_wrb_gpr_enable_EAX,
+    output logic                o_wrb_gpr_enable_AX,
+    output logic                o_wrb_gpr_enable_AL,
+    output logic                o_wrb_gpr_enable_AH,
+    output logic                o_wrb_gpr_enable_EBX,
+    output logic                o_wrb_gpr_enable_BX,
+    output logic                o_wrb_gpr_enable_BL,
+    output logic                o_wrb_gpr_enable_BH,
+    output logic                o_wrb_gpr_enable_ECX,
+    output logic                o_wrb_gpr_enable_CX,
+    output logic                o_wrb_gpr_enable_CL,
+    output logic                o_wrb_gpr_enable_CH,
+    output logic                o_wrb_gpr_enable_EDX,
+    output logic                o_wrb_gpr_enable_DX,
+    output logic                o_wrb_gpr_enable_DL,
+    output logic                o_wrb_gpr_enable_DH,
+    output logic                o_wrb_gpr_enable_ESP,
+    output logic                o_wrb_gpr_enable_SP,
+    output logic                o_wrb_gpr_enable_EBP,
+    output logic                o_wrb_gpr_enable_BP,
+    output logic                o_wrb_gpr_enable_ESI,
+    output logic                o_wrb_gpr_enable_SI,
+    output logic                o_wrb_gpr_enable_EDI,
+    output logic                o_wrb_gpr_enable_DI,
+    output logic [31: 0]        o_wrb_gpr_data_EAX,
+    output logic [15: 0]        o_wrb_gpr_data_AX,
+    output logic [ 7: 0]        o_wrb_gpr_data_AL,
+    output logic [ 7: 0]        o_wrb_gpr_data_AH,
+    output logic [31: 0]        o_wrb_gpr_data_EBX,
+    output logic [15: 0]        o_wrb_gpr_data_BX,
+    output logic [ 7: 0]        o_wrb_gpr_data_BL,
+    output logic [ 7: 0]        o_wrb_gpr_data_BH,
+    output logic [31: 0]        o_wrb_gpr_data_ECX,
+    output logic [15: 0]        o_wrb_gpr_data_CX,
+    output logic [ 7: 0]        o_wrb_gpr_data_CL,
+    output logic [ 7: 0]        o_wrb_gpr_data_CH,
+    output logic [31: 0]        o_wrb_gpr_data_EDX,
+    output logic [15: 0]        o_wrb_gpr_data_DX,
+    output logic [ 7: 0]        o_wrb_gpr_data_DL,
+    output logic [ 7: 0]        o_wrb_gpr_data_DH,
+    output logic [31: 0]        o_wrb_gpr_data_ESP,
+    output logic [15: 0]        o_wrb_gpr_data_SP,
+    output logic [31: 0]        o_wrb_gpr_data_EBP,
+    output logic [15: 0]        o_wrb_gpr_data_BP,
+    output logic [31: 0]        o_wrb_gpr_data_ESI,
+    output logic [15: 0]        o_wrb_gpr_data_SI,
+    output logic [31: 0]        o_wrb_gpr_data_EDI,
+    output logic [15: 0]        o_wrb_gpr_data_DI,
+    output logic                o_wrb_seg_enable_es,
+    output logic                o_wrb_seg_enable_cs,
+    output logic                o_wrb_seg_enable_ss,
+    output logic                o_wrb_seg_enable_ds,
+    output logic                o_wrb_seg_enable_fs,
+    output logic                o_wrb_seg_enable_gs,
+    output logic [15: 0]        o_wrb_seg_selector,
+    output logic [63: 0]        o_wrb_seg_descriptor,
+    output logic                o_wrb_flags_enable,
+    output logic [31: 0]        o_wrb_flags_data,
+    output logic                o_wrb_ip_enable,
+    output logic [31: 0]        o_wrb_ip_data,
+    output logic                o_mem_valid,
+    output logic                o_mem_write_enable,
+    output logic [31: 0]        o_mem_address,
+    output logic [31: 0]        o_mem_write_data,
 
     // =========================
     // Clock and reset
@@ -119,586 +124,747 @@ module stage_5_exu (
     input  logic                rst_n
 );
 
-    // ============================================================
-    // Internal signals — uop decode
-    // ============================================================
-    logic [ 5: 0] int_op;
-    logic         int_valid;
-    logic [ 2: 0] md_op;
-    logic         md_valid;
-    logic [ 4: 0] x87_op;
-    logic         x87_valid;
-    logic         is_branch;
-    logic         is_jcc;
-    logic         is_mem_access;
+    logic [31: 0] src1_data;
+    logic [31: 0] src2_data;
+    logic [31: 0] immediate;
+    logic [31: 0] displacement;
+    logic [ 2: 0] dest_reg;
+    logic [ 3: 0] tttn;
+    logic         has_imm;
+    logic         has_disp;
+    logic         mem_access;
     logic         is_store;
-    logic         is_flag_ctrl;
-    logic         is_lea;
-    logic         is_nop;
+    logic [ 5: 0] uop_opcode;
 
-    // ============================================================
-    // Internal signals — operand selection
-    // ============================================================
-    logic [31: 0] operand_a;    // dest reg value / src1
-    logic [31: 0] operand_b;    // src2 reg value or immediate
-    logic [31: 0] operand_count; // shift/rotate count
+    logic [31: 0] result;
+    logic         new_cf;
+    logic         new_pf;
+    logic         new_zf;
+    logic         new_sf;
+    logic         new_of;
+    logic [31: 0] flags_data;
+    logic         write_gpr;
+    logic         write_flags;
+    logic         write_ip;
+    logic [31: 0] ip_data;
+    logic         mem_valid;
+    logic         mem_write_enable;
+    logic [31: 0] mem_address;
+    logic [31: 0] mem_write_data;
 
-    // ============================================================
-    // Internal signals — sub-unit results
-    // ============================================================
-    logic [31: 0] alu_result;
-    logic         alu_cf;
-    logic         alu_zf;
+    assign src1_data = i_src1_data;
+    assign src2_data = i_src2_data;
+    assign immediate = i_uop.uop_immediate;
+    assign displacement = i_uop.uop_displacement;
+    assign dest_reg = i_uop.uop_dest_reg;
+    assign tttn = i_uop.uop_tttn;
+    assign has_imm = i_uop.uop_has_imm;
+    assign has_disp = i_uop.uop_has_disp;
+    assign mem_access = i_uop.uop_mem_access;
+    assign is_store = i_uop.uop_is_store;
+    assign uop_opcode = i_uop.uop_opcode;
 
-    logic [31: 0] branch_result;   // not used for data, placeholder
-    logic         br_taken;
-    logic [31: 0] br_target_eip;
-
-    logic [31: 0] md_lo;
-    logic [31: 0] md_hi;
-    logic         md_div0;
-
-    logic [31: 0] agu_ea;
-
-    logic [63: 0] x87_st0;
-    logic [63: 0] x87_st1;
-    logic         x87_zf;
-    logic         x87_pf;
-    logic         x87_cf;
-
-    // ============================================================
-    // Stall / handshake
-    // ============================================================
-    logic         exec_stall;
-    logic         cpuid_busy_r;
-    logic         lsu_busy_r;
-
-    // ============================================================
-    // Uop decode — map uop_opcode to sub-unit control signals
-    // ============================================================
     always_comb begin
-        // Defaults
-        int_op      = `EXE_INT_NOP;
-        int_valid   = 1'b0;
-        md_op       = `EXE_MD_NOP;
-        md_valid    = 1'b0;
-        x87_op      = `EXE_X87_NOP;
-        x87_valid   = 1'b0;
-        is_branch   = 1'b0;
-        is_jcc      = 1'b0;
-        is_mem_access = 1'b0;
-        is_store    = 1'b0;
-        is_flag_ctrl = 1'b0;
-        is_lea      = 1'b0;
-        is_nop      = 1'b0;
+        result = 32'd0;
+        new_cf = i_cf;
+        new_pf = i_pf;
+        new_zf = i_zf;
+        new_sf = i_sf;
+        new_of = i_of;
+        flags_data = {10'b0, i_of, 1'b0, 1'b0, 1'b0, i_sf, i_zf, 1'b0, i_pf, 1'b0, i_cf};
+        write_gpr = 1'b0;
+        write_flags = 1'b0;
+        write_ip = 1'b0;
+        ip_data = 32'd0;
+        mem_valid = 1'b0;
+        mem_write_enable = 1'b0;
+        mem_address = 32'd0;
+        mem_write_data = 32'd0;
 
-        if (i_uop_valid && !i_flush) begin
-            unique case (i_uop.uop_opcode)
+        if (i_uop_valid) begin
+            case (uop_opcode)
                 `UOP_ADD: begin
-                    int_op    = `EXE_INT_ADD;
-                    int_valid = 1'b1;
-                end
-                `UOP_ADC: begin
-                    int_op    = `EXE_INT_ADC;
-                    int_valid = 1'b1;
+                    logic [31: 0] sum = src1_data + src2_data;
+                    result = sum;
+                    new_cf = compute_cf_add(src1_data, src2_data);
+                    new_pf = compute_pf(sum);
+                    new_zf = compute_zf(sum);
+                    new_sf = compute_sf(sum);
+                    new_of = compute_of_add(src1_data, src2_data);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
                 end
                 `UOP_SUB: begin
-                    int_op    = `EXE_INT_SUB;
-                    int_valid = 1'b1;
-                end
-                `UOP_SBB: begin
-                    int_op    = `EXE_INT_SBB;
-                    int_valid = 1'b1;
+                    logic [31: 0] diff = src1_data - src2_data;
+                    result = diff;
+                    new_cf = compute_cf_sub(src1_data, src2_data);
+                    new_pf = compute_pf(diff);
+                    new_zf = compute_zf(diff);
+                    new_sf = compute_sf(diff);
+                    new_of = compute_of_sub(src1_data, src2_data);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
                 end
                 `UOP_AND: begin
-                    int_op    = `EXE_INT_AND;
-                    int_valid = 1'b1;
+                    logic [31: 0] res = src1_data & src2_data;
+                    result = res;
+                    new_cf = 1'b0;
+                    new_of = 1'b0;
+                    new_pf = compute_pf(res);
+                    new_zf = compute_zf(res);
+                    new_sf = compute_sf(res);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
                 end
                 `UOP_OR: begin
-                    int_op    = `EXE_INT_OR;
-                    int_valid = 1'b1;
+                    logic [31: 0] res = src1_data | src2_data;
+                    result = res;
+                    new_cf = 1'b0;
+                    new_of = 1'b0;
+                    new_pf = compute_pf(res);
+                    new_zf = compute_zf(res);
+                    new_sf = compute_sf(res);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
                 end
                 `UOP_XOR: begin
-                    int_op    = `EXE_INT_XOR;
-                    int_valid = 1'b1;
-                end
-                `UOP_NOT: begin
-                    int_op    = `EXE_INT_NOT;
-                    int_valid = 1'b1;
-                end
-                `UOP_NEG: begin
-                    int_op    = `EXE_INT_NEG;
-                    int_valid = 1'b1;
-                end
-                `UOP_INC: begin
-                    int_op    = `EXE_INT_INC;
-                    int_valid = 1'b1;
-                end
-                `UOP_DEC: begin
-                    int_op    = `EXE_INT_DEC;
-                    int_valid = 1'b1;
-                end
-                `UOP_SHL: begin
-                    int_op    = `EXE_INT_SHL;
-                    int_valid = 1'b1;
-                end
-                `UOP_SHR: begin
-                    int_op    = `EXE_INT_SHR;
-                    int_valid = 1'b1;
-                end
-                `UOP_SAR: begin
-                    int_op    = `EXE_INT_SAR;
-                    int_valid = 1'b1;
-                end
-                `UOP_ROL: begin
-                    int_op    = `EXE_INT_ROL;
-                    int_valid = 1'b1;
-                end
-                `UOP_ROR: begin
-                    int_op    = `EXE_INT_ROR;
-                    int_valid = 1'b1;
-                end
-                `UOP_RCL: begin
-                    int_op    = `EXE_INT_RCL;
-                    int_valid = 1'b1;
-                end
-                `UOP_RCR: begin
-                    int_op    = `EXE_INT_RCR;
-                    int_valid = 1'b1;
-                end
-                `UOP_SHLD: begin
-                    int_op    = `EXE_INT_SHLD;
-                    int_valid = 1'b1;
-                end
-                `UOP_SHRD: begin
-                    int_op    = `EXE_INT_SHRD;
-                    int_valid = 1'b1;
-                end
-                `UOP_BSF: begin
-                    int_op    = `EXE_INT_BSF;
-                    int_valid = 1'b1;
-                end
-                `UOP_BSR: begin
-                    int_op    = `EXE_INT_BSR;
-                    int_valid = 1'b1;
-                end
-                `UOP_BT: begin
-                    int_op    = `EXE_INT_BT;
-                    int_valid = 1'b1;
-                end
-                `UOP_BTS: begin
-                    int_op    = `EXE_INT_BTS;
-                    int_valid = 1'b1;
-                end
-                `UOP_BTR: begin
-                    int_op    = `EXE_INT_BTR;
-                    int_valid = 1'b1;
-                end
-                `UOP_BTC: begin
-                    int_op    = `EXE_INT_BTC;
-                    int_valid = 1'b1;
+                    logic [31: 0] res = src1_data ^ src2_data;
+                    result = res;
+                    new_cf = 1'b0;
+                    new_of = 1'b0;
+                    new_pf = compute_pf(res);
+                    new_zf = compute_zf(res);
+                    new_sf = compute_sf(res);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
                 end
                 `UOP_MOV: begin
-                    int_op    = `EXE_INT_XCHG;  // MOV = pass-through src
-                    int_valid = 1'b1;
-                end
-                `UOP_MOVSX: begin
-                    int_op    = `EXE_INT_MOVSX;
-                    int_valid = 1'b1;
-                end
-                `UOP_MOVZX: begin
-                    int_op    = `EXE_INT_MOVZX;
-                    int_valid = 1'b1;
+                    result = has_imm ? immediate : src2_data;
+                    write_gpr = 1'b1;
                 end
                 `UOP_CMP: begin
-                    int_op    = `EXE_INT_SUB;   // CMP = SUB without writeback
-                    int_valid = 1'b1;
+                    logic [31: 0] diff = src1_data - src2_data;
+                    new_cf = compute_cf_sub(src1_data, src2_data);
+                    new_pf = compute_pf(diff);
+                    new_zf = compute_zf(diff);
+                    new_sf = compute_sf(diff);
+                    new_of = compute_of_sub(src1_data, src2_data);
+                    write_flags = 1'b1;
+                end
+                `UOP_ADC: begin
+                    logic [31: 0] sum = src1_data + src2_data + i_cf;
+                    result = sum;
+                    new_cf = compute_cf_adc(src1_data, src2_data, i_cf);
+                    new_pf = compute_pf(sum);
+                    new_zf = compute_zf(sum);
+                    new_sf = compute_sf(sum);
+                    new_of = compute_of_adc(src1_data, src2_data, i_cf);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_SBB: begin
+                    logic [31: 0] diff = src1_data - src2_data - i_cf;
+                    result = diff;
+                    new_cf = compute_cf_sbb(src1_data, src2_data, i_cf);
+                    new_pf = compute_pf(diff);
+                    new_zf = compute_zf(diff);
+                    new_sf = compute_sf(diff);
+                    new_of = compute_of_sbb(src1_data, src2_data, i_cf);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_INC: begin
+                    logic [31: 0] res = src1_data + 32'd1;
+                    result = res;
+                    new_pf = compute_pf(res);
+                    new_zf = compute_zf(res);
+                    new_sf = compute_sf(res);
+                    new_of = compute_of_inc(src1_data);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_DEC: begin
+                    logic [31: 0] res = src1_data - 32'd1;
+                    result = res;
+                    new_pf = compute_pf(res);
+                    new_zf = compute_zf(res);
+                    new_sf = compute_sf(res);
+                    new_of = compute_of_dec(src1_data);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_NEG: begin
+                    logic [31: 0] res = ~src1_data + 32'd1;
+                    result = res;
+                    new_cf = (src1_data != 32'd0);
+                    new_pf = compute_pf(res);
+                    new_zf = compute_zf(res);
+                    new_sf = compute_sf(res);
+                    new_of = (src1_data == 32'h80000000);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_NOT: begin
+                    result = ~src1_data;
+                    write_gpr = 1'b1;
                 end
                 `UOP_TEST: begin
-                    int_op    = `EXE_INT_AND;   // TEST = AND without writeback
-                    int_valid = 1'b1;
+                    logic [31: 0] res = src1_data & src2_data;
+                    new_cf = 1'b0;
+                    new_of = 1'b0;
+                    new_pf = compute_pf(res);
+                    new_zf = compute_zf(res);
+                    new_sf = compute_sf(res);
+                    write_flags = 1'b1;
+                end
+                `UOP_SHL: begin
+                    logic [ 4: 0] shift_count = src2_data[4: 0];
+                    logic [31: 0] res = src1_data << shift_count;
+                    result = res;
+                    if (shift_count != 5'd0) begin
+                        new_cf = (shift_count > 5'd0) ? src1_data[32'd32 - shift_count] : src1_data[0];
+                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                        new_pf = compute_pf(res);
+                        new_zf = compute_zf(res);
+                        new_sf = compute_sf(res);
+                    end
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_SHR: begin
+                    logic [ 4: 0] shift_count = src2_data[4: 0];
+                    logic [31: 0] res = src1_data >> shift_count;
+                    result = res;
+                    if (shift_count != 5'd0) begin
+                        new_cf = (shift_count > 5'd0) ? src1_data[shift_count - 5'd1] : src1_data[31];
+                        new_of = (shift_count == 5'd1) ? src1_data[31] : 1'b0;
+                        new_pf = compute_pf(res);
+                        new_zf = compute_zf(res);
+                        new_sf = compute_sf(res);
+                    end
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_SAR: begin
+                    logic [ 4: 0] shift_count = src2_data[4: 0];
+                    logic [31: 0] res = $signed(src1_data) >>> shift_count;
+                    result = res;
+                    if (shift_count != 5'd0) begin
+                        new_cf = (shift_count > 5'd0) ? src1_data[shift_count - 5'd1] : src1_data[31];
+                        new_of = 1'b0;
+                        new_pf = compute_pf(res);
+                        new_zf = compute_zf(res);
+                        new_sf = compute_sf(res);
+                    end
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_ROL: begin
+                    logic [ 4: 0] shift_count = src2_data[4: 0];
+                    logic [31: 0] res = (src1_data << shift_count) | (src1_data >> (32'd32 - shift_count));
+                    result = res;
+                    if (shift_count != 5'd0) begin
+                        new_cf = (shift_count == 5'd0) ? i_cf : src1_data[32'd32 - shift_count];
+                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                    end
+                    write_gpr = 1'b1;
+                end
+                `UOP_ROR: begin
+                    logic [ 4: 0] shift_count = src2_data[4: 0];
+                    logic [31: 0] res = (src1_data >> shift_count) | (src1_data << (32'd32 - shift_count));
+                    result = res;
+                    if (shift_count != 5'd0) begin
+                        new_cf = (shift_count == 5'd0) ? i_cf : src1_data[shift_count - 5'd1];
+                        new_of = (shift_count == 5'd1) ? (res[31] ^ src1_data[31]) : i_of;
+                    end
+                    write_gpr = 1'b1;
+                end
+                `UOP_RCL: begin
+                    logic [ 4: 0] shift_count = src2_data[4: 0];
+                    logic [32: 0] ext_src = {i_cf, src1_data};
+                    logic [32: 0] res = (ext_src << shift_count) | (ext_src >> (33'd33 - shift_count));
+                    result = res[31: 0];
+                    if (shift_count != 5'd0) begin
+                        new_cf = res[32];
+                        new_of = (shift_count == 5'd1) ? (res[31] ^ src1_data[31]) : i_of;
+                    end
+                    write_gpr = 1'b1;
+                end
+                `UOP_RCR: begin
+                    logic [ 4: 0] shift_count = src2_data[4: 0];
+                    logic [32: 0] ext_src = {src1_data, i_cf};
+                    logic [32: 0] res = (ext_src >> shift_count) | (ext_src << (33'd33 - shift_count));
+                    result = res[31: 0];
+                    if (shift_count != 5'd0) begin
+                        new_cf = res[0];
+                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                    end
+                    write_gpr = 1'b1;
+                end
+                `UOP_SHLD: begin
+                    logic [ 4: 0] shift_count = src2_data[4: 0];
+                    logic [63: 0] combined = {src1_data, src2_data};
+                    logic [31: 0] res = combined[31: 0] << shift_count;
+                    result = res;
+                    if (shift_count != 5'd0) begin
+                        new_cf = (shift_count > 5'd0) ? combined[32'd32 - shift_count] : combined[31];
+                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                        new_pf = compute_pf(res);
+                        new_zf = compute_zf(res);
+                        new_sf = compute_sf(res);
+                    end
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_SHRD: begin
+                    logic [ 4: 0] shift_count = src2_data[4: 0];
+                    logic [63: 0] combined = {src1_data, src2_data};
+                    logic [31: 0] res = combined[63: 32] >> shift_count;
+                    result = res;
+                    if (shift_count != 5'd0) begin
+                        new_cf = (shift_count > 5'd0) ? combined[shift_count - 5'd1] : combined[32];
+                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                        new_pf = compute_pf(res);
+                        new_zf = compute_zf(res);
+                        new_sf = compute_sf(res);
+                    end
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_BT: begin
+                    logic [ 4: 0] bit_index = src2_data[4: 0];
+                    new_cf = src1_data[bit_index];
+                    write_flags = 1'b1;
+                end
+                `UOP_BTS: begin
+                    logic [ 4: 0] bit_index = src2_data[4: 0];
+                    new_cf = src1_data[bit_index];
+                    result = src1_data;
+                    result[bit_index] = 1'b1;
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_BTR: begin
+                    logic [ 4: 0] bit_index = src2_data[4: 0];
+                    new_cf = src1_data[bit_index];
+                    result = src1_data;
+                    result[bit_index] = 1'b0;
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_BTC: begin
+                    logic [ 4: 0] bit_index = src2_data[4: 0];
+                    new_cf = src1_data[bit_index];
+                    result = src1_data;
+                    result[bit_index] = ~src1_data[bit_index];
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_BSF: begin
+                    logic [ 4: 0] bit_index = 5'd0;
+                    logic [31: 0] operand = src1_data;
+                    if (operand != 32'd0) begin
+                        case (1'b1)
+                            operand[0]:  bit_index = 5'd0;
+                            operand[1]:  bit_index = 5'd1;
+                            operand[2]:  bit_index = 5'd2;
+                            operand[3]:  bit_index = 5'd3;
+                            operand[4]:  bit_index = 5'd4;
+                            operand[5]:  bit_index = 5'd5;
+                            operand[6]:  bit_index = 5'd6;
+                            operand[7]:  bit_index = 5'd7;
+                            operand[8]:  bit_index = 5'd8;
+                            operand[9]:  bit_index = 5'd9;
+                            operand[10]: bit_index = 5'd10;
+                            operand[11]: bit_index = 5'd11;
+                            operand[12]: bit_index = 5'd12;
+                            operand[13]: bit_index = 5'd13;
+                            operand[14]: bit_index = 5'd14;
+                            operand[15]: bit_index = 5'd15;
+                            operand[16]: bit_index = 5'd16;
+                            operand[17]: bit_index = 5'd17;
+                            operand[18]: bit_index = 5'd18;
+                            operand[19]: bit_index = 5'd19;
+                            operand[20]: bit_index = 5'd20;
+                            operand[21]: bit_index = 5'd21;
+                            operand[22]: bit_index = 5'd22;
+                            operand[23]: bit_index = 5'd23;
+                            operand[24]: bit_index = 5'd24;
+                            operand[25]: bit_index = 5'd25;
+                            operand[26]: bit_index = 5'd26;
+                            operand[27]: bit_index = 5'd27;
+                            operand[28]: bit_index = 5'd28;
+                            operand[29]: bit_index = 5'd29;
+                            operand[30]: bit_index = 5'd30;
+                            operand[31]: bit_index = 5'd31;
+                            default:  bit_index = 5'd0;
+                        endcase
+                        result = {27'd0, bit_index};
+                        write_gpr = 1'b1;
+                        write_flags = 1'b1;
+                    end
+                    new_zf = (operand == 32'd0);
+                    write_flags = 1'b1;
+                end
+                `UOP_BSR: begin
+                    logic [ 4: 0] bit_index = 5'd0;
+                    logic [31: 0] operand = src1_data;
+                    if (operand != 32'd0) begin
+                        case (1'b1)
+                            operand[31]: bit_index = 5'd31;
+                            operand[30]: bit_index = 5'd30;
+                            operand[29]: bit_index = 5'd29;
+                            operand[28]: bit_index = 5'd28;
+                            operand[27]: bit_index = 5'd27;
+                            operand[26]: bit_index = 5'd26;
+                            operand[25]: bit_index = 5'd25;
+                            operand[24]: bit_index = 5'd24;
+                            operand[23]: bit_index = 5'd23;
+                            operand[22]: bit_index = 5'd22;
+                            operand[21]: bit_index = 5'd21;
+                            operand[20]: bit_index = 5'd20;
+                            operand[19]: bit_index = 5'd19;
+                            operand[18]: bit_index = 5'd18;
+                            operand[17]: bit_index = 5'd17;
+                            operand[16]: bit_index = 5'd16;
+                            operand[15]: bit_index = 5'd15;
+                            operand[14]: bit_index = 5'd14;
+                            operand[13]: bit_index = 5'd13;
+                            operand[12]: bit_index = 5'd12;
+                            operand[11]: bit_index = 5'd11;
+                            operand[10]: bit_index = 5'd10;
+                            operand[9]:  bit_index = 5'd9;
+                            operand[8]:  bit_index = 5'd8;
+                            operand[7]:  bit_index = 5'd7;
+                            operand[6]:  bit_index = 5'd6;
+                            operand[5]:  bit_index = 5'd5;
+                            operand[4]:  bit_index = 5'd4;
+                            operand[3]:  bit_index = 5'd3;
+                            operand[2]:  bit_index = 5'd2;
+                            operand[1]:  bit_index = 5'd1;
+                            operand[0]:  bit_index = 5'd0;
+                            default:  bit_index = 5'd0;
+                        endcase
+                        result = {27'd0, bit_index};
+                        write_gpr = 1'b1;
+                        write_flags = 1'b1;
+                    end
+                    new_zf = (operand == 32'd0);
+                    write_flags = 1'b1;
+                end
+                `UOP_BSWAP: begin
+                    result = {src1_data[ 7: 0], src1_data[15: 8], src1_data[23:16], src1_data[31:24]};
+                    write_gpr = 1'b1;
+                end
+                `UOP_MOVSX: begin
+                    logic [15: 0] src = has_imm ? immediate[15: 0] : src2_data[15: 0];
+                    result = {{16{src[15]}}, src};
+                    write_gpr = 1'b1;
+                end
+                `UOP_MOVZX: begin
+                    logic [15: 0] src = has_imm ? immediate[15: 0] : src2_data[15: 0];
+                    result = {16'd0, src};
+                    write_gpr = 1'b1;
                 end
                 `UOP_XCHG: begin
-                    int_op    = `EXE_INT_XCHG;
-                    int_valid = 1'b1;
+                    result = src2_data;
+                    write_gpr = 1'b1;
                 end
                 `UOP_LEA: begin
-                    is_lea    = 1'b1;
-                end
-                `UOP_BRANCH: begin
-                    is_branch = 1'b1;
-                    is_jcc    = (i_uop.uop_tttn != 4'b0) ? 1'b1 : 1'b0;
-                end
-                `UOP_CALL: begin
-                    is_branch = 1'b1;
-                    is_jcc    = 1'b0;
-                end
-                `UOP_RET: begin
-                    is_branch = 1'b1;
-                    is_jcc    = 1'b0;
-                end
-                `UOP_MUL: begin
-                    md_op     = `EXE_MD_MULU32;
-                    md_valid  = 1'b1;
-                end
-                `UOP_IMUL: begin
-                    md_op     = `EXE_MD_IMUL32;
-                    md_valid  = 1'b1;
-                end
-                `UOP_DIV: begin
-                    md_op     = `EXE_MD_DIVU32;
-                    md_valid  = 1'b1;
-                end
-                `UOP_IDIV: begin
-                    md_op     = `EXE_MD_IDIV32;
-                    md_valid  = 1'b1;
-                end
-                `UOP_PUSH,
-                `UOP_POP: begin
-                    is_mem_access = 1'b1;
-                    is_store     = (i_uop.uop_opcode == `UOP_PUSH);
-                end
-                `UOP_LOAD: begin
-                    is_mem_access = 1'b1;
-                    is_store     = 1'b0;
-                end
-                `UOP_STORE: begin
-                    is_mem_access = 1'b1;
-                    is_store     = 1'b1;
-                end
-                `UOP_X87: begin
-                    x87_valid = 1'b1;
-                    // Map uop_eee to x87 sub-opcode
-                    x87_op    = i_uop.uop_eee[2:0] == 3'b000 ? `EXE_X87_FADD :
-                                i_uop.uop_eee[2:0] == 3'b001 ? `EXE_X87_FMUL :
-                                i_uop.uop_eee[2:0] == 3'b010 ? `EXE_X87_FCOM :
-                                i_uop.uop_eee[2:0] == 3'b011 ? `EXE_X87_FCOMP :
-                                i_uop.uop_eee[2:0] == 3'b100 ? `EXE_X87_FSUB :
-                                i_uop.uop_eee[2:0] == 3'b101 ? `EXE_X87_FSUBR :
-                                i_uop.uop_eee[2:0] == 3'b110 ? `EXE_X87_FDIV :
-                                `EXE_X87_FDIVR;
-                end
-                `UOP_FLAG_CTRL: begin
-                    is_flag_ctrl = 1'b1;
+                    result = src1_data + src2_data + displacement;
+                    write_gpr = 1'b1;
                 end
                 `UOP_XADD: begin
-                    int_op    = `EXE_INT_XADD;
-                    int_valid = 1'b1;
+                    logic [31: 0] sum = src1_data + src2_data;
+                    result = sum;
+                    new_cf = compute_cf_add(src1_data, src2_data);
+                    new_pf = compute_pf(sum);
+                    new_zf = compute_zf(sum);
+                    new_sf = compute_sf(sum);
+                    new_of = compute_of_add(src1_data, src2_data);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
                 end
                 `UOP_CMPXCHG: begin
-                    int_op    = `EXE_INT_CMPXCHG;
-                    int_valid = 1'b1;
+                    logic [31: 0] diff = src1_data - src2_data;
+                    new_cf = compute_cf_sub(src1_data, src2_data);
+                    new_pf = compute_pf(diff);
+                    new_zf = compute_zf(diff);
+                    new_sf = compute_sf(diff);
+                    new_of = compute_of_sub(src1_data, src2_data);
+                    if (src1_data == src2_data) begin
+                        result = src2_data;
+                    end else begin
+                        result = src1_data;
+                    end
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_PUSH: begin
+                    logic [31: 0] src = has_imm ? immediate : src1_data;
+                    logic [31: 0] new_esp = src2_data - 32'd4;
+                    result = new_esp;
+                    mem_address = new_esp;
+                    mem_write_data = src;
+                    mem_valid = 1'b1;
+                    mem_write_enable = 1'b1;
+                    write_gpr = 1'b1;
+                end
+                `UOP_POP: begin
+                    logic [31: 0] new_esp = src1_data + 32'd4;
+                    result = has_imm ? new_esp + immediate : src2_data;
+                    mem_address = src1_data;
+                    mem_valid = 1'b1;
+                    mem_write_enable = 1'b0;
+                    write_gpr = 1'b1;
+                end
+                `UOP_BRANCH: begin
+                    logic [31: 0] target = has_disp ? displacement : immediate;
+                    logic         condition_met;
+                    case (tttn)
+                        4'h0: condition_met = i_of;
+                        4'h1: condition_met = ~i_of;
+                        4'h2: condition_met = i_cf;
+                        4'h3: condition_met = ~i_cf;
+                        4'h4: condition_met = i_zf;
+                        4'h5: condition_met = ~i_zf;
+                        4'h6: condition_met = i_cf | i_zf;
+                        4'h7: condition_met = ~(i_cf | i_zf);
+                        4'h8: condition_met = i_sf;
+                        4'h9: condition_met = ~i_sf;
+                        4'hA: condition_met = i_pf;
+                        4'hB: condition_met = ~i_pf;
+                        4'hC: condition_met = i_sf ^ i_of;
+                        4'hD: condition_met = ~(i_sf ^ i_of);
+                        4'hE: condition_met = i_sf ^ i_of ^ i_cf;
+                        4'hF: condition_met = 1'b1;
+                        default: condition_met = 1'b0;
+                    endcase
+                    if (condition_met) begin
+                        ip_data = target;
+                        write_ip = 1'b1;
+                    end
+                end
+                `UOP_CALL: begin
+                    logic [31: 0] target = has_disp ? displacement : immediate;
+                    logic [31: 0] new_esp = src2_data - 32'd4;
+                    result = new_esp;
+                    mem_address = new_esp;
+                    mem_write_data = src1_data;
+                    mem_valid = 1'b1;
+                    mem_write_enable = 1'b1;
+                    ip_data = target;
+                    write_gpr = 1'b1;
+                    write_ip = 1'b1;
+                end
+                `UOP_RET: begin
+                    logic [31: 0] new_esp = has_imm ? (src1_data + immediate) : (src1_data + 32'd4);
+                    result = new_esp;
+                    mem_address = src1_data;
+                    mem_valid = 1'b1;
+                    mem_write_enable = 1'b0;
+                    ip_data = src2_data;
+                    write_gpr = 1'b1;
+                    write_ip = 1'b1;
                 end
                 `UOP_SETCC: begin
-                    int_op    = `EXE_INT_SETCC;
-                    int_valid = 1'b1;
-                end
-                `UOP_MISC: begin
-                    int_op    = `EXE_INT_BSWAP;
-                    int_valid = 1'b1;
+                    logic         condition_met;
+                    case (tttn)
+                        4'h0: condition_met = i_of;
+                        4'h1: condition_met = ~i_of;
+                        4'h2: condition_met = i_cf;
+                        4'h3: condition_met = ~i_cf;
+                        4'h4: condition_met = i_zf;
+                        4'h5: condition_met = ~i_zf;
+                        4'h6: condition_met = i_cf | i_zf;
+                        4'h7: condition_met = ~(i_cf | i_zf);
+                        4'h8: condition_met = i_sf;
+                        4'h9: condition_met = ~i_sf;
+                        4'hA: condition_met = i_pf;
+                        4'hB: condition_met = ~i_pf;
+                        4'hC: condition_met = i_sf ^ i_of;
+                        4'hD: condition_met = ~(i_sf ^ i_of);
+                        4'hE: condition_met = i_sf ^ i_of ^ i_cf;
+                        4'hF: condition_met = 1'b1;
+                        default: condition_met = 1'b0;
+                    endcase
+                    result = condition_met ? 32'd1 : 32'd0;
+                    write_gpr = 1'b1;
                 end
                 `UOP_STRING: begin
-                    is_mem_access = 1'b1;
+                    result = 32'd0;
+                end
+                `UOP_FLAG_CTRL: begin
+                    result = 32'd0;
+                end
+                `UOP_MISC: begin
+                    result = 32'd0;
+                end
+                `UOP_X87: begin
+                    result = 32'd0;
+                end
+                `UOP_NOP: begin
+                    result = 32'd0;
+                end
+                `UOP_MUL: begin
+                    logic [63: 0] product = src1_data * src2_data;
+                    result = product[31: 0];
+                    new_cf = product[63: 32] != 32'd0;
+                    new_of = product[63: 32] != 32'd0;
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_IMUL: begin
+                    logic signed [63: 0] product = $signed(src1_data) * $signed(src2_data);
+                    result = product[31: 0];
+                    new_cf = (product[63: 32] != 32'sd0) && (product[63: 32] != 32'hFFFFFFFF);
+                    new_of = (product[63: 32] != 32'sd0) && (product[63: 32] != 32'hFFFFFFFF);
+                    write_gpr = 1'b1;
+                    write_flags = 1'b1;
+                end
+                `UOP_DIV: begin
+                    logic [63: 0] dividend = {src1_data, src2_data};
+                    logic [31: 0] divisor = src2_data;
+                    if (divisor != 32'd0) begin
+                        result = dividend[31: 0] / divisor;
+                    end
+                    write_gpr = 1'b1;
+                end
+                `UOP_IDIV: begin
+                    logic signed [63: 0] dividend = {src1_data, src2_data};
+                    logic signed [31: 0] divisor = src2_data;
+                    if (divisor != 32'sd0) begin
+                        result = dividend[31: 0] / divisor;
+                    end
+                    write_gpr = 1'b1;
                 end
                 default: begin
-                    is_nop    = 1'b1;
+                    result = 32'd0;
+                end
+            endcase
+
+            flags_data = {10'b0, new_of, 1'b0, 1'b0, 1'b0, new_sf, new_zf, 1'b0, new_pf, 1'b0, new_cf};
+        end
+    end
+
+    assign o_stage_ready = i_wrb_ready;
+    assign o_stage_valid = i_uop_valid;
+
+    always_comb begin
+        o_wrb_gpr_enable_EAX = 1'b0;
+        o_wrb_gpr_enable_AX  = 1'b0;
+        o_wrb_gpr_enable_AL  = 1'b0;
+        o_wrb_gpr_enable_AH  = 1'b0;
+        o_wrb_gpr_enable_EBX = 1'b0;
+        o_wrb_gpr_enable_BX  = 1'b0;
+        o_wrb_gpr_enable_BL  = 1'b0;
+        o_wrb_gpr_enable_BH  = 1'b0;
+        o_wrb_gpr_enable_ECX = 1'b0;
+        o_wrb_gpr_enable_CX  = 1'b0;
+        o_wrb_gpr_enable_CL  = 1'b0;
+        o_wrb_gpr_enable_CH  = 1'b0;
+        o_wrb_gpr_enable_EDX = 1'b0;
+        o_wrb_gpr_enable_DX  = 1'b0;
+        o_wrb_gpr_enable_DL  = 1'b0;
+        o_wrb_gpr_enable_DH  = 1'b0;
+        o_wrb_gpr_enable_ESP = 1'b0;
+        o_wrb_gpr_enable_SP  = 1'b0;
+        o_wrb_gpr_enable_EBP = 1'b0;
+        o_wrb_gpr_enable_BP  = 1'b0;
+        o_wrb_gpr_enable_ESI = 1'b0;
+        o_wrb_gpr_enable_SI  = 1'b0;
+        o_wrb_gpr_enable_EDI = 1'b0;
+        o_wrb_gpr_enable_DI  = 1'b0;
+
+        if (i_uop_valid && write_gpr) begin
+            case (dest_reg)
+                3'd0: begin
+                    o_wrb_gpr_enable_EAX = 1'b1;
+                    o_wrb_gpr_enable_AX  = 1'b1;
+                    o_wrb_gpr_enable_AL  = 1'b1;
+                    o_wrb_gpr_enable_AH  = 1'b1;
+                end
+                3'd1: begin
+                    o_wrb_gpr_enable_ECX = 1'b1;
+                    o_wrb_gpr_enable_CX  = 1'b1;
+                    o_wrb_gpr_enable_CL  = 1'b1;
+                    o_wrb_gpr_enable_CH  = 1'b1;
+                end
+                3'd2: begin
+                    o_wrb_gpr_enable_EDX = 1'b1;
+                    o_wrb_gpr_enable_DX  = 1'b1;
+                    o_wrb_gpr_enable_DL  = 1'b1;
+                    o_wrb_gpr_enable_DH  = 1'b1;
+                end
+                3'd3: begin
+                    o_wrb_gpr_enable_EBX = 1'b1;
+                    o_wrb_gpr_enable_BX  = 1'b1;
+                    o_wrb_gpr_enable_BL  = 1'b1;
+                    o_wrb_gpr_enable_BH  = 1'b1;
+                end
+                3'd4: begin
+                    o_wrb_gpr_enable_ESP = 1'b1;
+                    o_wrb_gpr_enable_SP  = 1'b1;
+                end
+                3'd5: begin
+                    o_wrb_gpr_enable_EBP = 1'b1;
+                    o_wrb_gpr_enable_BP  = 1'b1;
+                end
+                3'd6: begin
+                    o_wrb_gpr_enable_ESI = 1'b1;
+                    o_wrb_gpr_enable_SI  = 1'b1;
+                end
+                3'd7: begin
+                    o_wrb_gpr_enable_EDI = 1'b1;
+                    o_wrb_gpr_enable_DI  = 1'b1;
                 end
             endcase
         end
     end
 
-    // ============================================================
-    // Operand selection
-    // ============================================================
-    assign operand_a = i_src1_data;
-    assign operand_b = i_uop.uop_has_imm ? i_uop.uop_immediate :
-                       i_src2_data;
-    assign operand_count = i_uop.uop_has_imm ? i_uop.uop_immediate[4:0] :
-                           i_src2_data[4:0];
+    assign o_wrb_gpr_data_EAX = result;
+    assign o_wrb_gpr_data_AX  = result[15: 0];
+    assign o_wrb_gpr_data_AL  = result[ 7: 0];
+    assign o_wrb_gpr_data_AH  = result[15: 8];
+    assign o_wrb_gpr_data_EBX = result;
+    assign o_wrb_gpr_data_BX  = result[15: 0];
+    assign o_wrb_gpr_data_BL  = result[ 7: 0];
+    assign o_wrb_gpr_data_BH  = result[15: 8];
+    assign o_wrb_gpr_data_ECX = result;
+    assign o_wrb_gpr_data_CX  = result[15: 0];
+    assign o_wrb_gpr_data_CL  = result[ 7: 0];
+    assign o_wrb_gpr_data_CH  = result[15: 8];
+    assign o_wrb_gpr_data_EDX = result;
+    assign o_wrb_gpr_data_DX  = result[15: 0];
+    assign o_wrb_gpr_data_DL  = result[ 7: 0];
+    assign o_wrb_gpr_data_DH  = result[15: 8];
+    assign o_wrb_gpr_data_ESP = result;
+    assign o_wrb_gpr_data_SP  = result[15: 0];
+    assign o_wrb_gpr_data_EBP = result;
+    assign o_wrb_gpr_data_BP  = result[15: 0];
+    assign o_wrb_gpr_data_ESI = result;
+    assign o_wrb_gpr_data_SI  = result[15: 0];
+    assign o_wrb_gpr_data_EDI = result;
+    assign o_wrb_gpr_data_DI  = result[15: 0];
 
-    // ============================================================
-    // ALU — Integer arithmetic/logic/shift/bitmanip
-    // ============================================================
-    logic [31: 0] alu_add_y;
-    logic [31: 0] alu_adc_y;
-    logic [31: 0] alu_sub_y;
-    logic [31: 0] alu_sbb_y;
-    logic [31: 0] alu_and_y;
-    logic [31: 0] alu_or_y;
-    logic [31: 0] alu_xor_y;
-    logic [31: 0] alu_not_y;
-    logic [31: 0] alu_neg_y;
-    logic [31: 0] alu_inc_y;
-    logic [31: 0] alu_dec_y;
-    logic [31: 0] alu_shl_y;
-    logic [31: 0] alu_shr_y;
-    logic [31: 0] alu_sar_y;
-    logic [31: 0] alu_rol_y;
-    logic [31: 0] alu_ror_y;
-    logic [31: 0] alu_rcl_y;
-    logic         alu_rcl_cf;
-    logic [31: 0] alu_rcr_y;
-    logic         alu_rcr_cf;
-    logic [31: 0] alu_shld_y;
-    logic [31: 0] alu_shrd_y;
-    logic [31: 0] alu_bsf_y;
-    logic         alu_bsf_zf;
-    logic [31: 0] alu_bsr_y;
-    logic         alu_bsr_zf;
-    logic [31: 0] alu_bt_y;
-    logic         alu_bt_cf;
-    logic [31: 0] alu_bts_y;
-    logic         alu_bts_cf;
-    logic [31: 0] alu_btr_y;
-    logic         alu_btr_cf;
-    logic [31: 0] alu_btc_y;
-    logic         alu_btc_cf;
-    logic [31: 0] alu_xchg_y;
-    logic [31: 0] alu_movsx_y;
-    logic [31: 0] alu_movzx_y;
-    logic [31: 0] alu_bswap_y;
-    logic [31: 0] alu_xadd_y;
-    logic [31: 0] alu_cmpxchg_y;
-    logic         alu_cmpxchg_zf;
-    logic [31: 0] alu_setcc_y;
+    assign o_wrb_seg_enable_es = 1'b0;
+    assign o_wrb_seg_enable_cs = 1'b0;
+    assign o_wrb_seg_enable_ss = 1'b0;
+    assign o_wrb_seg_enable_ds = 1'b0;
+    assign o_wrb_seg_enable_fs = 1'b0;
+    assign o_wrb_seg_enable_gs = 1'b0;
+    assign o_wrb_seg_selector   = 16'd0;
+    assign o_wrb_seg_descriptor = 64'd0;
 
-    // Arithmetic
-    alu_arithmetic_ari_add   u_ari_add   (.a (operand_a), .b (operand_b), .y (alu_add_y));
-    alu_arithmetic_ari_adc   u_ari_adc   (.a (operand_a), .b (operand_b), .cf (i_flag_cf), .y (alu_adc_y));
-    alu_arithmetic_ari_sub   u_ari_sub   (.a (operand_a), .b (operand_b), .y (alu_sub_y));
-    alu_arithmetic_ari_sbb   u_ari_sbb   (.a (operand_a), .b (operand_b), .cf (i_flag_cf), .y (alu_sbb_y));
-    alu_arithmetic_ari_inc   u_ari_inc   (.a (operand_a), .y (alu_inc_y));
-    alu_arithmetic_ari_dec   u_ari_dec   (.a (operand_a), .y (alu_dec_y));
-    alu_arithmetic_ari_neg   u_ari_neg   (.a (operand_a), .y (alu_neg_y));
-    alu_logic_log_not   u_log_not   (.a (operand_a), .y (alu_not_y));
+    assign o_wrb_flags_enable = i_uop_valid && write_flags;
+    assign o_wrb_flags_data   = flags_data;
 
-    // Logic
-    alu_logic_log_and   u_log_and   (.a (operand_a), .b (operand_b), .y (alu_and_y));
-    alu_logic_log_or    u_log_or    (.a (operand_a), .b (operand_b), .y (alu_or_y));
-    alu_logic_log_xor   u_log_xor   (.a (operand_a), .b (operand_b), .y (alu_xor_y));
+    assign o_wrb_ip_enable = i_uop_valid && write_ip;
+    assign o_wrb_ip_data   = ip_data;
 
-    // Shift/Rotate
-    alu_shift_rotate_shf_shl   u_shf_shl   (.a (operand_a), .count (operand_count), .y (alu_shl_y));
-    alu_shift_rotate_shf_shr   u_shf_shr   (.a (operand_a), .count (operand_count), .y (alu_shr_y));
-    alu_shift_rotate_shf_sar   u_shf_sar   (.a (operand_a), .count (operand_count), .y (alu_sar_y));
-    alu_shift_rotate_rot_rol   u_rot_rol   (.a (operand_a), .count (operand_count), .y (alu_rol_y));
-    alu_shift_rotate_rot_ror   u_rot_ror   (.a (operand_a), .count (operand_count), .y (alu_ror_y));
-    alu_shift_rotate_rot_rcl   u_rot_rcl   (.a (operand_a), .count (operand_count), .cf_in (i_flag_cf), .y (alu_rcl_y), .cf_out (alu_rcl_cf));
-    alu_shift_rotate_rot_rcr   u_rot_rcr   (.a (operand_a), .count (operand_count), .cf_in (i_flag_cf), .y (alu_rcr_y), .cf_out (alu_rcr_cf));
-    alu_shift_rotate_shf_shld  u_shf_shld  (.a (operand_a), .b (operand_b), .count (operand_count), .y (alu_shld_y));
-    alu_shift_rotate_shf_shrd  u_shf_shrd  (.a (operand_a), .b (operand_b), .count (operand_count), .y (alu_shrd_y));
-
-    // Bit manipulation
-    alu_bitmanip_bit_bsf   u_bit_bsf   (.a (operand_a), .y (alu_bsf_y), .zf (alu_bsf_zf));
-    alu_bitmanip_bit_bsr   u_bit_bsr   (.a (operand_a), .y (alu_bsr_y), .zf (alu_bsr_zf));
-    alu_bitmanip_bit_bt    u_bit_bt    (.a (operand_a), .bit_index (operand_b), .y (alu_bt_y), .cf (alu_bt_cf));
-    alu_bitmanip_bit_bts   u_bit_bts   (.a (operand_a), .bit_index (operand_b), .y (alu_bts_y), .cf (alu_bts_cf));
-    alu_bitmanip_bit_btr   u_bit_btr   (.a (operand_a), .bit_index (operand_b), .y (alu_btr_y), .cf (alu_btr_cf));
-    alu_bitmanip_bit_btc   u_bit_btc   (.a (operand_a), .bit_index (operand_b), .y (alu_btc_y), .cf (alu_btc_cf));
-
-    // Misc
-    alu_misc_misc_xchg     u_misc_xchg     (.a (operand_a), .b (operand_b), .y (alu_xchg_y));
-    alu_misc_misc_movsx    u_misc_movsx    (.a (operand_a), .width (2'b10), .y (alu_movsx_y));
-    alu_misc_misc_movzx    u_misc_movzx    (.a (operand_a), .width (2'b10), .y (alu_movzx_y));
-    alu_misc_misc_bswap    u_misc_bswap    (.a (operand_a), .y (alu_bswap_y));
-    alu_misc_misc_xadd     u_misc_xadd     (.a (operand_a), .b (operand_b), .y (alu_xadd_y));
-    alu_misc_misc_cmpxchg  u_misc_cmpxchg  (.acc (operand_a), .dst (operand_a), .src (operand_b), .y (alu_cmpxchg_y), .zf (alu_cmpxchg_zf));
-    alu_misc_misc_setcc    u_misc_setcc    (.flags ({21'd0, i_flag_of, 1'b0, i_flag_sf, 1'b0, i_flag_zf, 1'b0, i_flag_af, 1'b0, i_flag_pf, 1'b1, i_flag_cf}), .tttn (i_uop.uop_tttn), .y (alu_setcc_y));
-
-    // ============================================================
-    // ALU result mux — select based on int_op
-    // ============================================================
-    always_comb begin
-        alu_result = 32'd0;
-        alu_cf     = 1'b0;
-        alu_zf     = 1'b0;
-
-        unique case (int_op)
-            `EXE_INT_ADD:    alu_result = alu_add_y;
-            `EXE_INT_ADC:    alu_result = alu_adc_y;
-            `EXE_INT_SUB:    alu_result = alu_sub_y;
-            `EXE_INT_SBB:    alu_result = alu_sbb_y;
-            `EXE_INT_AND:    alu_result = alu_and_y;
-            `EXE_INT_OR:     alu_result = alu_or_y;
-            `EXE_INT_XOR:    alu_result = alu_xor_y;
-            `EXE_INT_NOT:    alu_result = alu_not_y;
-            `EXE_INT_NEG:    alu_result = alu_neg_y;
-            `EXE_INT_INC:    alu_result = alu_inc_y;
-            `EXE_INT_DEC:    alu_result = alu_dec_y;
-            `EXE_INT_SHL:    alu_result = alu_shl_y;
-            `EXE_INT_SHR:    alu_result = alu_shr_y;
-            `EXE_INT_SAR:    alu_result = alu_sar_y;
-            `EXE_INT_ROL:    alu_result = alu_rol_y;
-            `EXE_INT_ROR:    alu_result = alu_ror_y;
-            `EXE_INT_RCL:  begin alu_result = alu_rcl_y; alu_cf = alu_rcl_cf; end
-            `EXE_INT_RCR:  begin alu_result = alu_rcr_y; alu_cf = alu_rcr_cf; end
-            `EXE_INT_SHLD:   alu_result = alu_shld_y;
-            `EXE_INT_SHRD:   alu_result = alu_shrd_y;
-            `EXE_INT_BSF:  begin alu_result = alu_bsf_y; alu_zf = alu_bsf_zf; end
-            `EXE_INT_BSR:  begin alu_result = alu_bsr_y; alu_zf = alu_bsr_zf; end
-            `EXE_INT_BT:   begin alu_result = alu_bt_y;  alu_cf = alu_bt_cf;  end
-            `EXE_INT_BTS:  begin alu_result = alu_bts_y; alu_cf = alu_bts_cf; end
-            `EXE_INT_BTR:  begin alu_result = alu_btr_y; alu_cf = alu_btr_cf; end
-            `EXE_INT_BTC:  begin alu_result = alu_btc_y; alu_cf = alu_btc_cf; end
-            `EXE_INT_XCHG:   alu_result = alu_xchg_y;
-            `EXE_INT_MOVSX:  alu_result = alu_movsx_y;
-            `EXE_INT_MOVZX:  alu_result = alu_movzx_y;
-            `EXE_INT_BSWAP:  alu_result = alu_bswap_y;
-            `EXE_INT_XADD:   alu_result = alu_xadd_y;
-            `EXE_INT_CMPXCHG: begin alu_result = alu_cmpxchg_y; alu_zf = alu_cmpxchg_zf; end
-            `EXE_INT_SETCC:  alu_result = alu_setcc_y;
-            default:         alu_result = 32'd0;
-        endcase
-    end
-
-    // ============================================================
-    // Branch unit
-    // ============================================================
-    branch_execute_branch_unit u_branch (
-        .i_is_jcc     ( is_jcc              ),
-        .i_jcc_nibble ( i_uop.uop_tttn      ),
-        .i_CF         ( i_flag_cf            ),
-        .i_PF         ( i_flag_pf            ),
-        .i_ZF         ( i_flag_zf            ),
-        .i_SF         ( i_flag_sf            ),
-        .i_OF         ( i_flag_of            ),
-        .i_eip        ( i_eip                ),
-        .i_rel32      ( i_uop.uop_displacement ),
-        .i_rel8       ( i_uop.uop_displacement[7:0] ),
-        .i_use_rel8   ( 1'b0                 ), // TODO: derive from instruction length
-        .o_taken      ( br_taken             ),
-        .o_target_eip ( br_target_eip        )
-    );
-
-    // ============================================================
-    // MulDiv unit
-    // ============================================================
-    execute_muldiv_unit u_muldiv (
-        .i_op   ( md_op                ),
-        .i_lo   ( operand_a            ),
-        .i_hi   ( i_gpr_edx            ), // EDX for 64-bit dividend
-        .i_src  ( operand_b            ),
-        .o_lo   ( md_lo                ),
-        .o_hi   ( md_hi                ),
-        .o_div0 ( md_div0              )
-    );
-
-    // ============================================================
-    // AGU (Address Generation Unit)
-    // ============================================================
-    agu_lsu_address_generation_unit u_agu (
-        .i_base              ( operand_a                ),
-        .i_index             ( gpr_by_idx[i_uop.uop_src1_reg] ),
-        .i_scale             ( i_uop.uop_sib_scale       ),
-        .i_disp              ( i_uop.uop_displacement    ),
-        .o_effective_address ( agu_ea                    )
-    );
-
-    // ============================================================
-    // X87 FPU
-    // ============================================================
-    execute_x87_fpu u_x87_fpu (
-        .i_valid     ( x87_valid           ),
-        .i_op        ( x87_op              ),
-        .i_push_data ( 64'd0               ), // TODO: from memory load
-        .i_st_src    ( i_uop.uop_eee       ),
-        .o_st0       ( x87_st0             ),
-        .o_st1       ( x87_st1             ),
-        .o_zf        ( x87_zf              ),
-        .o_pf        ( x87_pf              ),
-        .o_cf        ( x87_cf              ),
-        .clk         ( clk                 ),
-        .rst_n       ( rst_n               )
-    );
-
-    // ============================================================
-    // i486 Extensions (CPUID / Cache invalidate)
-    // ============================================================
-    logic insn_fire;
-    assign insn_fire = i_uop_valid & o_stage_ready & ~i_flush;
-
-    i486_execute_unit u_ext (
-        .insn_fire          ( insn_fire           ),
-        .op_cpuid           ( i_op_cpuid          ),
-        .gpr_eax            ( i_src1_data        ),
-        .gpr_ecx            ( i_src2_data        ),
-        .cpuid_busy         ( cpuid_busy_r        ),
-        .gpr_wr_en          ( o_cpuid_gpr_wr      ),
-        .gpr_wr_idx         ( o_cpuid_gpr_idx     ),
-        .gpr_wr_data        ( o_cpuid_gpr_wdata   ),
-        .cpuid_done_pulse   ( o_cpuid_done_pulse  ),
-        .op_invd            ( i_op_invd           ),
-        .op_wbinvd          ( i_op_wbinvd         ),
-        .op_invlpg          ( i_op_invlpg         ),
-        .invlpg_ea          ( i_invlpg_ea         ),
-        .cache_flush_pulse  ( o_cache_flush_pulse ),
-        .invlpg_pulse       ( o_invlpg_pulse      ),
-        .invlpg_linear_addr ( o_invlpg_linear_addr ),
-        .clk                ( clk                 ),
-        .rst_n              ( rst_n               )
-    );
-
-    assign o_cpuid_busy = cpuid_busy_r;
-
-    // ============================================================
-    // Stall control
-    // ============================================================
-    always_comb begin
-        lsu_busy_r   = 1'b0; // TODO: connect to LSU busy
-        exec_stall   = cpuid_busy_r | lsu_busy_r;
-    end
-
-    // ============================================================
-    // Output assignments — handshake
-    // ============================================================
-    assign o_stage_ready = ~exec_stall;
-    assign o_stage_valid = i_uop_valid & ~i_flush & ~exec_stall;
-
-    // ============================================================
-    // Output assignments — result mux (select between ALU/branch/AGU/muldiv)
-    // ============================================================
-    always_comb begin
-        o_result       = 32'd0;
-        o_result_valid = 1'b0;
-        o_dest_reg     = i_uop.uop_dest_reg;
-        o_flag_cf      = 1'b0;
-        o_flag_af      = 1'b0;
-        o_flag_zf      = 1'b0;
-
-        if (i_uop_valid && !i_flush && !exec_stall) begin
-            if (int_valid) begin
-                o_result       = alu_result;
-                o_result_valid = 1'b1;
-                o_flag_cf      = alu_cf;
-                o_flag_zf      = alu_zf;
-            end else if (is_branch) begin
-                o_br_taken     = br_taken;
-                o_br_target_eip = br_target_eip;
-                o_result_valid = 1'b1;
-            end else if (md_valid) begin
-                o_md_lo  = md_lo;
-                o_md_hi  = md_hi;
-                o_md_div0 = md_div0;
-                o_result = md_lo;
-                o_result_valid = 1'b1;
-            end else if (is_lea || is_mem_access) begin
-                o_agu_effective_addr = agu_ea;
-                o_result = agu_ea;
-                o_result_valid = 1'b1;
-            end else if (is_flag_ctrl) begin
-                // Flag control: result not meaningful, valid to advance pipeline
-                o_result_valid = 1'b1;
-            end else if (is_nop) begin
-                o_result_valid = 1'b1;
-            end
-        end
-    end
-
-    // X87 outputs — direct wiring
-    assign o_x87_st0 = x87_st0;
-    assign o_x87_st1 = x87_st1;
-    assign o_x87_zf  = x87_zf;
-    assign o_x87_pf  = x87_pf;
-    assign o_x87_cf  = x87_cf;
+    assign o_mem_valid        = i_uop_valid && mem_valid;
+    assign o_mem_write_enable = i_uop_valid && mem_write_enable;
+    assign o_mem_address      = mem_address;
+    assign o_mem_write_data   = mem_write_data;
 
 endmodule

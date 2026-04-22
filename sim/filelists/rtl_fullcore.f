@@ -85,7 +85,7 @@ rtl/cpu/pipeline/stage_5_exu/stage_5_exu.sv
 rtl/cpu/pipeline/stage_6_mem/stage_6_mem.sv
 rtl/cpu/pipeline/stage_6_mem/exe_to_mem.sv
 rtl/cpu/pipeline/stage_6_mem/mem_to_wrb.sv
-rtl/cpu/pipeline/stage_7_wbu/stage_7_wbu.sv
+rtl/cpu/pipeline/stage_6_wbu/stage_6_wbu.sv
 rtl/cpu/memory/access_memory.sv
 rtl/cpu/memory/memory_stage.sv
 rtl/cpu/mmu/memory_management_unit.sv

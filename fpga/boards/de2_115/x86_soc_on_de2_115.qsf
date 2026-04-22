@@ -1269,7 +1269,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_2
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_3_uop/dec_to_uop.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_3_uop/stage_3_uop.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_3_uop/uop_to_exu.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_4_reg/reg_to_exu.sv
+    set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_4_reg/reg_to_exu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_4_reg/stage_4_reg.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_5_exu/stage_5_exu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_5_exu/agu_lsu/agu_lsu_address_generation_unit.sv
@@ -1315,8 +1315,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_5
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_6_mem/exe_to_mem.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_6_mem/mem_to_wrb.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_6_mem/stage_6_mem.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_7_wbu/stage_7_wbu.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_7_wbu/write_back_stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/pipeline/stage_6_wbu/stage_6_wbu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_file/rf_x86_cr0.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_file/rf_x86_cr1.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/cpu/register_file/rf_x86_cr2.sv
