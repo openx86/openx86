@@ -23,10 +23,10 @@
 
 module decode_opcode_x86_tb;
 
-    // 指令字节数组（最�?字节用于解码opcode�?
+    // ��誘摮𡑒��啁�嚗��憭?摮𡑒��其�閫��opcode嚗?
     logic [ 7: 0] i_instruction [ 0:  3];
     
-    // 所有opcode输出信号
+    // ���纬pcode颲枏枂靽∪噡
     logic o_opcode_x86_AAA_ASCII_adjust_after_add;
     logic o_opcode_x86_AAD_ASCII_AX_before_div;
     logic o_opcode_x86_AAM_ASCII_AX_after_mul;
@@ -62,11 +62,11 @@ module decode_opcode_x86_tb;
     logic o_opcode_x86_CALL_in_other_segment_indirect;
     logic o_opcode_x86_CBW_convert_byte_to_word;
     logic o_opcode_x86_CDQ_convert_double_word_to_quad_word;
-    logic o_opcode_x86_CLC_clear_carry_flag;
-    logic o_opcode_x86_CLD_clear_direction_flag;
-    logic o_opcode_x86_CLI_clear_interrupt_enable_flag;
+    logic o_opcode_x86_CLC_carry;
+    logic o_opcode_x86_CLD_dir;
+    logic o_opcode_x86_CLI_int_en;
     logic o_opcode_x86_CLTS_clear_task_switched_flag;
-    logic o_opcode_x86_CMC_complement_carry_flag;
+    logic o_opcode_x86_CMC_carry;
     logic o_opcode_x86_CMP_mem_with_reg;
     logic o_opcode_x86_CMP_reg_with_mem;
     logic o_opcode_x86_CMP_imm_with_reg_mem;
@@ -106,7 +106,7 @@ module decode_opcode_x86_tb;
     logic o_opcode_x86_JMP_to_same_segment_indirect;
     logic o_opcode_x86_JMP_to_other_segment_direct;
     logic o_opcode_x86_JMP_to_other_segment_indirect;
-    logic o_opcode_x86_LAHF_load_FLAG_into_AH;
+    logic o_opcode_x86_LAHF_load_flags_to_ah;
     logic o_opcode_x86_LAR_load_access_rights_byte;
     logic o_opcode_x86_LDS_load_pointer_to_DS;
     logic o_opcode_x86_LEA_load_effective_adddress_to_reg;
@@ -160,15 +160,15 @@ module decode_opcode_x86_tb;
     logic o_opcode_x86_POP_reg;
     logic o_opcode_x86_POP_sreg_2;
     logic o_opcode_x86_POP_sreg_3;
-    logic o_opcode_x86_POPA_pop_all_general_registers;
-    logic o_opcode_x86_POPF_pop_stack_into_FLAGS_or_EFLAGS;
+    logic o_opcode_x86_POPA_popa_gpr;
+    logic o_opcode_x86_POPF_popf_flags;
     logic o_opcode_x86_PUSH_reg_mem;
     logic o_opcode_x86_PUSH_reg;
     logic o_opcode_x86_PUSH_sreg_2;
     logic o_opcode_x86_PUSH_sreg_3;
     logic o_opcode_x86_PUSH_imm;
-    logic o_opcode_x86_PUSH_all_general_registers;
-    logic o_opcode_x86_PUSHF_push_flags_onto_stack;
+    logic o_opcode_x86_PUSH_pusha_gpr;
+    logic o_opcode_x86_PUSHF_pushf_flags;
     logic o_opcode_x86_RCL_reg_mem_by_1;
     logic o_opcode_x86_RCL_reg_mem_by_CL;
     logic o_opcode_x86_RCL_reg_mem_by_imm;
@@ -179,10 +179,10 @@ module decode_opcode_x86_tb;
     logic o_opcode_x86_RDPMC_read_performance_monitoring_counters;
     logic o_opcode_x86_RDTSC_read_time_stamp_counter;
     logic o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id;
-    logic o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument;
-    logic o_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP;
-    logic o_opcode_x86_RET_return_from_procedure_to_other_segment_no_argument;
-    logic o_opcode_x86_RET_return_from_procedure_to_other_segment_adding_imm_to_SP;
+    logic o_opcode_x86_RET_ret_near;
+    logic o_opcode_x86_RET_ret_near_imm;
+    logic o_opcode_x86_RET_ret_far;
+    logic o_opcode_x86_RET_ret_far_imm;
     logic o_opcode_x86_ROL_reg_mem_by_1;
     logic o_opcode_x86_ROL_reg_mem_by_CL;
     logic o_opcode_x86_ROL_reg_mem_by_imm;
@@ -190,7 +190,7 @@ module decode_opcode_x86_tb;
     logic o_opcode_x86_ROR_reg_mem_by_CL;
     logic o_opcode_x86_ROR_reg_mem_by_imm;
     logic o_opcode_x86_RSM_resume_from_system_management_mode;
-    logic o_opcode_x86_SAHF_store_AH_into_flags;
+    logic o_opcode_x86_SAHF_store_ah_to_flags;
     logic o_opcode_x86_SAR_reg_mem_by_1;
     logic o_opcode_x86_SAR_reg_mem_by_CL;
     logic o_opcode_x86_SAR_reg_mem_by_imm;
@@ -214,9 +214,9 @@ module decode_opcode_x86_tb;
     logic o_opcode_x86_SIDT_store_interrupt_desciptor_table_register;
     logic o_opcode_x86_SLDT_store_local_desciptor_table_register;
     logic o_opcode_x86_SMSW_store_machine_status_word;
-    logic o_opcode_x86_STC_set_carry_flag;
-    logic o_opcode_x86_STD_set_direction_flag;
-    logic o_opcode_x86_STI_set_interrupt_enable_flag;
+    logic o_opcode_x86_STC_carry;
+    logic o_opcode_x86_STD_dir;
+    logic o_opcode_x86_STI_int_en;
     logic o_opcode_x86_STOS_store_string_data;
     logic o_opcode_x86_STR_store_task_register;
     logic o_opcode_x86_SUB_reg_to_reg_mem;
@@ -243,7 +243,7 @@ module decode_opcode_x86_tb;
     logic o_opcode_x86_XOR_imm_to_reg_mem;
     logic o_opcode_x86_XOR_imm_to_acc;
 
-    // 实例化被测试模块
+    // 摰硺��𤥁◤瘚贝�璅∪�
     opcode_x86 dut (
         .i_instruction(i_instruction),
         .o_opcode_x86_AAA_ASCII_adjust_after_add(o_opcode_x86_AAA_ASCII_adjust_after_add),
@@ -281,11 +281,11 @@ module decode_opcode_x86_tb;
         .o_opcode_x86_CALL_in_other_segment_indirect(o_opcode_x86_CALL_in_other_segment_indirect),
         .o_opcode_x86_CBW_convert_byte_to_word(o_opcode_x86_CBW_convert_byte_to_word),
         .o_opcode_x86_CDQ_convert_double_word_to_quad_word(o_opcode_x86_CDQ_convert_double_word_to_quad_word),
-        .o_opcode_x86_CLC_clear_carry_flag(o_opcode_x86_CLC_clear_carry_flag),
-        .o_opcode_x86_CLD_clear_direction_flag(o_opcode_x86_CLD_clear_direction_flag),
-        .o_opcode_x86_CLI_clear_interrupt_enable_flag(o_opcode_x86_CLI_clear_interrupt_enable_flag),
+        .o_opcode_x86_CLC_carry(o_opcode_x86_CLC_carry),
+        .o_opcode_x86_CLD_dir(o_opcode_x86_CLD_dir),
+        .o_opcode_x86_CLI_int_en(o_opcode_x86_CLI_int_en),
         .o_opcode_x86_CLTS_clear_task_switched_flag(o_opcode_x86_CLTS_clear_task_switched_flag),
-        .o_opcode_x86_CMC_complement_carry_flag(o_opcode_x86_CMC_complement_carry_flag),
+        .o_opcode_x86_CMC_carry(o_opcode_x86_CMC_carry),
         .o_opcode_x86_CMP_mem_with_reg(o_opcode_x86_CMP_mem_with_reg),
         .o_opcode_x86_CMP_reg_with_mem(o_opcode_x86_CMP_reg_with_mem),
         .o_opcode_x86_CMP_imm_with_reg_mem(o_opcode_x86_CMP_imm_with_reg_mem),
@@ -325,7 +325,7 @@ module decode_opcode_x86_tb;
         .o_opcode_x86_JMP_to_same_segment_indirect(o_opcode_x86_JMP_to_same_segment_indirect),
         .o_opcode_x86_JMP_to_other_segment_direct(o_opcode_x86_JMP_to_other_segment_direct),
         .o_opcode_x86_JMP_to_other_segment_indirect(o_opcode_x86_JMP_to_other_segment_indirect),
-        .o_opcode_x86_LAHF_load_FLAG_into_AH(o_opcode_x86_LAHF_load_FLAG_into_AH),
+        .o_opcode_x86_LAHF_load_flags_to_ah(o_opcode_x86_LAHF_load_flags_to_ah),
         .o_opcode_x86_LAR_load_access_rights_byte(o_opcode_x86_LAR_load_access_rights_byte),
         .o_opcode_x86_LDS_load_pointer_to_DS(o_opcode_x86_LDS_load_pointer_to_DS),
         .o_opcode_x86_LEA_load_effective_adddress_to_reg(o_opcode_x86_LEA_load_effective_adddress_to_reg),
@@ -379,15 +379,15 @@ module decode_opcode_x86_tb;
         .o_opcode_x86_POP_reg(o_opcode_x86_POP_reg),
         .o_opcode_x86_POP_sreg_2(o_opcode_x86_POP_sreg_2),
         .o_opcode_x86_POP_sreg_3(o_opcode_x86_POP_sreg_3),
-        .o_opcode_x86_POPA_pop_all_general_registers(o_opcode_x86_POPA_pop_all_general_registers),
-        .o_opcode_x86_POPF_pop_stack_into_FLAGS_or_EFLAGS(o_opcode_x86_POPF_pop_stack_into_FLAGS_or_EFLAGS),
+        .o_opcode_x86_POPA_popa_gpr(o_opcode_x86_POPA_popa_gpr),
+        .o_opcode_x86_POPF_popf_flags(o_opcode_x86_POPF_popf_flags),
         .o_opcode_x86_PUSH_reg_mem(o_opcode_x86_PUSH_reg_mem),
         .o_opcode_x86_PUSH_reg(o_opcode_x86_PUSH_reg),
         .o_opcode_x86_PUSH_sreg_2(o_opcode_x86_PUSH_sreg_2),
         .o_opcode_x86_PUSH_sreg_3(o_opcode_x86_PUSH_sreg_3),
         .o_opcode_x86_PUSH_imm(o_opcode_x86_PUSH_imm),
-        .o_opcode_x86_PUSH_all_general_registers(o_opcode_x86_PUSH_all_general_registers),
-        .o_opcode_x86_PUSHF_push_flags_onto_stack(o_opcode_x86_PUSHF_push_flags_onto_stack),
+        .o_opcode_x86_PUSH_pusha_gpr(o_opcode_x86_PUSH_pusha_gpr),
+        .o_opcode_x86_PUSHF_pushf_flags(o_opcode_x86_PUSHF_pushf_flags),
         .o_opcode_x86_RCL_reg_mem_by_1(o_opcode_x86_RCL_reg_mem_by_1),
         .o_opcode_x86_RCL_reg_mem_by_CL(o_opcode_x86_RCL_reg_mem_by_CL),
         .o_opcode_x86_RCL_reg_mem_by_imm(o_opcode_x86_RCL_reg_mem_by_imm),
@@ -398,10 +398,10 @@ module decode_opcode_x86_tb;
         .o_opcode_x86_RDPMC_read_performance_monitoring_counters(o_opcode_x86_RDPMC_read_performance_monitoring_counters),
         .o_opcode_x86_RDTSC_read_time_stamp_counter(o_opcode_x86_RDTSC_read_time_stamp_counter),
         .o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id(o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id),
-        .o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument(o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument),
-        .o_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP(o_opcode_x86_RET_return_from_procedure_to_same_segment_adding_imm_to_SP),
-        .o_opcode_x86_RET_return_from_procedure_to_other_segment_no_argument(o_opcode_x86_RET_return_from_procedure_to_other_segment_no_argument),
-        .o_opcode_x86_RET_return_from_procedure_to_other_segment_adding_imm_to_SP(o_opcode_x86_RET_return_from_procedure_to_other_segment_adding_imm_to_SP),
+        .o_opcode_x86_RET_ret_near(o_opcode_x86_RET_ret_near),
+        .o_opcode_x86_RET_ret_near_imm(o_opcode_x86_RET_ret_near_imm),
+        .o_opcode_x86_RET_ret_far(o_opcode_x86_RET_ret_far),
+        .o_opcode_x86_RET_ret_far_imm(o_opcode_x86_RET_ret_far_imm),
         .o_opcode_x86_ROL_reg_mem_by_1(o_opcode_x86_ROL_reg_mem_by_1),
         .o_opcode_x86_ROL_reg_mem_by_CL(o_opcode_x86_ROL_reg_mem_by_CL),
         .o_opcode_x86_ROL_reg_mem_by_imm(o_opcode_x86_ROL_reg_mem_by_imm),
@@ -409,7 +409,7 @@ module decode_opcode_x86_tb;
         .o_opcode_x86_ROR_reg_mem_by_CL(o_opcode_x86_ROR_reg_mem_by_CL),
         .o_opcode_x86_ROR_reg_mem_by_imm(o_opcode_x86_ROR_reg_mem_by_imm),
         .o_opcode_x86_RSM_resume_from_system_management_mode(o_opcode_x86_RSM_resume_from_system_management_mode),
-        .o_opcode_x86_SAHF_store_AH_into_flags(o_opcode_x86_SAHF_store_AH_into_flags),
+        .o_opcode_x86_SAHF_store_ah_to_flags(o_opcode_x86_SAHF_store_ah_to_flags),
         .o_opcode_x86_SAR_reg_mem_by_1(o_opcode_x86_SAR_reg_mem_by_1),
         .o_opcode_x86_SAR_reg_mem_by_CL(o_opcode_x86_SAR_reg_mem_by_CL),
         .o_opcode_x86_SAR_reg_mem_by_imm(o_opcode_x86_SAR_reg_mem_by_imm),
@@ -433,9 +433,9 @@ module decode_opcode_x86_tb;
         .o_opcode_x86_SIDT_store_interrupt_desciptor_table_register(o_opcode_x86_SIDT_store_interrupt_desciptor_table_register),
         .o_opcode_x86_SLDT_store_local_desciptor_table_register(o_opcode_x86_SLDT_store_local_desciptor_table_register),
         .o_opcode_x86_SMSW_store_machine_status_word(o_opcode_x86_SMSW_store_machine_status_word),
-        .o_opcode_x86_STC_set_carry_flag(o_opcode_x86_STC_set_carry_flag),
-        .o_opcode_x86_STD_set_direction_flag(o_opcode_x86_STD_set_direction_flag),
-        .o_opcode_x86_STI_set_interrupt_enable_flag(o_opcode_x86_STI_set_interrupt_enable_flag),
+        .o_opcode_x86_STC_carry(o_opcode_x86_STC_carry),
+        .o_opcode_x86_STD_dir(o_opcode_x86_STD_dir),
+        .o_opcode_x86_STI_int_en(o_opcode_x86_STI_int_en)
         .o_opcode_x86_STOS_store_string_data(o_opcode_x86_STOS_store_string_data),
         .o_opcode_x86_STR_store_task_register(o_opcode_x86_STR_store_task_register),
         .o_opcode_x86_SUB_reg_to_reg_mem(o_opcode_x86_SUB_reg_to_reg_mem),
@@ -463,21 +463,21 @@ module decode_opcode_x86_tb;
         .o_opcode_x86_XOR_imm_to_acc(o_opcode_x86_XOR_imm_to_acc)
     );
 
-    // 测试结果统计
+    // 瘚贝�蝏𤘪�蝏蠘恣
     int test_count = 0;
     int pass_count = 0;
     int fail_count = 0;
 
-    // 设置指令字节的任�?
+    // 霈曄蔭��誘摮𡑒���遙�?
     task set_instruction(bit [ 7: 0] byte0, bit [ 7: 0] byte1 = 8'h00, bit [ 7: 0] byte2 = 8'h00, bit [ 7: 0] byte3 = 8'h00);
         i_instruction[0] = byte0;
         i_instruction[1] = byte1;
         i_instruction[2] = byte2;
         i_instruction[3] = byte3;
-        #1; // 等待一个时间单位让信号稳定
+        #1; // 蝑匧�銝�銝芣𧒄�游�雿滩悟靽∪噡蝔喳�
     endtask
 
-    // 检查opcode是否正确的任�?
+    // 璉��叨pcode�臬炏甇�＆��遙�?
     task check_opcode(string opcode_name, bit expected);
         test_count++;
         if (expected === 1'b1) begin
@@ -499,40 +499,40 @@ module decode_opcode_x86_tb;
         end
     endtask
 
-    // 使用反射检查期望的opcode信号
+    // 雿輻鍂�滚�璉��交��𤤿�opcode靽∪噡
     task verify_opcode(string opcode_name, bit expected);
-        // 这里我们需要根据opcode_name来检查对应的信号
-        // 由于SystemVerilog不支持动态信号访问，我们需要手动映�?
-        // 为了简化，我们创建一个辅助函数来检�?
+        // 餈䠷��睲賑��閬�覔�峨pcode_name�交��亙笆摨𠉛�靽∪噡
+        // �曹�SystemVerilog銝齿𣈲��𢆡��縑�瑁挪�殷��睲賑��閬���冽�撠?
+        // 銝箔�蝞��吔��睲賑�𥕦遣銝�銝芾��拙遆�唳䔉璉��?
         test_count++;
-        // 注意：这里需要根据实际的信号名称进行映射
-        // 为了测试，我们直接比较期望�?
+        // 瘜冽�嚗朞��屸�閬�覔�桀����靽∪噡�滨妍餈𥡝��惩�
+        // 銝箔�瘚贝�嚗峕�隞祉凒�交�颲���𥕦�?
         if (expected === 1'b1) begin
             $display("[TEST] %s: expected=1", opcode_name);
-            pass_count++; // 暂时都算通过，实际需要根据信号值检�?
+            pass_count++; // ��𧒄�賜��朞�嚗�����閬�覔�桐縑�瑕�潭��?
         end else begin
             $display("[TEST] %s: expected=0", opcode_name);
-            pass_count++; // 暂时都算通过
+            pass_count++; // ��𧒄�賜��朞�
         end
     endtask
 
-    // 测试用例：验证单个opcode
+    // 瘚贝��其�嚗𡁻�霂��銝油pcode
     task test_single_opcode(string opcode_name, bit [ 7: 0] byte0, bit [ 7: 0] byte1 = 8'h00, bit [ 7: 0] byte2 = 8'h00, bit [ 7: 0] byte3 = 8'h00, bit expected_opcode);
         bit actual_opcode;
         
-        // 设置指令
+        // 霈曄蔭��誘
         set_instruction(byte0, byte1, byte2, byte3);
         
-        // 根据opcode_name获取实际输出信号
-        // 由于SystemVerilog限制，我们需要手动映�?
-        // 这里简化处理，实际应该检查对应的信号
+        // �寞旿opcode_name�瑕�摰鮋�颲枏枂靽∪噡
+        // �曹�SystemVerilog�𣂼�嚗峕�隞祇�閬���冽�撠?
+        // 餈䠷�蝞��硋����摰鮋�摨磰砲璉��亙笆摨𠉛�靽∪噡
         
         test_count++;
         $display("[TEST] %s: instruction bytes %02h %02h %02h %02h", 
                  opcode_name, byte0, byte1, byte2, byte3);
         
-        // 这里应该根据opcode_name检查对应的信号，但为了简化，先显示所有信�?
-        // 实际实现中需要根据opcode_name映射到对应的信号进行检�?
+        // 餈䠷�摨磰砲�寞旿opcode_name璉��亙笆摨𠉛�靽∪噡嚗䔶�銝箔�蝞��吔���遬蝷箸��劐縑�?
+        // 摰鮋�摰䂿緵銝剝�閬�覔�峨pcode_name�惩��啣笆摨𠉛�靽∪噡餈𥡝�璉��?
     endtask
 
     initial begin
@@ -540,15 +540,15 @@ module decode_opcode_x86_tb;
         $display("Starting decode_opcode_x86 tests");
         $display("========================================");
         
-        // 初始化指令数�?
+        // �嘥��𡝗�隞斗㺭蝏?
         i_instruction[0] = 8'h00;
         i_instruction[1] = 8'h00;
         i_instruction[2] = 8'h00;
         i_instruction[3] = 8'h00;
         
         // ============================================
-        // 测试用例1: NOP (0x90)
-        // 汇编: nop
+        // 瘚贝��其�1: NOP (0x90)
+        // 瘙��: nop
         // ============================================
         set_instruction(8'h90);
         test_count++;
@@ -561,8 +561,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例2: MOV AL, imm8 (0xB0 + reg)
-        // 汇编: mov al, 0x12
+        // 瘚贝��其�2: MOV AL, imm8 (0xB0 + reg)
+        // 瘙��: mov al, 0x12
         // ============================================
         set_instruction(8'hB0, 8'h12);
         test_count++;
@@ -575,8 +575,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例3: ADD EAX, imm32 (0x05)
-        // 汇编: add eax, 0x12345678
+        // 瘚贝��其�3: ADD EAX, imm32 (0x05)
+        // 瘙��: add eax, 0x12345678
         // ============================================
         set_instruction(8'h05, 8'h78, 8'h56, 8'h34);
         test_count++;
@@ -589,8 +589,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例4: ADD reg, imm (0x83 /0)
-        // 汇编: add eax, 0x12
+        // 瘚贝��其�4: ADD reg, imm (0x83 /0)
+        // 瘙��: add eax, 0x12
         // ============================================
         set_instruction(8'h83, 8'hC0, 8'h12);
         test_count++;
@@ -603,8 +603,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例5: MOV reg, reg (0x89)
-        // 汇编: mov eax, ebx
+        // 瘚贝��其�5: MOV reg, reg (0x89)
+        // 瘙��: mov eax, ebx
         // ============================================
         set_instruction(8'h89, 8'hD8);
         test_count++;
@@ -617,8 +617,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例6: MOV reg, reg (0x8B)
-        // 汇编: mov eax, ebx
+        // 瘚贝��其�6: MOV reg, reg (0x8B)
+        // 瘙��: mov eax, ebx
         // ============================================
         set_instruction(8'h8B, 8'hC3);
         test_count++;
@@ -631,8 +631,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例7: PUSH reg (0x50 + reg)
-        // 汇编: push eax
+        // 瘚贝��其�7: PUSH reg (0x50 + reg)
+        // 瘙��: push eax
         // ============================================
         set_instruction(8'h50);
         test_count++;
@@ -645,8 +645,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例8: POP reg (0x58 + reg)
-        // 汇编: pop eax
+        // 瘚贝��其�8: POP reg (0x58 + reg)
+        // 瘙��: pop eax
         // ============================================
         set_instruction(8'h58);
         test_count++;
@@ -659,8 +659,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例9: CALL direct (0xE8)
-        // 汇编: call label
+        // 瘚贝��其�9: CALL direct (0xE8)
+        // 瘙��: call label
         // ============================================
         set_instruction(8'hE8, 8'h12, 8'h34, 8'h56);
         test_count++;
@@ -673,22 +673,22 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例10: RET (0xC3)
-        // 汇编: ret
+        // 瘚贝��其�10: RET (0xC3)
+        // 瘙��: ret
         // ============================================
         set_instruction(8'hC3);
         test_count++;
-        if (o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument === 1'b1) begin
+        if (o_opcode_x86_RET_ret_near === 1'b1) begin
             $display("[PASS] RET: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] RET: expected=1, actual=%b", o_opcode_x86_RET_return_from_procedure_to_same_segment_no_argument);
+            $display("[FAIL] RET: expected=1, actual=%b", o_opcode_x86_RET_ret_near);
             fail_count++;
         end
         
         // ============================================
-        // 测试用例11: HLT (0xF4)
-        // 汇编: hlt
+        // 瘚贝��其�11: HLT (0xF4)
+        // 瘙��: hlt
         // ============================================
         set_instruction(8'hF4);
         test_count++;
@@ -701,22 +701,22 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例12: CLC (0xF8)
-        // 汇编: clc
+        // 瘚贝��其�12: CLC (0xF8)
+        // 瘙��: clc
         // ============================================
         set_instruction(8'hF8);
         test_count++;
-        if (o_opcode_x86_CLC_clear_carry_flag === 1'b1) begin
+        if (o_opcode_x86_CLC_carry === 1'b1) begin
             $display("[PASS] CLC: decode OK");
             pass_count++;
         end else begin
-            $display("[FAIL] CLC: expected=1, actual=%b", o_opcode_x86_CLC_clear_carry_flag);
+            $display("[FAIL] CLC: expected=1, actual=%b", o_opcode_x86_CLC_carry);
             fail_count++;
         end
         
         // ============================================
-        // 测试用例13: JMP short (0xEB)
-        // 汇编: jmp short label
+        // 瘚贝��其�13: JMP short (0xEB)
+        // 瘙��: jmp short label
         // ============================================
         set_instruction(8'hEB, 8'h12);
         test_count++;
@@ -729,8 +729,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例14: JZ/JE 8-bit (0x74)
-        // 汇编: jz label
+        // 瘚贝��其�14: JZ/JE 8-bit (0x74)
+        // 瘙��: jz label
         // ============================================
         set_instruction(8'h74, 8'h12);
         test_count++;
@@ -743,8 +743,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例15: CPUID (0x0F 0xA2)
-        // 汇编: cpuid
+        // 瘚贝��其�15: CPUID (0x0F 0xA2)
+        // 瘙��: cpuid
         // ============================================
         set_instruction(8'h0F, 8'hA2);
         test_count++;
@@ -757,8 +757,8 @@ module decode_opcode_x86_tb;
         end
 
         // ============================================
-        // 测试用例16: UD2 (0x0F 0x0B)
-        // 汇编: ud2
+        // 瘚贝��其�16: UD2 (0x0F 0x0B)
+        // 瘙��: ud2
         // ============================================
         set_instruction(8'h0F, 8'h0B);
         test_count++;
@@ -772,8 +772,8 @@ module decode_opcode_x86_tb;
         end
 
         // ============================================
-        // 测试用例17: UD1 (0x0F 0xB9 /r)
-        // 汇编: ud1 eax, eax
+        // 瘚贝��其�17: UD1 (0x0F 0xB9 /r)
+        // 瘙��: ud1 eax, eax
         // ============================================
         set_instruction(8'h0F, 8'hB9, 8'hC0);
         test_count++;
@@ -787,7 +787,7 @@ module decode_opcode_x86_tb;
         end
 
         // ============================================
-        // 测试用例18: UD0 (0x0F 0xFF)
+        // 瘚贝��其�18: UD0 (0x0F 0xFF)
         // ============================================
         set_instruction(8'h0F, 8'hFF);
         test_count++;
@@ -800,8 +800,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例19: INC reg (0x40 + reg)
-        // 汇编: inc eax
+        // 瘚贝��其�19: INC reg (0x40 + reg)
+        // 瘙��: inc eax
         // ============================================
         set_instruction(8'h40);
         test_count++;
@@ -814,8 +814,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例20: DEC reg (0x48 + reg)
-        // 汇编: dec eax
+        // 瘚贝��其�20: DEC reg (0x48 + reg)
+        // 瘙��: dec eax
         // ============================================
         set_instruction(8'h48);
         test_count++;
@@ -828,8 +828,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例21: XOR reg, reg (0x31)
-        // 汇编: xor eax, ebx
+        // 瘚贝��其�21: XOR reg, reg (0x31)
+        // 瘙��: xor eax, ebx
         // ============================================
         set_instruction(8'h31, 8'hD8);
         test_count++;
@@ -842,8 +842,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例22: TEST reg, reg (0x85)
-        // 汇编: test eax, ebx
+        // 瘚贝��其�22: TEST reg, reg (0x85)
+        // 瘙��: test eax, ebx
         // ============================================
         set_instruction(8'h85, 8'hD8);
         test_count++;
@@ -856,8 +856,8 @@ module decode_opcode_x86_tb;
         end
         
         // ============================================
-        // 测试用例23: INT 3 (0xCC)
-        // 汇编: int 3
+        // 瘚贝��其�23: INT 3 (0xCC)
+        // 瘙��: int 3
         // ============================================
         set_instruction(8'hCC);
         test_count++;
@@ -869,7 +869,7 @@ module decode_opcode_x86_tb;
             fail_count++;
         end
         
-        // 输出测试结果
+        // 颲枏枂瘚贝�蝏𤘪�
         $display("");
         $display("========================================");
         $display("Tests finished");
