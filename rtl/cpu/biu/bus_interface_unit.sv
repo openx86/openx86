@@ -90,7 +90,7 @@ module bus_interface_unit (
     always_ff @(posedge clk or negedge rst_n) begin : ff_biu_arbiter
     if (~rst_n) begin  // 异步复位：状态空闲，总线与各 ready 无效
         state <= S_IDLE;
-        o_bus_vaild <= 1'b0;
+        o_bus_valid <= 1'b0;
         o_bus_write_enable <= 1'b0;
         o_bus_io_access <= 1'b0;
         o_bus_address <= 32'h0;
