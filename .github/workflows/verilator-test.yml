@@ -54,40 +54,5 @@ jobs:
 
       - name: Lint all rtl/*.sv (verilator --lint-only)
         run: |
-          chmod +x scripts/lint_rtl_verilator.sh
-          ./scripts/lint_rtl_verilator.sh
-
-#       - name: Run testbenches (verilator)
-#         env:
-#           VERILATOR_TB_LIST: sim/filelists/ci_verilator_tbs.txt
-#           VERILATOR_RUN_TIMEOUT: "600"
-#         run: |
-#           chmod +x scripts/test_all_verilator.sh scripts/sim_tb_verilator.sh
-#           ./scripts/test_all_verilator.sh build || {
-#             echo "Test failure！"
-#             echo "Logs:"
-#             ls -la *_compile.log *_run.log 2>/dev/null || true
-#             exit 1
-#           }
-#
-#       - name: Upload test logs (on failure)
-#         if: failure()
-#         uses: actions/upload-artifact@v6
-#         with:
-#           name: verilator-test-logs
-#           path: |
-#             *_compile.log
-#             *_run.log
-#           retention-days: 7
-#
-#       - name: Upload test logs (on success)
-#         if: success()
-#         uses: actions/upload-artifact@v6
-#         with:
-#           name: verilator-test-logs-success
-#           path: |
-#             *_compile.log
-#             *_run.log
-#           retention-days: 1
-#           if-no-files-found: ignore
-
+          chmod +x scripts/verilator_lint.sh
+          ./scripts/verilator_lint.sh
