@@ -44,6 +44,12 @@ module stage_5_exu (
     input  logic [31: 0]        i_src2_data,
 
     // =========================
+    // GPR values (for muldiv/AGU)
+    // =========================
+    input  logic [31: 0]        i_gpr_edx,
+    input  logic [ 7: 0][31: 0] i_gpr_by_idx,
+
+    // =========================
     // Flags (from stage_4_reg)
     // =========================
     input  logic                i_flag_cf,
