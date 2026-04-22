@@ -18,6 +18,104 @@
 //  Description : Module
 // ============================================================================
 
+module bus_controller (
+    // =========================
+    // CPU bus interface
+    // =========================
+    input  logic [31: 0] i_bus_address,
+    input  logic [31: 0] i_bus_data_write,
+    output logic [31: 0] o_bus_data_read,
+    input  logic         i_bus_valid,
+    input  logic         i_bus_write_enable,
+    input  logic         i_bus_io_access,
+    output logic         o_bus_ready,
+    output logic         o_bus_busy,
+
+    // =========================
+    // BIOS ROM interface
+    // =========================
+    input  logic [31: 0] i_bios_rdata,
+    output logic [15: 0] o_bios_addr,
+
+    // =========================
+    // Extended BIOS ROM interface
+    // =========================
+    input  logic [31: 0] i_ext_bios_rdata,
+    output logic [16: 0] o_ext_bios_addr,
+
+    // =========================
+    // SDRAM interface
+    // =========================
+    input  logic [31: 0] i_sdram_rdata,
+    input  logic         i_sdram_ready,
+    input  logic         i_sdram_busy,
+    output logic         o_sdram_en,
+    output logic         o_sdram_we,
+    output logic [23: 0] o_sdram_addr_off,
+    output logic [31: 0] o_sdram_wdata,
+
+    // =========================
+    // VGA VRAM interface
+    // =========================
+    output logic         o_vga_mem_en_w,
+    output logic [19: 0] o_vga_mem_addr,
+    output logic [ 7: 0] o_vga_mem_data_w,
+
+    // =========================
+    // VGA I/O interface
+    // =========================
+    output logic         o_vga_io_en_w,
+    output logic         o_vga_io_en_r,
+    output logic [15: 0] o_vga_io_addr,
+    output logic [ 7: 0] o_vga_io_data_w,
+    input  logic [ 7: 0] i_vga_io_data_r,
+
+    // =========================
+    // PS2 keyboard/mouse interface
+    // =========================
+    output logic         o_ps2_kbd_clk_out,
+    output logic         o_ps2_kbd_clk_oe,
+    input  logic         i_ps2_kbd_clk_in,
+    output logic         o_ps2_kbd_dat_out,
+    output logic         o_ps2_kbd_dat_oe,
+    input  logic         i_ps2_kbd_dat_in,
+    output logic         o_ps2_aux_clk_out,
+    output logic         o_ps2_aux_clk_oe,
+    input  logic         i_ps2_aux_clk_in,
+    output logic         o_ps2_aux_dat_out,
+    output logic         o_ps2_aux_dat_oe,
+    input  logic         i_ps2_aux_dat_in,
+
+    // =========================
+    // SDIO interface
+    // =========================
+    output logic         o_sdio_clk,
+    output logic         o_sdio_cmd_o,
+    output logic         o_sdio_cmd_oe,
+    input  logic         i_sdio_cmd_i,
+    output logic [ 3: 0] o_sdio_dat_o,
+    output logic [ 3: 0] o_sdio_dat_oe,
+    input  logic [ 3: 0] i_sdio_dat_i,
+
+    // =========================
+    // Interrupt output
+    // =========================
+    output logic         o_pic_intr,
+
+    // =========================
+    // Parameters
+    // =========================
+    parameter logic       USE_REAL_PS2 = 1'b0,
+    parameter int         PS2_CLK_HZ   = 100_000,
+    parameter logic       USE_SDIO_DISK = 1'b0,
+
+    // =========================
+    // Clock and reset
+    // =========================
+    input  logic         clk,
+    input  logic         rst_n
+);
+
     // ============================================================
     // memory address range definitions (32-bit address space)
     // ============================================================

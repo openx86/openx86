@@ -80,7 +80,7 @@ module stage_2_dec_x87_opcode (
     assign o_opcode_x87_FLD_load_real       = (i_instruction[0] == 8'hD9 && modrm_reg == 3'b000);
     assign o_opcode_x87_FST_store_real      = (i_instruction[0] == 8'hD9 && modrm_reg == 3'b010);
     assign o_opcode_x87_FSTP_store_pop_real = (i_instruction[0] == 8'hD9 && modrm_reg == 3'b011);
-    assign o_opcode_x87_FLD_STi             = (i_instruction[0] == 8'hD9 && mod == 2'b11 && i_instruction[1][2: 0] < 3'd8);
+    assign o_opcode_x87_FLD_STi             = (i_instruction[0] == 8'hD9 && mod == 2'b11 && i_instruction[1][2: 0] < 4'd8);
     assign o_opcode_x87_FXCH                = (i_instruction[0] == 8'hD9 && modrm_reg == 3'b001);
     assign o_opcode_x87_FINIT               = (i_instruction[0] == 8'hD9 && i_instruction[1] == 8'hE3);
     assign o_opcode_x87_FCLEX               = (i_instruction[0] == 8'hD9 && i_instruction[1] == 8'hE2);
@@ -93,3 +93,5 @@ module stage_2_dec_x87_opcode (
     assign o_opcode_x87_FINCSTP             = (i_instruction[0] == 8'hD9 && i_instruction[1] == 8'hF7);
     assign o_opcode_x87_FDECSTP             = (i_instruction[0] == 8'hD9 && i_instruction[1] == 8'hF6);
     assign o_opcode_x87_FNSTSW              = (i_instruction[0] == 8'hDF && i_instruction[1] == 8'hE0);
+
+endmodule

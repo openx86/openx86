@@ -261,7 +261,7 @@ module stage_2_dec (
     output logic                o_opcode_xor_imm_to_acc,
     output logic                o_opcode_x87_esc,
     output logic [ 3: 0]        o_tttn,
-    output logic [ 2: 0]        o_eee
+    output logic [ 2: 0]        o_eee,
 
     // Decoded operand fields (subset)
     output logic [31: 0]        o_dec_displacement,      // 输出信号

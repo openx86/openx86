@@ -249,7 +249,7 @@ module stage_3_uop (
     input  logic                i_opcode_xor_imm_to_acc,
     input  logic                i_opcode_x87_esc,
     input  logic [ 3: 0]        i_tttn,
-    input  logic [ 2: 0]        i_eee
+    input  logic [ 2: 0]        i_eee,
 
     input  logic [31: 0]        i_dec_displacement, // 输入信号
     input  logic [31: 0]        i_dec_immediate, // 输入信号

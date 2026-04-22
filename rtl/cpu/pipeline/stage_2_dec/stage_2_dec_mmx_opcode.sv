@@ -128,7 +128,7 @@ stage_2_dec_mmx_opcode_logical u_logical (
     .i_instruction(i_instruction),
     .o_opcode_mmx_PAND_bitwise_and(o_opcode_mmx_PAND_bitwise_and),
     .o_opcode_mmx_PANDN_bitwise_and_not(o_opcode_mmx_PANDN_bitwise_and_not),
-    o_opcode_mmx_POR_bitwise_or(o_opcode_mmx_POR_bitwise_or),
+    .o_opcode_mmx_POR_bitwise_or(o_opcode_mmx_POR_bitwise_or),
     .o_opcode_mmx_PXOR_bitwise_xor(o_opcode_mmx_PXOR_bitwise_xor)
 );
 
