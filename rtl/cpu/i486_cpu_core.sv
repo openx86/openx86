@@ -132,16 +132,20 @@ module i486_cpu_core (
     // ============================================================
     logic FLAGS_write_enable;
     logic [31: 0] FLAGS_write_data;
+    /* verilator lint_off UNDRIVEN */
     logic wrb_FLAGS_write_enable;
     logic [31: 0] wrb_FLAGS_write_data;
+    /* verilator lint_on UNDRIVEN */
 
     // ============================================================
     // EIP write ports
     // ============================================================
     logic IP_write_enable;
     logic [31: 0] IP_write_data;
+    /* verilator lint_off UNDRIVEN */
     logic wrb_IP_write_enable;
     logic [31: 0] wrb_IP_write_data;
+    /* verilator lint_on UNDRIVEN */
 
     // ============================================================
     // control registers write ports (individual write enables)

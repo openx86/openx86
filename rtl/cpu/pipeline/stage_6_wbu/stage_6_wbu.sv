@@ -136,13 +136,9 @@ module stage_6_wbu (
         .o_mem_valid            ( o_mem_valid ),
         .o_mem_write_enable     ( o_mem_write_enable ),
         .o_mem_address          ( o_mem_address ),
-        .o_mem_write_data       ( o_mem_write_data )
+        .o_mem_write_data       ( o_mem_write_data ),
+        .clk                    ( clk ),
+        .rst_n                  ( rst_n )
     );
-
-    // Keep lint clean while write_back_stage remains combinational/no-reset.
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic unused_clk_rst;
-    assign unused_clk_rst = clk ^ rst_n;
-    /* verilator lint_on UNUSEDSIGNAL */
 
 endmodule

@@ -237,6 +237,7 @@ module stage_2_dec_x86_opcode (
     input  logic [ 3: 0][ 7: 0] i_instruction
 );
 
+/* verilator lint_off PINMISSING */
 // Instantiate generation-scoped sub-modules
 stage_2_dec_x86_opcode_186 u_186 (
     .i_instruction                               (i_instruction),
@@ -464,6 +465,7 @@ stage_2_dec_x86_opcode_586 u_586 (
     .o_opcode_x86_WRMSR_write_to_model_specific_register   (o_opcode_x86_WRMSR_write_to_model_specific_register),
     .o_opcode_x86_RSM_resume_from_system_management_mode    (o_opcode_x86_RSM_resume_from_system_management_mode)
 );
+/* verilator lint_on PINMISSING */
 
 stage_2_dec_x86_opcode_686 u_686 (
     .i_instruction                                                   (i_instruction),

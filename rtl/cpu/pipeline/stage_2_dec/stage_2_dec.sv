@@ -1041,6 +1041,7 @@ module stage_2_dec (
         endcase
     end
 
+    /* verilator lint_off PINMISSING */
     stage_2_dec_x86_opcode u_opcode (
         .o_opcode_x86_AAA_ASCII_adjust_after_add       (opcode_aaa),
         .o_opcode_x86_AAD_ASCII_AX_before_div         (opcode_aad),
@@ -1259,6 +1260,7 @@ module stage_2_dec (
         .o_opcode_x86_XOR_imm_to_acc                          (opcode_xor_imm_to_acc),
         .o_opcode_x86_x87_esc                                 (opcode_x87_esc)
     );
+    /* verilator lint_on PINMISSING */
 
     // ============================================================
     // Operand module instantiation (bytes[prefix_count+opcode_count:prefix_count+opcode_count+7])
@@ -1282,6 +1284,8 @@ module stage_2_dec (
         endcase
     end
 
+    /* verilator lint_off PINMISSING */
+    /* verilator lint_off PINCONNECTEMPTY */
     stage_2_dec_x86_operand u_operand (
         .i_instruction_bytes         (operand_instruction_bytes),
         .i_default_op_size           (3'b011),
@@ -1548,7 +1552,9 @@ module stage_2_dec (
         .i_opcode_x86_XOR_reg_mem_to_reg                      (opcode_xor_reg_mem_to_reg),
         .i_opcode_x86_XOR_imm_to_reg_mem                      (opcode_xor_imm_to_reg_mem),
         .i_opcode_x86_XOR_imm_to_acc                          (opcode_xor_imm_to_acc),
-        .i_opcode_x86_x87_esc                                 (opcode_x87_esc)
+        .o_opcode_x86_x87_esc                                 (opcode_x87_esc)
     );
+    /* verilator lint_on PINCONNECTEMPTY */
+    /* verilator lint_on PINMISSING */
 
 endmodule

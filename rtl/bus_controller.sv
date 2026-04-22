@@ -101,7 +101,7 @@ module bus_controller #(
     output logic         o_sdio_cmd_oe,
     input  logic         i_sdio_cmd_i,
     output logic [ 3: 0] o_sdio_dat_o,
-    output logic [ 3: 0] o_sdio_dat_oe,
+    output logic         o_sdio_dat_oe,
     input  logic [ 3: 0] i_sdio_dat_i,
 
     // =========================

@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
-# Scan all *.sv files in rtl/ individually with Verilator lint-only.
-# Continue scanning even if errors are found in individual files.
-# All output messages are in English.
+# 使用 Verilator 对 rtl/ 下全部 *.sv 做一次合并编译的 --lint-only 检查（语法与可静态检查的问题）。
+# 依赖：已安装 verilator，且在仓库根目录执行（或通过下方 ROOT 自动定位）。
 
 set -eu
 
@@ -18,106 +17,51 @@ if [ ! -d rtl ]; then
   exit 2
 fi
 
-# Collect all SystemVerilog source files (sorted for consistent ordering)
-RTL_SV_LIST=$(mktemp)
-find rtl -type f -name '*.sv' | LC_ALL=C sort >"$RTL_SV_LIST"
+# 临时输出目录，避免污染仓库根目录的默认 obj_dir
+LINT_OBJDIR="${TMPDIR:-/tmp}/openx86_verilator_rtl_lint_$$"
+mkdir -p "$LINT_OBJDIR"
+trap 'rm -rf "$LINT_OBJDIR"' EXIT INT TERM
+
+# 收集 rtl 下全部 SystemVerilog 源（稳定排序便于日志对比）
+# 先列出 package 源（*_pkg.sv），再列其余 *.sv，避免按路径名排序时包定义排在 import 之后（Verilator PKGNODECL）。
+RTL_SV_LIST="${LINT_OBJDIR}/rtl_sv_files.lst"
+: >"$RTL_SV_LIST"
+find rtl -type f -name '*_pkg.sv' | LC_ALL=C sort >>"$RTL_SV_LIST"
+find rtl -type f -name '*.sv' ! -name '*_pkg.sv' | LC_ALL=C sort >>"$RTL_SV_LIST"
 
 if ! [ -s "$RTL_SV_LIST" ]; then
   echo "error: no *.sv files found under rtl/" >&2
-  rm -f "$RTL_SV_LIST"
   exit 2
 fi
 
-TOTAL_FILES=$(wc -l <"$RTL_SV_LIST")
-ERROR_COUNT=0
+# Verilator 命令文件：选项 + 全部源文件（避免命令行长度上限）
+# `include "openx86_defs.h.sv"` -> include/
+# `include "iu_decode_outputs_decl.svh"` -> rtl/cpu/include/
+CMDFILE="${LINT_OBJDIR}/verilator_rtl_lint.vf"
+{
+  printf '%s\n' "-Iinclude" "-Irtl/cpu" "-Irtl/cpu/include"
+  cat "$RTL_SV_LIST"
+} >"$CMDFILE"
 
-echo "Verilator individual file lint: $TOTAL_FILES file(s) to scan"
-echo "Verilator version:"
+echo "Verilator RTL lint: $(wc -l <"$RTL_SV_LIST") file(s)"
 verilator --version
-echo "========================================"
+echo "Running: verilator --lint-only -f $CMDFILE"
+# 英文提示便于 CI/日志工具稳定抓取，中文信息保留在注释里帮助本地维护。
+echo "Info: temporary lint objdir = $LINT_OBJDIR"
 
-# Scan each file individually
-while IFS= read -r sv_file; do
-  echo ""
-  echo "Scanning: $sv_file"
-  
-  # Temporary objdir for this file
-  FILE_OBJDIR="${TMPDIR:-/tmp}/openx86_verilator_lint_$$"
-  mkdir -p "$FILE_OBJDIR"
-  
-  # Run verilator lint-only on this single file
-  # -Iinclude for common definitions, plus all RTL subdirectories for module resolution
-  if verilator \
-    --lint-only \
-    -Wall \
-    -Wno-DECLFILENAME \
-    -Wno-UNUSEDSIGNAL \
-    -Wno-UNUSEDPARAM \
-    -Wno-SYNCASYNCNET \
-    -Wno-fatal \
-    -Iinclude \
-    -Irtl \
-    -Irtl/chipset \
-    -Irtl/common \
-    -Irtl/cpu \
-    -Irtl/cpu/biu \
-    -Irtl/cpu/include \
-    -Irtl/cpu/load_store_unit \
-    -Irtl/cpu/mmu \
-    -Irtl/cpu/mmu/paging \
-    -Irtl/cpu/mmu/segmentation \
-    -Irtl/cpu/pipeline \
-    -Irtl/cpu/pipeline/stage_1_ifu \
-    -Irtl/cpu/pipeline/stage_1_ifu/prefetch \
-    -Irtl/cpu/pipeline/stage_2_dec \
-    -Irtl/cpu/pipeline/stage_3_uop \
-    -Irtl/cpu/pipeline/stage_4_exu \
-    -Irtl/cpu/pipeline/stage_4_exu/agu_lsu \
-    -Irtl/cpu/pipeline/stage_4_exu/alu \
-    -Irtl/cpu/pipeline/stage_4_exu/alu/arithmetic \
-    -Irtl/cpu/pipeline/stage_4_exu/alu/bitmanip \
-    -Irtl/cpu/pipeline/stage_4_exu/alu/logic \
-    -Irtl/cpu/pipeline/stage_4_exu/alu/misc \
-    -Irtl/cpu/pipeline/stage_4_exu/alu/shift_rotate \
-    -Irtl/cpu/pipeline/stage_4_exu/branch \
-    -Irtl/cpu/pipeline/stage_4_exu/control \
-    -Irtl/cpu/pipeline/stage_4_exu/extensions_i486 \
-    -Irtl/cpu/pipeline/stage_4_exu/fpu \
-    -Irtl/cpu/pipeline/stage_4_exu/muldiv \
-    -Irtl/cpu/pipeline/stage_5_mem \
-    -Irtl/cpu/pipeline/stage_6_wbu \
-    -Irtl/cpu/register_file \
-    -Irtl/device \
-    -Irtl/device/ps2 \
-    -Irtl/device/vga \
-    -Irtl/memory \
-    -Irtl/peripheral \
-    -Irtl/peripheral/sdcard \
-    -Mdir "$FILE_OBJDIR" \
-    "$sv_file" 2>&1; then
-    echo "  Status: PASS"
-  else
-    echo "  Status: ERROR found"
-    ERROR_COUNT=$((ERROR_COUNT + 1))
-  fi
-  
-  # Clean up temporary objdir
-  rm -rf "$FILE_OBJDIR"
-done <"$RTL_SV_LIST"
+# shellcheck disable=SC2086
+# -Wno-fatal：整库 -Wall 时警告量很大，默认达到上限会以非零退出；lint 脚本以“打印问题”为主，不因警告终止。
+verilator \
+  --lint-only \
+  -Wall \
+  -Wno-DECLFILENAME \
+  -Wno-UNUSEDSIGNAL \
+  -Wno-UNUSEDPARAM \
+  -Wno-SYNCASYNCNET \
+  -Wno-fatal \
+  --top-module openx86_soc_top \
+  -Mdir "$LINT_OBJDIR" \
+  -f "$CMDFILE" \
+  ${VERILATOR_EXTRA_ARGS:-}
 
-# Clean up
-rm -f "$RTL_SV_LIST"
-
-echo ""
-echo "========================================"
-echo "Lint scan completed"
-echo "Total files scanned: $TOTAL_FILES"
-echo "Files with errors: $ERROR_COUNT"
-
-if [ "$ERROR_COUNT" -gt 0 ]; then
-  echo "Summary: $ERROR_COUNT file(s) contained errors"
-  exit 1
-else
-  echo "Summary: All files passed lint check"
-  exit 0
-fi
+echo "Lint completed: no fatal Verilator errors."

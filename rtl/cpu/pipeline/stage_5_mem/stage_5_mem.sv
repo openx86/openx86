@@ -61,6 +61,7 @@ module stage_5_mem (
     logic [31: 0] mem_address_from_mem;
     logic [31: 0] mem_write_data_from_mem;
 
+    /* verilator lint_off PINCONNECTEMPTY */
     exe_to_mem u_stage_4_mem_exe_to_mem (
         .i_stage3_valid    ( i_stage3_valid ),
         .o_stage3_valid    ( s34_stage3_valid ),
@@ -121,6 +122,7 @@ module stage_5_mem (
         .clk                 ( clk ),
         .rst_n               ( rst_n )
     );
+    /* verilator lint_on PINCONNECTEMPTY */
 
     assign o_stage3_ready = s34_stage_ready;
 

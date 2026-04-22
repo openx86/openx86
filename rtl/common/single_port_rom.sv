@@ -40,7 +40,6 @@ module single_port_rom #(
     // read-only content array (initialized externally or by IP)
     // ============================================================
     /* verilator lint_off UNDRIVEN */
-    /* synthesis read_only */
     logic [P_DATA_WIDTH-1: 0] rom [0:P_DEPTH-1];
     /* verilator lint_on UNDRIVEN */
 
