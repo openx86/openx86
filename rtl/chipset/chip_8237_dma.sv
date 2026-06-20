@@ -49,6 +49,17 @@ module chip_8237_dma (
     output logic [ 7: 0] o_d,
 
     // =========================
+    // Channel 2 bus-master (disk/floppy 8-bit)
+    // =========================
+    output logic         o_master_valid,
+    input  logic         i_master_ready,
+    output logic         o_master_we,
+    output logic         o_master_io,
+    output logic [31: 0] o_master_addr,
+    output logic [ 7: 0] o_master_wdata,
+    input  logic [ 7: 0] i_master_rdata,
+
+    // =========================
     // clock and reset
     // =========================
     input  logic         clk,
@@ -63,6 +74,24 @@ module chip_8237_dma (
     localparam logic [ 3: 0] LP_REG_MCLR      = 4'hD;
     localparam logic [ 3: 0] LP_REG_CLR_MASK  = 4'hE;
     localparam logic [ 3: 0] LP_REG_ALL_MASK  = 4'hF;
+    localparam logic [15: 0] LP_IDE_DATA_PORT = 16'h01F0;
+    localparam int LP_CH_DISK      = 2;
+    localparam int LP_CH2_PAGE_IDX = 0;
+
+    typedef enum logic [ 1: 0] {
+        DMA_IDLE,
+        DMA_READ,
+        DMA_WRITE
+    } dma_state_t;
+
+    dma_state_t dma_state;
+    logic         dma_active;
+    logic         dma_mem_to_io;
+    logic [ 7: 0] dma_hold_byte;
+    logic         dma_set_tc;
+    logic         dma_clear_req;
+    logic         dma_dec_count;
+    logic         dma_inc_addr;
 
     // ============================================================
     // channel registers
@@ -210,6 +239,98 @@ module chip_8237_dma (
                 if (wr_clear_ff) begin
                     first_last_ff <= 1'b0;
                 end
+
+                if (dma_set_tc) begin
+                    reg_tc[LP_CH_DISK] <= 1'b1;
+                end
+                if (dma_clear_req) begin
+                    reg_request[LP_CH_DISK] <= 1'b0;
+                end
+                if (dma_dec_count) begin
+                    ch_curr_count[LP_CH_DISK] <= ch_curr_count[LP_CH_DISK] - 16'h0001;
+                end
+                if (dma_inc_addr) begin
+                    ch_curr_addr[LP_CH_DISK] <= ch_curr_addr[LP_CH_DISK] + 16'h0001;
+                end
+            end
+        end
+    end
+
+    assign dma_mem_to_io = reg_mode_last[5];
+    assign dma_active    = reg_request[LP_CH_DISK] & ~reg_mask[LP_CH_DISK] &
+                           (ch_curr_count[LP_CH_DISK] != 16'h0);
+
+    always_ff @(posedge clk or negedge rst_n) begin : ff_dma_engine
+        if (~rst_n) begin
+            dma_state     <= DMA_IDLE;
+            dma_hold_byte <= 8'h0;
+        end else if (wr_master_clear) begin
+            dma_state <= DMA_IDLE;
+        end else begin
+            case (dma_state)
+                DMA_IDLE: begin
+                    if (dma_active) begin
+                        dma_state <= DMA_READ;
+                    end
+                end
+                DMA_READ: begin
+                    if (i_master_ready) begin
+                        dma_hold_byte <= i_master_rdata;
+                        dma_state     <= DMA_WRITE;
+                    end
+                end
+                DMA_WRITE: begin
+                    if (i_master_ready) begin
+                        if (ch_curr_count[LP_CH_DISK] <= 16'h0001) begin
+                            dma_state <= DMA_IDLE;
+                        end else begin
+                            dma_state <= DMA_READ;
+                        end
+                    end
+                end
+                default: dma_state <= DMA_IDLE;
+            endcase
+        end
+    end
+
+    assign dma_set_tc    = (dma_state == DMA_WRITE) & i_master_ready &
+                           (ch_curr_count[LP_CH_DISK] <= 16'h0001);
+    assign dma_clear_req = dma_set_tc;
+    assign dma_dec_count = (dma_state == DMA_WRITE) & i_master_ready &
+                            (ch_curr_count[LP_CH_DISK] > 16'h0001);
+    assign dma_inc_addr  = dma_dec_count;
+
+    logic [31: 0] dma_mem_addr;
+
+    assign dma_mem_addr = {page_reg[LP_CH2_PAGE_IDX], ch_curr_addr[LP_CH_DISK], 8'h00};
+
+    always_comb begin
+        o_master_valid = 1'b0;
+        o_master_we    = 1'b0;
+        o_master_io    = 1'b0;
+        o_master_addr  = 32'h0;
+        o_master_wdata = 8'h0;
+
+        if (dma_state == DMA_READ) begin
+            o_master_valid = 1'b1;
+            o_master_we    = 1'b0;
+            if (dma_mem_to_io) begin
+                o_master_io   = 1'b0;
+                o_master_addr = dma_mem_addr;
+            end else begin
+                o_master_io   = 1'b1;
+                o_master_addr = {16'h0, LP_IDE_DATA_PORT};
+            end
+        end else if (dma_state == DMA_WRITE) begin
+            o_master_valid = 1'b1;
+            o_master_we    = 1'b1;
+            o_master_wdata = dma_hold_byte;
+            if (dma_mem_to_io) begin
+                o_master_io   = 1'b1;
+                o_master_addr = {16'h0, LP_IDE_DATA_PORT};
+            end else begin
+                o_master_io   = 1'b0;
+                o_master_addr = dma_mem_addr;
             end
         end
     end

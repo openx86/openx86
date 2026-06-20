@@ -34,6 +34,7 @@ module i486_dec_uop_stage (
     output logic                o_uop_valid,
     output micro_op_t           o_uop,
     input  logic                i_reg_ready,
+    input  logic                i_stall,
     input  logic                clk,
     input  logic                rst_n
 );
@@ -275,6 +276,11 @@ module i486_dec_uop_stage (
 
     logic uop_stage2_valid;
     logic uop_stage2_ready;
+    logic ifu_dec_ready_raw;
+    logic ifu_dec_fire_raw;
+
+    assign o_ifu_dec_ready = ifu_dec_ready_raw & ~i_stall;
+    assign o_ifu_dec_fire  = ifu_dec_fire_raw & ~i_stall;
 
     stage_2_dec u_dec (
         .i_ifu_instruction        (i_ifu_instruction),
@@ -282,8 +288,8 @@ module i486_dec_uop_stage (
         .i_ifu_segment_fault      (i_ifu_segment_fault),
         .i_ifu_fifo_count         (i_ifu_fifo_count),
         .i_ifu_eip                (i_ifu_eip),
-        .o_ifu_dec_ready          (o_ifu_dec_ready),
-        .o_ifu_dec_fire           (o_ifu_dec_fire),
+        .o_ifu_dec_ready          (ifu_dec_ready_raw),
+        .o_ifu_dec_fire           (ifu_dec_fire_raw),
         .o_ifu_dec_consume_bytes  (o_ifu_dec_consume_bytes),
         .o_ifu_dec_error          (o_ifu_dec_error),
         .o_uop_stage2_valid       (uop_stage2_valid),

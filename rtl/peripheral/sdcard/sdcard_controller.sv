@@ -24,6 +24,9 @@ module sdcard_controller #(
 ) (
     input  logic [31: 0] i_disk_raddr, // 磁盘线性字节读地址
     output logic [ 7: 0] o_disk_rdata, // 当前地址读出的字节
+    input  logic [31: 0] i_disk_waddr, // 磁盘线性字节写地址
+    input  logic [ 7: 0] i_disk_wdata, // 写入字节
+    input  logic         i_disk_we,    // 写使能（BRAM 映像路径）
     input  logic         i_disk_sector_req, // SDIO 模式：请求确保当前 LBA 扇区已载入缓冲
     output logic         o_disk_sector_ready, // 当前读地址所在扇区已在 sector_buf 就绪（脉冲/保持见逻辑）
     output logic         o_sdcard_controller_phy_clk, // 下至 PHY/卡的 SD 时钟
@@ -49,6 +52,8 @@ module sdcard_controller #(
                 if (~rst_n) begin
                     image[0] <= 8'hA5;
                     image[1] <= 8'h5A;
+                end else if (i_disk_we && (i_disk_waddr < P_BYTE_DEPTH)) begin
+                    image[i_disk_waddr[LP_AW-1: 0]] <= i_disk_wdata;
                 end
             end
 

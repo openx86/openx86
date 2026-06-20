@@ -13,31 +13,30 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : x87_fpu_load_store.sv
+//  File        : exu_result_mux.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : x87 memory load/store helpers (80-bit extended)
+//  Description : Priority mux for exu_dispatch_out_t from parallel EXU units
 // ============================================================================
 
-module x87_fpu_load_store (
-    input  logic         i_load,
-    input  logic         i_store,
-    input  logic         i_real64,
-    input  logic [31: 0] i_mem_data,
-    input  logic [79: 0] i_st_val,
-    output logic [79: 0] o_st_val,
-    output logic [31: 0] o_mem_data,
-    output logic         o_mem_write_enable
+`include "openx86_defs.h.sv"
+`include "exu_common.h.sv"
+
+module exu_result_mux #(
+    parameter int LP_ENTRIES = 48
+) (
+    input  exu_dispatch_out_t i_entries [0: LP_ENTRIES - 1],
+    input  logic [ 5: 0]      i_select,
+    output exu_dispatch_out_t o_selected
 );
 
-    logic [79: 0] load_ext;
+    localparam int LP_IDX_WIDTH = $clog2(LP_ENTRIES);
 
-    assign load_ext[79]    = i_mem_data[31];
-    assign load_ext[78: 64] = 15'd16383;
-    assign load_ext[63: 32] = 32'h0;
-    assign load_ext[31: 0]  = i_mem_data;
-
-    assign o_st_val           = i_load ? load_ext : i_st_val;
-    assign o_mem_data         = i_store ? i_st_val[31: 0] : 32'd0;
-    assign o_mem_write_enable = i_store;
+    always_comb begin
+        if (i_select < 6'(LP_ENTRIES)) begin
+            o_selected = i_entries[i_select];
+        end else begin
+            o_selected = '0;
+        end
+    end
 
 endmodule

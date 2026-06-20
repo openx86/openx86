@@ -21,6 +21,7 @@ rtl/cpu/biu/bus_interface_unit.sv
 rtl/cpu/biu/i486_burst_controller.sv
 rtl/cpu/cache/i486_cache_unit.sv
 rtl/cpu/exception_interrupt_unit.sv
+rtl/cpu/interrupt_delivery_unit.sv
 rtl/cpu/fpu/x87_fpu_alu.sv
 rtl/cpu/fpu/x87_fpu_core.sv
 rtl/cpu/fpu/x87_fpu_load_store.sv
@@ -38,6 +39,7 @@ rtl/cpu/mmu/segmentation/gate_segment_descriptor_decode.sv
 rtl/cpu/mmu/segmentation/segment_descriptor_cache.sv
 rtl/cpu/mmu/segmentation/segment_descriptor_decode.sv
 rtl/cpu/mmu/segmentation/segment_descriptor_encode.sv
+rtl/cpu/mmu/segmentation/segment_load_unit.sv
 rtl/cpu/mmu/segmentation/segmentation_unit.sv
 rtl/cpu/mmu/segmentation/system_segment_descriptor_decode.sv
 rtl/cpu/mmx/mmx_alu.sv
@@ -80,6 +82,7 @@ rtl/cpu/pipeline/stage_3_uop/stage_3_uop.sv
 rtl/cpu/pipeline/stage_3_uop/uop_to_exu.sv
 rtl/cpu/pipeline/stage_4_reg/stage_4_reg.sv
 rtl/cpu/pipeline/stage_5_exu/exu_dispatcher.sv
+rtl/cpu/pipeline/stage_5_exu/exu_result_mux.sv
 rtl/cpu/pipeline/stage_5_exu/i486/i486_cpuid.sv
 rtl/cpu/pipeline/stage_5_exu/include/exu_common.h.sv
 rtl/cpu/pipeline/stage_5_exu/load_store/exu_load_store.sv
@@ -180,6 +183,8 @@ rtl/cpu/register_file/rf_x86_tr4.sv
 rtl/cpu/register_file/rf_x86_tr5.sv
 rtl/cpu/register_file/rf_x86_tr6.sv
 rtl/cpu/register_file/rf_x86_tr7.sv
+rtl/cpu/register_file/rf_x87_fpu_fcw.sv
+rtl/cpu/register_file/rf_x87_fpu_fsw.sv
 rtl/cpu/register_file/rf_x87_fpu_st0.sv
 rtl/cpu/register_file/rf_x87_fpu_st1.sv
 rtl/cpu/register_file/rf_x87_fpu_st2.sv

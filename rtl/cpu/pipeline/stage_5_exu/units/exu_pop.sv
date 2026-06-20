@@ -30,12 +30,10 @@ module exu_pop (
 );
 
     logic [31: 0] new_esp;
-    logic [31: 0] mem_data;
 
     assign new_esp = i_src1_data + 32'd4;
-    assign mem_data = i_src2_data;
 
-    assign o_result.result           = mem_data;
+    assign o_result.result           = new_esp;
     assign o_result.cf               = 1'b0;
     assign o_result.pf               = 1'b0;
     assign o_result.af               = 1'b0;

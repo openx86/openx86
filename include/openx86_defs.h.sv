@@ -534,5 +534,7 @@ typedef struct packed {
 `define MISC_SUB_MOV_CR   8'h15
 `define MISC_SUB_IN       8'h20
 `define MISC_SUB_OUT      8'h21
+`define MISC_SUB_INT      8'h30
+`define MISC_SUB_IRET     8'h31
 
 `endif

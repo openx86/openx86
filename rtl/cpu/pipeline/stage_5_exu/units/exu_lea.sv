@@ -24,14 +24,13 @@
 module exu_lea (
     input  logic [31: 0] i_src1_data,
     input  logic [31: 0] i_src2_data,
-    input  logic [31: 0] i_immediate,
-    input  logic         i_has_imm,
+    input  logic [31: 0] i_displacement,
     output exu_result_t   o_result
 );
 
     logic [31: 0] effective_addr;
 
-    assign effective_addr = i_src1_data + i_src2_data;
+    assign effective_addr = i_src1_data + i_src2_data + i_displacement;
 
     assign o_result.result           = effective_addr;
     assign o_result.cf               = 1'b0;

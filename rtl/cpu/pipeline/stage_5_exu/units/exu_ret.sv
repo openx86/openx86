@@ -29,13 +29,11 @@ module exu_ret (
     output exu_result_t   o_result
 );
 
-    logic [31: 0] return_addr;
     logic [31: 0] new_esp;
 
-    assign return_addr = i_src2_data;
     assign new_esp = i_has_imm ? (i_src1_data + i_immediate) : (i_src1_data + 32'd4);
 
-    assign o_result.result           = return_addr;
+    assign o_result.result           = new_esp;
     assign o_result.cf               = 1'b0;
     assign o_result.pf               = 1'b0;
     assign o_result.af               = 1'b0;

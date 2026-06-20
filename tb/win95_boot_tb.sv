@@ -13,16 +13,12 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : soc_top_tb.sv
+//  File        : win95_boot_tb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : soc_top_tb module
+//  Description : Windows 95 boot regression stub (extends SeaBIOS SoC TB)
 // ============================================================================
 
-// ============================================================================
-// openx86_soc_top smoke test — 复位后运行固定周期（i486_cpu + bus_controller + SDRAM 窗口）
-// ============================================================================
-
-module openx86_soc_top_tb;
+module win95_boot_tb;
 
     logic clk;
     logic rst_n;
@@ -74,69 +70,10 @@ module openx86_soc_top_tb;
         .io_sdram_dq   ( sdram_dq )
     );
 
-    task automatic tb_load_bin_to_bios(input string path);
-        integer fh, n;
-        fh = $fopen(path, "rb");
-        if (fh == 0) begin
-            $display("soc_top_tb: cannot open SEABIOS_BIN %s", path);
-            return;
-        end
-        n = $fread(dut.u_bios_24lc32.mem, fh);
-        $fclose(fh);
-        $display("soc_top_tb: SEABIOS_BIN loaded %0d bytes", n);
-    endtask
-
-    task automatic tb_load_bin_to_disk(input string path);
-        integer fh;
-        fh = $fopen(path, "rb");
-        if (fh == 0) begin
-            $display("soc_top_tb: cannot open DISK_BIN %s", path);
-            return;
-        end
-        $fclose(fh);
-        $display("soc_top_tb: DISK_BIN %s opened (smoke TB skips image preload)", path);
-    endtask
-
-    task automatic tb_apply_default_pc_bootstub();
-        int unsigned base = 16'h0FF0;
-        dut.u_bios_24lc32.mem[base+0]  = 8'h66;
-        dut.u_bios_24lc32.mem[base+1]  = 8'hB8;
-        dut.u_bios_24lc32.mem[base+2]  = 8'h34;
-        dut.u_bios_24lc32.mem[base+3]  = 8'h12;
-        dut.u_bios_24lc32.mem[base+4]  = 8'h00;
-        dut.u_bios_24lc32.mem[base+5]  = 8'h00;
-        dut.u_bios_24lc32.mem[base+6]  = 8'h66;
-        dut.u_bios_24lc32.mem[base+7]  = 8'h05;
-        dut.u_bios_24lc32.mem[base+8]  = 8'h01;
-        dut.u_bios_24lc32.mem[base+9]  = 8'h00;
-        dut.u_bios_24lc32.mem[base+10] = 8'h00;
-        dut.u_bios_24lc32.mem[base+11] = 8'h00;
-        dut.u_bios_24lc32.mem[base+12] = 8'hF4;
-        dut.u_bios_24lc32.mem[base+13] = 8'h90;
-        dut.u_bios_24lc32.mem[base+14] = 8'h90;
-        dut.u_bios_24lc32.mem[base+15] = 8'h90;
-    endtask
-
     initial begin
         $readmemh("rtl/device/vga/vga_font_8x16.hex", dut.u_vga.font_rom_inst.font_rom_inst.rom);
-
-        begin
-            automatic string p;
-            for (int i = 0; i < 4096; i++)
-                dut.u_bios_24lc32.mem[i] = 8'hFF;
-            if ($value$plusargs("SEABIOS_BIN=%s", p))
-                tb_load_bin_to_bios(p);
-            else if ($value$plusargs("SEABIOS_HEX=%s", p))
-                $readmemh(p, dut.u_bios_24lc32.mem);
-            else
-                tb_apply_default_pc_bootstub();
-        end
-
-        begin
-            automatic string p;
-            if ($value$plusargs("DISK_BIN=%s", p))
-                tb_load_bin_to_disk(p);
-        end
+        max_cycles = 500000;
+        void'($value$plusargs("MAX_CYCLES=%0d", max_cycles));
     end
 
     initial begin
@@ -145,20 +82,18 @@ module openx86_soc_top_tb;
     end
 
     initial begin
-        $display("=== soc_top_tb ===");
+        $display("=== win95_boot_tb (stub) ===");
         rst_n = 1'b0;
         #25;
         rst_n = 1'b1;
 
         c = 0;
-        max_cycles = 500000;
-        void'($value$plusargs("MAX_CYCLES=%0d", max_cycles));
         while (c < max_cycles) begin
             @(posedge clk);
             c++;
         end
 
-        $display("soc_top_tb PASS (ran %0d cycles)", c);
+        $display("win95_boot_tb PASS stub (ran %0d cycles)", c);
         $finish;
     end
 

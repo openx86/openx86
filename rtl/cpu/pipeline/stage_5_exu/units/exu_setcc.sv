@@ -27,41 +27,19 @@ module exu_setcc (
     input  logic [31: 0] i_immediate,
     input  logic         i_has_imm,
     input  logic [ 3: 0] i_tttn,
-    output exu_result_t   o_result
+    input  logic         i_cf,
+    input  logic         i_pf,
+    input  logic         i_zf,
+    input  logic         i_sf,
+    input  logic         i_of,
+    output exu_result_t  o_result
 );
 
     logic         condition_met;
-    logic [ 7: 0] result;
-    logic [ 3: 0] tttn;
     logic [31: 0] result_full;
 
-    assign tttn = i_tttn;
-
-    always_comb begin
-        condition_met = 1'b0;
-        case (tttn)
-            4'h0: condition_met = 1'b0;
-            4'h1: condition_met = 1'b0;
-            4'h2: condition_met = 1'b0;
-            4'h3: condition_met = 1'b0;
-            4'h4: condition_met = 1'b0;
-            4'h5: condition_met = 1'b0;
-            4'h6: condition_met = 1'b0;
-            4'h7: condition_met = 1'b0;
-            4'h8: condition_met = 1'b0;
-            4'h9: condition_met = 1'b0;
-            4'hA: condition_met = 1'b0;
-            4'hB: condition_met = 1'b0;
-            4'hC: condition_met = 1'b0;
-            4'hD: condition_met = 1'b0;
-            4'hE: condition_met = 1'b0;
-            4'hF: condition_met = 1'b1;
-            default: condition_met = 1'b0;
-        endcase
-    end
-
-    assign result = condition_met ? 8'h01 : 8'h00;
-    assign result_full = {24'd0, result};
+    assign condition_met = compute_condition(i_tttn, i_of, i_cf, i_zf, i_sf, i_pf);
+    assign result_full   = condition_met ? 32'd1 : 32'd0;
 
     assign o_result.result           = result_full;
     assign o_result.cf               = 1'b0;

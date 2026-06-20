@@ -57,6 +57,8 @@ module i486_cpu_core (
     input  logic         i_intr,
     input  logic         i_nmi,
     output logic         o_ferr_n,
+    output logic         o_invalidate_cache,
+    output logic         o_wbinvd,
 
     // =========================
     // clock and reset
@@ -261,6 +263,7 @@ module i486_cpu_core (
     logic [ 1: 0] cpl;
     logic         invalidate_cache;
     logic         wbinvd_cmd;
+    logic         cr3_flush_pulse;
 
     assign cpl = descriptor_cache[`sreg_index_CS][45:44];
     assign FLAGS_write_enable = wrb_FLAGS_write_enable;
@@ -775,15 +778,48 @@ module i486_cpu_core (
     );
 
     // ============================================================
-    // x87 ST0/ST1 register file (written by pipeline EXU x87 path)
+    // x87 ST0-ST7 + FCW/FSW register file (written by pipeline EXU x87 path)
     // ============================================================
     logic [79: 0] fpu_st0;
     logic [79: 0] fpu_st1;
+    logic [79: 0] fpu_st2;
+    logic [79: 0] fpu_st3;
+    logic [79: 0] fpu_st4;
+    logic [79: 0] fpu_st5;
+    logic [79: 0] fpu_st6;
+    logic [79: 0] fpu_st7;
+    logic [15: 0] fpu_fcw;
+    logic [15: 0] fpu_fsw;
     logic         pipe_fpu_st0_we;
     logic [79: 0] pipe_fpu_st0_wdata;
     logic         pipe_fpu_st1_we;
     logic [79: 0] pipe_fpu_st1_wdata;
+    logic         pipe_fpu_st2_we;
+    logic [79: 0] pipe_fpu_st2_wdata;
+    logic         pipe_fpu_st3_we;
+    logic [79: 0] pipe_fpu_st3_wdata;
+    logic         pipe_fpu_st4_we;
+    logic [79: 0] pipe_fpu_st4_wdata;
+    logic         pipe_fpu_st5_we;
+    logic [79: 0] pipe_fpu_st5_wdata;
+    logic         pipe_fpu_st6_we;
+    logic [79: 0] pipe_fpu_st6_wdata;
+    logic         pipe_fpu_st7_we;
+    logic [79: 0] pipe_fpu_st7_wdata;
+    logic         pipe_fpu_fsw_we;
+    logic [15: 0] pipe_fpu_fsw_wdata;
     logic         pipe_fpu_exception;
+
+    assign o_invalidate_cache = invalidate_cache | cr3_flush_pulse;
+    assign o_wbinvd           = wbinvd_cmd;
+
+    always_ff @(posedge clk or negedge rst_n) begin : ff_cr3_flush
+        if (~rst_n) begin
+            cr3_flush_pulse <= 1'b0;
+        end else begin
+            cr3_flush_pulse <= wrb_cr3_write_enable;
+        end
+    end
 
     i486_cpu_pipeline u_pipeline (
         .o_mmu_valid               (o_mmu_valid),
@@ -893,6 +929,8 @@ module i486_cpu_core (
         .o_wrb_seg_write_descriptor(wrb_seg_write_descriptor),
         .i_intr                    (i_intr),
         .i_nmi                     (i_nmi),
+        .i_inta_vector             (8'h00),
+        .o_inta                    (),
         .o_ferr_n                  (o_ferr_n),
         .o_invalidate_cache        (invalidate_cache),
         .o_wbinvd                  (wbinvd_cmd),
@@ -904,10 +942,32 @@ module i486_cpu_core (
         .o_wrb_idtr_write_base     (pipe_idtr_write_base),
         .i_fpu_st0                 (fpu_st0),
         .i_fpu_st1                 (fpu_st1),
+        .i_fpu_st2                 (fpu_st2),
+        .i_fpu_st3                 (fpu_st3),
+        .i_fpu_st4                 (fpu_st4),
+        .i_fpu_st5                 (fpu_st5),
+        .i_fpu_st6                 (fpu_st6),
+        .i_fpu_st7                 (fpu_st7),
+        .i_fpu_fcw                 (fpu_fcw),
+        .i_fpu_fsw                 (fpu_fsw),
         .o_fpu_st0_we              (pipe_fpu_st0_we),
         .o_fpu_st0_wdata           (pipe_fpu_st0_wdata),
         .o_fpu_st1_we              (pipe_fpu_st1_we),
         .o_fpu_st1_wdata           (pipe_fpu_st1_wdata),
+        .o_fpu_st2_we              (pipe_fpu_st2_we),
+        .o_fpu_st2_wdata           (pipe_fpu_st2_wdata),
+        .o_fpu_st3_we              (pipe_fpu_st3_we),
+        .o_fpu_st3_wdata           (pipe_fpu_st3_wdata),
+        .o_fpu_st4_we              (pipe_fpu_st4_we),
+        .o_fpu_st4_wdata           (pipe_fpu_st4_wdata),
+        .o_fpu_st5_we              (pipe_fpu_st5_we),
+        .o_fpu_st5_wdata           (pipe_fpu_st5_wdata),
+        .o_fpu_st6_we              (pipe_fpu_st6_we),
+        .o_fpu_st6_wdata           (pipe_fpu_st6_wdata),
+        .o_fpu_st7_we              (pipe_fpu_st7_we),
+        .o_fpu_st7_wdata           (pipe_fpu_st7_wdata),
+        .o_fpu_fsw_we              (pipe_fpu_fsw_we),
+        .o_fpu_fsw_wdata           (pipe_fpu_fsw_wdata),
         .o_fpu_exception           (pipe_fpu_exception),
         .clk                       (clk),
         .rst_n                     (rst_n)
@@ -929,6 +989,70 @@ module i486_cpu_core (
         .rst_n          (rst_n)
     );
 
+    rf_x87_fpu_st2 u_rf_fpu_st2 (
+        .i_write_enable (pipe_fpu_st2_we),
+        .i_write_data   (pipe_fpu_st2_wdata),
+        .o_data         (fpu_st2),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x87_fpu_st3 u_rf_fpu_st3 (
+        .i_write_enable (pipe_fpu_st3_we),
+        .i_write_data   (pipe_fpu_st3_wdata),
+        .o_data         (fpu_st3),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x87_fpu_st4 u_rf_fpu_st4 (
+        .i_write_enable (pipe_fpu_st4_we),
+        .i_write_data   (pipe_fpu_st4_wdata),
+        .o_data         (fpu_st4),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x87_fpu_st5 u_rf_fpu_st5 (
+        .i_write_enable (pipe_fpu_st5_we),
+        .i_write_data   (pipe_fpu_st5_wdata),
+        .o_data         (fpu_st5),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x87_fpu_st6 u_rf_fpu_st6 (
+        .i_write_enable (pipe_fpu_st6_we),
+        .i_write_data   (pipe_fpu_st6_wdata),
+        .o_data         (fpu_st6),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x87_fpu_st7 u_rf_fpu_st7 (
+        .i_write_enable (pipe_fpu_st7_we),
+        .i_write_data   (pipe_fpu_st7_wdata),
+        .o_data         (fpu_st7),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x87_fpu_fcw u_rf_fpu_fcw (
+        .i_write_enable (1'b0),
+        .i_write_data   (16'h037F),
+        .o_data         (fpu_fcw),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x87_fpu_fsw u_rf_fpu_fsw (
+        .i_write_enable (pipe_fpu_fsw_we),
+        .i_write_data   (pipe_fpu_fsw_wdata),
+        .o_data         (fpu_fsw),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
     logic unused_fpu_exception;
     assign unused_fpu_exception = pipe_fpu_exception;
 
@@ -940,6 +1064,12 @@ module i486_cpu_core (
 
     assign mmx_st_alias[0] = fpu_st0[63: 0];
     assign mmx_st_alias[1] = fpu_st1[63: 0];
+    assign mmx_st_alias[2] = fpu_st2[63: 0];
+    assign mmx_st_alias[3] = fpu_st3[63: 0];
+    assign mmx_st_alias[4] = fpu_st4[63: 0];
+    assign mmx_st_alias[5] = fpu_st5[63: 0];
+    assign mmx_st_alias[6] = fpu_st6[63: 0];
+    assign mmx_st_alias[7] = fpu_st7[63: 0];
 
     mmx_register_file u_mmx_rf (
         .i_write_enable (1'b0),

@@ -68,6 +68,9 @@ module memory_management_unit #(
     logic         paging_valid;
     logic         paging_ready;
     logic         seg_priv_err;
+    logic         seg_not_present;
+    logic         seg_ss_fault;
+    logic         seg_gp_fault;
     logic         pg_fault;
     logic         pg_fault_present;
     logic [31: 0] pg_fault_linear;
@@ -84,6 +87,9 @@ module memory_management_unit #(
         .i_write_enable             (i_write_enable),
         .o_linear_address           (linear_address),
         .o_segment_privilege_error  (seg_priv_err),
+        .o_segment_not_present      (seg_not_present),
+        .o_stack_segment_fault      (seg_ss_fault),
+        .o_segment_fault            (seg_gp_fault),
         .clk                        (clk),
         .rst_n                      (rst_n)
     );

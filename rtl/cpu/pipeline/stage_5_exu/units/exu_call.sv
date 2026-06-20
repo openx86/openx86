@@ -25,17 +25,17 @@ module exu_call (
     input  logic [31: 0] i_src1_data,
     input  logic [31: 0] i_src2_data,
     input  logic [31: 0] i_immediate,
+    input  logic [31: 0] i_displacement,
     input  logic         i_has_imm,
-    output exu_result_t   o_result
+    input  logic         i_has_disp,
+    output exu_result_t  o_result
 );
 
     logic [31: 0] return_addr;
-    logic [31: 0] target;
     logic [31: 0] new_esp;
 
     assign return_addr = i_src1_data;
-    assign target = i_immediate;
-    assign new_esp = i_src2_data - 32'd4;
+    assign new_esp     = i_src2_data - 32'd4;
 
     assign o_result.result           = new_esp;
     assign o_result.cf               = 1'b0;

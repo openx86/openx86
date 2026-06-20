@@ -122,6 +122,8 @@ module i486_cpu (
         .i_intr             (i_intr),
         .i_nmi              (i_nmi),
         .o_ferr_n           (o_ferr_n),
+        .o_invalidate_cache (invalidate_cache),
+        .o_wbinvd           (wbinvd_cmd),
         .clk                (clk),
         .rst_n              (rst_n)
     );

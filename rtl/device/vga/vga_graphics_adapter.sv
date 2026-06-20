@@ -71,9 +71,10 @@ module vga_graphics_adapter (
     localparam logic [15: 0] PORT_MODE_REG  = 16'h03C0;  // 模式选择寄存器（简化）
 
     // 模式定义
-    localparam logic [ 1: 0] MODE_GRAPHICS = 2'b00;  // 图形模式
-    localparam logic [ 1: 0] MODE_TEXT_COLOR = 2'b01;  // 彩色文本模式
-    localparam logic [ 1: 0] MODE_TEXT_INTENSE = 2'b10;  // 淡色文本模式
+    localparam logic [ 1: 0] MODE_GRAPHICS     = 2'b00;
+    localparam logic [ 1: 0] MODE_TEXT_COLOR   = 2'b01;
+    localparam logic [ 1: 0] MODE_TEXT_INTENSE = 2'b10;
+    localparam logic [ 1: 0] MODE_13H          = 2'b11;
 
     // ============================================================
     // MISC output register (lower bits control display-related switches)
@@ -110,7 +111,7 @@ module vga_graphics_adapter (
         .i_wdata ( mem_data_w      ),
         // 读端口（VGA）
         .i_re    ( 1'b1            ),  // VGA 持续读取
-        .i_raddr ( vram_rd_addr    ),
+        .i_raddr ( vram_scan_addr    ),
         .o_rdata ( vram_rd_data    ),
         // 时钟与复位
         .clk     ( clk             ),
@@ -126,6 +127,35 @@ module vga_graphics_adapter (
     logic [$clog2(525)-1: 0] v_count;
     logic video_active;
     
+    logic [VRAM_ADDR_WIDTH-1: 0] vram_scan_addr;
+    logic [ 3: 0] vga_r_mode13;
+    logic [ 3: 0] vga_g_mode13;
+    logic [ 3: 0] vga_b_mode13;
+    logic [ 8: 0] mode13_vram_addr;
+    logic         mode13_active;
+
+    assign mode13_active    = (vga_mode == MODE_13H) && video_active &&
+                              (h_count < 10'd320) && (v_count < 10'd200);
+    assign mode13_vram_addr = 9'(v_count[7: 0]) * 9'd320 + 9'(h_count[8: 0]);
+    assign vram_scan_addr   = (vga_mode == MODE_13H) ?
+                              VRAM_ADDR_WIDTH'(mode13_vram_addr) : vram_rd_addr;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            vga_r_mode13 <= 4'h0;
+            vga_g_mode13 <= 4'h0;
+            vga_b_mode13 <= 4'h0;
+        end else if (mode13_active) begin
+            vga_r_mode13 <= {vram_rd_data[ 7: 5], 1'b0};
+            vga_g_mode13 <= {vram_rd_data[ 4: 2], 1'b0};
+            vga_b_mode13 <= {vram_rd_data[ 1: 0], vram_rd_data[ 1: 0]};
+        end else begin
+            vga_r_mode13 <= 4'h0;
+            vga_g_mode13 <= 4'h0;
+            vga_b_mode13 <= 4'h0;
+        end
+    end
+
     // 图形模式 RGB（RRRGGGBB 展开）
     logic [ 3: 0] vga_r_graphics;
     logic [ 3: 0] vga_g_graphics;
@@ -282,10 +312,15 @@ module vga_graphics_adapter (
     // 按 vga_mode 在图形与两种文本流水线输出间切换
     always_comb begin
         unique case (vga_mode)
-            MODE_GRAPHICS: begin // 640x480 直接 VRAM 调色板展开
+            MODE_GRAPHICS: begin
                 vga_r = vga_r_graphics;
                 vga_g = vga_g_graphics;
                 vga_b = vga_b_graphics;
+            end
+            MODE_13H: begin
+                vga_r = vga_r_mode13;
+                vga_g = vga_g_mode13;
+                vga_b = vga_b_mode13;
             end
             MODE_TEXT_COLOR: begin // 80x25 彩色文本
                 vga_r = vga_r_text_color;
@@ -321,8 +356,11 @@ module vga_graphics_adapter (
                         misc_out_reg <= io_data_w;
                     end
                     PORT_MODE_REG: begin
-                        // 模式选择寄存器：bit[ 1: 0] 选择模式
                         vga_mode <= io_data_w[ 1: 0];
+                    end
+                    16'h03D4: begin
+                        if (io_data_w == 8'h13)
+                            vga_mode <= MODE_13H;
                     end
                     default: begin
                         // 其他端口尚未实现

@@ -158,6 +158,25 @@ module bus_controller #(
     logic is_other_io_access;
     logic is_chipset_io;
 
+    logic         dma_master_valid;
+    logic         dma_master_we;
+    logic         dma_master_io;
+    logic [31: 0] dma_master_addr;
+    logic [ 7: 0] dma_master_wdata;
+    logic [ 7: 0] dma_master_rdata;
+    logic         dma_master_ready;
+    logic         mux_valid;
+    logic         mux_we;
+    logic         mux_io;
+    logic [31: 0] mux_addr;
+    logic [31: 0] mux_wdata;
+
+    assign mux_valid  = dma_master_valid | i_bus_valid;
+    assign mux_we     = dma_master_valid ? dma_master_we : i_bus_write_enable;
+    assign mux_io     = dma_master_valid ? dma_master_io : i_bus_io_access;
+    assign mux_addr   = dma_master_valid ? dma_master_addr : i_bus_address;
+    assign mux_wdata  = dma_master_valid ? {24'h0, dma_master_wdata} : i_bus_data_write;
+
     // ============================================================
     // address decode logic
     // ============================================================
@@ -167,31 +186,31 @@ module bus_controller #(
     // - i_bus_io_access = 0: memory access
     // - i_bus_io_access = 1: I/O port access (lower 16 bits are I/O port address)
 
-assign is_memory_access   = !i_bus_io_access;
-assign is_ram_access      = is_memory_access && (i_bus_address <= MEM_END_RAM);
-assign is_vram_access     = is_memory_access && (i_bus_address >= MEM_BASE_VRAM) && (i_bus_address <= MEM_END_VRAM);
-assign is_ext_bios_access = is_memory_access && (i_bus_address >= MEM_BASE_EXT_BIOS) && (i_bus_address <= MEM_END_EXT_BIOS);
-assign is_sys_bios_access = is_memory_access && (i_bus_address >= MEM_BASE_SYS_BIOS) && (i_bus_address <= MEM_END_SYS_BIOS);
-assign is_sdram_access    = is_memory_access && (i_bus_address >= MEM_BASE_SDRAM) && (i_bus_address <= MEM_END_SDRAM);
+assign is_memory_access   = !mux_io;
+assign is_ram_access      = is_memory_access && (mux_addr <= MEM_END_RAM);
+assign is_vram_access     = is_memory_access && (mux_addr >= MEM_BASE_VRAM) && (mux_addr <= MEM_END_VRAM);
+assign is_ext_bios_access = is_memory_access && (mux_addr >= MEM_BASE_EXT_BIOS) && (mux_addr <= MEM_END_EXT_BIOS);
+assign is_sys_bios_access = is_memory_access && (mux_addr >= MEM_BASE_SYS_BIOS) && (mux_addr <= MEM_END_SYS_BIOS);
+assign is_sdram_access    = is_memory_access && (mux_addr >= MEM_BASE_SDRAM) && (mux_addr <= MEM_END_SDRAM);
 
-assign is_io_access       = i_bus_io_access;
-assign is_vga_io_access   = is_io_access && (i_bus_address[15: 0] >= IO_BASE_VGA) && (i_bus_address[15: 0] <= IO_END_VGA);
+assign is_io_access       = mux_io;
+assign is_vga_io_access   = is_io_access && (mux_addr[15: 0] >= IO_BASE_VGA) && (mux_addr[15: 0] <= IO_END_VGA);
 assign is_other_io_access = is_io_access && !is_vga_io_access;
 
 assign is_chipset_io = is_other_io_access && (
-    (i_bus_address[15: 0] <= 16'h000F) ||
-    ((i_bus_address[15: 0] >= 16'h0080) && (i_bus_address[15: 0] <= 16'h008F)) ||
-    ((i_bus_address[15: 0] >= 16'h00C0) && (i_bus_address[15: 0] <= 16'h00DF)) ||
-    ((i_bus_address[15: 0] >= 16'h0020) && (i_bus_address[15: 0] <= 16'h0021)) ||
-    ((i_bus_address[15: 0] >= 16'h00A0) && (i_bus_address[15: 0] <= 16'h00A1)) ||
-    ((i_bus_address[15: 0] >= 16'h0040) && (i_bus_address[15: 0] <= 16'h0043)) ||
-    (i_bus_address[15: 0] == 16'h0060) ||
-    (i_bus_address[15: 0] == 16'h0064) ||
-    ((i_bus_address[15: 0] >= 16'h0070) && (i_bus_address[15: 0] <= 16'h0071)) ||
-    ((i_bus_address[15: 0] >= 16'h01F0) && (i_bus_address[15: 0] <= 16'h01F7)) ||
-    (i_bus_address[15: 0] == 16'h03F6) ||
-    ((i_bus_address[15: 0] >= 16'h0378) && (i_bus_address[15: 0] <= 16'h037F)) ||
-    ((i_bus_address[15: 0] >= 16'h03F8) && (i_bus_address[15: 0] <= 16'h03FF))
+    (mux_addr[15: 0] <= 16'h000F) ||
+    ((mux_addr[15: 0] >= 16'h0080) && (mux_addr[15: 0] <= 16'h008F)) ||
+    ((mux_addr[15: 0] >= 16'h00C0) && (mux_addr[15: 0] <= 16'h00DF)) ||
+    ((mux_addr[15: 0] >= 16'h0020) && (mux_addr[15: 0] <= 16'h0021)) ||
+    ((mux_addr[15: 0] >= 16'h00A0) && (mux_addr[15: 0] <= 16'h00A1)) ||
+    ((mux_addr[15: 0] >= 16'h0040) && (mux_addr[15: 0] <= 16'h0043)) ||
+    (mux_addr[15: 0] == 16'h0060) ||
+    (mux_addr[15: 0] == 16'h0064) ||
+    ((mux_addr[15: 0] >= 16'h0070) && (mux_addr[15: 0] <= 16'h0071)) ||
+    ((mux_addr[15: 0] >= 16'h01F0) && (mux_addr[15: 0] <= 16'h01F7)) ||
+    (mux_addr[15: 0] == 16'h03F6) ||
+    ((mux_addr[15: 0] >= 16'h0378) && (mux_addr[15: 0] <= 16'h037F)) ||
+    ((mux_addr[15: 0] >= 16'h03F8) && (mux_addr[15: 0] <= 16'h03FF))
 );
     logic [ 7: 0] chipset_io_rdata;
     logic         chipset_io_hit;
@@ -227,9 +246,9 @@ logic [15: 0] chip_io_addr;
 logic         chip_io_vld;
 logic         chip_io_we;
 
-assign chip_io_addr = i_bus_address[15: 0];
-assign chip_io_vld = is_chipset_io && i_bus_valid;
-assign chip_io_we = i_bus_write_enable;
+assign chip_io_addr = mux_addr[15: 0];
+assign chip_io_vld  = mux_valid && mux_io && is_chipset_io;
+assign chip_io_we   = mux_we;
 
 logic [ 7: 0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
 
@@ -340,14 +359,21 @@ assign ir_m[2]    = intr_s;
 assign ir_m[ 7:  3]  = 5'b0;
 
 chip_8237_dma u_chip_dma (
-    .clk    (clk),
-    .rst_n  (rst_n),
-    .i_cs_n (cs_dma_n),
-    .i_rd_n (rd_dma_n),
-    .i_wr_n (wr_dma_n),
-    .i_addr (chip_io_addr),
-    .i_d    (i_bus_data_write[7: 0]),
-    .o_d    (r_dma)
+    .clk             (clk),
+    .rst_n           (rst_n),
+    .i_cs_n          (cs_dma_n),
+    .i_rd_n          (rd_dma_n),
+    .i_wr_n          (wr_dma_n),
+    .i_addr          (chip_io_addr),
+    .i_d             (i_bus_data_write[7: 0]),
+    .o_d             (r_dma),
+    .o_master_valid  (dma_master_valid),
+    .i_master_ready  (dma_master_ready),
+    .o_master_we     (dma_master_we),
+    .o_master_io     (dma_master_io),
+    .o_master_addr   (dma_master_addr),
+    .o_master_wdata  (dma_master_wdata),
+    .i_master_rdata  (dma_master_rdata)
 );
 
 chip_8259_pic u_chip_pic_m (
@@ -516,32 +542,32 @@ assign o_pic_intr = intr_m;
 // ============================================================================
 
 // VRAM 地址：减去基地址，使用低 20 位（128KB = 2^17，但为了对齐使用 20 位）
-assign o_vga_mem_addr = i_bus_address[19: 0] - MEM_BASE_VRAM[19: 0];
+assign o_vga_mem_addr   = mux_addr[19: 0] - MEM_BASE_VRAM[19: 0];
 
 // ============================================================================
 // 外设使能信号生成
 // ============================================================================
 
 // VRAM 访问控制（VGA 只支持字节写）
-assign o_vga_mem_en_w = is_vram_access && i_bus_valid && i_bus_write_enable;
-assign o_vga_mem_data_w = i_bus_data_write[ 7: 0];  // 只使用低 8 位
+assign o_vga_mem_en_w   = is_vram_access && mux_valid && mux_we;
+assign o_vga_mem_data_w = mux_wdata[ 7: 0];
 
 // BIOS ROM 访问控制（只读）
-assign o_bios_addr = i_bus_address[15: 0] - MEM_BASE_SYS_BIOS[15: 0];
-assign o_ext_bios_addr = i_bus_address[16: 0] - MEM_BASE_EXT_BIOS[16: 0];
+assign o_bios_addr     = mux_addr[15: 0] - MEM_BASE_SYS_BIOS[15: 0];
+assign o_ext_bios_addr = mux_addr[16: 0] - MEM_BASE_EXT_BIOS[16: 0];
 
 // SDRAM（32 位字访问；常规 RAM 与高位窗口映射到同一物理地址空间，见 soc_top）
-assign o_sdram_en       = (is_ram_access || is_sdram_access) && i_bus_valid;
-assign o_sdram_we       = i_bus_write_enable;
-assign o_sdram_addr_off = is_ram_access ? i_bus_address[23: 0]
-                                        : (i_bus_address[23: 0] - MEM_BASE_SDRAM[23: 0]);
-assign o_sdram_wdata    = i_bus_data_write;
+assign o_sdram_en       = (is_ram_access || is_sdram_access) && mux_valid;
+assign o_sdram_we       = mux_we;
+assign o_sdram_addr_off = is_ram_access ? mux_addr[23: 0]
+                                        : (mux_addr[23: 0] - MEM_BASE_SDRAM[23: 0]);
+assign o_sdram_wdata    = mux_wdata;
 
 // VGA I/O 端口访问控制
-assign o_vga_io_en_w = is_vga_io_access && i_bus_valid && i_bus_write_enable;
-assign o_vga_io_en_r = is_vga_io_access && i_bus_valid && !i_bus_write_enable;
-assign o_vga_io_addr = i_bus_address[15: 0];
-assign o_vga_io_data_w = i_bus_data_write[ 7: 0];  // I/O 端口通常是 8 位或 16 位
+assign o_vga_io_en_w   = is_vga_io_access && mux_valid && mux_we;
+assign o_vga_io_en_r   = is_vga_io_access && mux_valid && !mux_we;
+assign o_vga_io_addr   = mux_addr[15: 0];
+assign o_vga_io_data_w = mux_wdata[ 7: 0];
 
 // ============================================================================
 // 数据读取路径选择
@@ -587,24 +613,30 @@ end
 // BIOS ROM是同步的，假设立即完成
 
 // 总线就绪：SDRAM 多周期就绪，其余 I/O/ROM 组合就绪。
+logic bus_ready_internal;
+
 always_comb begin
     if (is_ram_access || is_sdram_access) begin
-        o_bus_ready = sdram_ready_internal;
+        bus_ready_internal = sdram_ready_internal;
     end else if (is_vram_access) begin
-        o_bus_ready = vram_ready_internal;
+        bus_ready_internal = vram_ready_internal;
     end else if (is_ext_bios_access) begin
-        o_bus_ready = ext_bios_ready_internal;
+        bus_ready_internal = ext_bios_ready_internal;
     end else if (is_sys_bios_access) begin
-        o_bus_ready = bios_ready_internal;
+        bus_ready_internal = bios_ready_internal;
     end else if (is_io_access) begin
-        o_bus_ready = io_ready_internal;
+        bus_ready_internal = io_ready_internal;
     end else begin
-        // 未映射的地址立即返回就绪（但数据是 0xFFFFFFFF）
-        o_bus_ready = i_bus_valid;
+        bus_ready_internal = mux_valid;
     end
 end
 
+assign dma_master_ready = bus_ready_internal;
+assign dma_master_rdata = io_byte_data;
+assign o_bus_ready      = dma_master_valid ? 1'b0 : bus_ready_internal;
+
 // SDRAM 忙：多周期事务期间由控制器拉高
-assign o_bus_busy = (is_ram_access || is_sdram_access) && i_sdram_busy;
+assign o_bus_busy = dma_master_valid |
+                    ((is_ram_access || is_sdram_access) && i_sdram_busy);
 
 endmodule

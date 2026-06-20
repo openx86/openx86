@@ -1,0 +1,339 @@
+m255
+K4
+z2
+!s11f vlog 2025.2 2025.05, May 31 2025
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dD:/GitHub/openx86/openx86
+vmemory_management_unit
+Z1 2rtl/cpu/mmu/segmentation/segmentation_unit.sv|rtl/cpu/mmu/paging/paging_unit.sv|rtl/cpu/mmu/memory_management_unit.sv
+Z2 DXx6 sv_std 3 std 0 22 @5XbY]_OacJl=`ToSm<M^0
+Z3 !s110 1781958158
+!i10b 1
+!s100 M]0R3[TCi=XE_83<42E<02
+I6cEOaYGgV7@nz[VY3l5bC2
+S1
+R0
+w1781958010
+8rtl/cpu/mmu/memory_management_unit.sv
+Frtl/cpu/mmu/memory_management_unit.sv
+!i122 1
+L0 21 172
+Z4 VDg1SIo80bB@j0V0VzS_@n1
+Z5 OL;L;2025.2;82
+r1
+!s85 0
+31
+Z6 !s108 1781958158.000000
+!s107 include/openx86_defs.h.sv|rtl/cpu/mmu/memory_management_unit.sv|rtl/cpu/mmu/paging/paging_unit.sv|rtl/cpu/mmu/segmentation/segmentation_unit.sv|
+Z7 !s90 -sv|+incdir+include|rtl/cpu/mmu/segmentation/segmentation_unit.sv|rtl/cpu/mmu/paging/paging_unit.sv|rtl/cpu/mmu/memory_management_unit.sv|
+!i113 0
+Z8 o-sv -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+Z9 !s92 -sv +incdir+include -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+Z10 tCvgOpt 0 defaultOptions 1085333592
+vpaging_unit
+R1
+R2
+DXx4 work 19 paging_unit_sv_unit 0 22 6Hg?9zfO8LXhKaYdZjbTD0
+R3
+R4
+r1
+!s85 0
+!i10b 1
+!s100 ZAU8z`:;RHTQzCj_<kg[i3
+I_=3EYk7=gFg`FXR`]Cbg32
+!s105 paging_unit_sv_unit
+S1
+R0
+w1781955881
+Z11 8rtl/cpu/mmu/paging/paging_unit.sv
+Z12 Frtl/cpu/mmu/paging/paging_unit.sv
+!i122 1
+L0 23 157
+R5
+31
+R6
+Z13 !s107 include/openx86_defs.h.sv|rtl/cpu/mmu/memory_management_unit.sv|rtl/cpu/mmu/paging/paging_unit.sv|rtl/cpu/mmu/segmentation/segmentation_unit.sv|
+R7
+!i113 0
+R8
+R9
+R10
+Xpaging_unit_sv_unit
+R1
+R2
+R3
+V6Hg?9zfO8LXhKaYdZjbTD0
+r1
+!s85 0
+!i10b 1
+!s100 hnWPNNi^eK09gaYC@lE5m3
+I6Hg?9zfO8LXhKaYdZjbTD0
+!i103 1
+S1
+R0
+Z14 w1781958076
+R11
+R12
+Z15 Finclude/openx86_defs.h.sv
+!i122 1
+Z16 L0 447 0
+R5
+31
+R6
+R13
+R7
+!i113 0
+R8
+R9
+R10
+vsegment_descriptor_cache
+Z17 2rtl/cpu/mmu/segmentation/segment_descriptor_decode.sv|rtl/cpu/mmu/segmentation/segment_descriptor_encode.sv|rtl/cpu/mmu/segmentation/segment_descriptor_cache.sv|rtl/cpu/mmu/segmentation/segment_load_unit.sv|tb/cpu/mmu/segment_load_unit_tb.sv
+R2
+DXx4 work 32 segment_descriptor_cache_sv_unit 0 22 @]BHZQnPDa<4]SoKTlRYK0
+Z18 !s110 1781958133
+R4
+r1
+!s85 0
+!i10b 1
+!s100 a4D5X2[STJP[>GQo9b1TM0
+Ih3iPR>I@C@>0i4h>Edc1g2
+!s105 segment_descriptor_cache_sv_unit
+S1
+R0
+w1776835557
+Z19 8rtl/cpu/mmu/segmentation/segment_descriptor_cache.sv
+Z20 Frtl/cpu/mmu/segmentation/segment_descriptor_cache.sv
+!i122 0
+L0 32 108
+R5
+31
+Z21 !s108 1781958133.000000
+Z22 !s107 include/openx86_defs.h.sv|tb/cpu/mmu/segment_load_unit_tb.sv|rtl/cpu/mmu/segmentation/segment_load_unit.sv|rtl/cpu/mmu/segmentation/segment_descriptor_cache.sv|rtl/cpu/mmu/segmentation/segment_descriptor_encode.sv|rtl/cpu/mmu/segmentation/segment_descriptor_decode.sv|
+Z23 !s90 -sv|+incdir+include|rtl/cpu/mmu/segmentation/segment_descriptor_decode.sv|rtl/cpu/mmu/segmentation/segment_descriptor_encode.sv|rtl/cpu/mmu/segmentation/segment_descriptor_cache.sv|rtl/cpu/mmu/segmentation/segment_load_unit.sv|tb/cpu/mmu/segment_load_unit_tb.sv|
+!i113 0
+R8
+R9
+R10
+Xsegment_descriptor_cache_sv_unit
+R17
+R2
+R18
+V@]BHZQnPDa<4]SoKTlRYK0
+r1
+!s85 0
+!i10b 1
+!s100 _;go2IMnMRV8b=jS3^Ulz1
+I@]BHZQnPDa<4]SoKTlRYK0
+!i103 1
+S1
+R0
+R14
+R19
+R20
+R15
+!i122 0
+R16
+R5
+31
+R21
+R22
+R23
+!i113 0
+R8
+R9
+R10
+vsegment_descriptor_decode
+R17
+R2
+R18
+!i10b 1
+!s100 5OP8kjU2>]n3N9`ikVflj2
+IGmYE6gWUfKT?7<_ilHiYS3
+S1
+R0
+Z24 w1781955818
+8rtl/cpu/mmu/segmentation/segment_descriptor_decode.sv
+Frtl/cpu/mmu/segmentation/segment_descriptor_decode.sv
+!i122 0
+L0 51 79
+R4
+R5
+r1
+!s85 0
+31
+R21
+R22
+R23
+!i113 0
+R8
+R9
+R10
+vsegment_descriptor_encode
+R17
+R2
+R18
+!i10b 1
+!s100 =TaBkKhE?3LdQ`Q`km@180
+IVP8:b>dRfMmDkPolV6Y880
+S1
+R0
+R24
+8rtl/cpu/mmu/segmentation/segment_descriptor_encode.sv
+Frtl/cpu/mmu/segmentation/segment_descriptor_encode.sv
+!i122 0
+L0 51 46
+R4
+R5
+r1
+!s85 0
+31
+R21
+R22
+R23
+!i113 0
+R8
+R9
+R10
+vsegment_load_unit
+R17
+R2
+DXx4 work 25 segment_load_unit_sv_unit 0 22 Ede<HZ_gf_@e37Vf9L<fj2
+R18
+R4
+r1
+!s85 0
+!i10b 1
+!s100 `3i20WhkFWXP0U@WezS3V0
+Ij?cH4e1`XM<@S4?m`g:LJ1
+!s105 segment_load_unit_sv_unit
+S1
+R0
+Z25 w1781958131
+Z26 8rtl/cpu/mmu/segmentation/segment_load_unit.sv
+Z27 Frtl/cpu/mmu/segmentation/segment_load_unit.sv
+!i122 0
+L0 23 523
+R5
+31
+R21
+R22
+R23
+!i113 0
+R8
+R9
+R10
+Xsegment_load_unit_sv_unit
+R17
+R2
+R18
+VEde<HZ_gf_@e37Vf9L<fj2
+r1
+!s85 0
+!i10b 1
+!s100 P_4[1ize0kXz`f4dUFSWT2
+IEde<HZ_gf_@e37Vf9L<fj2
+!i103 1
+S1
+R0
+R25
+R26
+R27
+R15
+!i122 0
+R16
+R5
+31
+R21
+R22
+R23
+!i113 0
+R8
+R9
+R10
+vsegment_load_unit_tb
+R17
+R2
+DXx4 work 28 segment_load_unit_tb_sv_unit 0 22 SQk0S_;>5ZR2;Wk3?58m22
+R18
+R4
+r1
+!s85 0
+!i10b 1
+!s100 N2[d:R;N8DS8;<8bL1e:H1
+I>FEnT1Ziol`Em_NeT_^=f2
+!s105 segment_load_unit_tb_sv_unit
+S1
+R0
+Z28 w1781958109
+Z29 8tb/cpu/mmu/segment_load_unit_tb.sv
+Z30 Ftb/cpu/mmu/segment_load_unit_tb.sv
+!i122 0
+L0 25 179
+R5
+31
+R21
+R22
+R23
+!i113 0
+R8
+R9
+R10
+Xsegment_load_unit_tb_sv_unit
+R17
+R2
+R18
+VSQk0S_;>5ZR2;Wk3?58m22
+r1
+!s85 0
+!i10b 1
+!s100 k1U_I<e6d?Wk>OBSd]jP]0
+ISQk0S_;>5ZR2;Wk3?58m22
+!i103 1
+S1
+R0
+R28
+R29
+R30
+R15
+!i122 0
+R16
+R5
+31
+R21
+R22
+R23
+!i113 0
+R8
+R9
+R10
+vsegmentation_unit
+R1
+R2
+R3
+!i10b 1
+!s100 <^aHn90O1[WL@i_BNnJi:1
+I?_C9z05gPO<bC]8676fQ91
+S1
+R0
+w1781958004
+8rtl/cpu/mmu/segmentation/segmentation_unit.sv
+Frtl/cpu/mmu/segmentation/segmentation_unit.sv
+!i122 1
+L0 21 157
+R4
+R5
+r1
+!s85 0
+31
+R6
+R13
+R7
+!i113 0
+R8
+R9
+R10

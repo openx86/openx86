@@ -69,6 +69,7 @@ module stage_1_ifu (
     input  logic                 i_dec_fire,
     input  logic [ 3: 0]        i_dec_consume_bytes,
     input  logic                 i_dec_error,
+    input  logic                 i_stall,
 
     // =========================
     // clock and reset
@@ -166,7 +167,7 @@ module stage_1_ifu (
     // ============================================================
     // fetch control assignments
     // ============================================================
-    assign fetch_request           = started_r & i_start & ~fetch_active_r & fifo_empty;
+    assign fetch_request           = started_r & i_start & ~fetch_active_r & fifo_empty & ~i_stall;
     assign fetch_instruction_ready = fetch_instruction_ready_r;
     assign fetch_segment_fault     = mmu_seg_fault;
 
@@ -219,7 +220,7 @@ module stage_1_ifu (
             if (~started_r && i_start) begin
                 eip_r     <= i_initial_eip;
                 started_r <= 1'b1;
-            end else if (i_dec_fire) begin
+            end else if (i_dec_fire & ~i_stall) begin
                 eip_r <= eip_r + {28'h0, i_dec_consume_bytes};
             end
 

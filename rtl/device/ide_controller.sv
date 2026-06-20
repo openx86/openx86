@@ -57,7 +57,8 @@ module ide_controller #(
     typedef enum logic [ 2: 0] {
         ST_IDLE,
         ST_WAIT_SECTOR,
-        ST_DRQ
+        ST_DRQ,
+        ST_WRITE_DRQ
     } ide_state_t;
 
     ide_state_t state;
@@ -75,7 +76,11 @@ module ide_controller #(
     // ============================================================
     logic [ 8: 0] buf_ptr;
     logic [31: 0] mem_off;
-    logic         rd_data_d;
+    logic [31: 0] disk_waddr;
+    logic [ 7: 0] disk_wdata;
+    logic         disk_we;
+    logic         wr_data_d;
+    logic [ 7: 0] sectors_left;
 
     // ============================================================
     // disk backend interface
@@ -102,6 +107,9 @@ module ide_controller #(
     assign mem_bytes = P_SECTOR_BYTES * P_SECTOR_COUNT;
     assign byte_addr = mem_off * 32'(P_SECTOR_BYTES) + { 23'h0, buf_ptr };
     assign disk_raddr = byte_addr;
+    assign disk_waddr = byte_addr;
+    assign disk_we    = wr && (i_addr == 16'h01F0) && (state == ST_WRITE_DRQ);
+    assign disk_wdata = i_wdata;
     assign disk_sector_req = async_on && (state == ST_WAIT_SECTOR);
 
     logic wr;
@@ -119,6 +127,9 @@ module ide_controller #(
     ) u_disk (
         .i_disk_raddr         ( disk_raddr ),
         .o_disk_rdata         ( disk_rdata ),
+        .i_disk_waddr         ( disk_waddr ),
+        .i_disk_wdata         ( disk_wdata ),
+        .i_disk_we            ( disk_we ),
         .i_disk_sector_req    ( disk_sector_req ),
         .o_disk_sector_ready  ( disk_sector_ready ),
         .o_sdcard_controller_phy_clk     ( o_sdio_clk ),
@@ -145,46 +156,86 @@ module ide_controller #(
             buf_ptr    <= '0;
             mem_off    <= '0;
             rd_data_d  <= 1'b0;
+            wr_data_d  <= 1'b0;
+            sectors_left <= 8'h0;
         end else begin
-            if (async_on && (state == ST_WAIT_SECTOR) && disk_sector_ready) begin // 扇区到：进入 DRQ 可读
+            if (async_on && (state == ST_WAIT_SECTOR) && disk_sector_ready) begin
                 state    <= ST_DRQ;
                 buf_ptr  <= '0;
                 status_r <= LP_ST_DRQ | LP_ST_RDY;
             end else if (wr) begin
                 unique case (i_addr)
-                    16'h01F2: sector_cnt <= i_wdata; // 扇区数
-                    16'h01F3: lba_lo  <= i_wdata;   // LBA 低
-                    16'h01F4: lba_mid <= i_wdata;   // LBA 中
-                    16'h01F5: lba_hi  <= i_wdata;   // LBA 高
-                    16'h01F6: drv_head <= i_wdata;  // 设备/磁头
-                    16'h01F7: begin // 命令寄存器
-                        if (i_wdata == 8'h20) begin // READ SECTORS 简化入口
-                            mem_off <= {8'b0, lba_hi, lba_mid, lba_lo};
-                            buf_ptr <= '0;
-                            if (async_on) begin // SDIO：先发 BSY，等扇区
+                    16'h01F2: sector_cnt <= i_wdata;
+                    16'h01F3: lba_lo  <= i_wdata;
+                    16'h01F4: lba_mid <= i_wdata;
+                    16'h01F5: lba_hi  <= i_wdata;
+                    16'h01F6: drv_head <= i_wdata;
+                    16'h01F7: begin
+                        if (i_wdata == 8'h20) begin
+                            mem_off      <= {8'b0, lba_hi, lba_mid, lba_lo};
+                            buf_ptr      <= '0;
+                            sectors_left <= sector_cnt;
+                            if (async_on) begin
                                 state    <= ST_WAIT_SECTOR;
                                 status_r <= LP_ST_BSY;
-                            end else begin // BRAM：立即可流读
+                            end else begin
                                 state    <= ST_DRQ;
                                 status_r <= LP_ST_DRQ | LP_ST_RDY;
                             end
+                        end else if (i_wdata == 8'h30) begin
+                            mem_off      <= {8'b0, lba_hi, lba_mid, lba_lo};
+                            buf_ptr      <= '0;
+                            sectors_left <= sector_cnt;
+                            state        <= ST_WRITE_DRQ;
+                            status_r     <= LP_ST_DRQ | LP_ST_RDY;
                         end
                     end
-                    16'h03F6: ; // 备用状态口写忽略
+                    16'h03F6: ;
                     default: ;
                 endcase
             end
 
-            if (rd_data_d && !(rd && (i_addr == 16'h01F0) && (state == ST_DRQ))) begin // 上一拍读过数据口且本拍非连续读：推进指针
-                if (buf_ptr == (9'(P_SECTOR_BYTES) - 9'd1)) begin // 扇区读完
-                    state    <= ST_IDLE;
-                    status_r <= LP_ST_RDY;
-                    buf_ptr  <= '0;
+            if (rd_data_d && !(rd && (i_addr == 16'h01F0) && (state == ST_DRQ))) begin
+                if (buf_ptr == (9'(P_SECTOR_BYTES) - 9'd1)) begin
+                    if (sectors_left <= 8'd1) begin
+                        state    <= ST_IDLE;
+                        status_r <= LP_ST_RDY;
+                        buf_ptr  <= '0;
+                    end else begin
+                        sectors_left <= sectors_left - 8'd1;
+                        mem_off      <= mem_off + 32'd1;
+                        buf_ptr      <= '0;
+                        if (async_on) begin
+                            state    <= ST_WAIT_SECTOR;
+                            status_r <= LP_ST_BSY;
+                        end else begin
+                            state    <= ST_DRQ;
+                            status_r <= LP_ST_DRQ | LP_ST_RDY;
+                        end
+                    end
                 end else
                     buf_ptr <= buf_ptr + 9'h1;
             end
 
-            rd_data_d <= (rd && (i_addr == 16'h01F0) && (state == ST_DRQ)); // 记录“本拍在读数据口”
+            if (wr_data_d && !(wr && (i_addr == 16'h01F0) && (state == ST_WRITE_DRQ))) begin
+                if (buf_ptr == (9'(P_SECTOR_BYTES) - 9'd1)) begin
+                    if (sectors_left <= 8'd1) begin
+                        state    <= ST_IDLE;
+                        status_r <= LP_ST_RDY;
+                        buf_ptr  <= '0;
+                    end else begin
+                        sectors_left <= sectors_left - 8'd1;
+                        mem_off      <= mem_off + 32'd1;
+                        buf_ptr      <= '0;
+                        state        <= ST_WRITE_DRQ;
+                        status_r     <= LP_ST_DRQ | LP_ST_RDY;
+                    end
+                end else
+                    buf_ptr <= buf_ptr + 9'h1;
+            end
+
+            rd_data_d <= (rd && (i_addr == 16'h01F0) && (state == ST_DRQ));
+            wr_data_d <= (wr && (i_addr == 16'h01F0) && (state == ST_WRITE_DRQ));
         end
     end
 
@@ -193,10 +244,15 @@ module ide_controller #(
         o_rdata = 8'hFF;
         if (rd) begin
             unique case (i_addr)
-                16'h01F0: begin // 数据口
-                    if ((state == ST_DRQ) && (byte_addr < mem_bytes))
-                        o_rdata = disk_rdata;
-                    else
+                16'h01F0: begin
+                    if (state == ST_DRQ) begin
+                        if (byte_addr < mem_bytes)
+                            o_rdata = disk_rdata;
+                        else
+                            o_rdata = 8'h00;
+                    end else if (state == ST_WRITE_DRQ) begin
+                        o_rdata = 8'h00;
+                    end else
                         o_rdata = 8'h00;
                 end
                 16'h01F1: o_rdata = 8'h00; // 错误（当前模型恒 0）

@@ -62,14 +62,21 @@ module chip_8237_dma_tb;
     // DUT instantiation
     // ============================================================
     chip_8237_dma dut (
-        .i_cs_n  ( cs_n ),
-        .i_rd_n  ( rd_n ),
-        .i_wr_n  ( wr_n ),
-        .i_addr  ( addr ),
-        .i_d     ( wdata ),
-        .o_d     ( rdata ),
-        .clk   ( clk ),
-        .rst_n ( rst_n )
+        .i_cs_n         ( cs_n ),
+        .i_rd_n         ( rd_n ),
+        .i_wr_n         ( wr_n ),
+        .i_addr         ( addr ),
+        .i_d            ( wdata ),
+        .o_d            ( rdata ),
+        .o_master_valid ( ),
+        .i_master_ready ( 1'b1 ),
+        .o_master_we    ( ),
+        .o_master_io    ( ),
+        .o_master_addr  ( ),
+        .o_master_wdata ( ),
+        .i_master_rdata ( 8'h0 ),
+        .clk            ( clk ),
+        .rst_n          ( rst_n )
     );
 
     // ============================================================

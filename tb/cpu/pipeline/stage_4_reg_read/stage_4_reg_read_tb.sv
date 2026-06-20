@@ -81,7 +81,7 @@ module stage_4_reg_read_tb;
     // ============================================================
     // DUT instantiation
     // ============================================================
-    stage_4_reg_read dut (
+    stage_4_reg dut (
         .i_uop_valid   ( i_uop_valid   ),
         .i_uop         ( i_uop         ),
         .o_stage3_ready( o_stage3_ready),

@@ -13,31 +13,29 @@
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : x87_fpu_load_store.sv
+//  File        : rf_x87_fpu_fsw.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : x87 memory load/store helpers (80-bit extended)
+//  Description : x87 floating-point status word (FSW)
 // ============================================================================
 
-module x87_fpu_load_store (
-    input  logic         i_load,
-    input  logic         i_store,
-    input  logic         i_real64,
-    input  logic [31: 0] i_mem_data,
-    input  logic [79: 0] i_st_val,
-    output logic [79: 0] o_st_val,
-    output logic [31: 0] o_mem_data,
-    output logic         o_mem_write_enable
+module rf_x87_fpu_fsw (
+    input  logic         i_write_enable,
+    input  logic [15: 0] i_write_data,
+    output logic [15: 0] o_data,
+    input  logic         clk,
+    input  logic         rst_n
 );
 
-    logic [79: 0] load_ext;
+    logic [15: 0] register;
 
-    assign load_ext[79]    = i_mem_data[31];
-    assign load_ext[78: 64] = 15'd16383;
-    assign load_ext[63: 32] = 32'h0;
-    assign load_ext[31: 0]  = i_mem_data;
+    always_ff @(posedge clk or negedge rst_n) begin : ff_register
+        if (~rst_n) begin
+            register <= 16'h0000;
+        end else if (i_write_enable) begin
+            register <= i_write_data;
+        end
+    end
 
-    assign o_st_val           = i_load ? load_ext : i_st_val;
-    assign o_mem_data         = i_store ? i_st_val[31: 0] : 32'd0;
-    assign o_mem_write_enable = i_store;
+    assign o_data = register;
 
 endmodule

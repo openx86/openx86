@@ -674,8 +674,19 @@ module dec_to_uop (
             end else if (i_opcode_wbinvd) begin
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_WBINVD};
-            end else if (i_opcode_int_n || i_opcode_int_3 || i_opcode_int_4 ||
-                     i_opcode_iret || i_opcode_invpcid ||
+            end else if (i_opcode_int_n) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {16'h0, i_dec_immediate[7: 0], `MISC_SUB_INT};
+            end else if (i_opcode_int_3) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {16'h0, 8'h03, `MISC_SUB_INT};
+            end else if (i_opcode_int_4) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {16'h0, 8'h04, `MISC_SUB_INT};
+            end else if (i_opcode_iret) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_IRET};
+            end else if (i_opcode_invpcid ||
                      i_opcode_rdmsr || i_opcode_wrmsr || i_opcode_rdtsc || i_opcode_rdtscp ||
                      i_opcode_rdpmc || i_opcode_rsm || i_opcode_wait) begin
                 uop_next.uop_opcode = `UOP_MISC;
