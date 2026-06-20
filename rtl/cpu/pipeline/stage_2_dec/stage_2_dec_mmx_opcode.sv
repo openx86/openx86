@@ -77,6 +77,7 @@ module stage_2_dec_mmx_opcode (
     output logic                o_opcode_mmx_PUNPCKLWD_unpack_low_packed_16_to_32,
     output logic                o_opcode_mmx_PUNPCKLDQ_unpack_low_packed_32_to_64,
     output logic                o_opcode_mmx_EMMS_empty_MMX_state,
+    output logic                o_opcode_mmx_any,
 
     // =========================
     // input
@@ -169,5 +170,11 @@ stage_2_dec_mmx_opcode_state u_state (
     .i_instruction                (i_instruction),
     .o_opcode_mmx_EMMS_empty_MMX_state (o_opcode_mmx_EMMS_empty_MMX_state)
 );
+
+assign o_opcode_mmx_any =
+    o_opcode_mmx_MOVQ_move_64_bit |
+    o_opcode_mmx_MOVD_move_32_bit |
+    o_opcode_mmx_PADDB_add_packed_8_bit |
+    o_opcode_mmx_EMMS_empty_MMX_state;
 
 endmodule

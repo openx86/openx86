@@ -127,9 +127,67 @@ module openx86_soc_top #(
     logic        sdram_phy_dq_oe;    // DQ 输出使能
     logic        sdram_phy_clk, sdram_phy_cke;
 
-    /* verilator lint_off UNUSEDSIGNAL */
-    logic        pic_intr;       // 主 PIC INTR → CPU（待接 CPU 中断输入）
-    /* verilator lint_on UNUSEDSIGNAL */
+    logic        pic_intr;       // 主 PIC INTR → CPU
+
+    logic        cpu_ads_n;
+    logic [31: 0] cpu_address;
+    logic [31: 0] cpu_data_out;
+    logic        cpu_data_oe;
+    logic [31: 0] cpu_data_in;
+    logic [ 3: 0] cpu_be_n;
+    logic        cpu_wr_n;
+    logic        cpu_dc_n;
+    logic        cpu_mio_n;
+    logic        cpu_blast_n;
+    logic        cpu_bready_n;
+    logic        cpu_hold;
+    logic        cpu_hlda;
+    logic        cpu_ferr_n;
+
+    i486_cpu u_cpu (
+        .o_ads_n    (cpu_ads_n),
+        .o_address  (cpu_address),
+        .o_data_out (cpu_data_out),
+        .o_data_oe  (cpu_data_oe),
+        .i_data_in  (cpu_data_in),
+        .o_be_n     (cpu_be_n),
+        .o_wr_n     (cpu_wr_n),
+        .o_dc_n     (cpu_dc_n),
+        .o_mio_n    (cpu_mio_n),
+        .o_blast_n  (cpu_blast_n),
+        .i_bready_n (cpu_bready_n),
+        .i_hold     (cpu_hold),
+        .o_hlda     (cpu_hlda),
+        .i_intr     (pic_intr),
+        .i_nmi      (1'b0),
+        .o_ferr_n   (cpu_ferr_n),
+        .clk        (clk),
+        .rst_n      (rst_n)
+    );
+
+    assign cpu_hold = 1'b0;
+
+    i486_soc_bus_bridge u_cpu_bridge (
+        .i_ads_n            (cpu_ads_n),
+        .i_address          (cpu_address),
+        .i_data_out         (cpu_data_out),
+        .i_data_oe          (cpu_data_oe),
+        .o_data_in          (cpu_data_in),
+        .i_wr_n             (cpu_wr_n),
+        .i_mio_n            (cpu_mio_n),
+        .i_blast_n          (cpu_blast_n),
+        .o_bready_n         (cpu_bready_n),
+        .o_bus_valid        (bus_valid),
+        .i_bus_ready        (bus_ready),
+        .i_bus_busy         (bus_busy),
+        .o_bus_write_enable (bus_we),
+        .o_bus_io_access    (bus_io),
+        .o_bus_address      (bus_addr),
+        .i_bus_read_data    (bus_rdata),
+        .o_bus_write_data   (bus_wdata),
+        .clk                (clk),
+        .rst_n              (rst_n)
+    );
 
     logic        b_sd_nat_clk;   // ide→native 主机时钟
     logic        b_sd_cmd_o;
@@ -144,20 +202,6 @@ module openx86_soc_top #(
     logic [ 3: 0]  sdio_dat_out;
     logic        sdio_dat_oe;
     logic [ 3: 0]  sdio_dat_in;
-
-    // W686 CPU 与总线控制器之间的主事务通道
-    i486_cpu u_cpu (
-        .bus_vaild        (bus_valid),
-        .bus_ready        (bus_ready),
-        .bus_busy         (bus_busy),
-        .bus_write_enable (bus_we),
-        .bus_io_access    (bus_io),
-        .bus_address      (bus_addr),
-        .bus_read_data    (bus_rdata),
-        .bus_write_data   (bus_wdata),
-        .clk              (clk),
-        .rst_n            (rst_n)
-    );
 
     // SDRAM DQ：仅当控制器 OE 时驱动，否则高阻。
     assign io_sdram_dq = sdram_phy_dq_oe ? sdram_phy_dq_out : 16'hZZZZ;

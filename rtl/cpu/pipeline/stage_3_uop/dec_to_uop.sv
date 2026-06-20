@@ -240,6 +240,9 @@ module dec_to_uop (
     input  logic                i_opcode_xor_imm_to_reg_mem,
     input  logic                i_opcode_xor_imm_to_acc,
     input  logic                i_opcode_x87_esc,
+    input  logic                i_opcode_mmx_any,
+    input  logic                i_opcode_mmx_emms,
+    input  logic                i_opcode_sse_any,
     input  logic [ 3: 0]        i_tttn,
     input  logic [ 2: 0]        i_eee,
 
@@ -617,9 +620,21 @@ module dec_to_uop (
                 uop_next.uop_opcode = `UOP_X87;
             end
 
+            // MMX instructions
+            else if (i_opcode_mmx_emms) begin
+                uop_next.uop_opcode = `UOP_EMMS;
+            end else if (i_opcode_mmx_any) begin
+                uop_next.uop_opcode = `UOP_MMX;
+            end
+
+            // SSE instructions
+            else if (i_opcode_sse_any) begin
+                uop_next.uop_opcode = `UOP_SSE;
+            end
+
             // CPUID
             else if (i_opcode_cpuid) begin
-                uop_next.uop_opcode = `UOP_NOP; // CPUID handled separately
+                uop_next.uop_opcode = `UOP_MISC;
             end
 
             // Other special instructions (AAA, AAD, AAM, AAS, DAA, DAS, etc.)

@@ -62,7 +62,7 @@ module stage_2_dec_x86_opcode (
     output logic                o_opcode_x86_CMP_mem_with_reg,
     output logic                o_opcode_x86_CMP_reg_with_mem,
     output logic                o_opcode_x86_CMP_imm_with_reg_mem,
-    output logic                o_opcode_x86_CMP_imm_with_acc,
+    output logic                o_opcode_x86_CMP_imm_to_acc,
     output logic                o_opcode_x86_CMPS_compare_string_operands,
     output logic                o_opcode_x86_CMPXCHG_compare_and_exchange,
     output logic                o_opcode_x86_CPUID_CPU_identification,
@@ -217,7 +217,7 @@ module stage_2_dec_x86_opcode (
     output logic                o_opcode_x86_SUB_imm_to_acc,
     output logic                o_opcode_x86_TEST_reg_mem_and_reg,
     output logic                o_opcode_x86_TEST_imm_and_reg_mem,
-    output logic                o_opcode_x86_TEST_imm_and_acc,
+    output logic                o_opcode_x86_TEST_imm_to_acc,
     output logic                o_opcode_x86_UD0_undefined_instruction,
     output logic                o_opcode_x86_UD1_undefined_instruction,
     output logic                o_opcode_x86_UD2_undefined_instruction,
@@ -270,7 +270,7 @@ stage_2_dec_x86_opcode_186 u_186 (
     .o_opcode_x86_CMP_mem_with_reg                                  (o_opcode_x86_CMP_mem_with_reg),
     .o_opcode_x86_CMP_reg_with_mem                                  (o_opcode_x86_CMP_reg_with_mem),
     .o_opcode_x86_CMP_imm_with_reg_mem                             (o_opcode_x86_CMP_imm_with_reg_mem),
-    .o_opcode_x86_CMP_imm_with_acc                                  (o_opcode_x86_CMP_imm_with_acc),
+    .o_opcode_x86_CMP_imm_to_acc                                  (o_opcode_x86_CMP_imm_to_acc),
     .o_opcode_x86_CMPS_compare_string_operands                      (o_opcode_x86_CMPS_compare_string_operands),
     .o_opcode_x86_CWD_convert_word_to_double                       (o_opcode_x86_CWD_convert_word_to_double),
     .o_opcode_x86_DAA_decimal_adjust_AL_after_add                  (o_opcode_x86_DAA_decimal_adjust_AL_after_add),
@@ -379,7 +379,7 @@ stage_2_dec_x86_opcode_186 u_186 (
     .o_opcode_x86_SUB_imm_to_acc                                     (o_opcode_x86_SUB_imm_to_acc),
     .o_opcode_x86_TEST_reg_mem_and_reg                               (o_opcode_x86_TEST_reg_mem_and_reg),
     .o_opcode_x86_TEST_imm_and_reg_mem                              (o_opcode_x86_TEST_imm_and_reg_mem),
-    .o_opcode_x86_TEST_imm_and_acc                                  (o_opcode_x86_TEST_imm_and_acc),
+    .o_opcode_x86_TEST_imm_to_acc                                  (o_opcode_x86_TEST_imm_to_acc),
     .o_opcode_x86_WAIT_wait                                         (o_opcode_x86_WAIT_wait),
     .o_opcode_x86_XCHG_reg_mem_with_reg                              (o_opcode_x86_XCHG_reg_mem_with_reg),
     .o_opcode_x86_XCHG_reg_with_acc_short                            (o_opcode_x86_XCHG_reg_with_acc_short),
@@ -391,7 +391,6 @@ stage_2_dec_x86_opcode_186 u_186 (
 );
 
 stage_2_dec_x86_opcode_286 u_286 (
-    .i_instruction                                     (i_instruction),
     .o_opcode_x86_ARPL_adjust_RPL_field_of_selector       (o_opcode_x86_ARPL_adjust_RPL_field_of_selector),
     .o_opcode_x86_CLTS_clear_task_switched_flag           (o_opcode_x86_CLTS_clear_task_switched_flag),
     .o_opcode_x86_LGDT_load_global_desciptor_table_reg    (o_opcode_x86_LGDT_load_global_desciptor_table_reg),
@@ -411,7 +410,6 @@ stage_2_dec_x86_opcode_286 u_286 (
 );
 
 stage_2_dec_x86_opcode_386 u_386 (
-    .i_instruction                                     (i_instruction),
     .o_opcode_x86_BSF_bit_scan_forward                    (o_opcode_x86_BSF_bit_scan_forward),
     .o_opcode_x86_BSR_bit_scan_reverse                    (o_opcode_x86_BSR_bit_scan_reverse),
     .o_opcode_x86_BT_reg_mem_with_imm                     (o_opcode_x86_BT_reg_mem_with_imm),
@@ -447,7 +445,6 @@ stage_2_dec_x86_opcode_386 u_386 (
 );
 
 stage_2_dec_x86_opcode_486 u_486 (
-    .i_instruction                                     (i_instruction),
     .o_opcode_x86_BSWAP_byte_swap                         (o_opcode_x86_BSWAP_byte_swap),
     .o_opcode_x86_CMPXCHG_compare_and_exchange             (o_opcode_x86_CMPXCHG_compare_and_exchange),
     .o_opcode_x86_CPUID_CPU_identification                 (o_opcode_x86_CPUID_CPU_identification),
@@ -459,7 +456,6 @@ stage_2_dec_x86_opcode_486 u_486 (
 );
 
 stage_2_dec_x86_opcode_586 u_586 (
-    .i_instruction                                     (i_instruction),
     .o_opcode_x86_RDTSC_read_time_stamp_counter            (o_opcode_x86_RDTSC_read_time_stamp_counter),
     .o_opcode_x86_RDMSR_read_from_model_specific_reg       (o_opcode_x86_RDMSR_read_from_model_specific_reg),
     .o_opcode_x86_WRMSR_write_to_model_specific_register   (o_opcode_x86_WRMSR_write_to_model_specific_register),
@@ -468,7 +464,6 @@ stage_2_dec_x86_opcode_586 u_586 (
 /* verilator lint_on PINMISSING */
 
 stage_2_dec_x86_opcode_686 u_686 (
-    .i_instruction                                                   (i_instruction),
     .o_opcode_x86_RDPMC_read_performance_monitoring_counters          (o_opcode_x86_RDPMC_read_performance_monitoring_counters),
     .o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id      (o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id),
     .o_opcode_x86_NOP_no_operation_multi_byte                         (o_opcode_x86_NOP_no_operation_multi_byte),

@@ -240,6 +240,9 @@ module stage_3_uop (
     input  logic                i_opcode_xor_imm_to_reg_mem,
     input  logic                i_opcode_xor_imm_to_acc,
     input  logic                i_opcode_x87_esc,
+    input  logic                i_opcode_mmx_any,
+    input  logic                i_opcode_mmx_emms,
+    input  logic                i_opcode_sse_any,
     input  logic [ 3: 0]        i_tttn,
     input  logic [ 2: 0]        i_eee,
 
@@ -279,7 +282,7 @@ module stage_3_uop (
     localparam int LP_QUEUE_DEPTH = 8;
 
     logic [LP_UOP_WIDTH - 1: 0] uop_data_vector;
-    logic [LP_UOP_WIDTH - 1: 0] uop_queue_data [0: LP_QUEUE_DEPTH - 1];
+    logic [LP_QUEUE_DEPTH - 1: 0][LP_UOP_WIDTH - 1: 0] uop_queue_data;
     logic [LP_UOP_WIDTH - 1: 0] uop_queue_out;
     logic                        queue_push_valid;
     logic                        queue_push_ready;
@@ -523,6 +526,9 @@ module stage_3_uop (
         .i_opcode_xor_imm_to_reg_mem ( i_opcode_xor_imm_to_reg_mem ),
         .i_opcode_xor_imm_to_acc     ( i_opcode_xor_imm_to_acc ),
         .i_opcode_x87_esc            ( i_opcode_x87_esc ),
+        .i_opcode_mmx_any            ( i_opcode_mmx_any ),
+        .i_opcode_mmx_emms           ( i_opcode_mmx_emms ),
+        .i_opcode_sse_any            ( i_opcode_sse_any ),
         .i_tttn                      ( i_tttn ),
         .i_eee                       ( i_eee ),
 

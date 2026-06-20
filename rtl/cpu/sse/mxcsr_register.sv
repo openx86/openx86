@@ -1,0 +1,43 @@
+// ============================================================================
+//  Copyright (c) 2026 Chang Wei
+//
+//  Permission is hereby granted, free of charge, to any person obtaining a copy
+//  of this software and associated documentation files (the "Software"), to deal
+//  in the Software without restriction, including without limitation the rights
+//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  copies of the Software, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included in
+//  all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+//
+// ----------------------------------------------------------------------------
+//  File        : mxcsr_register.sv
+//  Author      : Chang Wei <changwei1006@gmail.com>
+//  Description : SSE MXCSR control/status register
+// ============================================================================
+
+module mxcsr_register (
+    input  logic         i_write_enable,
+    input  logic [31: 0] i_write_data,
+    output logic [31: 0] o_data,
+    input  logic         clk,
+    input  logic         rst_n
+);
+
+    logic [31: 0] mxcsr;
+
+    localparam logic [31: 0] LP_MXCSR_RESET = 32'h0000_1F80;
+
+    always_ff @(posedge clk or negedge rst_n) begin : ff_mxcsr
+        if (~rst_n) begin
+            mxcsr <= LP_MXCSR_RESET;
+        end else if (i_write_enable) begin
+            mxcsr <= i_write_data;
+        end
+    end
+
+    assign o_data = mxcsr;
+
+endmodule

@@ -34,9 +34,9 @@
 `define cpuid_max_EAX (32'hFFFF_FFFF)
 // 3*32/8=12 bytes { EBX, ECX, EDX }, 12 ascii
 `define cpuid_manufacturer "OpenX86-Free"
-`define cpuid_stepping_id 4'b0
-`define cpuid_model_id 4'b0
-`define cpuid_family_id 4'b0
+`define cpuid_stepping_id 4'd4
+`define cpuid_model_id 4'd4
+`define cpuid_family_id 4'd5
 `define cpuid_processor_type 2'b0
 `define cpuid_extended_model_id 4'b0
 `define cpuid_extended_family_id 8'b0
@@ -47,7 +47,7 @@
 `define cpuid_logical_processors_count 8'b0
 `define cpuid_local_APIC_id 8'b0
 
-`define cpuid_feature_fpu           1'b0
+`define cpuid_feature_fpu           1'b1
 `define cpuid_feature_vme            1'b0
 `define cpuid_feature_de             1'b0
 `define cpuid_feature_pse            1'b0
@@ -69,9 +69,9 @@
 `define cpuid_feature_clfsh          1'b0
 `define cpuid_feature_ds             1'b0
 `define cpuid_feature_acpi           1'b0
-`define cpuid_feature_mmx            1'b0
-`define cpuid_feature_fxsr           1'b0
-`define cpuid_feature_sse            1'b0
+`define cpuid_feature_mmx            1'b1
+`define cpuid_feature_fxsr           1'b1
+`define cpuid_feature_sse            1'b1
 `define cpuid_feature_sse2           1'b0
 `define cpuid_feature_ss             1'b0
 `define cpuid_feature_htt            1'b0
@@ -510,5 +510,8 @@ typedef struct packed {
 `define UOP_STRING     6'd49
 `define UOP_FLAG_CTRL  6'd50
 `define UOP_MISC       6'd51
+`define UOP_MMX        6'd52
+`define UOP_SSE        6'd53
+`define UOP_EMMS       6'd54
 
 `endif

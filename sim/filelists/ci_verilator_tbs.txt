@@ -1,25 +1,13 @@
-# CI 上 Verilator 回归用的 TB 路径（相对仓库根，每行一个）。
-# 全量回归在本地执行: ./scripts/test_all_verilator.sh build
+# CI Verilator TB paths (relative to repo root, one per line).
+# Full regression locally: ./scripts/test_cpu.sh
 tb/common/edge_detect_tb.sv
-tb/top/soc_top_tb.sv
-tb/integration/bus_tb.sv
-tb/integration/bus_chipset_integration_tb.sv
-tb/memory/sdram_controller_tb.sv
-tb/peripheral/sdcard/sdcard_controller_tb.sv
-tb/peripheral/sdcard/disk_ram_8_tb.sv
-tb/peripheral/sdcard/ide_sd_native_disk_tb.sv
-tb/peripheral/vga/vga_font_rom_tb.sv
-tb/peripheral/vga/vga_port_tb.sv
-tb/chipset/i8259_pic_tb.sv
-tb/chipset/i8254_pit_tb.sv
-tb/chipset/at24lc32_tb.sv
-tb/chipset/com_ns16550_tb.sv
-tb/device/ide/ide_controller_tb.sv
-tb/cpu/iu/prefetch/instruction_fetch_tb.sv
-tb/cpu/iu/decode/decode_tb.sv
-tb/cpu/iu/decode/decode_opcode_x86_tb.sv
-tb/cpu/eu/execute_unit_tb.sv
-tb/cpu/eu/extensions_i486/execute_i486_cpuid_tb.sv
-tb/cpu/eu/instructions/eu_log_and_tb.sv
-tb/cpu/eu/instructions/eu_ari_add_tb.sv
+tb/openx86_soc_top_tb.sv
 tb/cpu/biu/bus_interface_unit_tb.sv
+tb/cpu/i486_soc_bus_bridge_tb.sv
+tb/cpu/exception_interrupt_unit_tb.sv
+tb/cpu/i486_cpu_core_tb.sv
+tb/cpu/pipeline/stage_4_reg_read/stage_4_reg_read_tb.sv
+tb/cpu/pipeline/stage_3_uop/pipeline_reg_tb.sv
+tb/chipset/chip_8259_pic_tb.sv
+tb/chipset/chip_ns16550_com_tb.sv
+tb/device/vga/vga_graphics_adapter_tb.sv

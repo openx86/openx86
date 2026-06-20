@@ -3,7 +3,7 @@
 //
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
+//  in the Software without tmp_restriction, including without limitation the rights
 //  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //  copies of the Software, subject to the following conditions:
 //
@@ -118,7 +118,7 @@ module stage_5_exu (
     output logic [31: 0]        o_mem_write_data,
 
     // =========================
-    // Clock and reset
+    // Clock and tmp_reset
     // =========================
     input  logic                clk,
     input  logic                rst_n
@@ -136,7 +136,7 @@ module stage_5_exu (
     logic         is_store;
     logic [ 5: 0] uop_opcode;
 
-    logic [31: 0] result;
+    logic [31: 0] tmp_result;
     logic         new_cf;
     logic         new_pf;
     logic         new_zf;
@@ -167,8 +167,11 @@ module stage_5_exu (
     logic [63: 0] tmp_combined;
     logic [63: 0] tmp_dividend;
     logic signed [63: 0] tmp_dividend_signed;
-    logic [31: 0] tmp_tmp_divisor;
-    logic signed [31: 0] tmp_tmp_divisor_signed;
+    logic [31: 0] tmp_divisor;
+    logic signed [31: 0] tmp_divisor_signed;
+    logic [63: 0] tmp_product;
+    logic signed [63: 0] tmp_product_signed;
+    logic         tmp_condition_met;
 
     assign src1_data = i_src1_data;
     assign src2_data = i_src2_data;
@@ -213,7 +216,7 @@ module stage_5_exu (
     endfunction
 
     always_comb begin
-        result = 32'd0;
+        tmp_result = 32'd0;
         new_cf = i_cf;
         new_pf = i_pf;
         new_zf = i_zf;
@@ -233,7 +236,7 @@ module stage_5_exu (
             case (uop_opcode)
                 `UOP_ADD: begin
                     tmp_sum = src1_data + src2_data;
-                    result = tmp_sum;
+                    tmp_result = tmp_sum;
                     new_cf = compute_cf_add(src1_data, src2_data);
                     new_pf = compute_pf(tmp_sum);
                     new_zf = compute_zf(tmp_sum);
@@ -244,7 +247,7 @@ module stage_5_exu (
                 end
                 `UOP_SUB: begin
                     tmp_diff = src1_data - src2_data;
-                    result = tmp_diff;
+                    tmp_result = tmp_diff;
                     new_cf = compute_cf_sub(src1_data, src2_data);
                     new_pf = compute_pf(tmp_diff);
                     new_zf = compute_zf(tmp_diff);
@@ -255,7 +258,7 @@ module stage_5_exu (
                 end
                 `UOP_AND: begin
                     tmp_res = src1_data & src2_data;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     new_cf = 1'b0;
                     new_of = 1'b0;
                     new_pf = compute_pf(tmp_res);
@@ -266,7 +269,7 @@ module stage_5_exu (
                 end
                 `UOP_OR: begin
                     tmp_res = src1_data | src2_data;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     new_cf = 1'b0;
                     new_of = 1'b0;
                     new_pf = compute_pf(tmp_res);
@@ -277,7 +280,7 @@ module stage_5_exu (
                 end
                 `UOP_XOR: begin
                     tmp_res = src1_data ^ src2_data;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     new_cf = 1'b0;
                     new_of = 1'b0;
                     new_pf = compute_pf(tmp_res);
@@ -287,7 +290,7 @@ module stage_5_exu (
                     write_flags = 1'b1;
                 end
                 `UOP_MOV: begin
-                    result = has_imm ? immediate : src2_data;
+                    tmp_result = has_imm ? immediate : src2_data;
                     write_gpr = 1'b1;
                 end
                 `UOP_CMP: begin
@@ -301,7 +304,7 @@ module stage_5_exu (
                 end
                 `UOP_ADC: begin
                     tmp_sum = src1_data + src2_data + i_cf;
-                    result = tmp_sum;
+                    tmp_result = tmp_sum;
                     new_cf = compute_cf_adc(src1_data, src2_data, i_cf);
                     new_pf = compute_pf(tmp_sum);
                     new_zf = compute_zf(tmp_sum);
@@ -312,7 +315,7 @@ module stage_5_exu (
                 end
                 `UOP_SBB: begin
                     tmp_diff = src1_data - src2_data - i_cf;
-                    result = tmp_diff;
+                    tmp_result = tmp_diff;
                     new_cf = compute_cf_sbb(src1_data, src2_data, i_cf);
                     new_pf = compute_pf(tmp_diff);
                     new_zf = compute_zf(tmp_diff);
@@ -323,7 +326,7 @@ module stage_5_exu (
                 end
                 `UOP_INC: begin
                     tmp_res = src1_data + 32'd1;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     new_pf = compute_pf(tmp_res);
                     new_zf = compute_zf(tmp_res);
                     new_sf = compute_sf(tmp_res);
@@ -333,7 +336,7 @@ module stage_5_exu (
                 end
                 `UOP_DEC: begin
                     tmp_res = src1_data - 32'd1;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     new_pf = compute_pf(tmp_res);
                     new_zf = compute_zf(tmp_res);
                     new_sf = compute_sf(tmp_res);
@@ -343,7 +346,7 @@ module stage_5_exu (
                 end
                 `UOP_NEG: begin
                     tmp_res = ~src1_data + 32'd1;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     new_cf = (src1_data != 32'd0);
                     new_pf = compute_pf(tmp_res);
                     new_zf = compute_zf(tmp_res);
@@ -353,7 +356,7 @@ module stage_5_exu (
                     write_flags = 1'b1;
                 end
                 `UOP_NOT: begin
-                    result = ~src1_data;
+                    tmp_result = ~src1_data;
                     write_gpr = 1'b1;
                 end
                 `UOP_TEST: begin
@@ -368,10 +371,10 @@ module stage_5_exu (
                 `UOP_SHL: begin
                     tmp_shift_count = src2_data[4: 0];
                     tmp_res = src1_data << tmp_shift_count;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     if (tmp_shift_count != 5'd0) begin
-                        new_cf = (shift_count > 5'd0) ? src1_data[32'd32 - shift_count] : src1_data[0];
-                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                        new_cf = (tmp_shift_count > 5'd0) ? src1_data[32'd32 - tmp_shift_count] : src1_data[0];
+                        new_of = (tmp_shift_count == 5'd1) ? (src1_data[31] ^ tmp_res[31]) : i_of;
                         new_pf = compute_pf(tmp_res);
                         new_zf = compute_zf(tmp_res);
                         new_sf = compute_sf(tmp_res);
@@ -382,10 +385,10 @@ module stage_5_exu (
                 `UOP_SHR: begin
                     tmp_shift_count = src2_data[4: 0];
                     tmp_res = src1_data >> tmp_shift_count;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     if (tmp_shift_count != 5'd0) begin
-                        new_cf = (shift_count > 5'd0) ? src1_data[shift_count - 5'd1] : src1_data[31];
-                        new_of = (shift_count == 5'd1) ? src1_data[31] : 1'b0;
+                        new_cf = (tmp_shift_count > 5'd0) ? src1_data[tmp_shift_count - 5'd1] : src1_data[31];
+                        new_of = (tmp_shift_count == 5'd1) ? src1_data[31] : 1'b0;
                         new_pf = compute_pf(tmp_res);
                         new_zf = compute_zf(tmp_res);
                         new_sf = compute_sf(tmp_res);
@@ -396,9 +399,9 @@ module stage_5_exu (
                 `UOP_SAR: begin
                     tmp_shift_count = src2_data[4: 0];
                     tmp_res = $signed(src1_data) >>> tmp_shift_count;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     if (tmp_shift_count != 5'd0) begin
-                        new_cf = (shift_count > 5'd0) ? src1_data[shift_count - 5'd1] : src1_data[31];
+                        new_cf = (tmp_shift_count > 5'd0) ? src1_data[tmp_shift_count - 5'd1] : src1_data[31];
                         new_of = 1'b0;
                         new_pf = compute_pf(tmp_res);
                         new_zf = compute_zf(tmp_res);
@@ -409,54 +412,54 @@ module stage_5_exu (
                 end
                 `UOP_ROL: begin
                     tmp_shift_count = src2_data[4: 0];
-                    tmp_res = (src1_data << tmp_shift_count) | (src1_data >> (32'd32 - shift_count));
-                    result = tmp_res;
+                    tmp_res = (src1_data << tmp_shift_count) | (src1_data >> (32'd32 - tmp_shift_count));
+                    tmp_result = tmp_res;
                     if (tmp_shift_count != 5'd0) begin
-                        new_cf = (shift_count == 5'd0) ? i_cf : src1_data[32'd32 - shift_count];
-                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                        new_cf = (tmp_shift_count == 5'd0) ? i_cf : src1_data[32'd32 - tmp_shift_count];
+                        new_of = (tmp_shift_count == 5'd1) ? (src1_data[31] ^ tmp_res[31]) : i_of;
                     end
                     write_gpr = 1'b1;
                 end
                 `UOP_ROR: begin
                     tmp_shift_count = src2_data[4: 0];
-                    tmp_res = (src1_data >> tmp_shift_count) | (src1_data << (32'd32 - shift_count));
-                    result = tmp_res;
+                    tmp_res = (src1_data >> tmp_shift_count) | (src1_data << (32'd32 - tmp_shift_count));
+                    tmp_result = tmp_res;
                     if (tmp_shift_count != 5'd0) begin
-                        new_cf = (shift_count == 5'd0) ? i_cf : src1_data[shift_count - 5'd1];
-                        new_of = (shift_count == 5'd1) ? (res[31] ^ src1_data[31]) : i_of;
+                        new_cf = (tmp_shift_count == 5'd0) ? i_cf : src1_data[tmp_shift_count - 5'd1];
+                        new_of = (tmp_shift_count == 5'd1) ? (tmp_res[31] ^ src1_data[31]) : i_of;
                     end
                     write_gpr = 1'b1;
                 end
                 `UOP_RCL: begin
                     tmp_shift_count = src2_data[4: 0];
-                    tmp_tmp_ext_src = {i_cf, src1_data};
-                    tmp_res = (tmp_ext_src << tmp_shift_count) | (tmp_ext_src >> (33'd33 - shift_count));
-                    result = tmp_res[31: 0];
+                    tmp_ext_src = {i_cf, src1_data};
+                    tmp_res = (tmp_ext_src << tmp_shift_count) | (tmp_ext_src >> (33'd33 - tmp_shift_count));
+                    tmp_result = tmp_res[31: 0];
                     if (tmp_shift_count != 5'd0) begin
-                        new_cf = res[32];
-                        new_of = (shift_count == 5'd1) ? (res[31] ^ src1_data[31]) : i_of;
+                        new_cf = tmp_res[32];
+                        new_of = (tmp_shift_count == 5'd1) ? (tmp_res[31] ^ src1_data[31]) : i_of;
                     end
                     write_gpr = 1'b1;
                 end
                 `UOP_RCR: begin
                     tmp_shift_count = src2_data[4: 0];
-                    tmp_tmp_ext_src = {src1_data, i_cf};
-                    tmp_res = (tmp_ext_src >> tmp_shift_count) | (tmp_ext_src << (33'd33 - shift_count));
-                    result = tmp_res[31: 0];
+                    tmp_ext_src = {src1_data, i_cf};
+                    tmp_res = (tmp_ext_src >> tmp_shift_count) | (tmp_ext_src << (33'd33 - tmp_shift_count));
+                    tmp_result = tmp_res[31: 0];
                     if (tmp_shift_count != 5'd0) begin
-                        new_cf = res[0];
-                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                        new_cf = tmp_res[0];
+                        new_of = (tmp_shift_count == 5'd1) ? (src1_data[31] ^ tmp_res[31]) : i_of;
                     end
                     write_gpr = 1'b1;
                 end
                 `UOP_SHLD: begin
                     tmp_shift_count = src2_data[4: 0];
-                    tmp_tmp_combined = {src1_data, src2_data};
+                    tmp_combined = {src1_data, src2_data};
                     tmp_res = tmp_combined[31: 0] << tmp_shift_count;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     if (tmp_shift_count != 5'd0) begin
-                        new_cf = (shift_count > 5'd0) ? combined[32'd32 - shift_count] : combined[31];
-                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                        new_cf = (tmp_shift_count > 5'd0) ? tmp_combined[32'd32 - tmp_shift_count] : tmp_combined[31];
+                        new_of = (tmp_shift_count == 5'd1) ? (src1_data[31] ^ tmp_res[31]) : i_of;
                         new_pf = compute_pf(tmp_res);
                         new_zf = compute_zf(tmp_res);
                         new_sf = compute_sf(tmp_res);
@@ -466,12 +469,12 @@ module stage_5_exu (
                 end
                 `UOP_SHRD: begin
                     tmp_shift_count = src2_data[4: 0];
-                    tmp_tmp_combined = {src1_data, src2_data};
+                    tmp_combined = {src1_data, src2_data};
                     tmp_res = tmp_combined[63: 32] >> tmp_shift_count;
-                    result = tmp_res;
+                    tmp_result = tmp_res;
                     if (tmp_shift_count != 5'd0) begin
-                        new_cf = (shift_count > 5'd0) ? combined[shift_count - 5'd1] : combined[32];
-                        new_of = (shift_count == 5'd1) ? (src1_data[31] ^ res[31]) : i_of;
+                        new_cf = (tmp_shift_count > 5'd0) ? tmp_combined[tmp_shift_count - 5'd1] : tmp_combined[32];
+                        new_of = (tmp_shift_count == 5'd1) ? (src1_data[31] ^ tmp_res[31]) : i_of;
                         new_pf = compute_pf(tmp_res);
                         new_zf = compute_zf(tmp_res);
                         new_sf = compute_sf(tmp_res);
@@ -487,140 +490,128 @@ module stage_5_exu (
                 `UOP_BTS: begin
                     tmp_bit_index = src2_data[4: 0];
                     new_cf = src1_data[tmp_bit_index];
-                    result = src1_data;
-                    result[tmp_bit_index] = 1'b1;
+                    tmp_result = src1_data;
+                    tmp_result[tmp_bit_index] = 1'b1;
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_BTR: begin
                     tmp_bit_index = src2_data[4: 0];
                     new_cf = src1_data[tmp_bit_index];
-                    result = src1_data;
-                    result[tmp_bit_index] = 1'b0;
+                    tmp_result = src1_data;
+                    tmp_result[tmp_bit_index] = 1'b0;
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_BTC: begin
                     tmp_bit_index = src2_data[4: 0];
                     new_cf = src1_data[tmp_bit_index];
-                    result = src1_data;
-                    result[tmp_bit_index] = ~src1_data[tmp_bit_index];
+                    tmp_result = src1_data;
+                    tmp_result[tmp_bit_index] = ~src1_data[tmp_bit_index];
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_BSF: begin
                     tmp_bit_index = 5'd0;
-                    tmp_operand = src1_data;
-                    if (tmp_operand != 32'd0) begin
-                        case (1'b1)
-                            operand[0]:  bit_index = 5'd0;
-                            operand[1]:  bit_index = 5'd1;
-                            operand[2]:  bit_index = 5'd2;
-                            operand[3]:  bit_index = 5'd3;
-                            operand[4]:  bit_index = 5'd4;
-                            operand[5]:  bit_index = 5'd5;
-                            operand[6]:  bit_index = 5'd6;
-                            operand[7]:  bit_index = 5'd7;
-                            operand[8]:  bit_index = 5'd8;
-                            operand[9]:  bit_index = 5'd9;
-                            operand[10]: bit_index = 5'd10;
-                            operand[11]: bit_index = 5'd11;
-                            operand[12]: bit_index = 5'd12;
-                            operand[13]: bit_index = 5'd13;
-                            operand[14]: bit_index = 5'd14;
-                            operand[15]: bit_index = 5'd15;
-                            operand[16]: bit_index = 5'd16;
-                            operand[17]: bit_index = 5'd17;
-                            operand[18]: bit_index = 5'd18;
-                            operand[19]: bit_index = 5'd19;
-                            operand[20]: bit_index = 5'd20;
-                            operand[21]: bit_index = 5'd21;
-                            operand[22]: bit_index = 5'd22;
-                            operand[23]: bit_index = 5'd23;
-                            operand[24]: bit_index = 5'd24;
-                            operand[25]: bit_index = 5'd25;
-                            operand[26]: bit_index = 5'd26;
-                            operand[27]: bit_index = 5'd27;
-                            operand[28]: bit_index = 5'd28;
-                            operand[29]: bit_index = 5'd29;
-                            operand[30]: bit_index = 5'd30;
-                            operand[31]: bit_index = 5'd31;
-                            default:  bit_index = 5'd0;
-                        endcase
-                        result = {27'd0, bit_index};
-                        write_gpr = 1'b1;
-                        write_flags = 1'b1;
-                    end
-                    new_zf = (operand == 32'd0);
+                    if (src1_data[ 0]) tmp_bit_index = 5'd0;
+                    if (src1_data[ 1]) tmp_bit_index = 5'd1;
+                    if (src1_data[ 2]) tmp_bit_index = 5'd2;
+                    if (src1_data[ 3]) tmp_bit_index = 5'd3;
+                    if (src1_data[ 4]) tmp_bit_index = 5'd4;
+                    if (src1_data[ 5]) tmp_bit_index = 5'd5;
+                    if (src1_data[ 6]) tmp_bit_index = 5'd6;
+                    if (src1_data[ 7]) tmp_bit_index = 5'd7;
+                    if (src1_data[ 8]) tmp_bit_index = 5'd8;
+                    if (src1_data[ 9]) tmp_bit_index = 5'd9;
+                    if (src1_data[10]) tmp_bit_index = 5'd10;
+                    if (src1_data[11]) tmp_bit_index = 5'd11;
+                    if (src1_data[12]) tmp_bit_index = 5'd12;
+                    if (src1_data[13]) tmp_bit_index = 5'd13;
+                    if (src1_data[14]) tmp_bit_index = 5'd14;
+                    if (src1_data[15]) tmp_bit_index = 5'd15;
+                    if (src1_data[16]) tmp_bit_index = 5'd16;
+                    if (src1_data[17]) tmp_bit_index = 5'd17;
+                    if (src1_data[18]) tmp_bit_index = 5'd18;
+                    if (src1_data[19]) tmp_bit_index = 5'd19;
+                    if (src1_data[20]) tmp_bit_index = 5'd20;
+                    if (src1_data[21]) tmp_bit_index = 5'd21;
+                    if (src1_data[22]) tmp_bit_index = 5'd22;
+                    if (src1_data[23]) tmp_bit_index = 5'd23;
+                    if (src1_data[24]) tmp_bit_index = 5'd24;
+                    if (src1_data[25]) tmp_bit_index = 5'd25;
+                    if (src1_data[26]) tmp_bit_index = 5'd26;
+                    if (src1_data[27]) tmp_bit_index = 5'd27;
+                    if (src1_data[28]) tmp_bit_index = 5'd28;
+                    if (src1_data[29]) tmp_bit_index = 5'd29;
+                    if (src1_data[30]) tmp_bit_index = 5'd30;
+                    if (src1_data[31]) tmp_bit_index = 5'd31;
+                    tmp_result = {27'd0, tmp_bit_index};
+                    new_zf = (src1_data == 32'd0);
+                    new_of = 1'b0;
+                    write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_BSR: begin
                     tmp_bit_index = 5'd0;
-                    tmp_operand = src1_data;
-                    if (tmp_operand != 32'd0) begin
-                        case (1'b1)
-                            operand[31]: bit_index = 5'd31;
-                            operand[30]: bit_index = 5'd30;
-                            operand[29]: bit_index = 5'd29;
-                            operand[28]: bit_index = 5'd28;
-                            operand[27]: bit_index = 5'd27;
-                            operand[26]: bit_index = 5'd26;
-                            operand[25]: bit_index = 5'd25;
-                            operand[24]: bit_index = 5'd24;
-                            operand[23]: bit_index = 5'd23;
-                            operand[22]: bit_index = 5'd22;
-                            operand[21]: bit_index = 5'd21;
-                            operand[20]: bit_index = 5'd20;
-                            operand[19]: bit_index = 5'd19;
-                            operand[18]: bit_index = 5'd18;
-                            operand[17]: bit_index = 5'd17;
-                            operand[16]: bit_index = 5'd16;
-                            operand[15]: bit_index = 5'd15;
-                            operand[14]: bit_index = 5'd14;
-                            operand[13]: bit_index = 5'd13;
-                            operand[12]: bit_index = 5'd12;
-                            operand[11]: bit_index = 5'd11;
-                            operand[10]: bit_index = 5'd10;
-                            operand[9]:  bit_index = 5'd9;
-                            operand[8]:  bit_index = 5'd8;
-                            operand[7]:  bit_index = 5'd7;
-                            operand[6]:  bit_index = 5'd6;
-                            operand[5]:  bit_index = 5'd5;
-                            operand[4]:  bit_index = 5'd4;
-                            operand[3]:  bit_index = 5'd3;
-                            operand[2]:  bit_index = 5'd2;
-                            operand[1]:  bit_index = 5'd1;
-                            operand[0]:  bit_index = 5'd0;
-                            default:  bit_index = 5'd0;
-                        endcase
-                        result = {27'd0, bit_index};
-                        write_gpr = 1'b1;
-                        write_flags = 1'b1;
-                    end
-                    new_zf = (operand == 32'd0);
+                    if (src1_data[31]) tmp_bit_index = 5'd31;
+                    if (src1_data[30]) tmp_bit_index = 5'd30;
+                    if (src1_data[29]) tmp_bit_index = 5'd29;
+                    if (src1_data[28]) tmp_bit_index = 5'd28;
+                    if (src1_data[27]) tmp_bit_index = 5'd27;
+                    if (src1_data[26]) tmp_bit_index = 5'd26;
+                    if (src1_data[25]) tmp_bit_index = 5'd25;
+                    if (src1_data[24]) tmp_bit_index = 5'd24;
+                    if (src1_data[23]) tmp_bit_index = 5'd23;
+                    if (src1_data[22]) tmp_bit_index = 5'd22;
+                    if (src1_data[21]) tmp_bit_index = 5'd21;
+                    if (src1_data[20]) tmp_bit_index = 5'd20;
+                    if (src1_data[19]) tmp_bit_index = 5'd19;
+                    if (src1_data[18]) tmp_bit_index = 5'd18;
+                    if (src1_data[17]) tmp_bit_index = 5'd17;
+                    if (src1_data[16]) tmp_bit_index = 5'd16;
+                    if (src1_data[15]) tmp_bit_index = 5'd15;
+                    if (src1_data[14]) tmp_bit_index = 5'd14;
+                    if (src1_data[13]) tmp_bit_index = 5'd13;
+                    if (src1_data[12]) tmp_bit_index = 5'd12;
+                    if (src1_data[11]) tmp_bit_index = 5'd11;
+                    if (src1_data[10]) tmp_bit_index = 5'd10;
+                    if (src1_data[ 9]) tmp_bit_index = 5'd9;
+                    if (src1_data[ 8]) tmp_bit_index = 5'd8;
+                    if (src1_data[ 7]) tmp_bit_index = 5'd7;
+                    if (src1_data[ 6]) tmp_bit_index = 5'd6;
+                    if (src1_data[ 5]) tmp_bit_index = 5'd5;
+                    if (src1_data[ 4]) tmp_bit_index = 5'd4;
+                    if (src1_data[ 3]) tmp_bit_index = 5'd3;
+                    if (src1_data[ 2]) tmp_bit_index = 5'd2;
+                    if (src1_data[ 1]) tmp_bit_index = 5'd1;
+                    if (src1_data[ 0]) tmp_bit_index = 5'd0;
+                    tmp_result = {27'd0, tmp_bit_index};
+                    new_zf = (src1_data == 32'd0);
+                    new_of = 1'b0;
+                    write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_MOVSX: begin
                     tmp_src_16 = has_imm ? immediate[15: 0] : src2_data[15: 0];
-                    result = {{16{tmp_src_16[15]}}, tmp_src_16};
+                    tmp_result = {{16{tmp_src_16[15]}}, tmp_src_16};
                     write_gpr = 1'b1;
                 end
                 `UOP_MOVZX: begin
                     tmp_src_16 = has_imm ? immediate[15: 0] : src2_data[15: 0];
-                    result = {16'd0, tmp_src_16};
+                    tmp_result = {16'd0, tmp_src_16};
                     write_gpr = 1'b1;
                 end
                 `UOP_XCHG: begin
-                    result = src2_data;
+                    tmp_result = src2_data;
                     write_gpr = 1'b1;
                 end
                 `UOP_LEA: begin
-                    result = src1_data + src2_data + displacement;
+                    tmp_result = src1_data + src2_data + displacement;
                     write_gpr = 1'b1;
                 end
                 `UOP_XADD: begin
                     tmp_sum = src1_data + src2_data;
-                    result = tmp_sum;
+                    tmp_result = tmp_sum;
                     new_cf = compute_cf_add(src1_data, src2_data);
                     new_pf = compute_pf(tmp_sum);
                     new_zf = compute_zf(tmp_sum);
@@ -637,9 +628,9 @@ module stage_5_exu (
                     new_sf = compute_sf(tmp_diff);
                     new_of = compute_of_sub(src1_data, src2_data);
                     if (src1_data == src2_data) begin
-                        result = src2_data;
+                        tmp_result = src2_data;
                     end else begin
-                        result = src1_data;
+                        tmp_result = src1_data;
                     end
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
@@ -647,16 +638,16 @@ module stage_5_exu (
                 `UOP_PUSH: begin
                     tmp_src = has_imm ? immediate : src1_data;
                     tmp_new_esp = src2_data - 32'd4;
-                    result = tmp_new_esp;
-                    mem_address = new_esp;
-                    mem_write_data = src;
+                    tmp_result = tmp_new_esp;
+                    mem_address = tmp_new_esp;
+                    mem_write_data = tmp_src;
                     mem_valid = 1'b1;
                     mem_write_enable = 1'b1;
                     write_gpr = 1'b1;
                 end
                 `UOP_POP: begin
                     tmp_new_esp = src1_data + 32'd4;
-                    result = has_imm ? new_esp + immediate : src2_data;
+                    tmp_result = has_imm ? (tmp_new_esp + immediate) : src2_data;
                     mem_address = src1_data;
                     mem_valid = 1'b1;
                     mem_write_enable = 1'b0;
@@ -665,26 +656,26 @@ module stage_5_exu (
                 `UOP_BRANCH: begin
                     tmp_target = has_disp ? displacement : immediate;
                     tmp_condition_met = compute_condition(tttn, i_of, i_cf, i_zf, i_sf, i_pf);
-                    if (condition_met) begin
-                        ip_data = target;
+                    if (tmp_condition_met) begin
+                        ip_data = tmp_target;
                         write_ip = 1'b1;
                     end
                 end
                 `UOP_CALL: begin
                     tmp_target = has_disp ? displacement : immediate;
                     tmp_new_esp = src2_data - 32'd4;
-                    result = tmp_new_esp;
-                    mem_address = new_esp;
+                    tmp_result = tmp_new_esp;
+                    mem_address = tmp_new_esp;
                     mem_write_data = src1_data;
                     mem_valid = 1'b1;
                     mem_write_enable = 1'b1;
-                    ip_data = target;
+                    ip_data = tmp_target;
                     write_gpr = 1'b1;
                     write_ip = 1'b1;
                 end
                 `UOP_RET: begin
                     tmp_new_esp = has_imm ? (src1_data + immediate) : (src1_data + 32'd4);
-                    result = tmp_new_esp;
+                    tmp_result = tmp_new_esp;
                     mem_address = src1_data;
                     mem_valid = 1'b1;
                     mem_write_enable = 1'b0;
@@ -694,37 +685,48 @@ module stage_5_exu (
                 end
                 `UOP_SETCC: begin
                     tmp_condition_met = compute_condition(tttn, i_of, i_cf, i_zf, i_sf, i_pf);
-                    result = condition_met ? 32'd1 : 32'd0;
+                    tmp_result = tmp_condition_met ? 32'd1 : 32'd0;
                     write_gpr = 1'b1;
                 end
                 `UOP_STRING: begin
-                    result = 32'd0;
+                    tmp_result = 32'd0;
                 end
                 `UOP_FLAG_CTRL: begin
-                    result = 32'd0;
+                    tmp_result = 32'd0;
                 end
                 `UOP_MISC: begin
-                    result = 32'd0;
+                    tmp_result = 32'd0;
                 end
                 `UOP_X87: begin
-                    result = 32'd0;
+                    tmp_result = 32'd0;
+                end
+                `UOP_MMX: begin
+                    tmp_result = src1_data + src2_data;
+                    write_gpr = 1'b1;
+                end
+                `UOP_SSE: begin
+                    tmp_result = src1_data + src2_data;
+                    write_gpr = 1'b1;
+                end
+                `UOP_EMMS: begin
+                    tmp_result = 32'd0;
                 end
                 `UOP_NOP: begin
-                    result = 32'd0;
+                    tmp_result = 32'd0;
                 end
                 `UOP_MUL: begin
-                    logic [63: 0] product = src1_data * src2_data;
-                    result = product[31: 0];
-                    new_cf = product[63: 32] != 32'd0;
-                    new_of = product[63: 32] != 32'd0;
+                    tmp_product = src1_data * src2_data;
+                    tmp_result = tmp_product[31: 0];
+                    new_cf = tmp_product[63: 32] != 32'd0;
+                    new_of = tmp_product[63: 32] != 32'd0;
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
                 `UOP_IMUL: begin
-                    logic signed [63: 0] product = $signed(src1_data) * $signed(src2_data);
-                    result = product[31: 0];
-                    new_cf = (product[63: 32] != 32'sd0) && (product[63: 32] != 32'hFFFFFFFF);
-                    new_of = (product[63: 32] != 32'sd0) && (product[63: 32] != 32'hFFFFFFFF);
+                    tmp_product_signed = $signed(src1_data) * $signed(src2_data);
+                    tmp_result = tmp_product_signed[31: 0];
+                    new_cf = (tmp_product_signed[63: 32] != 32'sd0) && (tmp_product_signed[63: 32] != 32'hFFFFFFFF);
+                    new_of = (tmp_product_signed[63: 32] != 32'sd0) && (tmp_product_signed[63: 32] != 32'hFFFFFFFF);
                     write_gpr = 1'b1;
                     write_flags = 1'b1;
                 end
@@ -732,7 +734,7 @@ module stage_5_exu (
                     tmp_dividend = {src1_data, src2_data};
                     tmp_divisor = src2_data;
                     if (tmp_divisor != 32'd0) begin
-                        result = tmp_dividend[31: 0] / tmp_divisor;
+                        tmp_result = tmp_dividend[31: 0] / tmp_divisor;
                     end
                     write_gpr = 1'b1;
                 end
@@ -740,12 +742,12 @@ module stage_5_exu (
                     tmp_dividend_signed = {src1_data, src2_data};
                     tmp_divisor_signed = src2_data;
                     if (tmp_divisor != 32'sd0) begin
-                        result = tmp_dividend[31: 0] / tmp_divisor;
+                        tmp_result = tmp_dividend[31: 0] / tmp_divisor;
                     end
                     write_gpr = 1'b1;
                 end
                 default: begin
-                    result = 32'd0;
+                    tmp_result = 32'd0;
                 end
             endcase
 
@@ -828,30 +830,30 @@ module stage_5_exu (
         end
     end
 
-    assign o_wrb_gpr_data_EAX = result;
-    assign o_wrb_gpr_data_AX  = result[15: 0];
-    assign o_wrb_gpr_data_AL  = result[ 7: 0];
-    assign o_wrb_gpr_data_AH  = result[15: 8];
-    assign o_wrb_gpr_data_EBX = result;
-    assign o_wrb_gpr_data_BX  = result[15: 0];
-    assign o_wrb_gpr_data_BL  = result[ 7: 0];
-    assign o_wrb_gpr_data_BH  = result[15: 8];
-    assign o_wrb_gpr_data_ECX = result;
-    assign o_wrb_gpr_data_CX  = result[15: 0];
-    assign o_wrb_gpr_data_CL  = result[ 7: 0];
-    assign o_wrb_gpr_data_CH  = result[15: 8];
-    assign o_wrb_gpr_data_EDX = result;
-    assign o_wrb_gpr_data_DX  = result[15: 0];
-    assign o_wrb_gpr_data_DL  = result[ 7: 0];
-    assign o_wrb_gpr_data_DH  = result[15: 8];
-    assign o_wrb_gpr_data_ESP = result;
-    assign o_wrb_gpr_data_SP  = result[15: 0];
-    assign o_wrb_gpr_data_EBP = result;
-    assign o_wrb_gpr_data_BP  = result[15: 0];
-    assign o_wrb_gpr_data_ESI = result;
-    assign o_wrb_gpr_data_SI  = result[15: 0];
-    assign o_wrb_gpr_data_EDI = result;
-    assign o_wrb_gpr_data_DI  = result[15: 0];
+    assign o_wrb_gpr_data_EAX = tmp_result;
+    assign o_wrb_gpr_data_AX  = tmp_result[15: 0];
+    assign o_wrb_gpr_data_AL  = tmp_result[ 7: 0];
+    assign o_wrb_gpr_data_AH  = tmp_result[15: 8];
+    assign o_wrb_gpr_data_EBX = tmp_result;
+    assign o_wrb_gpr_data_BX  = tmp_result[15: 0];
+    assign o_wrb_gpr_data_BL  = tmp_result[ 7: 0];
+    assign o_wrb_gpr_data_BH  = tmp_result[15: 8];
+    assign o_wrb_gpr_data_ECX = tmp_result;
+    assign o_wrb_gpr_data_CX  = tmp_result[15: 0];
+    assign o_wrb_gpr_data_CL  = tmp_result[ 7: 0];
+    assign o_wrb_gpr_data_CH  = tmp_result[15: 8];
+    assign o_wrb_gpr_data_EDX = tmp_result;
+    assign o_wrb_gpr_data_DX  = tmp_result[15: 0];
+    assign o_wrb_gpr_data_DL  = tmp_result[ 7: 0];
+    assign o_wrb_gpr_data_DH  = tmp_result[15: 8];
+    assign o_wrb_gpr_data_ESP = tmp_result;
+    assign o_wrb_gpr_data_SP  = tmp_result[15: 0];
+    assign o_wrb_gpr_data_EBP = tmp_result;
+    assign o_wrb_gpr_data_BP  = tmp_result[15: 0];
+    assign o_wrb_gpr_data_ESI = tmp_result;
+    assign o_wrb_gpr_data_SI  = tmp_result[15: 0];
+    assign o_wrb_gpr_data_EDI = tmp_result;
+    assign o_wrb_gpr_data_DI  = tmp_result[15: 0];
 
     assign o_wrb_seg_enable_es = 1'b0;
     assign o_wrb_seg_enable_cs = 1'b0;

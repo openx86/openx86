@@ -205,7 +205,7 @@ module stage_2_dec_x86_operand_field (
     input  logic         i_opcode_x86_SBB_imm_to_acc,
     input  logic         i_opcode_x86_SCAS_scan_string,
     input  logic         i_opcode_x86_SETcc_byte_set_on_condition,
-    input  logic         i_opcode_x86_SGDT_store_global_descriptor_table_register,
+    input  logic         i_opcode_x86_SLDT_store_local_desciptor_table_register_register,
     input  logic         i_opcode_x86_SHL_reg_mem_by_1,
     input  logic         i_opcode_x86_SHL_reg_mem_by_CL,
     input  logic         i_opcode_x86_SHL_reg_mem_by_imm,
@@ -228,7 +228,7 @@ module stage_2_dec_x86_operand_field (
     input  logic         i_opcode_x86_SUB_reg_mem_to_reg,
     input  logic         i_opcode_x86_SUB_imm_to_reg_mem,
     input  logic         i_opcode_x86_SUB_imm_to_acc,
-    input  logic         i_opcode_x86_TEST_reg_mem_and_reg,
+    input  logic         i_opcode_x86_PUSH_reg_mem_and_reg,
     input  logic         i_opcode_x86_TEST_imm_and_reg_mem,
     input  logic         i_opcode_x86_TEST_imm_and_acc,
     input  logic         i_opcode_x86_UD0_undefined_instruction,
@@ -442,7 +442,7 @@ assign w_at_0_0 =
     i_opcode_x86_SUB_reg_mem_to_reg |
     i_opcode_x86_SUB_imm_to_reg_mem |
     i_opcode_x86_SUB_imm_to_acc |
-    i_opcode_x86_TEST_reg_mem_and_reg |
+    i_opcode_x86_PUSH_reg_mem_and_reg |
     i_opcode_x86_TEST_imm_and_reg_mem |
     i_opcode_x86_TEST_imm_and_acc |
     i_opcode_x86_XCHG_reg_mem_with_reg |
@@ -595,7 +595,7 @@ assign o_modrm_present =
     i_opcode_x86_SBB_reg_mem_to_reg |
     i_opcode_x86_SBB_imm_to_reg_mem |
     i_opcode_x86_SETcc_byte_set_on_condition |
-    i_opcode_x86_SGDT_store_global_descriptor_table_register |
+    i_opcode_x86_SLDT_store_local_desciptor_table_register_register |
     i_opcode_x86_SHL_reg_mem_by_1 |
     i_opcode_x86_SHL_reg_mem_by_CL |
     i_opcode_x86_SHL_reg_mem_by_imm |
@@ -613,7 +613,7 @@ assign o_modrm_present =
     i_opcode_x86_SUB_reg_to_reg_mem |
     i_opcode_x86_SUB_reg_mem_to_reg |
     i_opcode_x86_SUB_imm_to_reg_mem |
-    i_opcode_x86_TEST_reg_mem_and_reg |
+    i_opcode_x86_PUSH_reg_mem_and_reg |
     i_opcode_x86_TEST_imm_and_reg_mem |
     i_opcode_x86_VERR_verify_a_segment_for_reading |
     i_opcode_x86_VERW_verify_a_segment_for_writing |
@@ -845,7 +845,7 @@ assign o_disp_present =
 // i_opcode_x86_SUB_reg_mem_to_reg |
 // i_opcode_x86_SUB_imm_to_reg_mem |
 // i_opcode_x86_SUB_imm_to_acc |
-// i_opcode_x86_TEST_reg_mem_and_reg |
+// i_opcode_x86_PUSH_reg_mem_and_reg |
 // i_opcode_x86_TEST_imm_and_reg_mem |
 // i_opcode_x86_TEST_imm_and_acc |
 // i_opcode_x86_WAIT_wait |
@@ -894,7 +894,7 @@ assign o_disp_present =
 // i_opcode_x86_RDTSC_read_time_stamp_counter |
 // i_opcode_x86_RSM_resume_from_system_management_mode |
 // i_opcode_x86_SETcc_byte_set_on_condition |
-// i_opcode_x86_SGDT_store_global_descriptor_table_register |
+// i_opcode_x86_SLDT_store_local_desciptor_table_register_register |
 // i_opcode_x86_SHLD_reg_mem_by_imm |
 // i_opcode_x86_SHLD_reg_mem_by_CL |
 // i_opcode_x86_SHRD_reg_mem_by_imm |
@@ -1059,7 +1059,7 @@ assign o_opcode_byte_1 =
     i_opcode_x86_SUB_reg_mem_to_reg              |
     i_opcode_x86_SUB_imm_to_reg_mem              |
     i_opcode_x86_SUB_imm_to_acc                  |
-    i_opcode_x86_TEST_reg_mem_and_reg            |
+    i_opcode_x86_PUSH_reg_mem_and_reg            |
     i_opcode_x86_TEST_imm_and_reg_mem            |
     i_opcode_x86_TEST_imm_and_acc                |
     i_opcode_x86_WAIT_wait                       |
@@ -1120,7 +1120,7 @@ assign o_opcode_byte_2 =
     i_opcode_x86_RDTSC_read_time_stamp_counter |
     i_opcode_x86_RSM_resume_from_system_management_mode |
     i_opcode_x86_SETcc_byte_set_on_condition |
-    i_opcode_x86_SGDT_store_global_descriptor_table_register |
+    i_opcode_x86_SLDT_store_local_desciptor_table_register_register |
     i_opcode_x86_SHLD_reg_mem_by_imm |
     i_opcode_x86_SHLD_reg_mem_by_CL |
     i_opcode_x86_SHRD_reg_mem_by_imm |

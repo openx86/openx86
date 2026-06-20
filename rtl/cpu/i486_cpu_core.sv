@@ -27,35 +27,42 @@ module i486_cpu_core (
     // =========================
     // MMU channel
     // =========================
-    output logic         o_mmu_vaild      = 1'b0,
-    input  logic          i_mmu_ready,
-    output logic [31: 0] o_mmu_address     = 32'b0,
+    output logic         o_mmu_valid,
+    input  logic         i_mmu_ready,
+    output logic [31: 0] o_mmu_address,
     input  logic [31: 0] i_mmu_data_read,
 
     // =========================
     // instruction fetch channel
     // =========================
-    output logic         o_code_vaild     = 1'b0,
-    input  logic          i_code_ready,
-    output logic [31: 0] o_code_address    = 32'b0,
+    output logic         o_code_valid,
+    input  logic         i_code_ready,
+    output logic [31: 0] o_code_address,
     input  logic [31: 0] i_code_data_read,
 
     // =========================
     // data access channel
     // =========================
-    output logic         o_data_vaild     = 1'b0,
-    input  logic          i_data_ready,
-    output logic         o_data_write_enable = 1'b0,
-    output logic         o_data_io_access   = 1'b0,
-    output logic [31: 0] o_data_address    = 32'b0,
+    output logic         o_data_valid,
+    input  logic         i_data_ready,
+    output logic         o_data_write_enable,
+    output logic         o_data_io_access,
+    output logic [31: 0] o_data_address,
     input  logic [31: 0] i_data_data_read,
-    output logic [31: 0] o_data_data_write  = 32'b0,
+    output logic [31: 0] o_data_data_write,
+
+    // =========================
+    // Interrupt inputs
+    // =========================
+    input  logic         i_intr,
+    input  logic         i_nmi,
+    output logic         o_ferr_n,
 
     // =========================
     // clock and reset
     // =========================
-    input  logic          clk,
-    input  logic          rst_n
+    input  logic         clk,
+    input  logic         rst_n
 );
     // ============================================================
     // GPR write ports (individual write enables using register names)
@@ -129,20 +136,16 @@ module i486_cpu_core (
     // ============================================================
     logic FLAGS_write_enable;
     logic [31: 0] FLAGS_write_data;
-    /* verilator lint_off UNDRIVEN */
     logic wrb_FLAGS_write_enable;
     logic [31: 0] wrb_FLAGS_write_data;
-    /* verilator lint_on UNDRIVEN */
 
     // ============================================================
     // EIP write ports
     // ============================================================
     logic IP_write_enable;
     logic [31: 0] IP_write_data;
-    /* verilator lint_off UNDRIVEN */
     logic wrb_IP_write_enable;
     logic [31: 0] wrb_IP_write_data;
-    /* verilator lint_on UNDRIVEN */
 
     // ============================================================
     // control registers write ports (individual write enables)
@@ -255,6 +258,15 @@ module i486_cpu_core (
     logic [31: 0] cr7_data;
     logic PE, MP, EM, TS, R, PG;
     logic [19: 0] page_directory_base;
+    logic [ 1: 0] cpl;
+    logic         invalidate_cache;
+    logic         wbinvd_cmd;
+
+    assign cpl = 2'b00;
+    assign FLAGS_write_enable = wrb_FLAGS_write_enable;
+    assign FLAGS_write_data   = wrb_FLAGS_write_data;
+    assign IP_write_enable    = wrb_IP_write_enable;
+    assign IP_write_data      = wrb_IP_write_data;
 
     // ============================================================
     // debug and test registers
@@ -719,27 +731,154 @@ module i486_cpu_core (
     // ============================================================
     // GDTR register file
     // ============================================================
+    logic wrb_gdtr_write_enable;
+    logic [15: 0] wrb_gdtr_write_data_limit;
+    logic [31: 0] wrb_gdtr_write_data_base;
+    logic wrb_idtr_write_enable;
+    logic [15: 0] wrb_idtr_write_data_limit;
+    logic [31: 0] wrb_idtr_write_data_base;
+    logic         pipe_gdtr_write_enable;
+    logic [15: 0] pipe_gdtr_write_limit;
+    logic [31: 0] pipe_gdtr_write_base;
+    logic         pipe_idtr_write_enable;
+    logic [15: 0] pipe_idtr_write_limit;
+    logic [31: 0] pipe_idtr_write_base;
+
+    assign wrb_gdtr_write_enable     = pipe_gdtr_write_enable;
+    assign wrb_gdtr_write_data_limit = pipe_gdtr_write_limit;
+    assign wrb_gdtr_write_data_base  = pipe_gdtr_write_base;
+    assign wrb_idtr_write_enable     = pipe_idtr_write_enable;
+    assign wrb_idtr_write_data_limit = pipe_idtr_write_limit;
+    assign wrb_idtr_write_data_base  = pipe_idtr_write_base;
+
     rf_x86_gdtr u_rf_gdtr (
-        .gdtr_write_enable    (1'b0),
-        .gdtr_write_data_limit (16'd0),
-        .gdtr_write_data_base  (32'd0),
-        .gdtr_limit           (GDTR_limit),
-        .gdtr_base            (GDTR_base),
-        .clk                  (clk),
-        .rst_n                (rst_n)
+        .gdtr_write_enable     (wrb_gdtr_write_enable),
+        .gdtr_write_data_limit (wrb_gdtr_write_data_limit),
+        .gdtr_write_data_base  (wrb_gdtr_write_data_base),
+        .gdtr_limit            (GDTR_limit),
+        .gdtr_base             (GDTR_base),
+        .clk                   (clk),
+        .rst_n                 (rst_n)
     );
 
     // ============================================================
     // IDTR register file
     // ============================================================
     rf_x86_idtr u_rf_idtr (
-        .idtr_write_enable   (1'b0),
-        .idtr_write_data_limit(16'd0),
-        .idtr_write_data_base (32'd0),
-        .idtr_limit          (IDTR_limit),
-        .idtr_base           (IDTR_base),
-        .clk                (clk),
-        .rst_n              (rst_n)
+        .idtr_write_enable      (wrb_idtr_write_enable),
+        .idtr_write_data_limit  (wrb_idtr_write_data_limit),
+        .idtr_write_data_base   (wrb_idtr_write_data_base),
+        .idtr_limit             (IDTR_limit),
+        .idtr_base              (IDTR_base),
+        .clk                    (clk),
+        .rst_n                  (rst_n)
+    );
+
+    i486_cpu_pipeline u_pipeline (
+        .o_mmu_valid               (o_mmu_valid),
+        .i_mmu_ready               (i_mmu_ready),
+        .o_mmu_address             (o_mmu_address),
+        .i_mmu_data_read           (i_mmu_data_read),
+        .o_code_valid              (o_code_valid),
+        .i_code_ready              (i_code_ready),
+        .o_code_address            (o_code_address),
+        .i_code_data_read          (i_code_data_read),
+        .o_data_valid              (o_data_valid),
+        .i_data_ready              (i_data_ready),
+        .o_data_write_enable       (o_data_write_enable),
+        .o_data_io_access          (o_data_io_access),
+        .o_data_address            (o_data_address),
+        .i_data_data_read          (i_data_data_read),
+        .o_data_data_write         (o_data_data_write),
+        .i_gpr_eax                 (o_EAX),
+        .i_gpr_ebx                 (o_EBX),
+        .i_gpr_ecx                 (o_ECX),
+        .i_gpr_edx                 (o_EDX),
+        .i_gpr_esp                 (o_ESP),
+        .i_gpr_ebp                 (o_EBP),
+        .i_gpr_esi                 (o_ESI),
+        .i_gpr_edi                 (o_EDI),
+        .i_cf                      (CF),
+        .i_pf                      (PF),
+        .i_af                      (AF),
+        .i_zf                      (ZF),
+        .i_sf                      (SF),
+        .i_of                      (OF),
+        .i_if_flag                 (IF),
+        .i_protected_mode          (PE),
+        .i_segment_selector        (segment_selector),
+        .i_segment_descriptor      (descriptor_cache),
+        .i_cpl                     (cpl),
+        .i_paging_enable           (PG),
+        .i_page_directory_base     ({12'h0, page_directory_base}),
+        .i_idtr_base               (IDTR_base),
+        .i_idtr_limit              (IDTR_limit),
+        .i_eip                     (EIP),
+        .o_wrb_gpr_write_enable_EAX(wrb_gpr_write_enable_EAX),
+        .o_wrb_gpr_write_enable_AX (wrb_gpr_write_enable_AX),
+        .o_wrb_gpr_write_enable_AL (wrb_gpr_write_enable_AL),
+        .o_wrb_gpr_write_enable_AH (wrb_gpr_write_enable_AH),
+        .o_wrb_gpr_write_enable_EBX(wrb_gpr_write_enable_EBX),
+        .o_wrb_gpr_write_enable_BX (wrb_gpr_write_enable_BX),
+        .o_wrb_gpr_write_enable_BL (wrb_gpr_write_enable_BL),
+        .o_wrb_gpr_write_enable_BH (wrb_gpr_write_enable_BH),
+        .o_wrb_gpr_write_enable_ECX(wrb_gpr_write_enable_ECX),
+        .o_wrb_gpr_write_enable_CX (wrb_gpr_write_enable_CX),
+        .o_wrb_gpr_write_enable_CL (wrb_gpr_write_enable_CL),
+        .o_wrb_gpr_write_enable_CH (wrb_gpr_write_enable_CH),
+        .o_wrb_gpr_write_enable_EDX(wrb_gpr_write_enable_EDX),
+        .o_wrb_gpr_write_enable_DX (wrb_gpr_write_enable_DX),
+        .o_wrb_gpr_write_enable_DL (wrb_gpr_write_enable_DL),
+        .o_wrb_gpr_write_enable_DH (wrb_gpr_write_enable_DH),
+        .o_wrb_gpr_write_enable_ESP(wrb_gpr_write_enable_ESP),
+        .o_wrb_gpr_write_enable_SP (wrb_gpr_write_enable_SP),
+        .o_wrb_gpr_write_enable_EBP(wrb_gpr_write_enable_EBP),
+        .o_wrb_gpr_write_enable_BP (wrb_gpr_write_enable_BP),
+        .o_wrb_gpr_write_enable_ESI(wrb_gpr_write_enable_ESI),
+        .o_wrb_gpr_write_enable_SI (wrb_gpr_write_enable_SI),
+        .o_wrb_gpr_write_enable_EDI(wrb_gpr_write_enable_EDI),
+        .o_wrb_gpr_write_enable_DI (wrb_gpr_write_enable_DI),
+        .o_wrb_gpr_write_data_EAX  (wrb_gpr_write_data_EAX),
+        .o_wrb_gpr_write_data_AX   (wrb_gpr_write_data_AX),
+        .o_wrb_gpr_write_data_AL   (wrb_gpr_write_data_AL),
+        .o_wrb_gpr_write_data_AH   (wrb_gpr_write_data_AH),
+        .o_wrb_gpr_write_data_EBX  (wrb_gpr_write_data_EBX),
+        .o_wrb_gpr_write_data_BX   (wrb_gpr_write_data_BX),
+        .o_wrb_gpr_write_data_BL   (wrb_gpr_write_data_BL),
+        .o_wrb_gpr_write_data_BH   (wrb_gpr_write_data_BH),
+        .o_wrb_gpr_write_data_ECX  (wrb_gpr_write_data_ECX),
+        .o_wrb_gpr_write_data_CX   (wrb_gpr_write_data_CX),
+        .o_wrb_gpr_write_data_CL   (wrb_gpr_write_data_CL),
+        .o_wrb_gpr_write_data_CH   (wrb_gpr_write_data_CH),
+        .o_wrb_gpr_write_data_EDX  (wrb_gpr_write_data_EDX),
+        .o_wrb_gpr_write_data_DX   (wrb_gpr_write_data_DX),
+        .o_wrb_gpr_write_data_DL   (wrb_gpr_write_data_DL),
+        .o_wrb_gpr_write_data_DH   (wrb_gpr_write_data_DH),
+        .o_wrb_gpr_write_data_ESP  (wrb_gpr_write_data_ESP),
+        .o_wrb_gpr_write_data_SP   (wrb_gpr_write_data_SP),
+        .o_wrb_gpr_write_data_EBP  (wrb_gpr_write_data_EBP),
+        .o_wrb_gpr_write_data_BP   (wrb_gpr_write_data_BP),
+        .o_wrb_gpr_write_data_ESI  (wrb_gpr_write_data_ESI),
+        .o_wrb_gpr_write_data_SI   (wrb_gpr_write_data_SI),
+        .o_wrb_gpr_write_data_EDI  (wrb_gpr_write_data_EDI),
+        .o_wrb_gpr_write_data_DI   (wrb_gpr_write_data_DI),
+        .o_wrb_FLAGS_write_enable  (wrb_FLAGS_write_enable),
+        .o_wrb_FLAGS_write_data    (wrb_FLAGS_write_data),
+        .o_wrb_IP_write_enable     (wrb_IP_write_enable),
+        .o_wrb_IP_write_data       (wrb_IP_write_data),
+        .i_intr                    (i_intr),
+        .i_nmi                     (i_nmi),
+        .o_ferr_n                  (o_ferr_n),
+        .o_invalidate_cache        (invalidate_cache),
+        .o_wbinvd                  (wbinvd_cmd),
+        .o_wrb_gdtr_write_enable   (pipe_gdtr_write_enable),
+        .o_wrb_gdtr_write_limit    (pipe_gdtr_write_limit),
+        .o_wrb_gdtr_write_base     (pipe_gdtr_write_base),
+        .o_wrb_idtr_write_enable   (pipe_idtr_write_enable),
+        .o_wrb_idtr_write_limit    (pipe_idtr_write_limit),
+        .o_wrb_idtr_write_base     (pipe_idtr_write_base),
+        .clk                       (clk),
+        .rst_n                     (rst_n)
     );
 
 endmodule
