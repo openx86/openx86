@@ -15,7 +15,7 @@
 // ----------------------------------------------------------------------------
 //  File        : exu_misc.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : MISC execution unit - miscellaneous operations (placeholder)
+//  Description : MISC execution unit — CPUID, cache ops, system table access
 // ============================================================================
 
 `include "openx86_defs.h.sv"
@@ -26,19 +26,37 @@ module exu_misc (
     input  logic [31: 0] i_src2_data,
     input  logic [31: 0] i_immediate,
     input  logic         i_has_imm,
-    output exu_result_t   o_result
+    input  logic [31: 0] i_cpuid_eax,
+    output exu_result_t  o_result
 );
 
-    assign o_result.result           = 32'd0;
-    assign o_result.cf               = 1'b0;
-    assign o_result.pf               = 1'b0;
-    assign o_result.af               = 1'b0;
-    assign o_result.zf               = 1'b0;
-    assign o_result.sf               = 1'b0;
-    assign o_result.of               = 1'b0;
-    assign o_result.mem_valid        = 1'b0;
-    assign o_result.mem_write_enable = 1'b0;
-    assign o_result.mem_address      = 32'd0;
-    assign o_result.mem_write_data   = 32'd0;
+    logic [ 7: 0] subcode;
+
+    assign subcode = i_immediate[7: 0];
+
+    always_comb begin
+        o_result.result           = 32'd0;
+        o_result.cf               = 1'b0;
+        o_result.pf               = 1'b0;
+        o_result.af               = 1'b0;
+        o_result.zf               = 1'b0;
+        o_result.sf               = 1'b0;
+        o_result.of               = 1'b0;
+        o_result.mem_valid        = 1'b0;
+        o_result.mem_write_enable = 1'b0;
+        o_result.mem_address      = 32'd0;
+        o_result.mem_write_data   = 32'd0;
+
+        unique case (subcode)
+            `MISC_SUB_BSWAP: begin
+                o_result.result = {i_src1_data[ 7: 0], i_src1_data[15: 8],
+                                   i_src1_data[23:16], i_src1_data[31:24]};
+            end
+            `MISC_SUB_CPUID: begin
+                o_result.result = i_cpuid_eax;
+            end
+            default: ;
+        endcase
+    end
 
 endmodule

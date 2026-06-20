@@ -31,7 +31,15 @@ module stage_5_exu (
     input  micro_op_t           i_uop,
     output logic                o_stage_ready,
     output logic                o_stage_valid,
+    output logic                o_multicycle_stall,
     input  logic                i_wrb_ready,
+
+    input  logic                i_mem_done,
+    input  logic [31: 0]        i_mem_rdata,
+    input  logic [31: 0]        i_gdtr_base,
+    input  logic [15: 0]        i_gdtr_limit,
+    input  logic [31: 0]        i_idtr_base,
+    input  logic [15: 0]        i_idtr_limit,
 
     // =========================
     // Operand data from stage_4_reg
@@ -112,6 +120,20 @@ module stage_5_exu (
     output logic [31: 0]        o_wrb_flags_data,
     output logic                o_wrb_ip_enable,
     output logic [31: 0]        o_wrb_ip_data,
+
+    output logic                o_gdtr_write_enable,
+    output logic [15: 0]        o_gdtr_write_limit,
+    output logic [31: 0]        o_gdtr_write_base,
+    output logic                o_idtr_write_enable,
+    output logic [15: 0]        o_idtr_write_limit,
+    output logic [31: 0]        o_idtr_write_base,
+    output logic                o_cr_write_enable,
+    output logic [ 2: 0]        o_cr_write_index,
+    output logic [31: 0]        o_cr_write_data,
+    output logic                o_invalidate_cache,
+    output logic                o_wbinvd,
+    output logic                o_data_io_access,
+
     output logic                o_mem_valid,
     output logic                o_mem_write_enable,
     output logic [31: 0]        o_mem_address,
@@ -151,6 +173,32 @@ module stage_5_exu (
     logic         mem_write_enable;
     logic [31: 0] mem_address;
     logic [31: 0] mem_write_data;
+
+    logic         load_pending_r;
+    logic [ 2: 0] load_dest_r;
+    logic         load_complete_we;
+    logic [31: 0] load_complete_data;
+    logic         misc_load_pending_r;
+    logic [ 7: 0] misc_subcode_r;
+    logic         ret_pending_r;
+
+    logic         gdtr_we;
+    logic [15: 0] gdtr_limit;
+    logic [31: 0] gdtr_base;
+    logic         idtr_we;
+    logic [15: 0] idtr_limit;
+    logic [31: 0] idtr_base;
+    logic         cr_we;
+    logic [ 2: 0] cr_index;
+    logic [31: 0] cr_data;
+    logic         inv_cache;
+    logic         wbinvd_cmd;
+    logic         data_io_access;
+
+    logic [31: 0] cpuid_eax;
+    logic [31: 0] cpuid_ebx;
+    logic [31: 0] cpuid_ecx;
+    logic [31: 0] cpuid_edx;
 
     // Temporary variables for case statements
     logic [15: 0] tmp_src_16;
@@ -231,8 +279,20 @@ module stage_5_exu (
         mem_write_enable = 1'b0;
         mem_address = 32'd0;
         mem_write_data = 32'd0;
+        gdtr_we          = 1'b0;
+        gdtr_limit       = 16'd0;
+        gdtr_base        = 32'd0;
+        idtr_we          = 1'b0;
+        idtr_limit       = 16'd0;
+        idtr_base        = 32'd0;
+        cr_we            = 1'b0;
+        cr_index         = 3'd0;
+        cr_data          = 32'd0;
+        inv_cache        = 1'b0;
+        wbinvd_cmd       = 1'b0;
+        data_io_access   = 1'b0;
 
-        if (i_uop_valid) begin
+        if (i_uop_valid && ~load_pending_r) begin
             case (uop_opcode)
                 `UOP_ADD: begin
                     tmp_sum = src1_data + src2_data;
@@ -290,8 +350,30 @@ module stage_5_exu (
                     write_flags = 1'b1;
                 end
                 `UOP_MOV: begin
-                    tmp_result = has_imm ? immediate : src2_data;
-                    write_gpr = 1'b1;
+                    if (mem_access) begin
+                        mem_address = src1_data + displacement;
+                        mem_valid   = ~load_pending_r;
+                        if (is_store) begin
+                            mem_write_enable = 1'b1;
+                            mem_write_data   = src2_data;
+                        end else begin
+                            mem_write_enable = 1'b0;
+                        end
+                    end else begin
+                        tmp_result = has_imm ? immediate : src2_data;
+                        write_gpr = 1'b1;
+                    end
+                end
+                `UOP_LOAD: begin
+                    mem_address      = src1_data + displacement;
+                    mem_valid        = ~load_pending_r;
+                    mem_write_enable = 1'b0;
+                end
+                `UOP_STORE: begin
+                    mem_address      = src1_data + displacement;
+                    mem_write_data   = src2_data;
+                    mem_valid        = 1'b1;
+                    mem_write_enable = 1'b1;
                 end
                 `UOP_CMP: begin
                     tmp_diff = src1_data - src2_data;
@@ -647,11 +729,11 @@ module stage_5_exu (
                 end
                 `UOP_POP: begin
                     tmp_new_esp = src1_data + 32'd4;
-                    tmp_result = has_imm ? (tmp_new_esp + immediate) : src2_data;
+                    tmp_result  = tmp_new_esp;
                     mem_address = src1_data;
-                    mem_valid = 1'b1;
+                    mem_valid   = ~load_pending_r;
                     mem_write_enable = 1'b0;
-                    write_gpr = 1'b1;
+                    write_gpr   = 1'b1;
                 end
                 `UOP_BRANCH: begin
                     tmp_target = has_disp ? displacement : immediate;
@@ -675,13 +757,11 @@ module stage_5_exu (
                 end
                 `UOP_RET: begin
                     tmp_new_esp = has_imm ? (src1_data + immediate) : (src1_data + 32'd4);
-                    tmp_result = tmp_new_esp;
+                    tmp_result  = tmp_new_esp;
                     mem_address = src1_data;
-                    mem_valid = 1'b1;
+                    mem_valid   = ~load_pending_r;
                     mem_write_enable = 1'b0;
-                    ip_data = src2_data;
-                    write_gpr = 1'b1;
-                    write_ip = 1'b1;
+                    write_gpr   = 1'b1;
                 end
                 `UOP_SETCC: begin
                     tmp_condition_met = compute_condition(tttn, i_of, i_cf, i_zf, i_sf, i_pf);
@@ -689,13 +769,86 @@ module stage_5_exu (
                     write_gpr = 1'b1;
                 end
                 `UOP_STRING: begin
-                    tmp_result = 32'd0;
+                    mem_address      = src1_data;
+                    mem_valid        = 1'b1;
+                    mem_write_enable = is_store;
+                    mem_write_data   = src2_data;
+                    tmp_result       = src1_data + (i_zf ? 32'd0 : 32'd1);
+                    write_gpr        = 1'b1;
                 end
                 `UOP_FLAG_CTRL: begin
-                    tmp_result = 32'd0;
+                    flags_data  = {16'h0, i_of, 1'b0, 1'b0, 1'b0, 1'b1, i_sf, i_zf,
+                                   1'b0, i_af, 1'b0, i_pf, 1'b1, i_cf};
+                    write_flags = 1'b1;
                 end
                 `UOP_MISC: begin
-                    tmp_result = 32'd0;
+                    unique case (immediate[7: 0])
+                        `MISC_SUB_BSWAP: begin
+                            tmp_result = {src1_data[ 7: 0], src1_data[15: 8],
+                                          src1_data[23:16], src1_data[31:24]};
+                            write_gpr = 1'b1;
+                        end
+                        `MISC_SUB_CPUID: begin
+                            tmp_result = cpuid_eax;
+                            write_gpr  = 1'b1;
+                        end
+                        `MISC_SUB_INVD: begin
+                            inv_cache = 1'b1;
+                        end
+                        `MISC_SUB_WBINVD: begin
+                            wbinvd_cmd = 1'b1;
+                        end
+                        `MISC_SUB_LGDT: begin
+                            if (~misc_load_pending_r) begin
+                                mem_address      = src1_data + displacement;
+                                mem_valid        = 1'b1;
+                                mem_write_enable = 1'b0;
+                            end
+                        end
+                        `MISC_SUB_LIDT: begin
+                            if (~misc_load_pending_r) begin
+                                mem_address      = src1_data + displacement;
+                                mem_valid        = 1'b1;
+                                mem_write_enable = 1'b0;
+                            end
+                        end
+                        `MISC_SUB_SGDT: begin
+                            mem_address      = src1_data + displacement;
+                            mem_valid        = 1'b1;
+                            mem_write_enable = 1'b1;
+                            mem_write_data   = {i_gdtr_base[15: 0], i_gdtr_limit};
+                        end
+                        `MISC_SUB_SIDT: begin
+                            mem_address      = src1_data + displacement;
+                            mem_valid        = 1'b1;
+                            mem_write_enable = 1'b1;
+                            mem_write_data   = {i_idtr_base[15: 0], i_idtr_limit};
+                        end
+                        `MISC_SUB_LMSW: begin
+                            cr_we    = 1'b1;
+                            cr_index = 3'd0;
+                            cr_data  = {16'h0, src2_data[15: 0]};
+                        end
+                        `MISC_SUB_MOV_CR: begin
+                            cr_we    = 1'b1;
+                            cr_index = dest_reg;
+                            cr_data  = src2_data;
+                        end
+                        `MISC_SUB_IN: begin
+                            data_io_access   = 1'b1;
+                            mem_address      = {16'h0, immediate[15: 0]};
+                            mem_valid        = ~load_pending_r;
+                            mem_write_enable = 1'b0;
+                        end
+                        `MISC_SUB_OUT: begin
+                            data_io_access   = 1'b1;
+                            mem_address      = {16'h0, immediate[15: 0]};
+                            mem_valid        = 1'b1;
+                            mem_write_enable = 1'b1;
+                            mem_write_data   = src2_data;
+                        end
+                        default: ;
+                    endcase
                 end
                 `UOP_X87: begin
                     tmp_result = 32'd0;
@@ -753,12 +906,69 @@ module stage_5_exu (
 
             flags_data = {10'b0, new_of, 1'b0, 1'b0, 1'b0, new_sf, new_zf, 1'b0, new_pf, 1'b0, new_cf};
         end
+
+        if (load_pending_r & i_mem_done) begin
+            tmp_result = i_mem_rdata;
+            write_gpr  = 1'b1;
+            if (ret_pending_r) begin
+                ip_data  = i_mem_rdata;
+                write_ip = 1'b1;
+            end
+            if (misc_subcode_r == `MISC_SUB_LGDT) begin
+                gdtr_we    = 1'b1;
+                gdtr_limit = i_mem_rdata[15: 0];
+                gdtr_base  = {16'h0, i_mem_rdata[31:16]};
+            end else if (misc_subcode_r == `MISC_SUB_LIDT) begin
+                idtr_we    = 1'b1;
+                idtr_limit = i_mem_rdata[15: 0];
+                idtr_base  = {16'h0, i_mem_rdata[31:16]};
+            end
+        end
     end
 
-    assign o_stage_ready = i_wrb_ready;
-    assign o_stage_valid = i_uop_valid;
+    i486_cpuid u_cpuid (
+        .i_eax_in (src1_data),
+        .i_ecx_in (src2_data),
+        .o_eax    (cpuid_eax),
+        .o_ebx    (cpuid_ebx),
+        .o_ecx    (cpuid_ecx),
+        .o_edx    (cpuid_edx)
+    );
+
+    always_ff @(posedge clk or negedge rst_n) begin : ff_load_pending
+        if (~rst_n) begin
+            load_pending_r       <= 1'b0;
+            load_dest_r          <= 3'b0;
+            misc_load_pending_r  <= 1'b0;
+            misc_subcode_r       <= 8'h0;
+            ret_pending_r        <= 1'b0;
+        end else begin
+            if (i_uop_valid & i_wrb_ready & ~load_pending_r & mem_valid & ~mem_write_enable) begin
+                load_pending_r <= 1'b1;
+                load_dest_r    <= dest_reg;
+                if (uop_opcode == `UOP_RET) begin
+                    ret_pending_r <= 1'b1;
+                end
+                if (uop_opcode == `UOP_MISC) begin
+                    misc_load_pending_r <= 1'b1;
+                    misc_subcode_r      <= immediate[7: 0];
+                end
+            end else if (load_pending_r & i_mem_done) begin
+                load_pending_r      <= 1'b0;
+                misc_load_pending_r <= 1'b0;
+                ret_pending_r       <= 1'b0;
+            end
+        end
+    end
+
+    assign o_stage_ready       = i_wrb_ready & ~load_pending_r;
+    assign o_multicycle_stall  = load_pending_r;
+    assign o_stage_valid       = i_uop_valid | (load_pending_r & i_mem_done);
 
     always_comb begin
+        logic [2:0] active_dest;
+        active_dest = (load_pending_r & i_mem_done) ? load_dest_r : dest_reg;
+
         o_wrb_gpr_enable_EAX = 1'b0;
         o_wrb_gpr_enable_AX  = 1'b0;
         o_wrb_gpr_enable_AL  = 1'b0;
@@ -784,8 +994,8 @@ module stage_5_exu (
         o_wrb_gpr_enable_EDI = 1'b0;
         o_wrb_gpr_enable_DI  = 1'b0;
 
-        if (i_uop_valid && write_gpr) begin
-            case (dest_reg)
+        if (((i_uop_valid && ~load_pending_r) | (load_pending_r & i_mem_done)) && write_gpr) begin
+            case (active_dest)
                 3'd0: begin
                     o_wrb_gpr_enable_EAX = 1'b1;
                     o_wrb_gpr_enable_AX  = 1'b1;
@@ -864,15 +1074,28 @@ module stage_5_exu (
     assign o_wrb_seg_selector   = 16'd0;
     assign o_wrb_seg_descriptor = 64'd0;
 
-    assign o_wrb_flags_enable = i_uop_valid && write_flags;
+    assign o_wrb_flags_enable = ((i_uop_valid && ~load_pending_r) | (load_pending_r & i_mem_done)) && write_flags;
     assign o_wrb_flags_data   = flags_data;
 
-    assign o_wrb_ip_enable = i_uop_valid && write_ip;
+    assign o_wrb_ip_enable = ((i_uop_valid && ~load_pending_r) | (load_pending_r & i_mem_done)) && write_ip;
     assign o_wrb_ip_data   = ip_data;
 
-    assign o_mem_valid        = i_uop_valid && mem_valid;
+    assign o_mem_valid        = (i_uop_valid | load_pending_r) && mem_valid;
     assign o_mem_write_enable = i_uop_valid && mem_write_enable;
     assign o_mem_address      = mem_address;
     assign o_mem_write_data   = mem_write_data;
+
+    assign o_gdtr_write_enable = gdtr_we;
+    assign o_gdtr_write_limit  = gdtr_limit;
+    assign o_gdtr_write_base   = gdtr_base;
+    assign o_idtr_write_enable = idtr_we;
+    assign o_idtr_write_limit  = idtr_limit;
+    assign o_idtr_write_base   = idtr_base;
+    assign o_cr_write_enable   = cr_we;
+    assign o_cr_write_index    = cr_index;
+    assign o_cr_write_data     = cr_data;
+    assign o_invalidate_cache  = inv_cache;
+    assign o_wbinvd            = wbinvd_cmd;
+    assign o_data_io_access    = data_io_access;
 
 endmodule

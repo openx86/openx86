@@ -76,6 +76,8 @@ module i486_cpu_pipeline (
     input  logic [31: 0] i_page_directory_base,
     input  logic [31: 0] i_idtr_base,
     input  logic [15: 0] i_idtr_limit,
+    input  logic [31: 0] i_gdtr_base,
+    input  logic [15: 0] i_gdtr_limit,
     input  logic [31: 0] i_eip,
 
     // =========================
@@ -134,6 +136,20 @@ module i486_cpu_pipeline (
     output logic         o_wrb_IP_write_enable,
     output logic [31: 0] o_wrb_IP_write_data,
 
+    output logic         o_wrb_cr0_write_enable,
+    output logic         o_wrb_cr2_write_enable,
+    output logic         o_wrb_cr3_write_enable,
+    output logic [31: 0] o_wrb_cr_write_data,
+
+    output logic         o_wrb_seg_es_write_enable,
+    output logic         o_wrb_seg_cs_write_enable,
+    output logic         o_wrb_seg_ss_write_enable,
+    output logic         o_wrb_seg_ds_write_enable,
+    output logic         o_wrb_seg_fs_write_enable,
+    output logic         o_wrb_seg_gs_write_enable,
+    output logic [15: 0] o_wrb_seg_write_selector,
+    output logic [63: 0] o_wrb_seg_write_descriptor,
+
     // =========================
     // Interrupts
     // =========================
@@ -182,28 +198,85 @@ module i486_cpu_pipeline (
     logic                exu_valid;
     logic                mem_busy;
     logic                mem_stall;
+    logic                multicycle_stall;
     logic                branch_taken;
     logic                pipe_flush;
+    logic                pipe_flush_ctrl;
     logic                pipe_hlt;
+
+    logic                eiu_flush;
+    logic                eiu_ip_valid;
+    logic [31: 0]        eiu_new_eip;
+    logic                exc_valid;
+    logic [ 7: 0]        exc_vector;
+    logic                exc_has_ec;
+    logic [31: 0]        exc_error_code;
+
+    logic                exu_flags_enable;
+    logic [31: 0]        exu_flags_data;
 
     logic                exu_mem_valid;
     logic                exu_mem_we;
     logic [31: 0]        exu_mem_addr;
     logic [31: 0]        exu_mem_wdata;
+    logic                exu_data_io;
     logic [31: 0]        mem_rdata;
     logic                mem_done;
+
+    logic                exu_ip_enable;
+    logic [31: 0]        exu_ip_data;
+    logic                wbu_ip_enable;
+    logic [31: 0]        wbu_ip_data;
+
+    logic                exu_gdtr_we;
+    logic [15: 0]        exu_gdtr_limit;
+    logic [31: 0]        exu_gdtr_base;
+    logic                exu_idtr_we;
+    logic [15: 0]        exu_idtr_limit;
+    logic [31: 0]        exu_idtr_base;
+    logic                exu_cr_we;
+    logic [ 2: 0]        exu_cr_index;
+    logic [31: 0]        exu_cr_data;
+    logic                exu_inv_cache;
+    logic                exu_wbinvd;
+
+    logic                exu_seg_es;
+    logic                exu_seg_cs;
+    logic                exu_seg_ss;
+    logic                exu_seg_ds;
+    logic                exu_seg_fs;
+    logic                exu_seg_gs;
+    logic [15: 0]        exu_seg_selector;
+    logic [63: 0]        exu_seg_descriptor;
+
+    logic                load_pending;
+    logic [ 2: 0]        load_dest_reg;
+    logic                load_wb_valid;
+    logic [31: 0]        load_wb_data;
+    logic                load_wb_ip_valid;
+    logic [31: 0]        load_wb_ip_data;
+
+    logic [31: 0]        exu_gpr_data;
+
+    assign exc_valid      = ifu_segment_fault;
+    assign exc_vector     = ifu_segment_fault ? 8'd13 : 8'd14;
+    assign exc_has_ec     = 1'b0;
+    assign exc_error_code = exu_mem_addr;
+
+    assign pipe_flush     = pipe_flush_ctrl | eiu_flush;
+    assign mem_stall      = mem_busy | multicycle_stall;
 
     pipeline_controller u_pipe_ctrl (
         .i_branch_taken      (branch_taken),
         .i_mem_stall         (mem_stall),
-        .i_multicycle_stall  (1'b0),
-        .i_exception_valid   (1'b0),
+        .i_multicycle_stall  (multicycle_stall),
+        .i_exception_valid   (eiu_flush),
         .i_hlt               (pipe_hlt),
         .o_stall_ifu         (),
         .o_stall_dec         (),
         .o_stall_reg         (),
         .o_stall_exu         (),
-        .o_flush_ifu         (pipe_flush),
+        .o_flush_ifu         (pipe_flush_ctrl),
         .o_flush_dec         (),
         .o_flush_reg         (),
         .o_flush_exu         (),
@@ -213,10 +286,10 @@ module i486_cpu_pipeline (
     );
 
     exception_interrupt_unit u_eiu (
-        .i_exception_valid   (1'b0),
-        .i_exception_vector  (8'h0),
-        .i_has_error_code    (1'b0),
-        .i_error_code        (32'h0),
+        .i_exception_valid   (exc_valid),
+        .i_exception_vector  (exc_vector),
+        .i_has_error_code    (exc_has_ec),
+        .i_error_code        (exc_error_code),
         .i_external_intr     (i_intr),
         .i_nmi               (i_nmi),
         .i_if_flag           (i_if_flag),
@@ -225,10 +298,10 @@ module i486_cpu_pipeline (
         .i_current_eip       (i_eip),
         .i_current_cs_base   (32'h0),
         .i_cpl               (i_cpl),
-        .o_flush_pipeline    (),
+        .o_flush_pipeline    (eiu_flush),
         .o_clear_if          (),
-        .o_new_eip_valid     (),
-        .o_new_eip           (),
+        .o_new_eip_valid     (eiu_ip_valid),
+        .o_new_eip           (eiu_new_eip),
         .o_vector            (),
         .o_error_code_valid  (),
         .o_error_code        (),
@@ -328,7 +401,14 @@ module i486_cpu_pipeline (
         .i_uop                   (reg_uop),
         .o_stage_ready           (exu_stage_ready),
         .o_stage_valid           (exu_valid),
+        .o_multicycle_stall      (multicycle_stall),
         .i_wrb_ready             (1'b1),
+        .i_mem_done              (mem_done),
+        .i_mem_rdata             (mem_rdata),
+        .i_gdtr_base             (i_gdtr_base),
+        .i_gdtr_limit            (i_gdtr_limit),
+        .i_idtr_base             (i_idtr_base),
+        .i_idtr_limit            (i_idtr_limit),
         .i_src1_data             (reg_src1),
         .i_src2_data             (reg_src2),
         .i_cf                    (reg_cf),
@@ -361,14 +441,14 @@ module i486_cpu_pipeline (
         .o_wrb_gpr_enable_SI     (o_wrb_gpr_write_enable_SI),
         .o_wrb_gpr_enable_EDI    (o_wrb_gpr_write_enable_EDI),
         .o_wrb_gpr_enable_DI     (o_wrb_gpr_write_enable_DI),
-        .o_wrb_seg_enable_es    (),
-        .o_wrb_seg_enable_cs    (),
-        .o_wrb_seg_enable_ss    (),
-        .o_wrb_seg_enable_ds    (),
-        .o_wrb_seg_enable_fs    (),
-        .o_wrb_seg_enable_gs    (),
-        .o_wrb_seg_selector      (),
-        .o_wrb_seg_descriptor    (),
+        .o_wrb_seg_enable_es     (exu_seg_es),
+        .o_wrb_seg_enable_cs     (exu_seg_cs),
+        .o_wrb_seg_enable_ss     (exu_seg_ss),
+        .o_wrb_seg_enable_ds     (exu_seg_ds),
+        .o_wrb_seg_enable_fs     (exu_seg_fs),
+        .o_wrb_seg_enable_gs     (exu_seg_gs),
+        .o_wrb_seg_selector      (exu_seg_selector),
+        .o_wrb_seg_descriptor    (exu_seg_descriptor),
         .o_wrb_gpr_data_EAX      (o_wrb_gpr_write_data_EAX),
         .o_wrb_gpr_data_AX       (o_wrb_gpr_write_data_AX),
         .o_wrb_gpr_data_AL       (o_wrb_gpr_write_data_AL),
@@ -393,10 +473,22 @@ module i486_cpu_pipeline (
         .o_wrb_gpr_data_SI       (o_wrb_gpr_write_data_SI),
         .o_wrb_gpr_data_EDI      (o_wrb_gpr_write_data_EDI),
         .o_wrb_gpr_data_DI       (o_wrb_gpr_write_data_DI),
-        .o_wrb_flags_enable      (o_wrb_FLAGS_write_enable),
-        .o_wrb_flags_data        (o_wrb_FLAGS_write_data),
-        .o_wrb_ip_enable         (o_wrb_IP_write_enable),
-        .o_wrb_ip_data           (o_wrb_IP_write_data),
+        .o_wrb_flags_enable      (exu_flags_enable),
+        .o_wrb_flags_data        (exu_flags_data),
+        .o_wrb_ip_enable         (exu_ip_enable),
+        .o_wrb_ip_data           (exu_ip_data),
+        .o_gdtr_write_enable     (exu_gdtr_we),
+        .o_gdtr_write_limit      (exu_gdtr_limit),
+        .o_gdtr_write_base       (exu_gdtr_base),
+        .o_idtr_write_enable     (exu_idtr_we),
+        .o_idtr_write_limit      (exu_idtr_limit),
+        .o_idtr_write_base       (exu_idtr_base),
+        .o_cr_write_enable       (exu_cr_we),
+        .o_cr_write_index        (exu_cr_index),
+        .o_cr_write_data         (exu_cr_data),
+        .o_invalidate_cache      (exu_inv_cache),
+        .o_wbinvd                (exu_wbinvd),
+        .o_data_io_access        (exu_data_io),
         .o_mem_valid             (exu_mem_valid),
         .o_mem_write_enable      (exu_mem_we),
         .o_mem_address           (exu_mem_addr),
@@ -404,6 +496,96 @@ module i486_cpu_pipeline (
         .clk                     (clk),
         .rst_n                   (rst_n)
     );
+
+    stage_6_wbu u_wbu (
+        .i_stage4_valid          (exu_valid),
+        .o_stage_valid           (),
+        .i_stage5_ready          (1'b1),
+        .o_stage4_ready          (),
+        .i_gpr_write_enable      (1'b0),
+        .i_gpr_write_index       (3'b0),
+        .i_gpr_write_data        (32'h0),
+        .o_gpr_write_enable      (),
+        .o_gpr_write_index       (),
+        .o_gpr_write_data        (),
+        .i_sreg_write_enable     (exu_seg_es | exu_seg_cs | exu_seg_ss | exu_seg_ds | exu_seg_fs | exu_seg_gs),
+        .i_sreg_write_index      (3'b0),
+        .i_sreg_write_selector   (exu_seg_selector),
+        .i_sreg_write_descriptor (exu_seg_descriptor),
+        .o_sreg_write_enable     (),
+        .o_sreg_write_index      (),
+        .o_sreg_write_selector   (o_wrb_seg_write_selector),
+        .o_sreg_write_descriptor (o_wrb_seg_write_descriptor),
+        .i_flags_write_enable    (exu_flags_enable),
+        .i_flags_write_data      (exu_flags_data),
+        .o_flags_write_enable    (o_wrb_FLAGS_write_enable),
+        .o_flags_write_data      (o_wrb_FLAGS_write_data),
+        .i_ip_write_enable       (exu_ip_enable | eiu_ip_valid),
+        .i_ip_write_data         (eiu_ip_valid ? eiu_new_eip : exu_ip_data),
+        .o_ip_write_enable       (wbu_ip_enable),
+        .o_ip_write_data         (wbu_ip_data),
+        .i_cr_write_enable       (exu_cr_we),
+        .i_cr_write_index        (exu_cr_index),
+        .i_cr_write_data         (exu_cr_data),
+        .o_cr_write_enable       (),
+        .o_cr_write_index        (),
+        .o_cr_write_data         (o_wrb_cr_write_data),
+        .i_dr_write_enable       (1'b0),
+        .i_dr_write_index        (3'b0),
+        .i_dr_write_data         (32'h0),
+        .o_dr_write_enable       (),
+        .o_dr_write_index        (),
+        .o_dr_write_data         (),
+        .i_tr_write_enable       (1'b0),
+        .i_tr_write_index        (3'b0),
+        .i_tr_write_data         (32'h0),
+        .o_tr_write_enable       (),
+        .o_tr_write_index        (),
+        .o_tr_write_data         (),
+        .i_gdtr_write_enable     (exu_gdtr_we),
+        .i_gdtr_write_limit      (exu_gdtr_limit),
+        .i_gdtr_write_base       (exu_gdtr_base),
+        .o_gdtr_write_enable     (o_wrb_gdtr_write_enable),
+        .o_gdtr_write_limit      (o_wrb_gdtr_write_limit),
+        .o_gdtr_write_base       (o_wrb_gdtr_write_base),
+        .i_idtr_write_enable     (exu_idtr_we),
+        .i_idtr_write_limit      (exu_idtr_limit),
+        .i_idtr_write_base       (exu_idtr_base),
+        .o_idtr_write_enable     (o_wrb_idtr_write_enable),
+        .o_idtr_write_limit      (o_wrb_idtr_write_limit),
+        .o_idtr_write_base       (o_wrb_idtr_write_base),
+        .i_invalidate_cache      (exu_inv_cache),
+        .i_wbinvd                (exu_wbinvd),
+        .o_invalidate_cache      (o_invalidate_cache),
+        .o_wbinvd                (o_wbinvd),
+        .i_mem_valid             (exu_mem_valid),
+        .i_mem_write_enable      (exu_mem_we),
+        .i_mem_address           (exu_mem_addr),
+        .i_mem_write_data        (exu_mem_wdata),
+        .o_mem_valid             (),
+        .o_mem_write_enable      (),
+        .o_mem_address           (),
+        .o_mem_write_data        (),
+        .clk                     (clk),
+        .rst_n                   (rst_n)
+    );
+
+    assign o_wrb_IP_write_enable = wbu_ip_enable;
+    assign o_wrb_IP_write_data   = wbu_ip_data;
+    assign o_wrb_cr0_write_enable = exu_cr_we & (exu_cr_index == 3'd0);
+    assign o_wrb_cr2_write_enable = exu_cr_we & (exu_cr_index == 3'd2);
+    assign o_wrb_cr3_write_enable = exu_cr_we & (exu_cr_index == 3'd3);
+    assign o_wrb_seg_es_write_enable = exu_seg_es;
+    assign o_wrb_seg_cs_write_enable = exu_seg_cs;
+    assign o_wrb_seg_ss_write_enable = exu_seg_ss;
+    assign o_wrb_seg_ds_write_enable = exu_seg_ds;
+    assign o_wrb_seg_fs_write_enable = exu_seg_fs;
+    assign o_wrb_seg_gs_write_enable = exu_seg_gs;
+    assign branch_taken   = wbu_ip_enable & ~eiu_ip_valid;
+    assign pipe_hlt       = (reg_uop.uop_opcode == `UOP_MISC) &
+                              (reg_uop.uop_immediate[7: 0] == `MISC_SUB_HLT) &
+                              reg_stage_valid;
+    assign o_data_io_access = exu_data_io;
 
     memory_stage u_mem (
         .i_stage3_valid (exu_mem_valid),
@@ -425,18 +607,5 @@ module i486_cpu_pipeline (
         .clk            (clk),
         .rst_n          (rst_n)
     );
-
-    assign o_data_io_access = 1'b0;
-    assign mem_stall      = mem_busy;
-    assign branch_taken   = o_wrb_IP_write_enable;
-    assign pipe_hlt       = (reg_uop.uop_opcode == `UOP_MISC) & reg_stage_valid;
-    assign o_invalidate_cache   = 1'b0;
-    assign o_wbinvd             = 1'b0;
-    assign o_wrb_gdtr_write_enable = 1'b0;
-    assign o_wrb_gdtr_write_limit  = 16'd0;
-    assign o_wrb_gdtr_write_base   = 32'd0;
-    assign o_wrb_idtr_write_enable = 1'b0;
-    assign o_wrb_idtr_write_limit  = 16'd0;
-    assign o_wrb_idtr_write_base   = 32'd0;
 
 endmodule

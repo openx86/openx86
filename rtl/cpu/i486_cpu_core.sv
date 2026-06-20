@@ -262,7 +262,7 @@ module i486_cpu_core (
     logic         invalidate_cache;
     logic         wbinvd_cmd;
 
-    assign cpl = 2'b00;
+    assign cpl = descriptor_cache[`sreg_index_CS][45:44];
     assign FLAGS_write_enable = wrb_FLAGS_write_enable;
     assign FLAGS_write_data   = wrb_FLAGS_write_data;
     assign IP_write_enable    = wrb_IP_write_enable;
@@ -813,6 +813,8 @@ module i486_cpu_core (
         .i_page_directory_base     ({12'h0, page_directory_base}),
         .i_idtr_base               (IDTR_base),
         .i_idtr_limit              (IDTR_limit),
+        .i_gdtr_base               (GDTR_base),
+        .i_gdtr_limit              (GDTR_limit),
         .i_eip                     (EIP),
         .o_wrb_gpr_write_enable_EAX(wrb_gpr_write_enable_EAX),
         .o_wrb_gpr_write_enable_AX (wrb_gpr_write_enable_AX),
@@ -866,6 +868,18 @@ module i486_cpu_core (
         .o_wrb_FLAGS_write_data    (wrb_FLAGS_write_data),
         .o_wrb_IP_write_enable     (wrb_IP_write_enable),
         .o_wrb_IP_write_data       (wrb_IP_write_data),
+        .o_wrb_cr0_write_enable    (wrb_cr0_write_enable),
+        .o_wrb_cr2_write_enable    (wrb_cr2_write_enable),
+        .o_wrb_cr3_write_enable    (wrb_cr3_write_enable),
+        .o_wrb_cr_write_data       (wrb_cr_write_data),
+        .o_wrb_seg_es_write_enable (wrb_seg_es_write_enable),
+        .o_wrb_seg_cs_write_enable (wrb_seg_cs_write_enable),
+        .o_wrb_seg_ss_write_enable (wrb_seg_ss_write_enable),
+        .o_wrb_seg_ds_write_enable (wrb_seg_ds_write_enable),
+        .o_wrb_seg_fs_write_enable (wrb_seg_fs_write_enable),
+        .o_wrb_seg_gs_write_enable (wrb_seg_gs_write_enable),
+        .o_wrb_seg_write_selector  (wrb_seg_write_selector),
+        .o_wrb_seg_write_descriptor(wrb_seg_write_descriptor),
         .i_intr                    (i_intr),
         .i_nmi                     (i_nmi),
         .o_ferr_n                  (o_ferr_n),
@@ -879,6 +893,70 @@ module i486_cpu_core (
         .o_wrb_idtr_write_base     (pipe_idtr_write_base),
         .clk                       (clk),
         .rst_n                     (rst_n)
+    );
+
+    // ============================================================
+    // x87 FPU core + ST0/ST1 register file (minimal integration)
+    // ============================================================
+    logic [79: 0] fpu_st0;
+    logic [79: 0] fpu_st1;
+    logic [79: 0] fpu_st0_n;
+    logic [79: 0] fpu_st1_n;
+    logic         fpu_exception;
+
+    rf_x87_fpu_st0 u_rf_fpu_st0 (
+        .i_write_enable (1'b0),
+        .i_write_data   (80'h0),
+        .o_data         (fpu_st0),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    rf_x87_fpu_st1 u_rf_fpu_st1 (
+        .i_write_enable (1'b0),
+        .i_write_data   (80'h0),
+        .o_data         (fpu_st1),
+        .clk            (clk),
+        .rst_n          (rst_n)
+    );
+
+    x87_fpu_core u_x87_fpu (
+        .i_valid             (1'b0),
+        .i_uop_opcode        (`UOP_X87),
+        .i_mem_data          (32'h0),
+        .i_st0               (fpu_st0),
+        .i_st1               (fpu_st1),
+        .o_st0               (fpu_st0_n),
+        .o_st1               (fpu_st1_n),
+        .o_stack_push        (),
+        .o_stack_pop         (),
+        .o_mem_valid         (),
+        .o_mem_write_enable  (),
+        .o_mem_wdata         (),
+        .o_fpu_exception     (fpu_exception),
+        .clk                 (clk),
+        .rst_n               (rst_n)
+    );
+
+    // ============================================================
+    // MMX register file (alias-ready, idle until EXU MMX uops drive writes)
+    // ============================================================
+    logic [63: 0] mmx_st_alias [0: 7];
+    logic [63: 0] mmx_read_data;
+
+    assign mmx_st_alias[0] = fpu_st0[63: 0];
+    assign mmx_st_alias[1] = fpu_st1[63: 0];
+
+    mmx_register_file u_mmx_rf (
+        .i_write_enable (1'b0),
+        .i_write_index  (3'b0),
+        .i_write_data   (64'h0),
+        .i_read_index   (3'b0),
+        .o_read_data    (mmx_read_data),
+        .i_st_alias     (mmx_st_alias),
+        .o_st_alias     (),
+        .clk            (clk),
+        .rst_n          (rst_n)
     );
 
 endmodule

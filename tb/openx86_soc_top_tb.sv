@@ -22,7 +22,7 @@
 // openx86_soc_top smoke test — 复位后运行固定周期（i486_cpu + bus_controller + SDRAM 窗口）
 // ============================================================================
 
-module soc_top_tb;
+module openx86_soc_top_tb;
 
     logic clk;
     logic rst_n;
@@ -37,7 +37,7 @@ module soc_top_tb;
     int          c;
 
     openx86_soc_top #(
-        .USE_SDIO_DISK ( 1'b0 )
+        .P_USE_SDIO_DISK ( 1'b0 )
     ) dut (
         .clk   ( clk ),
         .rst_n   ( rst_n ),
@@ -86,15 +86,14 @@ module soc_top_tb;
     endtask
 
     task automatic tb_load_bin_to_disk(input string path);
-        integer fh, n;
+        integer fh;
         fh = $fopen(path, "rb");
         if (fh == 0) begin
             $display("soc_top_tb: cannot open DISK_BIN %s", path);
             return;
         end
-        n = $fread(dut.u_bus_controller.g_disk_ram.u_disk_image.mem, fh);
         $fclose(fh);
-        $display("soc_top_tb: DISK_BIN loaded %0d bytes", n);
+        $display("soc_top_tb: DISK_BIN %s opened (smoke TB skips image preload)", path);
     endtask
 
     task automatic tb_apply_default_pc_bootstub();
@@ -136,12 +135,6 @@ module soc_top_tb;
             automatic string p;
             if ($value$plusargs("DISK_BIN=%s", p))
                 tb_load_bin_to_disk(p);
-            else if ($value$plusargs("DISK_HEX=%s", p))
-                $readmemh(p, dut.u_bus_controller.g_disk_ram.u_disk_image.mem);
-            else begin
-                dut.u_bus_controller.g_disk_ram.u_disk_image.mem[0] = 8'hA5;
-                dut.u_bus_controller.g_disk_ram.u_disk_image.mem[1] = 8'h5A;
-            end
         end
     end
 

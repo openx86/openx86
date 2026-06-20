@@ -169,4 +169,6 @@ always_ff @(posedge clk or negedge rst_n) begin
     end
 end
 
+assign o_segment_fault = seg_priv_err;
+
 endmodule

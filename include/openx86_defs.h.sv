@@ -514,4 +514,20 @@ typedef struct packed {
 `define UOP_SSE        6'd53
 `define UOP_EMMS       6'd54
 
+// MISC micro-op subcodes (carried in uop_immediate[7: 0])
+`define MISC_SUB_BSWAP    8'h01
+`define MISC_SUB_CPUID    8'h02
+`define MISC_SUB_HLT      8'h03
+`define MISC_SUB_INVD     8'h04
+`define MISC_SUB_WBINVD   8'h05
+`define MISC_SUB_INVLPG   8'h06
+`define MISC_SUB_LGDT     8'h10
+`define MISC_SUB_LIDT     8'h11
+`define MISC_SUB_SGDT     8'h12
+`define MISC_SUB_SIDT     8'h13
+`define MISC_SUB_LMSW     8'h14
+`define MISC_SUB_MOV_CR   8'h15
+`define MISC_SUB_IN       8'h20
+`define MISC_SUB_OUT      8'h21
+
 `endif

@@ -15,30 +15,42 @@
 // ----------------------------------------------------------------------------
 //  File        : exu_flag_ctrl.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : FLAG_CTRL execution unit - flag control operations (placeholder)
+//  Description : FLAG_CTRL execution unit — EFLAGS subset updates
 // ============================================================================
 
 `include "openx86_defs.h.sv"
 `include "exu_common.h.sv"
 
 module exu_flag_ctrl (
-    input  logic [31: 0] i_src1_data,
-    input  logic [31: 0] i_src2_data,
+    input  logic         i_cf,
+    input  logic         i_pf,
+    input  logic         i_af,
+    input  logic         i_zf,
+    input  logic         i_sf,
+    input  logic         i_of,
     input  logic [31: 0] i_immediate,
-    input  logic         i_has_imm,
-    output exu_result_t   o_result
+    output exu_result_t  o_result
 );
 
-    assign o_result.result           = 32'd0;
-    assign o_result.cf               = 1'b0;
-    assign o_result.pf               = 1'b0;
-    assign o_result.af               = 1'b0;
-    assign o_result.zf               = 1'b0;
-    assign o_result.sf               = 1'b0;
-    assign o_result.of               = 1'b0;
-    assign o_result.mem_valid        = 1'b0;
-    assign o_result.mem_write_enable = 1'b0;
-    assign o_result.mem_address      = 32'd0;
-    assign o_result.mem_write_data   = 32'd0;
+    always_comb begin
+        o_result.result           = 32'd0;
+        o_result.cf               = i_cf;
+        o_result.pf               = i_pf;
+        o_result.af               = i_af;
+        o_result.zf               = i_zf;
+        o_result.sf               = i_sf;
+        o_result.of               = i_of;
+        o_result.mem_valid        = 1'b0;
+        o_result.mem_write_enable = 1'b0;
+        o_result.mem_address      = 32'd0;
+        o_result.mem_write_data   = 32'd0;
+
+        unique case (i_immediate[7: 0])
+            8'h01: o_result.cf = 1'b0;
+            8'h02: o_result.cf = 1'b1;
+            8'h03: o_result.cf = ~i_cf;
+            default: ;
+        endcase
+    end
 
 endmodule

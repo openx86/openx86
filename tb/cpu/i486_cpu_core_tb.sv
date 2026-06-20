@@ -15,7 +15,7 @@
 // ----------------------------------------------------------------------------
 //  File        : i486_cpu_core_tb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : Reset smoke test for i486_cpu_core
+//  Description : Smoke and fetch activity test for i486_cpu_core
 // ============================================================================
 
 `timescale 1ns/1ns
@@ -41,6 +41,9 @@ module i486_cpu_core_tb;
     logic [31: 0] data_data_write;
     logic         ferr_n;
 
+    int           code_fetch_count;
+    int           cycle_count;
+
     always #1 clk = ~clk;
 
     initial begin
@@ -52,10 +55,26 @@ module i486_cpu_core_tb;
         mmu_data_read = 32'h0;
         code_data_read = 32'h9090_9090;
         data_data_read = 32'h0;
+        code_fetch_count = 0;
+        cycle_count = 0;
         #8 rst_n = 1'b1;
-        #32;
-        $display("PASS i486_cpu_core_tb reset smoke");
-        $finish;
+    end
+
+    always @(posedge clk) begin
+        if (rst_n) begin
+            cycle_count <= cycle_count + 1;
+            if (code_valid & code_ready) begin
+                code_fetch_count <= code_fetch_count + 1;
+            end
+            if (cycle_count == 64) begin
+                if (code_fetch_count > 0) begin
+                    $display("PASS i486_cpu_core_tb code_fetch_count=%0d", code_fetch_count);
+                end else begin
+                    $display("FAIL i486_cpu_core_tb no code fetch activity");
+                end
+                $finish;
+            end
+        end
     end
 
     i486_cpu_core dut (

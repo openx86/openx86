@@ -15,7 +15,7 @@
 // ----------------------------------------------------------------------------
 //  File        : stage_6_wbu.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : stage_6_wbu module
+//  Description : Write-back stage — aggregates EXU/MEM/EIU write ports
 // ============================================================================
 
 module stage_6_wbu (
@@ -71,6 +71,25 @@ module stage_6_wbu (
     output logic [ 2: 0]  o_tr_write_index,
     output logic [31: 0]  o_tr_write_data,
 
+    input  logic          i_gdtr_write_enable,
+    input  logic [15: 0]  i_gdtr_write_limit,
+    input  logic [31: 0]  i_gdtr_write_base,
+    output logic          o_gdtr_write_enable,
+    output logic [15: 0]  o_gdtr_write_limit,
+    output logic [31: 0]  o_gdtr_write_base,
+
+    input  logic          i_idtr_write_enable,
+    input  logic [15: 0]  i_idtr_write_limit,
+    input  logic [31: 0]  i_idtr_write_base,
+    output logic          o_idtr_write_enable,
+    output logic [15: 0]  o_idtr_write_limit,
+    output logic [31: 0]  o_idtr_write_base,
+
+    input  logic          i_invalidate_cache,
+    input  logic          i_wbinvd,
+    output logic          o_invalidate_cache,
+    output logic          o_wbinvd,
+
     input  logic          i_mem_valid,
     input  logic          i_mem_write_enable,
     input  logic [31: 0]  i_mem_address,
@@ -80,11 +99,10 @@ module stage_6_wbu (
     output logic [31: 0]  o_mem_address,
     output logic [31: 0]  o_mem_write_data,
 
-    input  logic          clk, // 时钟信号
-    input  logic          rst_n // 复位信号
+    input  logic          clk,
+    input  logic          rst_n
 );
 
-    // Simple pass-through logic
     assign o_stage_valid          = i_stage4_valid;
     assign o_stage4_ready         = i_stage5_ready;
     assign o_gpr_write_enable     = i_gpr_write_enable;
@@ -95,7 +113,7 @@ module stage_6_wbu (
     assign o_sreg_write_selector  = i_sreg_write_selector;
     assign o_sreg_write_descriptor = i_sreg_write_descriptor;
     assign o_flags_write_enable   = i_flags_write_enable;
-    assign o_flags_write_data     = i_flags_write_data;
+    assign o_flags_write_data       = i_flags_write_data;
     assign o_ip_write_enable      = i_ip_write_enable;
     assign o_ip_write_data        = i_ip_write_data;
     assign o_cr_write_enable      = i_cr_write_enable;
@@ -107,6 +125,14 @@ module stage_6_wbu (
     assign o_tr_write_enable      = i_tr_write_enable;
     assign o_tr_write_index       = i_tr_write_index;
     assign o_tr_write_data        = i_tr_write_data;
+    assign o_gdtr_write_enable    = i_gdtr_write_enable;
+    assign o_gdtr_write_limit     = i_gdtr_write_limit;
+    assign o_gdtr_write_base      = i_gdtr_write_base;
+    assign o_idtr_write_enable    = i_idtr_write_enable;
+    assign o_idtr_write_limit     = i_idtr_write_limit;
+    assign o_idtr_write_base      = i_idtr_write_base;
+    assign o_invalidate_cache     = i_invalidate_cache;
+    assign o_wbinvd               = i_wbinvd;
     assign o_mem_valid            = i_mem_valid;
     assign o_mem_write_enable     = i_mem_write_enable;
     assign o_mem_address          = i_mem_address;

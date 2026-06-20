@@ -15,19 +15,47 @@
 // ----------------------------------------------------------------------------
 //  File        : exu_x87.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : X87 execution unit - x87 floating point operations (placeholder)
+//  Description : X87 execution unit — delegates to x87_fpu_core
 // ============================================================================
 
 `include "openx86_defs.h.sv"
 `include "exu_common.h.sv"
 
 module exu_x87 (
-    input  logic [31: 0] i_src1_data,
-    input  logic [31: 0] i_src2_data,
-    input  logic [31: 0] i_immediate,
-    input  logic         i_has_imm,
-    output exu_result_t   o_result
+    input  logic         i_valid,
+    input  logic [ 5: 0] i_uop_opcode,
+    input  logic [31: 0] i_mem_data,
+    input  logic [79: 0] i_st0,
+    input  logic [79: 0] i_st1,
+    output logic [79: 0] o_st0,
+    output logic [79: 0] o_st1,
+    output logic         o_fpu_exception,
+    output exu_result_t  o_result,
+    input  logic         clk,
+    input  logic         rst_n
 );
+
+    logic mem_valid;
+    logic mem_we;
+    logic [31: 0] mem_wdata;
+
+    x87_fpu_core u_fpu (
+        .i_valid             (i_valid),
+        .i_uop_opcode        (i_uop_opcode),
+        .i_mem_data          (i_mem_data),
+        .i_st0               (i_st0),
+        .i_st1               (i_st1),
+        .o_st0               (o_st0),
+        .o_st1               (o_st1),
+        .o_stack_push        (),
+        .o_stack_pop         (),
+        .o_mem_valid         (mem_valid),
+        .o_mem_write_enable  (mem_we),
+        .o_mem_wdata         (mem_wdata),
+        .o_fpu_exception     (o_fpu_exception),
+        .clk                 (clk),
+        .rst_n               (rst_n)
+    );
 
     assign o_result.result           = 32'd0;
     assign o_result.cf               = 1'b0;
@@ -36,9 +64,9 @@ module exu_x87 (
     assign o_result.zf               = 1'b0;
     assign o_result.sf               = 1'b0;
     assign o_result.of               = 1'b0;
-    assign o_result.mem_valid        = 1'b0;
-    assign o_result.mem_write_enable = 1'b0;
+    assign o_result.mem_valid        = mem_valid;
+    assign o_result.mem_write_enable = mem_we;
     assign o_result.mem_address      = 32'd0;
-    assign o_result.mem_write_data   = 32'd0;
+    assign o_result.mem_write_data   = mem_wdata;
 
 endmodule

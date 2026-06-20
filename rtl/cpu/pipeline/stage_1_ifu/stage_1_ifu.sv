@@ -18,6 +18,8 @@
 //  Description : stage_1_ifu module
 // ============================================================================
 
+`include "openx86_defs.h.sv"
+
 module stage_1_ifu (
     // =========================
     // instruction fetch bus interface
@@ -79,6 +81,7 @@ module stage_1_ifu (
     logic [31: 0] eip_r;
     logic         started_r;
     logic         fetch_active_r;
+    logic         fetch_code_phase;
     logic [ 1: 0] fetch_word_idx_r;
     logic         fetch_instruction_ready_r;
     logic         segment_fault_r;
@@ -109,19 +112,56 @@ module stage_1_ifu (
     logic [ 4: 0]        dec_consume_bytes_ext;
 
     // ============================================================
+    // MMU request gating and signals
+    // ============================================================
+    logic         mmu_req_valid;
+    logic         mmu_req_ready;
+    logic         mmu_bus_we;
+    logic [31: 0] mmu_bus_wdata;
+    logic         mmu_seg_fault;
+    logic [31: 0] mmu_phys_addr;
+    logic         fetch_need_mmu;
+    logic [31: 0] fetch_linear_addr;
+
+    assign fetch_linear_addr = eip_r + {28'h0, fetch_word_idx_r, 2'b00};
+    assign fetch_need_mmu    = fetch_active_r & ~fetch_code_phase;
+    assign mmu_req_valid     = fetch_need_mmu;
+
+    memory_management_unit #(
+        .read_from_fetch (1'b1)
+    ) u_ifu_mmu (
+        .i_valid                 (mmu_req_valid),
+        .o_ready                 (mmu_req_ready),
+        .i_protected_mode        (i_protected_mode),
+        .i_segment_selector      (i_segment_selector),
+        .i_segment_descriptor    (i_segment_descriptor),
+        .i_current_privilege_level (i_current_privilege_level),
+        .i_segment_index         (`sreg_index_CS),
+        .i_effective_address     (fetch_linear_addr),
+        .i_write_enable          (1'b0),
+        .i_paging_enable         (i_paging_enable),
+        .i_page_directory_base   (i_page_directory_base),
+        .o_physical_address      (mmu_phys_addr),
+        .o_segment_fault         (mmu_seg_fault),
+        .o_bus_valid             (o_mmu_bus_valid),
+        .i_bus_ready             (i_mmu_bus_ready),
+        .o_bus_write_enable      (mmu_bus_we),
+        .o_bus_address           (o_mmu_bus_addr),
+        .i_bus_data_read         (i_mmu_bus_rdata),
+        .o_bus_data_write        (mmu_bus_wdata),
+        .clk                     (clk),
+        .rst_n                   (rst_n)
+    );
+
+    // ============================================================
     // fetch control assignments
     // ============================================================
     assign fetch_request           = started_r & i_start & ~fetch_active_r & fifo_empty;
     assign fetch_instruction_ready = fetch_instruction_ready_r;
-    assign fetch_segment_fault     = 1'b0;
+    assign fetch_segment_fault     = mmu_seg_fault;
 
-    // IFU fetch bus driven by local simplified packing state machine (fetches 4×32b to form 16B window)
-    assign o_code_valid            = fetch_active_r;
-    assign o_code_address          = eip_r + {28'h0, fetch_word_idx_r, 2'b00};
-
-    // This local IFU does not directly initiate MMU backend access, ports reserved for upper interface compatibility
-    assign o_mmu_bus_valid         = 1'b0;
-    assign o_mmu_bus_addr          = 32'h0000_0000;
+    assign o_code_valid            = fetch_active_r & fetch_code_phase;
+    assign o_code_address          = mmu_phys_addr;
 
     // ============================================================
     // decode interface assignments
@@ -144,6 +184,7 @@ module stage_1_ifu (
             eip_r                    <= 32'h0000_0000;
             started_r                <= 1'b0;
             fetch_active_r           <= 1'b0;
+            fetch_code_phase         <= 1'b0;
             fetch_word_idx_r         <= 2'b00;
             fetch_instruction_ready_r <= 1'b0;
             fetch_instruction        <= '0;
@@ -152,6 +193,7 @@ module stage_1_ifu (
             eip_r                    <= i_reload_eip_value;
             started_r                <= 1'b1;
             fetch_active_r           <= 1'b0;
+            fetch_code_phase         <= 1'b0;
             fetch_word_idx_r         <= 2'b00;
             fetch_instruction_ready_r <= 1'b0;
             segment_fault_r          <= 1'b0;
@@ -167,11 +209,24 @@ module stage_1_ifu (
 
             if (fetch_request) begin
                 fetch_active_r   <= 1'b1;
+                fetch_code_phase <= 1'b0;
                 fetch_word_idx_r <= 2'b00;
             end
 
-            if (fetch_active_r && i_code_ready) begin
-                unique case (fetch_word_idx_r)
+            if (fetch_active_r) begin
+                if (~fetch_code_phase) begin
+                    if (mmu_req_ready) begin
+                        if (mmu_seg_fault) begin
+                            fetch_active_r            <= 1'b0;
+                            fetch_instruction_ready_r <= 1'b0;
+                            segment_fault_r           <= 1'b1;
+                        end else begin
+                            fetch_code_phase <= 1'b1;
+                        end
+                    end
+                end else if (i_code_ready) begin
+                    fetch_code_phase <= 1'b0;
+                    unique case (fetch_word_idx_r)
                     2'd0: begin
                         fetch_instruction[0] <= i_code_data_read[31: 24];
                         fetch_instruction[1] <= i_code_data_read[23: 16];
@@ -201,10 +256,11 @@ module stage_1_ifu (
                 if (fetch_word_idx_r == 2'd3) begin
                     fetch_active_r            <= 1'b0;
                     fetch_instruction_ready_r <= 1'b1;
-                    segment_fault_r           <= fetch_segment_fault;
+                    segment_fault_r           <= 1'b0;
                 end else begin
                     fetch_word_idx_r <= fetch_word_idx_r + 2'd1;
                 end
+            end
             end
         end
     end
@@ -233,9 +289,7 @@ module stage_1_ifu (
     logic unused_ifu;
     assign unused_ifu =
         fifo_push_ready ^ fifo_pop_ready ^ fifo_full ^ i_dec_ready ^ i_dec_error ^
-        i_mmu_bus_ready ^ i_mmu_bus_rdata[0] ^ i_protected_mode ^
-        i_segment_selector[0][0] ^ i_segment_descriptor[0][0] ^
-        i_current_privilege_level[0] ^ i_paging_enable ^ i_page_directory_base[0];
+        mmu_bus_we ^ mmu_bus_wdata[0];
     /* verilator lint_on UNUSEDSIGNAL */
 
 endmodule

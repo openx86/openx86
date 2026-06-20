@@ -139,12 +139,12 @@ assign exception_privilege_level = i_current_privilege_level >= date_or_code_pri
 assign exception_read         = is_read & ~read_from_fetch & ~code_readable;
 assign exception_write        = (is_write & is_index_CS) | (is_write & is_data_segment & ~data_writeable);
 
-assign o_segment_privilege_error =
-exception_limit |
-exception_privilege_level |
-exception_read |
-exception_write |
-1'b0;
+assign o_segment_privilege_error = i_protected_mode & (
+    exception_limit |
+    exception_privilege_level |
+    exception_read |
+    exception_write
+);
 
 // Linear address = segment base + offset (32-bit flat model)
 assign o_linear_address = base + i_effective_address;
