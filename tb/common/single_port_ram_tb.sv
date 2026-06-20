@@ -159,4 +159,3 @@ module single_port_ram_tb;
     end
 
 endmodule
-

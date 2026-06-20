@@ -339,7 +339,6 @@ assign ir_m[1]    = ps2_kbd_irq;
 assign ir_m[2]    = intr_s;
 assign ir_m[ 7:  3]  = 5'b0;
 
-
 chip_8237_dma u_chip_dma (
     .clk    (clk),
     .rst_n  (rst_n),
@@ -586,8 +585,6 @@ end
 // 各外设的就绪信号
 
 // BIOS ROM是同步的，假设立即完成
-
-
 
 // 总线就绪：SDRAM 多周期就绪，其余 I/O/ROM 组合就绪。
 always_comb begin

@@ -104,13 +104,11 @@ module ide_controller #(
     assign disk_raddr = byte_addr;
     assign disk_sector_req = async_on && (state == ST_WAIT_SECTOR);
 
-
     logic wr;
     logic rd;
 
     assign wr = !i_cs_n && !i_wr_n;
     assign rd = !i_cs_n && !i_rd_n;
-
 
     // ============================================================
     // disk backend: BRAM image or SDIO sector buffer
@@ -189,7 +187,6 @@ module ide_controller #(
             rd_data_d <= (rd && (i_addr == 16'h01F0) && (state == ST_DRQ)); // 记录“本拍在读数据口”
         end
     end
-
 
     // 读路径组合：默认 FF；译码各寄存器口与数据口
     always_comb begin

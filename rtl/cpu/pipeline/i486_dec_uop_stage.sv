@@ -256,6 +256,10 @@ module i486_dec_uop_stage (
     logic              w_opcode_wbinvd;
     logic              w_opcode_wrmsr;
     logic              w_opcode_x87_esc;
+    logic [ 4: 0]      w_x87_exe_subop;
+    logic [ 2: 0]      w_x87_sti;
+    logic              w_x87_mem_access;
+    logic              w_x87_is_store;
     logic              w_opcode_mmx_any;
     logic              w_opcode_mmx_emms;
     logic              w_opcode_sse_any;
@@ -503,6 +507,10 @@ module i486_dec_uop_stage (
         .o_opcode_wbinvd                            (w_opcode_wbinvd),
         .o_opcode_wrmsr                             (w_opcode_wrmsr),
         .o_opcode_x87_esc                           (w_opcode_x87_esc),
+        .o_x87_exe_subop                            (w_x87_exe_subop),
+        .o_x87_sti                                  (w_x87_sti),
+        .o_x87_mem_access                           (w_x87_mem_access),
+        .o_x87_is_store                             (w_x87_is_store),
         .o_opcode_mmx_any                           (w_opcode_mmx_any),
         .o_opcode_mmx_emms                          (w_opcode_mmx_emms),
         .o_opcode_sse_any                           (w_opcode_sse_any),
@@ -738,6 +746,10 @@ module i486_dec_uop_stage (
         .i_opcode_wbinvd                            (w_opcode_wbinvd),
         .i_opcode_wrmsr                             (w_opcode_wrmsr),
         .i_opcode_x87_esc                           (w_opcode_x87_esc),
+        .i_x87_exe_subop                            (w_x87_exe_subop),
+        .i_x87_sti                                  (w_x87_sti),
+        .i_x87_mem_access                           (w_x87_mem_access),
+        .i_x87_is_store                             (w_x87_is_store),
         .i_opcode_mmx_any                           (w_opcode_mmx_any),
         .i_opcode_mmx_emms                          (w_opcode_mmx_emms),
         .i_opcode_sse_any                           (w_opcode_sse_any),

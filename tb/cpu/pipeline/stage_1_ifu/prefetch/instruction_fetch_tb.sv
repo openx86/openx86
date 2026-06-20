@@ -101,7 +101,6 @@ initial begin
     #2;
     rst_n = 0;
 
-
     for(i=0;i<4;i=i+1) begin
         program_counter = i;
         program_counter_valid = 1;
@@ -120,7 +119,6 @@ initial begin
         $monitor("%t: bus_read_vaild=%h, bus_read_address=%h", $time, bus_read_vaild, bus_read_address);
         #32;
     end
-
 
     #64;
 

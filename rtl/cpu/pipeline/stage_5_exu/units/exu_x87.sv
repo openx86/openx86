@@ -23,7 +23,8 @@
 
 module exu_x87 (
     input  logic         i_valid,
-    input  logic [ 5: 0] i_uop_opcode,
+    input  logic [ 4: 0] i_x87_subop,
+    input  logic [ 2: 0] i_sti_index,
     input  logic [31: 0] i_mem_data,
     input  logic [79: 0] i_st0,
     input  logic [79: 0] i_st1,
@@ -41,14 +42,15 @@ module exu_x87 (
 
     x87_fpu_core u_fpu (
         .i_valid             (i_valid),
-        .i_uop_opcode        (i_uop_opcode),
+        .i_x87_subop         (i_x87_subop),
+        .i_sti_index         (i_sti_index),
         .i_mem_data          (i_mem_data),
         .i_st0               (i_st0),
         .i_st1               (i_st1),
         .o_st0               (o_st0),
         .o_st1               (o_st1),
         .o_stack_push        (),
-        .o_stack_pop         (),
+        .o_stack_pop           (),
         .o_mem_valid         (mem_valid),
         .o_mem_write_enable  (mem_we),
         .o_mem_wdata         (mem_wdata),

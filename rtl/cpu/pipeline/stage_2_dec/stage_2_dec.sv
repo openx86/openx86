@@ -260,6 +260,10 @@ module stage_2_dec (
     output logic                o_opcode_xor_imm_to_reg_mem,
     output logic                o_opcode_xor_imm_to_acc,
     output logic                o_opcode_x87_esc,
+    output logic [ 4: 0]        o_x87_exe_subop,
+    output logic [ 2: 0]        o_x87_sti,
+    output logic                o_x87_mem_access,
+    output logic                o_x87_is_store,
     output logic                o_opcode_mmx_any,
     output logic                o_opcode_mmx_emms,
     output logic                o_opcode_sse_any,
@@ -576,6 +580,29 @@ module stage_2_dec (
     logic                     opcode_xor_imm_to_reg_mem;
     logic                     opcode_xor_imm_to_acc;
     logic                     opcode_x87_esc;
+    logic                     x87_op_FLD_load_real;
+    logic                     x87_op_FST_store_real;
+    logic                     x87_op_FSTP_store_pop_real;
+    logic                     x87_op_FILD_load_int;
+    logic                     x87_op_FIST_store_int;
+    logic                     x87_op_FISTP_store_pop_int;
+    logic                     x87_op_FADD;
+    logic                     x87_op_FMUL;
+    logic                     x87_op_FCOM;
+    logic                     x87_op_FCOMP;
+    logic                     x87_op_FSUB;
+    logic                     x87_op_FSUBR;
+    logic                     x87_op_FDIV;
+    logic                     x87_op_FDIVR;
+    logic                     x87_op_FLD_STi;
+    logic                     x87_op_FXCH;
+    logic                     x87_op_FST_STi;
+    logic                     x87_op_is_memory;
+    logic                     x87_any;
+    logic [ 4: 0]             x87_exe_subop;
+    logic [ 2: 0]             x87_sti;
+    logic                     x87_mem_access;
+    logic                     x87_is_store;
     logic                     opcode_mmx_any;
     logic                     opcode_mmx_emms;
     logic                     opcode_sse_any;
@@ -990,6 +1017,10 @@ module stage_2_dec (
     assign o_opcode_xor_imm_to_reg_mem = opcode_xor_imm_to_reg_mem;
     assign o_opcode_xor_imm_to_acc     = opcode_xor_imm_to_acc;
     assign o_opcode_x87_esc            = opcode_x87_esc;
+    assign o_x87_exe_subop             = x87_exe_subop;
+    assign o_x87_sti                   = x87_sti;
+    assign o_x87_mem_access            = x87_mem_access;
+    assign o_x87_is_store              = x87_is_store;
     assign o_opcode_mmx_any            = opcode_mmx_any;
     assign o_opcode_mmx_emms           = opcode_mmx_emms;
     assign o_opcode_sse_any            = opcode_sse_any;
@@ -1270,9 +1301,89 @@ module stage_2_dec (
     );
     /* verilator lint_on PINMISSING */
 
-    // x87 ESC opcodes use primary opcode bytes D8-DF
-    assign opcode_x87_esc = (opcode_instruction_bytes[0][7: 4] == 4'hD) &&
-                            (opcode_instruction_bytes[0][3: 0] >= 4'h8);
+    // x87 ESC opcodes: fine-grained decode via stage_2_dec_x87_opcode/operand/encode
+    stage_2_dec_x87_opcode u_x87_opcode (
+        .i_instruction                              (opcode_instruction_bytes),
+        .o_opcode_x87_FLD_load_real                 (x87_op_FLD_load_real),
+        .o_opcode_x87_FST_store_real                (x87_op_FST_store_real),
+        .o_opcode_x87_FSTP_store_pop_real           (x87_op_FSTP_store_pop_real),
+        .o_opcode_x87_FILD_load_int                 (x87_op_FILD_load_int),
+        .o_opcode_x87_FIST_store_int                (x87_op_FIST_store_int),
+        .o_opcode_x87_FISTP_store_pop_int           (x87_op_FISTP_store_pop_int),
+        .o_opcode_x87_FADD                          (x87_op_FADD),
+        .o_opcode_x87_FMUL                          (x87_op_FMUL),
+        .o_opcode_x87_FCOM                          (x87_op_FCOM),
+        .o_opcode_x87_FCOMP                         (x87_op_FCOMP),
+        .o_opcode_x87_FSUB                          (x87_op_FSUB),
+        .o_opcode_x87_FSUBR                         (x87_op_FSUBR),
+        .o_opcode_x87_FDIV                          (x87_op_FDIV),
+        .o_opcode_x87_FDIVR                         (x87_op_FDIVR),
+        .o_opcode_x87_FLD_STi                       (x87_op_FLD_STi),
+        .o_opcode_x87_FXCH                          (x87_op_FXCH),
+        .o_opcode_x87_FFREE                         (),
+        .o_opcode_x87_FST_STi                       (x87_op_FST_STi),
+        .o_opcode_x87_FINCSTP                       (),
+        .o_opcode_x87_FDECSTP                       (),
+        .o_opcode_x87_FINIT                         (),
+        .o_opcode_x87_FCLEX                         (),
+        .o_opcode_x87_FNSTSW                        ()
+    );
+
+    stage_2_dec_x87_operand u_x87_operand (
+        .o_op_x87_is_memory                         (x87_op_is_memory),
+        .o_op_x87_is_reg_stack                      (),
+        .o_op_x87_sti                               (x87_sti),
+        .o_op_x87_use_st0                           (),
+        .o_op_x87_use_sti                           (),
+        .o_op_x87_mem_real32                        (),
+        .o_op_x87_mem_real64                        (),
+        .o_op_x87_mem_int16                         (),
+        .o_op_x87_mem_int32                         (),
+        .o_op_x87_mem_int64                         (),
+        .o_op_x87_mem_bcd                           (),
+        .i_opcode_x87_FLD_load_real                 (x87_op_FLD_load_real),
+        .i_opcode_x87_FST_store_real                (x87_op_FST_store_real),
+        .i_opcode_x87_FSTP_store_pop_real           (x87_op_FSTP_store_pop_real),
+        .i_opcode_x87_FILD_load_int                 (x87_op_FILD_load_int),
+        .i_opcode_x87_FIST_store_int                (x87_op_FIST_store_int),
+        .i_opcode_x87_FISTP_store_pop_int           (x87_op_FISTP_store_pop_int),
+        .i_opcode_x87_FADD                          (x87_op_FADD),
+        .i_opcode_x87_FMUL                          (x87_op_FMUL),
+        .i_opcode_x87_FSUB                          (x87_op_FSUB),
+        .i_opcode_x87_FDIV                          (x87_op_FDIV),
+        .i_opcode_x87_FLD_STi                       (x87_op_FLD_STi),
+        .i_opcode_x87_FXCH                          (x87_op_FXCH),
+        .i_instruction                              (opcode_instruction_bytes)
+    );
+
+    stage_2_dec_x87_encode u_x87_encode (
+        .o_x87_any                                  (x87_any),
+        .o_x87_exe_subop                            (x87_exe_subop),
+        .o_x87_mem_access                           (x87_mem_access),
+        .o_x87_is_store                             (x87_is_store),
+        .i_opcode_x87_FLD_load_real                 (x87_op_FLD_load_real),
+        .i_opcode_x87_FST_store_real                (x87_op_FST_store_real),
+        .i_opcode_x87_FSTP_store_pop_real           (x87_op_FSTP_store_pop_real),
+        .i_opcode_x87_FILD_load_int                 (x87_op_FILD_load_int),
+        .i_opcode_x87_FIST_store_int                (x87_op_FIST_store_int),
+        .i_opcode_x87_FISTP_store_pop_int           (x87_op_FISTP_store_pop_int),
+        .i_opcode_x87_FADD                          (x87_op_FADD),
+        .i_opcode_x87_FMUL                          (x87_op_FMUL),
+        .i_opcode_x87_FCOM                          (x87_op_FCOM),
+        .i_opcode_x87_FCOMP                         (x87_op_FCOMP),
+        .i_opcode_x87_FSUB                          (x87_op_FSUB),
+        .i_opcode_x87_FSUBR                         (x87_op_FSUBR),
+        .i_opcode_x87_FDIV                          (x87_op_FDIV),
+        .i_opcode_x87_FDIVR                         (x87_op_FDIVR),
+        .i_opcode_x87_FLD_STi                       (x87_op_FLD_STi),
+        .i_opcode_x87_FXCH                          (x87_op_FXCH),
+        .i_opcode_x87_FST_STi                       (x87_op_FST_STi),
+        .i_op_x87_is_memory                         (x87_op_is_memory)
+    );
+
+    assign opcode_x87_esc = x87_any |
+        ((opcode_instruction_bytes[0][7: 4] == 4'hD) &&
+         (opcode_instruction_bytes[0][3: 0] >= 4'h8));
 
     stage_2_dec_mmx_opcode u_mmx_opcode (
         .i_instruction                              (opcode_instruction_bytes),

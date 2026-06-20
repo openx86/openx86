@@ -274,4 +274,3 @@ module chip_at24lc32_eeprom_tb;
     end
 
 endmodule
-

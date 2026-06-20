@@ -135,7 +135,7 @@ assign limit_ext              = {12'h0, limit};
 assign limit_page_shifted     = limit_ext << 4;
 assign exception_limit        = (is_granularity_byte & (i_effective_address >= limit_ext)) |
                                    (is_granularity_page & (i_effective_address >= limit_page_shifted));
-assign exception_privilege_level = i_current_privilege_level >= date_or_code_privilege_level;
+assign exception_privilege_level = i_current_privilege_level < date_or_code_privilege_level;
 assign exception_read         = is_read & ~read_from_fetch & ~code_readable;
 assign exception_write        = (is_write & is_index_CS) | (is_write & is_data_segment & ~data_writeable);
 

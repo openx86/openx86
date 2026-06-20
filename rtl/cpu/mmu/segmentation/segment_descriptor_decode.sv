@@ -48,7 +48,6 @@ specifies the protection level 0–3 associated with a
 segment
 */
 
-
 module segment_descriptor_decode (
     // =========================
     // decoded descriptor fields (8-byte code/data segment descriptor)

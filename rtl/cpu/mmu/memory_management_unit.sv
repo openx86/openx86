@@ -15,17 +15,8 @@
 // ----------------------------------------------------------------------------
 //  File        : memory_management_unit.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : memory_management_unit module
+//  Description : Segmentation + paging MMU with segment and page fault outputs
 // ============================================================================
-
-/*
-project: w80386dx
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/w80386dx
-module: memory_management_unit
-create at: 2022-02-04 23:34:40
-description: memory_management_unit
-*/
 
 module memory_management_unit #(
     parameter bit read_from_fetch = 1'b0
@@ -50,6 +41,9 @@ module memory_management_unit #(
     input  logic [31: 0]        i_page_directory_base,
     output logic [31: 0]        o_physical_address,
     output logic                 o_segment_fault,
+    output logic                 o_page_fault,
+    output logic                 o_fault_present,
+    output logic [31: 0]        o_fault_linear_address,
 
     // =========================
     // bus for paging walks (two-level page table reads)
@@ -68,107 +62,125 @@ module memory_management_unit #(
     input  logic                 rst_n
 );
 
-    // ============================================================
-    // intermediate signals
-    // ============================================================
     logic [31: 0] linear_address;
     logic [31: 0] physical_address;
 
     logic         paging_valid;
     logic         paging_ready;
     logic         seg_priv_err;
+    logic         pg_fault;
+    logic         pg_fault_present;
+    logic [31: 0] pg_fault_linear;
 
-    // ============================================================
-    // segmentation unit
-    // ============================================================
     segmentation_unit #(
         .read_from_fetch (read_from_fetch)
     ) segmentation_unit (
-    .i_protected_mode           (i_protected_mode),
-    .i_segment_selector         (i_segment_selector),
-    .i_segment_descriptor       (i_segment_descriptor),
-    .i_current_privilege_level  (i_current_privilege_level),
-    .i_segment_index            (i_segment_index),
-    .i_effective_address        (i_effective_address),
-    .i_write_enable             (i_write_enable),
-    .o_linear_address           (linear_address),
-    .o_segment_privilege_error  (seg_priv_err),
-    .clk                        (clk),
-    .rst_n                      (rst_n)
-);
+        .i_protected_mode           (i_protected_mode),
+        .i_segment_selector         (i_segment_selector),
+        .i_segment_descriptor       (i_segment_descriptor),
+        .i_current_privilege_level  (i_current_privilege_level),
+        .i_segment_index            (i_segment_index),
+        .i_effective_address        (i_effective_address),
+        .i_write_enable             (i_write_enable),
+        .o_linear_address           (linear_address),
+        .o_segment_privilege_error  (seg_priv_err),
+        .clk                        (clk),
+        .rst_n                      (rst_n)
+    );
 
-    // ============================================================
-    // paging unit
-    // ============================================================
     paging_unit paging_unit (
-    .i_valid             (paging_valid),
-    .o_ready             (paging_ready),
-    .i_linear_address    (linear_address),
-    .i_page_directory_base (i_page_directory_base),
-    .o_physical_address  (physical_address),
-    .o_bus_valid         (o_bus_valid),
-    .i_bus_ready         (i_bus_ready),
-    .o_bus_write_enable  (o_bus_write_enable),
-    .o_bus_address       (o_bus_address),
-    .i_bus_data_read     (i_bus_data_read),
-    .o_bus_data_write    (o_bus_data_write),
-    .clk                 (clk),
-    .rst_n               (rst_n)
-);
+        .i_valid                 (paging_valid),
+        .o_ready                 (paging_ready),
+        .i_linear_address        (linear_address),
+        .i_page_directory_base   (i_page_directory_base),
+        .i_cpl                   (i_current_privilege_level),
+        .i_is_write              (i_write_enable),
+        .o_physical_address      (physical_address),
+        .o_page_fault            (pg_fault),
+        .o_fault_present         (pg_fault_present),
+        .o_fault_linear_address  (pg_fault_linear),
+        .o_bus_valid             (o_bus_valid),
+        .i_bus_ready             (i_bus_ready),
+        .o_bus_write_enable      (o_bus_write_enable),
+        .o_bus_address           (o_bus_address),
+        .i_bus_data_read         (i_bus_data_read),
+        .o_bus_data_write        (o_bus_data_write),
+        .clk                     (clk),
+        .rst_n                   (rst_n)
+    );
 
+    typedef enum logic [ 1: 0] {
+        STATE_IDLE,
+        STATE_WAIT_PAGING,
+        STATE_DONE
+    } mmu_state_e;
 
-// MMU 组合状态：空闲 →（可选）等分页 → 输出物理或线性
-enum logic [ 1: 0] {
-    STATE_WAIT_FOR_PAGING_UNIT_READY = 2'h1, // 等待页表两级读完成
-    STATE_OUTPUT_LINEAR_ADDRESS = 2'h2,      // 未分页：直接输出线性地址
-    STATE_WAIT_FOR_VAILD = 2'h0              // 等待新请求
-} state;
+    mmu_state_e state;
 
-// 顺序控制：分页关闭时一拍完成；开启时委托 paging_unit
-always_ff @(posedge clk or negedge rst_n) begin
-    if (~rst_n) begin
-        state <= STATE_WAIT_FOR_VAILD;
-        o_ready <= 0;
-    end else begin
-        unique case (state)
-            STATE_WAIT_FOR_VAILD: begin
-                if (i_valid) begin
-                    o_ready       <= 0;
-                    if (i_paging_enable) begin
-                        state          <= STATE_WAIT_FOR_PAGING_UNIT_READY;
-                        paging_valid   <= 1;
-                    end else begin
-                        state          <= STATE_OUTPUT_LINEAR_ADDRESS;
-                        paging_valid   <= 0;
+    logic         page_fault_r;
+    logic         seg_fault_r;
+    logic         fault_present_r;
+    logic [31: 0] fault_linear_r;
+
+    assign o_segment_fault          = seg_fault_r;
+    assign o_page_fault             = page_fault_r;
+    assign o_fault_present          = fault_present_r;
+    assign o_fault_linear_address   = fault_linear_r;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            state              <= STATE_IDLE;
+            o_ready            <= 1'b0;
+            paging_valid       <= 1'b0;
+            o_physical_address <= 32'h0;
+            page_fault_r       <= 1'b0;
+            seg_fault_r        <= 1'b0;
+            fault_present_r    <= 1'b0;
+            fault_linear_r     <= 32'h0;
+        end else begin
+            o_ready      <= 1'b0;
+            paging_valid <= 1'b0;
+
+            unique case (state)
+                STATE_IDLE: begin
+                    if (i_valid) begin
+                        page_fault_r <= 1'b0;
+                        seg_fault_r  <= 1'b0;
+                        fault_linear_r <= linear_address;
+                        if (seg_priv_err) begin
+                            state       <= STATE_DONE;
+                            o_ready     <= 1'b1;
+                            seg_fault_r <= 1'b1;
+                        end else if (i_paging_enable) begin
+                            state        <= STATE_WAIT_PAGING;
+                            paging_valid <= 1'b1;
+                        end else begin
+                            state              <= STATE_DONE;
+                            o_ready            <= 1'b1;
+                            o_physical_address <= linear_address;
+                        end
                     end
-                end else begin
-                    state          <= STATE_WAIT_FOR_VAILD;
-                    paging_valid   <= 0;
                 end
-            end
-            STATE_WAIT_FOR_PAGING_UNIT_READY: begin
-                if (paging_ready) begin
-                    state <= STATE_WAIT_FOR_VAILD;
-                    o_ready <= 1;
-                    o_physical_address <= physical_address;
-                end else begin
-                    state <= STATE_WAIT_FOR_PAGING_UNIT_READY;
-                    o_ready <= 0;
-                    o_physical_address <= o_physical_address;
+                STATE_WAIT_PAGING: begin
+                    paging_valid <= 1'b1;
+                    if (paging_ready) begin
+                        state   <= STATE_DONE;
+                        o_ready <= 1'b1;
+                        if (pg_fault) begin
+                            page_fault_r    <= 1'b1;
+                            fault_present_r <= pg_fault_present;
+                            fault_linear_r  <= pg_fault_linear;
+                        end else begin
+                            o_physical_address <= physical_address;
+                        end
+                    end
                 end
-            end
-            STATE_OUTPUT_LINEAR_ADDRESS: begin
-                state <= STATE_WAIT_FOR_VAILD;
-                o_ready <= 1;
-                o_physical_address <= linear_address;
-            end
-            default: begin
-                state <= STATE_WAIT_FOR_VAILD;
-            end
-        endcase
+                STATE_DONE: begin
+                    state <= STATE_IDLE;
+                end
+                default: state <= STATE_IDLE;
+            endcase
+        end
     end
-end
-
-assign o_segment_fault = seg_priv_err;
 
 endmodule

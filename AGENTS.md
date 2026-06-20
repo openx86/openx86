@@ -58,6 +58,8 @@
 
 **Shell scripts (`*.sh`):** Unix line endings only (LF), not Windows CRLF. Normalize before commit so scripts run correctly on Linux/macOS and in CI.
 
+**Blank lines (`*.sv`/`*.sh`):** use a single blank line only to separate logical sections (header / include / module / major always blocks); never insert blank lines between consecutive ports, assignments, case items, or other lines within the same block. No consecutive blank lines (max one `\n` between sections). File ends with exactly one trailing newline; no extra blank lines at EOF. Forbidden: corrupted `\r\r\n` or `\r\n\r\n` patterns that create a blank line after every source line — normalize to one line ending per line before commit.
+
 **Language policy (`*.sv`/`*.sh`):** Chinese is allowed in comments only; all non-comment content (identifiers, string literals/messages, directives, shell commands, paths) must be English. Add concise Chinese comments only where they improve readability of non-trivial logic, and keep runtime prompts/messages in English.
 
-**Review (quick):** header; port prefixes/PHY/last `clk`/`rst_n`; width/spacing/alignment; synth RTL; device vs peripheral layering; TB 1:1 map; CDC/reset/FSM style.
+**Review (quick):** header; port prefixes/PHY/last `clk`/`rst_n`; width/spacing/alignment; blank-line/line-ending hygiene; synth RTL; device vs peripheral layering; TB 1:1 map; CDC/reset/FSM style.

@@ -15,164 +15,165 @@
 // ----------------------------------------------------------------------------
 //  File        : paging_unit.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : paging_unit module
+//  Description : Two-level paging with PTE/PDE attribute checks and #PF
 // ============================================================================
 
-/*
-project: w80386dx
-author: Chang Wei<changwei1006@gmail.com>
-repo: https://github.com/openx86/w80386dx
-module: paging_unit
-create at: 2022-01-31 02:35:30
-description: paging_unit (分页部件)
-
-4.5.2 Paging Organization
-4.5.2.1 PAGE MECHANISM
-The Intel486 DX uses two levels of tables to translate
-the linear address (from the segmentation unit)
-into a physical address. There are three components
-to the paging mechanism of the Intel486 DX:
-the page directory, the page tables, and the page
-itself (page frame). All memory-resident elements of
-the Intel486 DX paging mechanism are the same
-size, namely, 4K bytes. A uniform size for all of the
-elements simplifies memory allocation and reallocation
-schemes, since there is no problem with memory
-fragmentation. Figure 4-19 shows how the paging
-mechanism works.
-4.5.2.2 PAGE DESCRIPTOR BASE REGISTER
-CR2 is the Page Fault Linear Address register. It
-holds the 32-bit linear address which caused the last
-page fault detected.
-CR3 is the Page Directory Physical Base Address
-Register. It contains the physical starting address of
-the Page Directory. The lower 12 bits of CR3 are
-always zero to ensure that the Page Directory is always
-page aligned. Loading it via a MOV CR3, reg
-instruction causes the Page Table Entry cache to be
-flushed, as will a task switch through a TSS which
-changes the value of CR0. (See 4.5.4 Translation
-Lookaside Buffer).
-*/
+`include "openx86_defs.h.sv"
 
 module paging_unit (
-    // =========================
-    // handshake with MMU
-    // =========================
     input  logic         i_valid,
     output logic         o_ready,
-
-    // =========================
-    // linear address and page directory base (CR3)
-    // =========================
     input  logic [31: 0] i_linear_address,
     input  logic [31: 0] i_page_directory_base,
+    input  logic [ 1: 0] i_cpl,
+    input  logic         i_is_write,
     output logic [31: 0] o_physical_address,
-
-    // =========================
-    // external bus for reading page directory/table entries
-    // =========================
+    output logic         o_page_fault,
+    output logic         o_fault_present,
+    output logic [31: 0] o_fault_linear_address,
     output logic         o_bus_valid,
     input  logic         i_bus_ready,
     output logic         o_bus_write_enable,
     output logic [31: 0] o_bus_address,
     input  logic [31: 0] i_bus_data_read,
     output logic [31: 0] o_bus_data_write,
-
-    // =========================
-    // clock and reset
-    // =========================
     input  logic          clk,
     input  logic          rst_n
 );
-
-    // ============================================================
-    // page index fields from linear address
-    // ============================================================
     logic  [ 9: 0] page_directory_index;
     logic  [ 9: 0] page_table_index;
     logic  [11: 0] page_frame_offset;
-
-    // ============================================================
-    // address calculation signals
-    // ============================================================
     logic  [31: 0] page_directory_offset;
-    logic [31: 0] page_table_base;
-    logic  [31: 0] page_table_address_offset;
-    logic [31: 0] page_frame_address_offset;
-
-assign page_directory_index = i_linear_address[31: 22];
-assign page_table_index = i_linear_address[21: 12];
-assign page_frame_offset = i_linear_address[11: 0];
-assign page_directory_offset = i_page_directory_base + (32'(page_directory_index) << 12);
-assign page_table_address_offset = page_table_base + (32'(page_table_index) << 12);
-assign o_physical_address = page_frame_address_offset + 32'(page_frame_offset);
-
-    // ============================================================
-    // two-level page table read FSM: PDE → PTE → physical address
-    // ============================================================
-    enum logic [ 1: 0] {
-        STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY = 2'h1,
-        STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID = 2'h2,
-        STATE_WAIT_FOR_VAILD = 2'h0
-    } state;
-
-    // ============================================================
-    // sequential logic
-    // ============================================================
-always_ff @(posedge clk or negedge rst_n) begin
-    if (~rst_n) begin
-        state <= STATE_WAIT_FOR_VAILD;
-        o_ready <= 0;
-        o_bus_write_enable <= 1'b0;
-        o_bus_data_write   <= '0;
-    end else begin
-        // 取指侧分页翻译仅发起读事务；写通道保持无效以免 UNDRIVEN
-        o_bus_write_enable <= 1'b0;
-        o_bus_data_write   <= '0;
+    logic  [31: 0] latched_linear_address;
+    assign page_directory_index  = latched_linear_address[31: 22];
+    assign page_table_index      = latched_linear_address[21: 12];
+    assign page_frame_offset     = latched_linear_address[11: 0];
+    assign page_directory_offset = i_page_directory_base + (32'(page_directory_index) << 2);
+    function automatic logic [31: 0] frame_base(input logic [31: 0] entry);
+        return {entry[31: 12], 12'h0};
+    endfunction
+    function automatic logic pte_protection_fault(
+        input logic [31: 0] entry,
+        input logic         is_write,
+        input logic [ 1: 0] cpl
+    );
+        if (is_write && ~entry[`PTE_BIT_RW]) begin
+            return 1'b1;
+        end
+        if ((cpl == 2'b11) && ~entry[`PTE_BIT_US]) begin
+            return 1'b1;
+        end
+        return 1'b0;
+    endfunction
+    typedef enum logic [ 1: 0] {
+        STATE_IDLE,
+        STATE_READ_PDE,
+        STATE_READ_PTE
+    } paging_state_e;
+    paging_state_e state;
+    logic [31: 0] pte_entry_r;
+    logic [31: 0] pte_read_addr_r;
+    logic         pte_addr_armed_r;
+    logic         fault_r;
+    logic         fault_present_r;
+    logic         i_valid_r;
+    logic         i_valid_rise;
+    logic [ 1: 0] latched_cpl;
+    logic         latched_is_write;
+    assign i_valid_rise = i_valid & ~i_valid_r;
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            i_valid_r <= 1'b0;
+        end else begin
+            i_valid_r <= i_valid;
+        end
+    end
+    always_comb begin
+        o_physical_address     = frame_base(pte_entry_r) + 32'(page_frame_offset);
+        o_fault_linear_address = latched_linear_address;
+        o_page_fault           = fault_r;
+        o_fault_present        = fault_present_r;
+        o_bus_write_enable     = 1'b0;
+        o_bus_data_write       = '0;
         unique case (state)
-            STATE_WAIT_FOR_VAILD: begin
-                o_ready       <= 0;
-                if (i_valid) begin
-                    state              <= STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY;
-                    o_bus_valid        <= 1;
-                    o_bus_address      <= page_directory_offset;
-                end else begin
-                    state              <= STATE_WAIT_FOR_VAILD;
-                    o_bus_valid        <= 0;
-                end
+            STATE_READ_PDE: begin
+                o_bus_valid   = 1'b1;
+                o_bus_address = page_directory_offset;
             end
-            STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY: begin
-                if (i_bus_ready) begin
-                    // 取到 PDE：发起 PTE 读
-                    state                  <= STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID;
-                    page_table_base        <= i_bus_data_read;
-                    o_bus_valid            <= 1;
-                    o_bus_address          <= page_table_address_offset;
-                end else begin
-                    state              <= STATE_WAIT_FOR_PAGE_DIR_ENTRY_READY;
-                    o_bus_valid        <= 0;
-                    o_bus_address      <= o_bus_address;
-                end
-            end
-            STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID: begin
-                if (i_bus_ready) begin
-                    // 取到 PTE：合成物理地址并结束
-                    state                    <= STATE_WAIT_FOR_VAILD;
-                    page_frame_address_offset <= i_bus_data_read;
-                    o_bus_valid              <= 0;
-                    o_ready                  <= 1;
-                end else begin
-                    state              <= STATE_WAIT_FOR_PAGE_TBL_ENTRY_VALID;
-                    o_bus_valid        <= 1;
-                    o_ready            <= 0;
-                end
+            STATE_READ_PTE: begin
+                o_bus_valid   = pte_addr_armed_r;
+                o_bus_address = pte_read_addr_r;
             end
             default: begin
-                state <= STATE_WAIT_FOR_VAILD;
+                o_bus_valid   = 1'b0;
+                o_bus_address = 32'h0;
             end
         endcase
     end
-end
-
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            state                  <= STATE_IDLE;
+            o_ready                <= 1'b0;
+            pte_entry_r            <= 32'h0;
+            pte_read_addr_r        <= 32'h0;
+            pte_addr_armed_r       <= 1'b0;
+            latched_linear_address <= 32'h0;
+            latched_cpl            <= 2'b00;
+            latched_is_write       <= 1'b0;
+            fault_r                <= 1'b0;
+            fault_present_r        <= 1'b0;
+        end else begin
+            o_ready <= 1'b0;
+            unique case (state)
+                STATE_IDLE: begin
+                    if (i_valid_rise) begin
+                        fault_r                <= 1'b0;
+                        fault_present_r        <= 1'b0;
+                        latched_linear_address <= i_linear_address;
+                        latched_cpl            <= i_cpl;
+                        latched_is_write       <= i_is_write;
+                        pte_addr_armed_r       <= 1'b0;
+                        state                  <= STATE_READ_PDE;
+                    end
+                end
+                STATE_READ_PDE: begin
+                    if (i_bus_ready) begin
+                        if (~i_bus_data_read[`PTE_BIT_P]) begin
+                            state           <= STATE_IDLE;
+                            o_ready         <= 1'b1;
+                            fault_r         <= 1'b1;
+                            fault_present_r <= 1'b0;
+                        end else begin
+                            pte_read_addr_r <= frame_base(i_bus_data_read) +
+                                (32'(latched_linear_address[21: 12]) << 2);
+                            pte_addr_armed_r <= 1'b0;
+                            state            <= STATE_READ_PTE;
+                        end
+                    end
+                end
+                STATE_READ_PTE: begin
+                    if (~pte_addr_armed_r) begin
+                        pte_addr_armed_r <= 1'b1;
+                    end else if (i_bus_ready) begin
+                        state       <= STATE_IDLE;
+                        o_ready     <= 1'b1;
+                        pte_entry_r <= i_bus_data_read;
+                        if (~i_bus_data_read[`PTE_BIT_P]) begin
+                            fault_r         <= 1'b1;
+                            fault_present_r <= 1'b0;
+                        end else if (pte_protection_fault(
+                            i_bus_data_read, latched_is_write, latched_cpl
+                        )) begin
+                            fault_r         <= 1'b1;
+                            fault_present_r <= 1'b1;
+                        end else begin
+                            fault_r         <= 1'b0;
+                            fault_present_r <= 1'b0;
+                        end
+                    end
+                end
+                default: state <= STATE_IDLE;
+            endcase
+        end
+    end
 endmodule

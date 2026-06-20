@@ -234,7 +234,6 @@
 `define length_displacement_16 (2'b10)
 `define length_displacement_32 (2'b11)
 
-
 // scale
 `define scale_x1 (2'b00)
 `define scale_x2 (2'b01)
@@ -376,6 +375,11 @@
 `define EXE_X87_FSUBR   5'd28
 `define EXE_X87_FDIVR   5'd29
 
+// Page table entry bit positions (i486 two-level paging)
+`define PTE_BIT_P   0
+`define PTE_BIT_RW  1
+`define PTE_BIT_US  2
+
 `define EXE_INT_NOP         6'd0
 `define EXE_INT_ADD         6'd1
 `define EXE_INT_ADC         6'd2
@@ -448,7 +452,8 @@ typedef struct packed {
     logic [31: 0] uop_immediate;     // Immediate value
     logic [31: 0] uop_displacement;  // Displacement value
     logic [ 3: 0] uop_tttn;          // Condition code for Jcc/SETcc
-    logic [ 2: 0] uop_eee;           // X87 sub-opcode index
+    logic [ 4: 0] uop_eee;           // X87 sub-opcode index (EXE_X87_*)
+    logic [ 2: 0] uop_seg_index;     // Segment register index for mem ops
     logic [ 1: 0] uop_sib_scale;     // SIB scale factor
     logic        uop_has_imm;        // Has immediate operand
     logic        uop_has_disp;       // Has displacement operand

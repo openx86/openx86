@@ -123,7 +123,6 @@ assign rm_111 = (i_rm == 3'b111);
 assign default_operation_size_16 = (i_default_op_size == `default_operation_size_16);
 assign default_operation_size_32 = (i_default_op_size == `default_operation_size_32);
 
-
 // segment register
 
 logic mod_00_DS_16_bit;
@@ -178,10 +177,8 @@ always_comb begin
     endcase
 end
 
-
 // scale-index-base is present
 assign o_sib_present = default_operation_size_32 & ~mod_11 & rm_100;
-
 
 // base register
 logic base_mod_xx_BX;
@@ -215,7 +212,6 @@ assign base_reg_size_16 = default_operation_size_16 & (base_16_BX | base_16_BP);
 assign base_reg_size_32 = 1'b0;
 
 assign o_base_reg_valid = base_reg_size_16 | base_reg_size_32;
-
 
 // index register
 logic index_mod_xx__SI;
@@ -272,7 +268,6 @@ assign index_reg_size_32 = default_operation_size_32 & (
     index_mod_xx_EDI |
 1'b0);
 assign o_index_reg_valid = index_reg_size_16 | index_reg_size_32;
-
 
 // displacement_length
 assign o_disp_size_8b  = mod_01;

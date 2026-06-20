@@ -61,6 +61,8 @@ module stage_1_ifu (
     output logic [15: 0][ 7: 0] o_instruction,
     output logic                 o_instruction_valid,
     output logic                 o_segment_fault,
+    output logic                 o_page_fault,
+    output logic [31: 0]        o_fault_linear_address,
     output logic [ 4: 0]        o_fifo_count,
     output logic [31: 0]        o_eip,
     input  logic                 i_dec_ready,
@@ -85,6 +87,8 @@ module stage_1_ifu (
     logic [ 1: 0] fetch_word_idx_r;
     logic         fetch_instruction_ready_r;
     logic         segment_fault_r;
+    logic         page_fault_r;
+    logic [31: 0] fault_linear_r;
 
     // ============================================================
     // fetch control signals
@@ -119,6 +123,9 @@ module stage_1_ifu (
     logic         mmu_bus_we;
     logic [31: 0] mmu_bus_wdata;
     logic         mmu_seg_fault;
+    logic         mmu_page_fault;
+    logic         mmu_fault_present;
+    logic [31: 0] mmu_fault_linear;
     logic [31: 0] mmu_phys_addr;
     logic         fetch_need_mmu;
     logic [31: 0] fetch_linear_addr;
@@ -143,6 +150,9 @@ module stage_1_ifu (
         .i_page_directory_base   (i_page_directory_base),
         .o_physical_address      (mmu_phys_addr),
         .o_segment_fault         (mmu_seg_fault),
+        .o_page_fault            (mmu_page_fault),
+        .o_fault_present         (mmu_fault_present),
+        .o_fault_linear_address  (mmu_fault_linear),
         .o_bus_valid             (o_mmu_bus_valid),
         .i_bus_ready             (i_mmu_bus_ready),
         .o_bus_write_enable      (mmu_bus_we),
@@ -174,7 +184,9 @@ module stage_1_ifu (
 
     assign o_instruction       = fifo_window;
     assign o_instruction_valid = ifu_valid;
-    assign o_segment_fault     = segment_fault_r;
+    assign o_segment_fault         = segment_fault_r;
+    assign o_page_fault            = page_fault_r;
+    assign o_fault_linear_address  = fault_linear_r;
     assign o_fifo_count        = fifo_count;
     assign o_eip               = eip_r;
 
@@ -189,6 +201,8 @@ module stage_1_ifu (
             fetch_instruction_ready_r <= 1'b0;
             fetch_instruction        <= '0;
             segment_fault_r          <= 1'b0;
+            page_fault_r             <= 1'b0;
+            fault_linear_r           <= 32'h0;
         end else if (i_reload_eip) begin
             eip_r                    <= i_reload_eip_value;
             started_r                <= 1'b1;
@@ -197,6 +211,8 @@ module stage_1_ifu (
             fetch_word_idx_r         <= 2'b00;
             fetch_instruction_ready_r <= 1'b0;
             segment_fault_r          <= 1'b0;
+            page_fault_r             <= 1'b0;
+            fault_linear_r           <= 32'h0;
         end else begin
             fetch_instruction_ready_r <= 1'b0;
 
@@ -220,6 +236,12 @@ module stage_1_ifu (
                             fetch_active_r            <= 1'b0;
                             fetch_instruction_ready_r <= 1'b0;
                             segment_fault_r           <= 1'b1;
+                            fault_linear_r            <= mmu_fault_linear;
+                        end else if (mmu_page_fault) begin
+                            fetch_active_r            <= 1'b0;
+                            fetch_instruction_ready_r <= 1'b0;
+                            page_fault_r              <= 1'b1;
+                            fault_linear_r            <= mmu_fault_linear;
                         end else begin
                             fetch_code_phase <= 1'b1;
                         end
@@ -257,6 +279,7 @@ module stage_1_ifu (
                     fetch_active_r            <= 1'b0;
                     fetch_instruction_ready_r <= 1'b1;
                     segment_fault_r           <= 1'b0;
+                    page_fault_r              <= 1'b0;
                 end else begin
                     fetch_word_idx_r <= fetch_word_idx_r + 2'd1;
                 end
@@ -289,7 +312,7 @@ module stage_1_ifu (
     logic unused_ifu;
     assign unused_ifu =
         fifo_push_ready ^ fifo_pop_ready ^ fifo_full ^ i_dec_ready ^ i_dec_error ^
-        mmu_bus_we ^ mmu_bus_wdata[0];
+        mmu_bus_we ^ mmu_bus_wdata[0] ^ mmu_fault_present;
     /* verilator lint_on UNUSEDSIGNAL */
 
 endmodule

@@ -79,7 +79,6 @@ module sdcard_native_host_4bit (
             start_d <= i_start;
     end
 
-
     assign o_sdcard_native_host_4bit_phy_clk = clk;
 
     // 主状态机：CMD17 单块读 → payload 顺序写入

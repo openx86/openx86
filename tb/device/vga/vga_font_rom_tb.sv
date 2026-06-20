@@ -145,4 +145,3 @@ module vga_font_rom_tb;
     end
 
 endmodule
-

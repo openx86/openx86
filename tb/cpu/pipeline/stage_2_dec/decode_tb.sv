@@ -37,7 +37,6 @@ unit decode_instance_in_testbench (
     .o_dbg_modrm_mod ( dbg_modrm_mod )
 );
 
-
 initial begin
     instruction[ 0: 15] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
 

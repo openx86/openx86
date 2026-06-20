@@ -774,6 +774,17 @@ module i486_cpu_core (
         .rst_n                  (rst_n)
     );
 
+    // ============================================================
+    // x87 ST0/ST1 register file (written by pipeline EXU x87 path)
+    // ============================================================
+    logic [79: 0] fpu_st0;
+    logic [79: 0] fpu_st1;
+    logic         pipe_fpu_st0_we;
+    logic [79: 0] pipe_fpu_st0_wdata;
+    logic         pipe_fpu_st1_we;
+    logic [79: 0] pipe_fpu_st1_wdata;
+    logic         pipe_fpu_exception;
+
     i486_cpu_pipeline u_pipeline (
         .o_mmu_valid               (o_mmu_valid),
         .i_mmu_ready               (i_mmu_ready),
@@ -891,52 +902,35 @@ module i486_cpu_core (
         .o_wrb_idtr_write_enable   (pipe_idtr_write_enable),
         .o_wrb_idtr_write_limit    (pipe_idtr_write_limit),
         .o_wrb_idtr_write_base     (pipe_idtr_write_base),
+        .i_fpu_st0                 (fpu_st0),
+        .i_fpu_st1                 (fpu_st1),
+        .o_fpu_st0_we              (pipe_fpu_st0_we),
+        .o_fpu_st0_wdata           (pipe_fpu_st0_wdata),
+        .o_fpu_st1_we              (pipe_fpu_st1_we),
+        .o_fpu_st1_wdata           (pipe_fpu_st1_wdata),
+        .o_fpu_exception           (pipe_fpu_exception),
         .clk                       (clk),
         .rst_n                     (rst_n)
     );
 
-    // ============================================================
-    // x87 FPU core + ST0/ST1 register file (minimal integration)
-    // ============================================================
-    logic [79: 0] fpu_st0;
-    logic [79: 0] fpu_st1;
-    logic [79: 0] fpu_st0_n;
-    logic [79: 0] fpu_st1_n;
-    logic         fpu_exception;
-
     rf_x87_fpu_st0 u_rf_fpu_st0 (
-        .i_write_enable (1'b0),
-        .i_write_data   (80'h0),
+        .i_write_enable (pipe_fpu_st0_we),
+        .i_write_data   (pipe_fpu_st0_wdata),
         .o_data         (fpu_st0),
         .clk            (clk),
         .rst_n          (rst_n)
     );
 
     rf_x87_fpu_st1 u_rf_fpu_st1 (
-        .i_write_enable (1'b0),
-        .i_write_data   (80'h0),
+        .i_write_enable (pipe_fpu_st1_we),
+        .i_write_data   (pipe_fpu_st1_wdata),
         .o_data         (fpu_st1),
         .clk            (clk),
         .rst_n          (rst_n)
     );
 
-    x87_fpu_core u_x87_fpu (
-        .i_valid             (1'b0),
-        .i_uop_opcode        (`UOP_X87),
-        .i_mem_data          (32'h0),
-        .i_st0               (fpu_st0),
-        .i_st1               (fpu_st1),
-        .o_st0               (fpu_st0_n),
-        .o_st1               (fpu_st1_n),
-        .o_stack_push        (),
-        .o_stack_pop         (),
-        .o_mem_valid         (),
-        .o_mem_write_enable  (),
-        .o_mem_wdata         (),
-        .o_fpu_exception     (fpu_exception),
-        .clk                 (clk),
-        .rst_n               (rst_n)
-    );
+    logic unused_fpu_exception;
+    assign unused_fpu_exception = pipe_fpu_exception;
 
     // ============================================================
     // MMX register file (alias-ready, idle until EXU MMX uops drive writes)

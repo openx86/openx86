@@ -67,8 +67,11 @@ module stage_2_dec_x87_opcode (
     // ============================================================
     // intermediate signals
     // ============================================================
-    logic [2: 0] modrm_reg = i_instruction[1][5: 3];
-    logic [1: 0] mod       = i_instruction[1][7: 6];
+    logic [2: 0] modrm_reg;
+    logic [1: 0] mod;
+
+    assign modrm_reg = i_instruction[1][5: 3];
+    assign mod       = i_instruction[1][7: 6];
 
     assign o_opcode_x87_FADD                = (i_instruction[0] == 8'hD8 && modrm_reg == 3'b000);
     assign o_opcode_x87_FMUL                = (i_instruction[0] == 8'hD8 && modrm_reg == 3'b001);

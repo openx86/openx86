@@ -203,4 +203,3 @@ module dual_port_rom_tb;
     end
 
 endmodule
-

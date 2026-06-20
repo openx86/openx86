@@ -361,4 +361,3 @@ module vga_graphics_adapter (
     end
 
 endmodule
-

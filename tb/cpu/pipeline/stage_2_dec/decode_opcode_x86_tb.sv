@@ -889,4 +889,3 @@ module decode_opcode_x86_tb;
     end
 
 endmodule
-

@@ -15,11 +15,7 @@
 // ----------------------------------------------------------------------------
 //  File        : decode_x87_tb.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : decode_x87_tb module
-// ============================================================================
-
-// ============================================================================
-// decode_x87_esc 冒烟：D8 C1 = FADD ST0,ST1（mod=11 reg=000 rm=001�?
+//  Description : x87 fine-grained decode smoke (D8 C1 -> EXE_X87_FADD)
 // ============================================================================
 
 `timescale 1ns/1ns
@@ -28,39 +24,115 @@
 
 module decode_x87_tb;
 
-    logic [ 7: 0] b0, b1;
-    logic esc;
-    logic [31: 0] mask;
+    logic [3: 0][7: 0] instruction;
+    logic             fadd_flag;
+    logic             fxch_flag;
+    logic             any_flag;
+    logic [4: 0]      exe_subop;
+    logic [2: 0]      sti;
+    logic             is_mem;
+    logic             is_store;
 
-    x87_esc dut (
-        .i_b0             ( b0 ),
-        .i_b1             ( b1 ),
-        .o_is_esc         ( esc ),
-        .o_mod            ( ),
-        .o_reg            ( ),
-        .o_rm             ( ),
-        .o_esc_group      ( ),
-        .o_opmask         ( mask ),
-        .o_modrm_required ( ),
-        .o_memory_operand ( )
+    stage_2_dec_x87_opcode u_opcode (
+        .i_instruction                              (instruction),
+        .o_opcode_x87_FLD_load_real                 (),
+        .o_opcode_x87_FST_store_real                (),
+        .o_opcode_x87_FSTP_store_pop_real           (),
+        .o_opcode_x87_FILD_load_int                 (),
+        .o_opcode_x87_FIST_store_int                (),
+        .o_opcode_x87_FISTP_store_pop_int           (),
+        .o_opcode_x87_FADD                          (fadd_flag),
+        .o_opcode_x87_FMUL                          (),
+        .o_opcode_x87_FCOM                          (),
+        .o_opcode_x87_FCOMP                         (),
+        .o_opcode_x87_FSUB                          (),
+        .o_opcode_x87_FSUBR                         (),
+        .o_opcode_x87_FDIV                          (),
+        .o_opcode_x87_FDIVR                         (),
+        .o_opcode_x87_FLD_STi                       (),
+        .o_opcode_x87_FXCH                          (fxch_flag),
+        .o_opcode_x87_FFREE                         (),
+        .o_opcode_x87_FST_STi                       (),
+        .o_opcode_x87_FINCSTP                       (),
+        .o_opcode_x87_FDECSTP                       (),
+        .o_opcode_x87_FINIT                         (),
+        .o_opcode_x87_FCLEX                         (),
+        .o_opcode_x87_FNSTSW                        ()
+    );
+
+    stage_2_dec_x87_operand u_operand (
+        .o_op_x87_is_memory                         (is_mem),
+        .o_op_x87_is_reg_stack                      (),
+        .o_op_x87_sti                               (sti),
+        .o_op_x87_use_st0                           (),
+        .o_op_x87_use_sti                           (),
+        .o_op_x87_mem_real32                        (),
+        .o_op_x87_mem_real64                        (),
+        .o_op_x87_mem_int16                         (),
+        .o_op_x87_mem_int32                         (),
+        .o_op_x87_mem_int64                         (),
+        .o_op_x87_mem_bcd                           (),
+        .i_opcode_x87_FLD_load_real                 (1'b0),
+        .i_opcode_x87_FST_store_real                (1'b0),
+        .i_opcode_x87_FSTP_store_pop_real           (1'b0),
+        .i_opcode_x87_FILD_load_int                 (1'b0),
+        .i_opcode_x87_FIST_store_int                (1'b0),
+        .i_opcode_x87_FISTP_store_pop_int           (1'b0),
+        .i_opcode_x87_FADD                          (fadd_flag),
+        .i_opcode_x87_FMUL                          (1'b0),
+        .i_opcode_x87_FSUB                          (1'b0),
+        .i_opcode_x87_FDIV                          (1'b0),
+        .i_opcode_x87_FLD_STi                       (1'b0),
+        .i_opcode_x87_FXCH                          (fxch_flag),
+        .i_instruction                              (instruction)
+    );
+
+    stage_2_dec_x87_encode u_encode (
+        .o_x87_any                                  (any_flag),
+        .o_x87_exe_subop                            (exe_subop),
+        .o_x87_mem_access                           (),
+        .o_x87_is_store                             (is_store),
+        .i_opcode_x87_FLD_load_real                 (1'b0),
+        .i_opcode_x87_FST_store_real                (1'b0),
+        .i_opcode_x87_FSTP_store_pop_real           (1'b0),
+        .i_opcode_x87_FILD_load_int                 (1'b0),
+        .i_opcode_x87_FIST_store_int                (1'b0),
+        .i_opcode_x87_FISTP_store_pop_int           (1'b0),
+        .i_opcode_x87_FADD                          (fadd_flag),
+        .i_opcode_x87_FMUL                          (1'b0),
+        .i_opcode_x87_FCOM                          (1'b0),
+        .i_opcode_x87_FCOMP                         (1'b0),
+        .i_opcode_x87_FSUB                          (1'b0),
+        .i_opcode_x87_FSUBR                         (1'b0),
+        .i_opcode_x87_FDIV                          (1'b0),
+        .i_opcode_x87_FDIVR                         (1'b0),
+        .i_opcode_x87_FLD_STi                       (1'b0),
+        .i_opcode_x87_FXCH                          (fxch_flag),
+        .i_opcode_x87_FST_STi                       (1'b0),
+        .i_op_x87_is_memory                         (is_mem)
     );
 
     initial begin
-        b0 = 8'hD8;
-        b1 = 8'hC1;
+        instruction[0] = 8'hD8;
+        instruction[1] = 8'hC1;
+        instruction[2] = 8'h00;
+        instruction[3] = 8'h00;
         #1;
-        if (!esc || !mask[`X87_MASK_M_FADD_ST0_STI]) begin
-            $display("FAIL D8 C1");
+        if (!fadd_flag || !any_flag || (exe_subop != `EXE_X87_FADD) || (sti != 3'd1)) begin
+            $display("FAIL D8 C1 FADD ST0,ST1 fadd=%b any=%b subop=%0d sti=%0d rm=%0d",
+                     fadd_flag, any_flag, exe_subop, sti, instruction[1][2:0]);
             $finish(1);
         end
-        b0 = 8'h0F;
-        b1 = 8'hA2;
+
+        instruction[0] = 8'hD9;
+        instruction[1] = 8'hC9;
         #1;
-        if (esc) begin
-            $display("FAIL non-ESC");
+        if (!fxch_flag || (exe_subop != `EXE_X87_FXCH)) begin
+            $display("FAIL D9 C9 FXCH subop=%0d", exe_subop);
             $finish(1);
         end
-        $display("decode_x87_tb PASS");
+
+        $display("PASS decode_x87_tb");
         $finish;
     end
 

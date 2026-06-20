@@ -431,4 +431,3 @@ module sdram_controller #(
     end
 
 endmodule
-

@@ -65,12 +65,19 @@ module stage_2_dec_x87_operand (
     // ============================================================
     // decode ModR/M
     // ============================================================
-    logic [1: 0] mod       = i_instruction[1][7: 6];
-    logic [2: 0] rm        = i_instruction[1][2: 0];
-    logic [2: 0] reg_field = i_instruction[1][5: 3];
+    logic [1: 0] mod;
+    logic [2: 0] rm;
+    logic [2: 0] reg_field;
 
-    logic is_mem = (mod != 2'b11);
-    logic is_reg = (mod == 2'b11);
+    assign mod       = i_instruction[1][7: 6];
+    assign rm        = i_instruction[1][2: 0];
+    assign reg_field = i_instruction[1][5: 3];
+
+    logic is_mem;
+    logic is_reg;
+
+    assign is_mem = (mod != 2'b11);
+    assign is_reg = (mod == 2'b11);
 
     // ============================================================
     // operand type classification

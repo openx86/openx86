@@ -196,4 +196,3 @@ module true_dual_port_ram_tb;
     end
 
 endmodule
-

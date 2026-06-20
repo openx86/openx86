@@ -165,6 +165,14 @@ module i486_cpu_pipeline (
     output logic [15: 0] o_wrb_idtr_write_limit,
     output logic [31: 0] o_wrb_idtr_write_base,
 
+    input  logic [79: 0] i_fpu_st0,
+    input  logic [79: 0] i_fpu_st1,
+    output logic         o_fpu_st0_we,
+    output logic [79: 0] o_fpu_st0_wdata,
+    output logic         o_fpu_st1_we,
+    output logic [79: 0] o_fpu_st1_wdata,
+    output logic         o_fpu_exception,
+
     input  logic         clk,
     input  logic         rst_n
 );
@@ -172,6 +180,8 @@ module i486_cpu_pipeline (
     logic [15: 0][ 7: 0] ifu_instruction;
     logic                ifu_instruction_valid;
     logic                ifu_segment_fault;
+    logic                ifu_page_fault;
+    logic [31: 0]        ifu_fault_linear;
     logic [ 4: 0]        ifu_fifo_count;
     logic [31: 0]        ifu_eip;
     logic                ifu_dec_ready;
@@ -258,13 +268,61 @@ module i486_cpu_pipeline (
 
     logic [31: 0]        exu_gpr_data;
 
-    assign exc_valid      = ifu_segment_fault;
-    assign exc_vector     = ifu_segment_fault ? 8'd13 : 8'd14;
-    assign exc_has_ec     = 1'b0;
-    assign exc_error_code = exu_mem_addr;
+    logic                ifu_mmu_bus_valid;
+    logic [31: 0]        ifu_mmu_bus_addr;
+    logic                lsu_mmu_bus_valid;
+    logic [31: 0]        lsu_mmu_bus_addr;
+    logic                lsu_mmu_done;
+    logic                lsu_mmu_busy;
+    logic [31: 0]        lsu_phys_addr;
+    logic                lsu_seg_fault;
+    logic                lsu_page_fault;
+    logic                lsu_fault_present;
+    logic [31: 0]        lsu_fault_linear;
+    logic [ 2: 0]        lsu_seg_index;
+    logic                mem_translate_done;
+    logic                mem_start;
+    logic [31: 0]        mem_phys_addr;
+    logic                page_fault_event;
+    logic                seg_fault_event;
+    logic [31: 0]        pf_cr2_addr;
+    logic [31: 0]        pf_error_code;
+    logic                ifu_mmu_ready;
+    logic                lsu_mmu_ready;
+    logic [31: 0]        wbu_cr_write_data;
+
+    logic                lsu_mmu_start;
+    logic                fpu_exception_r;
+
+    assign lsu_mmu_start = exu_mem_valid & ~exu_data_io;
+
+    assign lsu_seg_index = (reg_uop.uop_opcode == `UOP_PUSH) |
+                           (reg_uop.uop_opcode == `UOP_POP)  |
+                           (reg_uop.uop_opcode == `UOP_CALL) |
+                           (reg_uop.uop_opcode == `UOP_RET)
+                           ? `index_reg_seg__SS : reg_uop.uop_seg_index;
+
+    assign page_fault_event = ifu_page_fault | lsu_page_fault;
+    assign seg_fault_event  = ifu_segment_fault | lsu_seg_fault;
+
+    assign pf_cr2_addr = ifu_page_fault ? ifu_fault_linear : lsu_fault_linear;
+
+    assign pf_error_code = {29'h0,
+                            i_cpl[0],
+                            lsu_page_fault ? exu_mem_we : 1'b0,
+                            lsu_page_fault ? lsu_fault_present : 1'b0};
+
+    assign exc_valid      = seg_fault_event | page_fault_event;
+    assign exc_vector     = page_fault_event ? 8'd14 : 8'd13;
+    assign exc_has_ec     = page_fault_event;
+    assign exc_error_code = pf_error_code;
 
     assign pipe_flush     = pipe_flush_ctrl | eiu_flush;
-    assign mem_stall      = mem_busy | multicycle_stall;
+    assign mem_stall      = mem_busy | multicycle_stall | (lsu_mmu_busy & ~exu_data_io);
+    assign mem_start      = exu_data_io ? exu_mem_valid :
+                            (exu_mem_valid & lsu_mmu_done &
+                             ~lsu_seg_fault & ~lsu_page_fault);
+    assign mem_phys_addr  = exu_data_io ? exu_mem_addr : lsu_phys_addr;
 
     pipeline_controller u_pipe_ctrl (
         .i_branch_taken      (branch_taken),
@@ -306,7 +364,7 @@ module i486_cpu_pipeline (
         .o_error_code_valid  (),
         .o_error_code        (),
         .o_ferr_n            (o_ferr_n),
-        .i_fpu_exception     (1'b0),
+        .i_fpu_exception     (fpu_exception_r),
         .clk                 (clk),
         .rst_n               (rst_n)
     );
@@ -316,9 +374,9 @@ module i486_cpu_pipeline (
         .i_code_ready              (i_code_ready),
         .o_code_address            (o_code_address),
         .i_code_data_read          (i_code_data_read),
-        .o_mmu_bus_valid           (o_mmu_valid),
-        .i_mmu_bus_ready           (i_mmu_ready),
-        .o_mmu_bus_addr            (o_mmu_address),
+        .o_mmu_bus_valid           (ifu_mmu_bus_valid),
+        .i_mmu_bus_ready           (ifu_mmu_ready),
+        .o_mmu_bus_addr            (ifu_mmu_bus_addr),
         .i_mmu_bus_rdata           (i_mmu_data_read),
         .i_protected_mode          (i_protected_mode),
         .i_segment_selector        (i_segment_selector),
@@ -333,6 +391,8 @@ module i486_cpu_pipeline (
         .o_instruction             (ifu_instruction),
         .o_instruction_valid       (ifu_instruction_valid),
         .o_segment_fault           (ifu_segment_fault),
+        .o_page_fault              (ifu_page_fault),
+        .o_fault_linear_address    (ifu_fault_linear),
         .o_fifo_count              (ifu_fifo_count),
         .o_eip                     (ifu_eip),
         .i_dec_ready               (ifu_dec_ready),
@@ -341,6 +401,46 @@ module i486_cpu_pipeline (
         .i_dec_error               (ifu_dec_error),
         .clk                       (clk),
         .rst_n                     (rst_n)
+    );
+
+    mmu_bus_arbiter u_mmu_arb (
+        .i_ifu_valid   (ifu_mmu_bus_valid),
+        .o_ifu_ready   (ifu_mmu_ready),
+        .i_ifu_address (ifu_mmu_bus_addr),
+        .i_lsu_valid   (lsu_mmu_bus_valid),
+        .o_lsu_ready   (lsu_mmu_ready),
+        .i_lsu_address (lsu_mmu_bus_addr),
+        .o_mmu_valid   (o_mmu_valid),
+        .i_mmu_ready   (i_mmu_ready),
+        .o_mmu_address (o_mmu_address),
+        .clk           (clk),
+        .rst_n         (rst_n)
+    );
+
+    lsu_mmu_translate u_lsu_mmu (
+        .i_start                 (lsu_mmu_start),
+        .i_is_write              (exu_mem_we),
+        .i_effective_address     (exu_mem_addr),
+        .i_segment_index         (lsu_seg_index),
+        .i_protected_mode        (i_protected_mode),
+        .i_segment_selector      (i_segment_selector),
+        .i_segment_descriptor    (i_segment_descriptor),
+        .i_cpl                   (i_cpl),
+        .i_paging_enable         (i_paging_enable),
+        .i_page_directory_base   (i_page_directory_base),
+        .o_done                  (lsu_mmu_done),
+        .o_busy                  (lsu_mmu_busy),
+        .o_physical_address      (lsu_phys_addr),
+        .o_segment_fault         (lsu_seg_fault),
+        .o_page_fault            (lsu_page_fault),
+        .o_fault_present         (lsu_fault_present),
+        .o_fault_linear_address  (lsu_fault_linear),
+        .o_mmu_bus_valid         (lsu_mmu_bus_valid),
+        .i_mmu_bus_ready         (lsu_mmu_ready),
+        .o_mmu_bus_addr          (lsu_mmu_bus_addr),
+        .i_mmu_bus_rdata         (i_mmu_data_read),
+        .clk                     (clk),
+        .rst_n                   (rst_n)
     );
 
     i486_dec_uop_stage u_dec_uop (
@@ -493,6 +593,13 @@ module i486_cpu_pipeline (
         .o_mem_write_enable      (exu_mem_we),
         .o_mem_address           (exu_mem_addr),
         .o_mem_write_data        (exu_mem_wdata),
+        .i_fpu_st0               (i_fpu_st0),
+        .i_fpu_st1               (i_fpu_st1),
+        .o_fpu_st0_we            (o_fpu_st0_we),
+        .o_fpu_st0_wdata         (o_fpu_st0_wdata),
+        .o_fpu_st1_we            (o_fpu_st1_we),
+        .o_fpu_st1_wdata         (o_fpu_st1_wdata),
+        .o_fpu_exception         (fpu_exception_r),
         .clk                     (clk),
         .rst_n                   (rst_n)
     );
@@ -529,7 +636,7 @@ module i486_cpu_pipeline (
         .i_cr_write_data         (exu_cr_data),
         .o_cr_write_enable       (),
         .o_cr_write_index        (),
-        .o_cr_write_data         (o_wrb_cr_write_data),
+        .o_cr_write_data         (wbu_cr_write_data),
         .i_dr_write_enable       (1'b0),
         .i_dr_write_index        (3'b0),
         .i_dr_write_data         (32'h0),
@@ -573,8 +680,9 @@ module i486_cpu_pipeline (
     assign o_wrb_IP_write_enable = wbu_ip_enable;
     assign o_wrb_IP_write_data   = wbu_ip_data;
     assign o_wrb_cr0_write_enable = exu_cr_we & (exu_cr_index == 3'd0);
-    assign o_wrb_cr2_write_enable = exu_cr_we & (exu_cr_index == 3'd2);
+    assign o_wrb_cr2_write_enable = page_fault_event | (exu_cr_we & (exu_cr_index == 3'd2));
     assign o_wrb_cr3_write_enable = exu_cr_we & (exu_cr_index == 3'd3);
+    assign o_wrb_cr_write_data    = page_fault_event ? pf_cr2_addr : wbu_cr_write_data;
     assign o_wrb_seg_es_write_enable = exu_seg_es;
     assign o_wrb_seg_cs_write_enable = exu_seg_cs;
     assign o_wrb_seg_ss_write_enable = exu_seg_ss;
@@ -586,14 +694,15 @@ module i486_cpu_pipeline (
                               (reg_uop.uop_immediate[7: 0] == `MISC_SUB_HLT) &
                               reg_stage_valid;
     assign o_data_io_access = exu_data_io;
+    assign o_fpu_exception  = fpu_exception_r;
 
     memory_stage u_mem (
-        .i_stage3_valid (exu_mem_valid),
+        .i_stage3_valid (mem_start),
         .o_stage_valid  (),
         .o_stage_ready  (),
-        .i_start        (exu_mem_valid),
+        .i_start        (mem_start),
         .i_is_store     (exu_mem_we),
-        .i_addr         (exu_mem_addr),
+        .i_addr         (mem_phys_addr),
         .i_wdata        (exu_mem_wdata),
         .o_rdata        (mem_rdata),
         .o_done         (mem_done),

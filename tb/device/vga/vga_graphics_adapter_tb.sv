@@ -218,4 +218,3 @@ module vga_graphics_adapter_tb;
     end
 
 endmodule
-

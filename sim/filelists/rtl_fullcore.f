@@ -29,8 +29,10 @@ rtl/cpu/i486_cpu_core.sv
 rtl/cpu/i486_cpu_pipeline.sv
 rtl/cpu/i486_soc_bus_bridge.sv
 rtl/cpu/load_store_unit/access_memory.sv
+rtl/cpu/load_store_unit/lsu_mmu_translate.sv
 rtl/cpu/load_store_unit/memory_stage.sv
 rtl/cpu/mmu/memory_management_unit.sv
+rtl/cpu/mmu/mmu_bus_arbiter.sv
 rtl/cpu/mmu/paging/paging_unit.sv
 rtl/cpu/mmu/segmentation/gate_segment_descriptor_decode.sv
 rtl/cpu/mmu/segmentation/segment_descriptor_cache.sv
@@ -72,6 +74,7 @@ rtl/cpu/pipeline/stage_2_dec/stage_2_dec_x86_prefix.sv
 rtl/cpu/pipeline/stage_2_dec/stage_2_dec_x86_prefix_one.sv
 rtl/cpu/pipeline/stage_2_dec/stage_2_dec_x87_opcode.sv
 rtl/cpu/pipeline/stage_2_dec/stage_2_dec_x87_operand.sv
+rtl/cpu/pipeline/stage_2_dec/stage_2_dec_x87_encode.sv
 rtl/cpu/pipeline/stage_3_uop/dec_to_uop.sv
 rtl/cpu/pipeline/stage_3_uop/stage_3_uop.sv
 rtl/cpu/pipeline/stage_3_uop/uop_to_exu.sv

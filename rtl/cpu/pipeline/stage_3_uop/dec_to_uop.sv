@@ -240,6 +240,10 @@ module dec_to_uop (
     input  logic                i_opcode_xor_imm_to_reg_mem,
     input  logic                i_opcode_xor_imm_to_acc,
     input  logic                i_opcode_x87_esc,
+    input  logic [ 4: 0]        i_x87_exe_subop,
+    input  logic [ 2: 0]        i_x87_sti,
+    input  logic                i_x87_mem_access,
+    input  logic                i_x87_is_store,
     input  logic                i_opcode_mmx_any,
     input  logic                i_opcode_mmx_emms,
     input  logic                i_opcode_sse_any,
@@ -282,7 +286,8 @@ module dec_to_uop (
         uop_immediate:   32'd0,
         uop_displacement: 32'd0,
         uop_tttn:        4'b0,
-        uop_eee:         3'b0,
+        uop_eee:         5'b0,
+        uop_seg_index:   `index_reg_seg__DS,
         uop_sib_scale:   2'b0,
         uop_has_imm:     1'b0,
         uop_has_disp:    1'b0,
@@ -297,9 +302,10 @@ module dec_to_uop (
 
         if (i_stage2_valid) begin
             uop_next.uop_valid    = 1'b1;
-            uop_next.uop_tttn     = i_tttn;
-            uop_next.uop_eee      = i_eee;
-            uop_next.uop_sib_scale = i_dec_sib_scale_factor;
+            uop_next.uop_tttn       = i_tttn;
+            uop_next.uop_eee        = i_eee;
+            uop_next.uop_seg_index  = i_dec_segment_reg_index;
+            uop_next.uop_sib_scale  = i_dec_sib_scale_factor;
 
             // Data transfer instructions: MOV, MOVSX, MOVZX, XCHG, LEA
             if (i_opcode_mov_reg_to_reg_mem || i_opcode_mov_reg_mem_to_reg) begin
@@ -618,7 +624,17 @@ module dec_to_uop (
 
             // x87 instructions
             else if (i_opcode_x87_esc) begin
-                uop_next.uop_opcode = `UOP_X87;
+                uop_next.uop_opcode     = `UOP_X87;
+                uop_next.uop_eee        = i_x87_exe_subop;
+                uop_next.uop_src2_reg   = i_x87_sti;
+                uop_next.uop_mem_access = i_x87_mem_access;
+                uop_next.uop_is_store   = i_x87_is_store;
+                if (i_x87_mem_access) begin
+                    uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
+                    uop_next.uop_displacement = i_dec_displacement;
+                    uop_next.uop_src1_reg = i_dec_base_reg_is_present ?
+                                            i_dec_base_reg_index : 3'b0;
+                end
             end
 
             // MMX instructions

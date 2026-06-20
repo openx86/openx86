@@ -139,6 +139,14 @@ module stage_5_exu (
     output logic [31: 0]        o_mem_address,
     output logic [31: 0]        o_mem_write_data,
 
+    input  logic [79: 0]        i_fpu_st0,
+    input  logic [79: 0]        i_fpu_st1,
+    output logic                o_fpu_st0_we,
+    output logic [79: 0]        o_fpu_st0_wdata,
+    output logic                o_fpu_st1_we,
+    output logic [79: 0]        o_fpu_st1_wdata,
+    output logic                o_fpu_exception,
+
     // =========================
     // Clock and tmp_reset
     // =========================
@@ -195,6 +203,11 @@ module stage_5_exu (
     logic         wbinvd_cmd;
     logic         data_io_access;
 
+    logic         x87_valid;
+    logic [79: 0] x87_st0_out;
+    logic [79: 0] x87_st1_out;
+    exu_result_t  x87_result;
+
     logic [31: 0] cpuid_eax;
     logic [31: 0] cpuid_ebx;
     logic [31: 0] cpuid_ecx;
@@ -232,6 +245,37 @@ module stage_5_exu (
     assign mem_access = i_uop.uop_mem_access;
     assign is_store = i_uop.uop_is_store;
     assign uop_opcode = i_uop.uop_opcode;
+
+    assign x87_valid = i_uop_valid & (uop_opcode == `UOP_X87) & ~load_pending_r;
+
+    exu_x87 u_x87 (
+        .i_valid         (x87_valid),
+        .i_x87_subop     (i_uop.uop_eee),
+        .i_sti_index     (i_uop.uop_src2_reg),
+        .i_mem_data      (i_mem_rdata),
+        .i_st0           (i_fpu_st0),
+        .i_st1           (i_fpu_st1),
+        .o_st0           (x87_st0_out),
+        .o_st1           (x87_st1_out),
+        .o_fpu_exception (o_fpu_exception),
+        .o_result        (x87_result),
+        .clk             (clk),
+        .rst_n           (rst_n)
+    );
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            o_fpu_st0_we    <= 1'b0;
+            o_fpu_st1_we    <= 1'b0;
+            o_fpu_st0_wdata <= 80'h0;
+            o_fpu_st1_wdata <= 80'h0;
+        end else begin
+            o_fpu_st0_we    <= x87_valid;
+            o_fpu_st1_we    <= x87_valid & (i_uop.uop_eee == `EXE_X87_FXCH);
+            o_fpu_st0_wdata <= x87_st0_out;
+            o_fpu_st1_wdata <= x87_st1_out;
+        end
+    end
 
     // Function to compute condition based on tttn
     function automatic logic compute_condition (

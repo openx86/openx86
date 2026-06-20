@@ -101,4 +101,3 @@ module pipeline_reg_tb;
     end
 
 endmodule
-

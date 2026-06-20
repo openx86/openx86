@@ -112,4 +112,3 @@ module chip_i8042_ps2_tb;
     end
 
 endmodule
-

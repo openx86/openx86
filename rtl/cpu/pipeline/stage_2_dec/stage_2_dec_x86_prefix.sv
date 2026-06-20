@@ -131,7 +131,6 @@ assign error_repeat_group_3 = (sum_group_3 > 1) ? 1'b1 : 1'b0;
 assign error_repeat_group_4 = (sum_group_4 > 1) ? 1'b1 : 1'b0;
 assign error_repeat = error_repeat_group_1 | error_repeat_group_2 | error_repeat_group_3 | error_repeat_group_4;
 
-
 assign o_consume_bytes_prefix_1 = (is_present[0] == 1 & is_present[1] == 0);
 assign o_consume_bytes_prefix_2 = (is_present[0] == 1 & is_present[1] == 1 & is_present[2] == 0);
 assign o_consume_bytes_prefix_3 = (is_present[0] == 1 & is_present[1] == 1 & is_present[2] == 1 & is_present[3] == 0);

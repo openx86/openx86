@@ -206,4 +206,3 @@ module vga_port_tb;
     end
 
 endmodule
-

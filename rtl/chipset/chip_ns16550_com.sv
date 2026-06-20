@@ -128,8 +128,6 @@ module chip_ns16550_com (
     assign iir           = {iir_fifo_bits, 2'b00, iir_code[3: 1], iir_code[0]};
     assign lsr           = {1'b0, tx_empty, thr_empty, 1'b0, 1'b0, 1'b0, 1'b0, rbr_valid};
 
-
-
     // MSR 高半字节：回环时反映 MCR 位；否则外部调制解调器输入未建模为 0。
     always_comb begin
         if (mcr[4])
@@ -152,7 +150,6 @@ module chip_ns16550_com (
         else
             iir_code = LP_IIR_NONE;
     end
-
 
     // 寄存器与简化发送/接收路径、MSR 边沿与读清逻辑。
     always_ff @(posedge clk or negedge rst_n) begin
