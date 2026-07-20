@@ -46,9 +46,9 @@ module x87_cr0_gate_tb;
         cr0_em = 1'b0; cr0_ts = 1'b1;
         #1; if (nm) pass_count++;
         if (pass_count == 4)
-            $display("x87_cr0_gate_tb PASS");
+            $display("PASS x87_cr0_gate");
         else
-            $fatal(1, "x87_cr0_gate_tb FAIL");
+            $fatal(1, "FAIL x87_cr0_gate");
         $finish;
     end
 

@@ -72,7 +72,7 @@ module segment_load_unit_tb;
         .i_descriptor_type                           (1'b1),
         .i_date_or_code_granularity                  (1'b1),
         .i_date_or_code_default_operation_size       (1'b1),
-        .i_date_or_code_executable                   (1'b0),
+        .i_date_or_code_executable                   (1'b1),
         .i_data_expansion_direction_code_conforming  (1'b0),
         .i_data_writeable_code_readable              (1'b1),
         .i_date_or_code_accessed                     (1'b0),
@@ -185,26 +185,21 @@ module segment_load_unit_tb;
 
         do_mov_ds(16'h0018);
         if (segment_not_present || stack_segment_fault || segment_fault) begin
-            $display("FAIL MOV DS fault np=%b ss=%b gp=%b", segment_not_present,
-                     stack_segment_fault, segment_fault);
-            $finish(1);
+            $fatal(1, "FAIL MOV DS fault np=%b ss=%b gp=%b", segment_not_present,
+                   stack_segment_fault, segment_fault);
         end
         if (~seg_write_enable || (seg_write_index != `sreg_index_DS)) begin
-            $display("FAIL MOV DS no seg write en=%b idx=%0d", seg_write_enable, seg_write_index);
-            $finish(1);
+            $fatal(1, "FAIL MOV DS no seg write en=%b idx=%0d", seg_write_enable, seg_write_index);
         end
         if (seg_write_selector != 16'h0018) begin
-            $display("FAIL MOV DS selector=%h", seg_write_selector);
-            $finish(1);
+            $fatal(1, "FAIL MOV DS selector=%h", seg_write_selector);
         end
         if (seg_write_descriptor != expected_descriptor) begin
-            $display("FAIL MOV DS descriptor=%h expected=%h",
-                     seg_write_descriptor, expected_descriptor);
-            $finish(1);
+            $fatal(1, "FAIL MOV DS descriptor=%h expected=%h",
+                   seg_write_descriptor, expected_descriptor);
         end
         if (ip_write_enable) begin
-            $display("FAIL MOV DS unexpected IP write");
-            $finish(1);
+            $fatal(1, "FAIL MOV DS unexpected IP write");
         end
         pass_count++;
 
@@ -213,38 +208,33 @@ module segment_load_unit_tb;
         protected_mode     = 1'b1;
         do_far_op(LP_OP_FAR_JMP, 32'h0000_5678, 16'h0018);
         if (segment_not_present || stack_segment_fault || segment_fault) begin
-            $display("FAIL FAR JMP fault np=%b ss=%b gp=%b", segment_not_present,
-                     stack_segment_fault, segment_fault);
-            $finish(1);
+            $fatal(1, "FAIL FAR JMP fault np=%b ss=%b gp=%b", segment_not_present,
+                   stack_segment_fault, segment_fault);
         end
         if (~seg_write_enable || (seg_write_index != `sreg_index_CS) ||
             (seg_write_selector != 16'h0018) || (seg_write_descriptor != expected_descriptor) ||
             ~ip_write_enable || (ip_write_data != 32'h0000_5678)) begin
-            $display("FAIL FAR JMP cs=%h ip=%h en=%b", seg_write_selector, ip_write_data,
-                     seg_write_enable);
-            $finish(1);
+            $fatal(1, "FAIL FAR JMP cs=%h ip=%h en=%b", seg_write_selector, ip_write_data,
+                   seg_write_enable);
         end
         pass_count++;
 
         do_far_op(LP_OP_FAR_RET, 32'h0000_8000, 16'h0);
         if (segment_not_present || stack_segment_fault || segment_fault) begin
-            $display("FAIL FAR RET fault np=%b ss=%b gp=%b", segment_not_present,
-                     stack_segment_fault, segment_fault);
-            $finish(1);
+            $fatal(1, "FAIL FAR RET fault np=%b ss=%b gp=%b", segment_not_present,
+                   stack_segment_fault, segment_fault);
         end
         if (~seg_write_enable || (seg_write_index != `sreg_index_CS) ||
             (seg_write_selector != 16'h0018) || ~ip_write_enable ||
             (ip_write_data != 32'h0000_1234)) begin
-            $display("FAIL FAR RET cs=%h ip=%h", seg_write_selector, ip_write_data);
-            $finish(1);
+            $fatal(1, "FAIL FAR RET cs=%h ip=%h", seg_write_selector, ip_write_data);
         end
         pass_count++;
 
         protected_mode = 1'b0;
         do_mov_ds(16'h0020);
         if (~seg_write_enable || (seg_write_selector != 16'h0020) || (seg_write_descriptor != 64'h0)) begin
-            $display("FAIL real-mode MOV DS sel=%h desc=%h", seg_write_selector, seg_write_descriptor);
-            $finish(1);
+            $fatal(1, "FAIL real-mode MOV DS sel=%h desc=%h", seg_write_selector, seg_write_descriptor);
         end
         pass_count++;
 

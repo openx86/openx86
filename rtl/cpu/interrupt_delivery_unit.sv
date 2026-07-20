@@ -41,6 +41,7 @@ module interrupt_delivery_unit (
     input  logic         i_need_stack_switch,
     input  logic [15: 0] i_new_ss,
     input  logic [31: 0] i_new_esp,
+    input  logic [15: 0] i_current_ss,
     output logic         o_busy,
     output logic         o_inta_req,
     output logic         o_done,
@@ -64,32 +65,21 @@ module interrupt_delivery_unit (
     input  logic         rst_n
 );
 
-    typedef enum logic [ 4: 0] {
+    typedef enum logic [ 3: 0] {
         S_IDLE,
         S_INTA,
         S_RD_GATE_LO,
-        S_RD_GATE_LO_WAIT,
         S_RD_GATE_HI,
-        S_RD_GATE_HI_WAIT,
         S_PUSH_OLD_SS,
-        S_PUSH_OLD_SS_WAIT,
         S_PUSH_OLD_ESP,
-        S_PUSH_OLD_ESP_WAIT,
         S_PUSH_EFLAGS,
-        S_PUSH_EFLAGS_WAIT,
         S_PUSH_CS,
-        S_PUSH_CS_WAIT,
         S_PUSH_EIP,
-        S_PUSH_EIP_WAIT,
         S_PUSH_ERR,
-        S_PUSH_ERR_WAIT,
         S_COMMIT,
         S_IRET_POP_EIP,
-        S_IRET_POP_EIP_WAIT,
         S_IRET_POP_CS,
-        S_IRET_POP_CS_WAIT,
         S_IRET_POP_EFLAGS,
-        S_IRET_POP_EFLAGS_WAIT,
         S_IRET_COMMIT
     } idu_state_t;
 
@@ -119,19 +109,19 @@ module interrupt_delivery_unit (
     logic [ 1: 0] gate_dpl_r;
     logic [15: 0] new_ss_r;
 
-    logic [31: 0] gate_addr = i_idtr_base + {24'd0, vector_r, 3'b000};
-    logic [31: 0] gate_access = gate_hi_r[15: 8];
-    logic [ 3: 0] gate_type   = gate_access[7: 4];
+    logic [31: 0] gate_addr;
+    logic [ 7: 0] gate_access;
+    logic [ 3: 0] gate_type;
 
+    assign gate_addr          = i_idtr_base + {21'd0, vector_r, 3'b000};
+    assign gate_access        = gate_hi_r[15: 8];
+    assign gate_type          = gate_access[3: 0];
+    assign gate_offset_r      = {gate_hi_r[31: 16], gate_lo_r[15: 0]};
+    assign gate_selector_r    = gate_lo_r[31: 16];
+    assign clear_if_r         = (gate_type == 4'hE) | (gate_type == 4'h6);
     assign o_busy             = (state != S_IDLE);
     assign o_flush_pipeline   = (state != S_IDLE);
     assign o_inta_req         = (state == S_INTA);
-
-    always_comb begin
-        gate_offset_r   = {gate_hi_r[31: 16], gate_lo_r[15: 0]};
-        gate_selector_r = gate_lo_r[31: 16];
-        clear_if_r      = (gate_type == 4'hE) | (gate_type == 4'h6);
-    end
 
     always_ff @(posedge clk or negedge rst_n) begin : ff_idu_fsm
         if (~rst_n) begin
@@ -191,7 +181,7 @@ module interrupt_delivery_unit (
                         saved_esp_r         <= i_saved_esp;
                         need_stack_switch_r <= i_need_stack_switch;
                         old_esp_r           <= i_saved_esp;
-                        old_ss_r            <= 16'h0; // parent SS cache later
+                        old_ss_r            <= i_current_ss;
                         cpl_r               <= i_cpl;
                         gate_dpl_r          <= i_gate_dpl;
                         new_ss_r            <= i_new_ss;
@@ -230,9 +220,6 @@ module interrupt_delivery_unit (
                     o_mem_valid        <= 1'b1;
                     o_mem_write_enable <= 1'b0;
                     o_mem_address      <= gate_addr;
-                    state              <= S_RD_GATE_LO_WAIT;
-                end
-                S_RD_GATE_LO_WAIT: begin
                     if (i_mem_ready) begin
                         gate_lo_r <= i_mem_rdata;
                         state     <= S_RD_GATE_HI;
@@ -242,9 +229,6 @@ module interrupt_delivery_unit (
                     o_mem_valid        <= 1'b1;
                     o_mem_write_enable <= 1'b0;
                     o_mem_address      <= gate_addr + 32'd4;
-                    state              <= S_RD_GATE_HI_WAIT;
-                end
-                S_RD_GATE_HI_WAIT: begin
                     if (i_mem_ready) begin
                         gate_hi_r <= i_mem_rdata;
                         if (need_stack_switch_r) begin
@@ -261,9 +245,6 @@ module interrupt_delivery_unit (
                     o_mem_write_enable <= 1'b1;
                     o_mem_address      <= esp_r;
                     o_mem_write_data   <= {16'h0, old_ss_r};
-                    state              <= S_PUSH_OLD_SS_WAIT;
-                end
-                S_PUSH_OLD_SS_WAIT: begin
                     if (i_mem_ready) begin
                         esp_r <= esp_r - 32'd4;
                         state <= S_PUSH_OLD_ESP;
@@ -274,9 +255,6 @@ module interrupt_delivery_unit (
                     o_mem_write_enable <= 1'b1;
                     o_mem_address      <= esp_r;
                     o_mem_write_data   <= old_esp_r;
-                    state              <= S_PUSH_OLD_ESP_WAIT;
-                end
-                S_PUSH_OLD_ESP_WAIT: begin
                     if (i_mem_ready) begin
                         esp_r <= esp_r - 32'd4;
                         state <= S_PUSH_EFLAGS;
@@ -287,9 +265,6 @@ module interrupt_delivery_unit (
                     o_mem_write_enable <= 1'b1;
                     o_mem_address      <= esp_r;
                     o_mem_write_data   <= saved_eflags_r;
-                    state              <= S_PUSH_EFLAGS_WAIT;
-                end
-                S_PUSH_EFLAGS_WAIT: begin
                     if (i_mem_ready) begin
                         esp_r <= esp_r - 32'd4;
                         state <= S_PUSH_CS;
@@ -300,9 +275,6 @@ module interrupt_delivery_unit (
                     o_mem_write_enable <= 1'b1;
                     o_mem_address      <= esp_r;
                     o_mem_write_data   <= {16'h0, saved_cs_r};
-                    state              <= S_PUSH_CS_WAIT;
-                end
-                S_PUSH_CS_WAIT: begin
                     if (i_mem_ready) begin
                         esp_r <= esp_r - 32'd4;
                         state <= S_PUSH_EIP;
@@ -313,9 +285,6 @@ module interrupt_delivery_unit (
                     o_mem_write_enable <= 1'b1;
                     o_mem_address      <= esp_r;
                     o_mem_write_data   <= saved_eip_r;
-                    state              <= S_PUSH_EIP_WAIT;
-                end
-                S_PUSH_EIP_WAIT: begin
                     if (i_mem_ready) begin
                         if (has_error_r) begin
                             esp_r <= esp_r - 32'd4;
@@ -330,9 +299,6 @@ module interrupt_delivery_unit (
                     o_mem_write_enable <= 1'b1;
                     o_mem_address      <= esp_r;
                     o_mem_write_data   <= error_code_r;
-                    state              <= S_PUSH_ERR_WAIT;
-                end
-                S_PUSH_ERR_WAIT: begin
                     if (i_mem_ready) begin
                         state <= S_COMMIT;
                     end
@@ -357,9 +323,6 @@ module interrupt_delivery_unit (
                     o_mem_valid        <= 1'b1;
                     o_mem_write_enable <= 1'b0;
                     o_mem_address      <= esp_r;
-                    state              <= S_IRET_POP_EIP_WAIT;
-                end
-                S_IRET_POP_EIP_WAIT: begin
                     if (i_mem_ready) begin
                         iret_eip_r <= i_mem_rdata;
                         esp_r      <= esp_r + 32'd4;
@@ -370,9 +333,6 @@ module interrupt_delivery_unit (
                     o_mem_valid        <= 1'b1;
                     o_mem_write_enable <= 1'b0;
                     o_mem_address      <= esp_r;
-                    state              <= S_IRET_POP_CS_WAIT;
-                end
-                S_IRET_POP_CS_WAIT: begin
                     if (i_mem_ready) begin
                         iret_cs_r  <= i_mem_rdata[15: 0];
                         esp_r      <= esp_r + 32'd4;
@@ -383,9 +343,6 @@ module interrupt_delivery_unit (
                     o_mem_valid        <= 1'b1;
                     o_mem_write_enable <= 1'b0;
                     o_mem_address      <= esp_r;
-                    state              <= S_IRET_POP_EFLAGS_WAIT;
-                end
-                S_IRET_POP_EFLAGS_WAIT: begin
                     if (i_mem_ready) begin
                         iret_eflags_r <= i_mem_rdata;
                         esp_r         <= esp_r + 32'd4;

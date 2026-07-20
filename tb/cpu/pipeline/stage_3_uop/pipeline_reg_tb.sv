@@ -59,7 +59,7 @@ module pipeline_reg_tb;
             $display("pipeline_reg_tb: FAIL flags bit");
             $finish(1);
         end
-        $display("pipeline_reg_tb: PASS");
+        $display("PASS pipeline_reg");
         $finish(0);
     end
 

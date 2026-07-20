@@ -206,7 +206,7 @@ module win95_boot_tb;
                 checkpoint = 1;
         end
 
-        $display("win95_boot_tb PASS (last checkpoint CP%0d cycles=%0d cp1=%0d cp3=%0d cp5_stub=%0d)",
+        $display("PASS win95_boot (last checkpoint CP%0d cycles=%0d cp1=%0d cp3=%0d cp5_stub=%0d)",
                  checkpoint, c, cp1_done, cp3_done, cp5_done);
         $finish;
     end

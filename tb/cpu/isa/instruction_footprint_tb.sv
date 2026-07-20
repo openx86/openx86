@@ -90,7 +90,7 @@ module instruction_footprint_tb;
             @(posedge clk);
             cycle_count++;
         end
-        $display("footprint TB scaffold PASS (cycles=%0d)", cycle_count);
+        $display("PASS instruction_footprint (cycles=%0d)", cycle_count);
         $finish;
     end
 

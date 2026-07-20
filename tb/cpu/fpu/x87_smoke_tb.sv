@@ -101,10 +101,28 @@ module x87_smoke_tb;
         .rst_n               (rst_n)
     );
 
-    function automatic logic [79: 0] pack_ext(input logic [63: 0] mant);
-        pack_ext[79]    = 1'b0;
-        pack_ext[78: 64] = 15'd16383;
-        pack_ext[63: 0]  = {1'b1, mant[62: 0]};
+    // Pack a positive finite 80-bit extended value for small integers (exact when power-of-two aligned)
+    function automatic logic [79: 0] pack_int(input int unsigned val);
+        logic [14: 0] exp;
+        logic [63: 0] sig;
+        int unsigned  v;
+        int           shift;
+        begin
+            if (val == 0) begin
+                pack_int = 80'h0;
+            end else begin
+                v     = val;
+                shift = 0;
+                while (v < 32'h8000_0000) begin
+                    v     = v << 1;
+                    shift = shift + 1;
+                end
+                // v now has bit31 set; place as integer bit of 64-bit significand
+                sig     = {v, 32'h0};
+                exp     = 15'd16383 + 15'(31 - shift);
+                pack_int = {1'b0, exp, sig};
+            end
+        end
     endfunction
 
     initial begin
@@ -116,8 +134,8 @@ module x87_smoke_tb;
         mem_data = 32'h0;
         fcw      = 16'h037F;
         fsw      = 16'h0000;
-        st0      = pack_ext(64'd10);
-        st1      = pack_ext(64'd32);
+        st0      = pack_int(10);
+        st1      = pack_int(32);
         st2      = 80'h0;
         st3      = 80'h0;
         st4      = 80'h0;
@@ -130,27 +148,27 @@ module x87_smoke_tb;
         valid = 1'b1;
         subop = `EXE_X87_FADD;
         sti   = 3'd1;
-        @(posedge clk);
-        valid = 1'b0;
-        @(posedge clk);
-        if (st0_out[62: 0] != 64'd42) begin
-            $display("FAIL FADD result=%0d", st0_out[62: 0]);
-            $finish(1);
+        #1;
+        if (st0_out !== pack_int(42)) begin
+            $fatal(1, "FAIL FADD result=%h expected=%h", st0_out, pack_int(42));
         end
         if (st0_we) st0 = st0_out;
         if (st1_we) st1 = st1_out;
+        @(posedge clk);
+        valid = 1'b0;
 
         @(posedge clk);
         valid = 1'b1;
         subop = `EXE_X87_FXCH;
         sti   = 3'd1;
+        #1;
+        if ((st0_out !== pack_int(32)) || (st1_out !== pack_int(42))) begin
+            $fatal(1, "FAIL FXCH st0=%h st1=%h", st0_out, st1_out);
+        end
+        if (st0_we) st0 = st0_out;
+        if (st1_we) st1 = st1_out;
         @(posedge clk);
         valid = 1'b0;
-        @(posedge clk);
-        if (st0_out[62: 0] != 64'd32 || st1_out[62: 0] != 64'd42) begin
-            $display("FAIL FXCH st0=%0d st1=%0d", st0_out[62: 0], st1_out[62: 0]);
-            $finish(1);
-        end
 
         $display("PASS x87_smoke_tb");
         $finish;

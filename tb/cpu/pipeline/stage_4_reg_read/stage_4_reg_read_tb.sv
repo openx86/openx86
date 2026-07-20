@@ -217,7 +217,7 @@ module stage_4_reg_read_tb;
         #20;
         assert(o_stage_valid == 0) else $error("stage_valid should be 0 after flush");
 
-        $display("All tests passed!");
+        $display("PASS stage_4_reg_read");
         $finish;
     end
 

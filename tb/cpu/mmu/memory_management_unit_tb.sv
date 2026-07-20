@@ -53,7 +53,7 @@ module memory_management_unit_tb;
     logic         bus_ready_r;
     int           pass_count;
 
-    localparam logic [63: 0] LP_FLAT_CODE_DESC = 64'h0000_FFFF_004F_CD00;
+    localparam logic [63: 0] LP_FLAT_CODE_DESC = 64'h0000_FFFF_00CF_9A00;
 
     always #1 clk = ~clk;
 
@@ -126,7 +126,7 @@ module memory_management_unit_tb;
         segment_selector[`index_reg_seg__CS] = 16'h0008;
         segment_descriptor[`index_reg_seg__CS] = LP_FLAT_CODE_DESC;
         mem[32'h0 >> 2] = 32'h0000_2003;
-        mem[32'h2000 >> 2] = 32'h0000_0000;
+        mem[32'h2000 >> 2] = 32'h0000_0007;
         pass_count = 0;
         #8 rst_n = 1'b1;
         @(posedge clk);

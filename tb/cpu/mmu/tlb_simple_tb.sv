@@ -108,9 +108,9 @@ module tlb_simple_tb;
             pass_count++;
 
         if (pass_count == 3)
-            $display("tlb_simple_tb PASS");
+            $display("PASS tlb_simple");
         else
-            $fatal(1, "tlb_simple_tb FAIL pass_count=%0d", pass_count);
+            $fatal(1, "FAIL tlb_simple pass_count=%0d", pass_count);
         $finish;
     end
 

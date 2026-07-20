@@ -80,6 +80,7 @@ module ide_controller #(
     logic [ 7: 0] disk_wdata;
     logic         disk_we;
     logic         wr_data_d;
+    logic         rd_data_d;
     logic [ 7: 0] sectors_left;
 
     // ============================================================

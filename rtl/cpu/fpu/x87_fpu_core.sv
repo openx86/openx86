@@ -94,7 +94,7 @@ module x87_fpu_core (
     logic op_fstsw;
     logic op_finit;
 
-    assign stack_top = i_fsw[11: 13];
+    assign stack_top = i_fsw[13: 11];
     assign phys_sti  = stack_top + i_sti_index;
 
     assign st_phys[0] = i_st0;
@@ -188,7 +188,7 @@ module x87_fpu_core (
 
             if (i_x87_subop == `EXE_X87_FSTP) begin
                 top_next         = stack_top + 3'd1;
-                fsw_next[11: 13] = top_next;
+                fsw_next[13: 11] = top_next;
                 o_fsw_we         = 1'b1;
             end
         end

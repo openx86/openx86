@@ -166,7 +166,7 @@ module openx86_soc_top_tb;
             c++;
         end
 
-        $display("soc_top_tb PASS (ran %0d cycles)", c);
+        $display("PASS openx86_soc_top_tb (ran %0d cycles)", c);
         $finish;
     end
 

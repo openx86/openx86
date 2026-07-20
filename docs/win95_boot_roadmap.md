@@ -43,14 +43,15 @@ Win95 disk/BIOS images are **not** committed; load via `+SEABIOS_BIN=` / `+DISK_
 
 - [x] TSS privilege stack helper (`rtl/cpu/mmu/tss/tss_privilege_stack.sv`)
 - [x] IDU optional stack-switch inputs (`i_need_stack_switch`, `i_new_ss`, `i_new_esp`, …)
+- [x] Wire TSS helper + old SS cache into EIU parent (CPL≠0 → ESP0/SS0 fetch)
 - [ ] Full task gate / task switch (ongoing)
 - [ ] Nested task NT / busy TSS (ongoing)
-- [ ] Wire TSS helper + old SS cache into EIU parent (pending)
+- [ ] LTR loads real TR base/descriptor (soft `tr_base` placeholder)
 
 ### M4 — Virtual 8086
 
 - [x] `rtl/cpu/v86/v86_sensitive_check.sv` (CLI/STI/PUSHF/POPF/INT/IRET/IN/OUT vs IOPL)
-- [x] Instantiate checker in `i486_cpu_pipeline` (opcode class bits stubbed 0)
+- [x] Instantiate checker in `i486_cpu_pipeline` (CLI/STI/PUSHF/POPF/INT/IRET/IN/OUT from uop)
 - [ ] Full V86 monitor exception restart (ongoing)
 - [ ] I/O permission bitmap walk (ongoing)
 
@@ -58,7 +59,7 @@ Win95 disk/BIOS images are **not** committed; load via `+SEABIOS_BIN=` / `+DISK_
 
 - [x] `x87_cr0_gate` (#NM when CR0.EM|TS)
 - [x] FLDCW / FSTCW / FSTSW / FINIT subops in `x87_fpu_core`
-- [ ] Wire `x87_cr0_gate` into EXU/#NM delivery (pending)
+- [x] Wire `x87_cr0_gate` into EXU/#NM delivery (vector 7)
 - [ ] FLDENV/FSTENV/full compare/transcendentals (ongoing)
 - [ ] Wait/#MF precise delivery (ongoing)
 

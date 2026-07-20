@@ -57,7 +57,7 @@ jobs:
           chmod +x scripts/verilator_lint.sh
           ./scripts/verilator_lint.sh
 
-      - name: CPU TB subset (test_cpu.sh)
+      - name: Verilator TB regression (test_cpu.sh / ci_verilator_tbs.txt)
         run: |
           chmod +x scripts/sim_tb_verilator.sh scripts/test_cpu.sh
           ./scripts/test_cpu.sh

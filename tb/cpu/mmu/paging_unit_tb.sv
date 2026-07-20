@@ -124,27 +124,24 @@ module paging_unit_tb;
 
         do_translate(32'h0000_0123, 1'b0, 2'b00);
         if (page_fault || (physical_address != 32'h0000_3123)) begin
-            $display("FAIL valid translation phys=%h fault=%b", physical_address, page_fault);
-            $finish(1);
+            $fatal(1, "FAIL valid translation phys=%h fault=%b", physical_address, page_fault);
         end
         pass_count++;
 
         do_translate(32'h0000_1000, 1'b0, 2'b00);
         if (!page_fault || fault_present) begin
-            $display("FAIL not-present PTE fault=%b present=%b", page_fault, fault_present);
-            $finish(1);
+            $fatal(1, "FAIL not-present PTE fault=%b present=%b", page_fault, fault_present);
         end
         if (fault_linear_address != 32'h0000_1000) begin
-            $display("FAIL CR2 linear addr=%h", fault_linear_address);
-            $finish(1);
+            $fatal(1, "FAIL CR2 linear addr=%h", fault_linear_address);
         end
         pass_count++;
 
-        mem[32'h2000 >> 2] = 32'h0000_4001;
-        do_translate(32'h0000_0789, 1'b1, 2'b00);
+        // Use a different page so TLB hit from the first translate cannot skip the WP check
+        mem[32'h2004 >> 2] = 32'h0000_4001;
+        do_translate(32'h0000_1789, 1'b1, 2'b00);
         if (!page_fault || !fault_present) begin
-            $display("FAIL write-protection fault=%b present=%b", page_fault, fault_present);
-            $finish(1);
+            $fatal(1, "FAIL write-protection fault=%b present=%b", page_fault, fault_present);
         end
         pass_count++;
 

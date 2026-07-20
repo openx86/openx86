@@ -55,6 +55,8 @@ module x87_fpu_alu (
     logic [63: 0] st0_sig_eff;
     logic [63: 0] sti_sig_eff;
 
+    assign st0_zero    = (st0_exp == 15'h0) && (st0_sig == 64'h0);
+    assign sti_zero    = (sti_exp == 15'h0) && (sti_sig == 64'h0);
     assign st0_sig_eff = st0_sig[63] ? st0_sig : {1'b1, st0_sig[62: 0]};
     assign sti_sig_eff = sti_sig[63] ? sti_sig : {1'b1, sti_sig[62: 0]};
 
@@ -105,7 +107,8 @@ module x87_fpu_alu (
                         sum_wide  = {1'b0, big_sig} + {1'b0, aligned_small};
                         res_sign  = st0_sign;
                         res_exp   = big_exp;
-                        res_sig   = sum_wide[64] ? {sum_wide[63: 0], 1'b0} : sum_wide[63: 0];
+                        // Carry out of integer bit: right-shift and bump exponent
+                        res_sig   = sum_wide[64] ? sum_wide[64: 1] : sum_wide[63: 0];
                         if (sum_wide[64])
                             res_exp = res_exp + 15'd1;
                     end else begin
@@ -124,7 +127,7 @@ module x87_fpu_alu (
                         sum_wide  = {1'b0, big_sig} + {1'b0, aligned_small};
                         res_sign  = st0_sign;
                         res_exp   = big_exp;
-                        res_sig   = sum_wide[64] ? {sum_wide[63: 0], 1'b0} : sum_wide[63: 0];
+                        res_sig   = sum_wide[64] ? sum_wide[64: 1] : sum_wide[63: 0];
                         if (sum_wide[64])
                             res_exp = res_exp + 15'd1;
                     end else begin

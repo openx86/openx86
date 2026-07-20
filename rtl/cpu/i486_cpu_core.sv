@@ -292,12 +292,19 @@ module i486_cpu_core (
     logic [31: 0] tr7_data;
 
     // ============================================================
-    // GDTR/IDTR (hardwired to 0 for SGDT/SIDT instruction placeholders)
+    // GDTR/IDTR / soft TR base
     // ============================================================
     logic [15: 0] GDTR_limit;
     logic [31: 0] GDTR_base;
     logic [15: 0] IDTR_limit;
     logic [31: 0] IDTR_base;
+    logic [31: 0] tr_base;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            tr_base <= 32'h0;
+        end
+    end
 
     // ============================================================
     // general purpose registers (individual modules)
@@ -866,6 +873,7 @@ module i486_cpu_core (
         .i_cr0_data                (cr0_data),
         .i_vm                      (VM),
         .i_iopl                    (iOPL),
+        .i_tss_base                (tr_base),
         .o_wrb_gpr_write_enable_EAX(wrb_gpr_write_enable_EAX),
         .o_wrb_gpr_write_enable_AX (wrb_gpr_write_enable_AX),
         .o_wrb_gpr_write_enable_AL (wrb_gpr_write_enable_AL),

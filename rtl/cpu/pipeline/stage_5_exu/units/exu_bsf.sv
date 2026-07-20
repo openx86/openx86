@@ -34,9 +34,9 @@ module exu_bsf (
     logic [31: 0] result;
 
     assign operand = i_src1_data;
-    assign bit_index = 5'd0;
 
     always_comb begin
+        bit_index = 5'd0;
         if (operand != 32'd0) begin
             case (1'b1)
                 operand[0]:  bit_index = 5'd0;

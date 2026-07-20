@@ -20,63 +20,60 @@
 
 `timescale 1ns/1ns
 module edge_detect_tb #(
-    // ============================================================
-    // parameters
-    // ============================================================
     parameter clock_period = 2
-) (
-    // ports
 );
 
-    // ============================================================
-    // test signals
-    // ============================================================
-    logic clk, rst_n;
+    logic clk;
+    logic rst_n;
     logic signal;
+    logic pos_edge;
+    logic neg_edge;
+    int   pos_count;
+    int   neg_count;
 
-    // ============================================================
-    // clock generation
-    // ============================================================
     always #(clock_period/2) clk = ~clk;
 
-    // ============================================================
-    // test procedure
-    // ============================================================
-    initial begin : main_test
-        clk <= 0;
-        rst_n <= 1;
-        signal <= 0;
+    edge_detect edge_detect_inst (
+        .i_signal   ( signal ),
+        .o_pos_edge ( pos_edge ),
+        .o_neg_edge ( neg_edge ),
+        .clk        ( clk ),
+        .rst_n      ( rst_n )
+    );
 
-        #3;
-        rst_n <= 0;
-
-        #1;
-        signal <= 0;
-
-        #2;
-        signal <= 1;
-
-        #1;
-        signal <= 1;
-
-        #3;
-        signal <= 0;
-
-        #4;
-
-        $finish;
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            pos_count <= 0;
+            neg_count <= 0;
+        end else begin
+            if (pos_edge)
+                pos_count <= pos_count + 1;
+            if (neg_edge)
+                neg_count <= neg_count + 1;
+        end
     end
 
-    // ============================================================
-    // DUT instantiation
-    // ============================================================
-    logic pos_edge, neg_edge;
-    edge_detect edge_detect_inst (
-        .signal ( signal ),
-        .pos_edge ( pos_edge ),
-        .neg_edge ( neg_edge ),
-        .clk    ( clk ),
-        .rst_n  ( rst_n )
-    );
+    initial begin : main_test
+        clk    = 1'b0;
+        rst_n  = 1'b0;
+        signal = 1'b0;
+        repeat (2) @(posedge clk);
+        rst_n = 1'b1;
+        repeat (2) @(posedge clk);
+
+        @(negedge clk);
+        signal = 1'b1;
+        repeat (3) @(posedge clk);
+
+        @(negedge clk);
+        signal = 1'b0;
+        repeat (3) @(posedge clk);
+
+        if ((pos_count == 1) && (neg_count == 1))
+            $display("PASS edge_detect");
+        else
+            $display("FAIL edge_detect pos=%0d neg=%0d", pos_count, neg_count);
+        $finish;
+    end
 
 endmodule

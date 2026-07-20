@@ -574,5 +574,8 @@ typedef struct packed {
 `define MISC_SUB_LFS      8'h6A
 `define MISC_SUB_LGS      8'h6B
 `define MISC_SUB_LSS      8'h6C
+// Stack / flag tags carried in uop_immediate[7:0] for PUSH/POP variants
+`define UOP_TAG_PUSHF     8'hFA
+`define UOP_TAG_POPF      8'hFB
 
 `endif

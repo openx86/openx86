@@ -129,7 +129,7 @@ module chip_8259_pic (
         irq_eligible  = (state == ST_READY) && pending_valid && (!isr_valid || (pending_idx < isr_idx));
     end
 
-    assign o_intr = irq_eligible;
+    assign o_intr = irq_eligible_n;
 
     // 次态与写副作用：ICW/OCW 译码、IRR 采样、内部 INTA 近似。
     always_comb begin
@@ -220,14 +220,15 @@ module chip_8259_pic (
             end
         end
 
-        masked_irr_n   = irr_n & ~imr_n;
+        masked_irr_n    = irr_n & ~imr_n;
         pending_valid_n = |masked_irr_n;
-        pending_idx_n  = f_highest_prio_idx(masked_irr_n);
-        isr_valid_n    = |isr_n;
-        isr_idx_n      = f_highest_prio_idx(isr_n);
-        irq_eligible_n = (state_n == ST_READY) && pending_valid_n && (!isr_valid_n || (pending_idx_n < isr_idx_n));
+        pending_idx_n   = f_highest_prio_idx(masked_irr_n);
+        isr_valid_n     = |isr_n;
+        isr_idx_n       = f_highest_prio_idx(isr_n);
+        irq_eligible_n  = (state_n == ST_READY) && pending_valid_n && (!isr_valid_n || (pending_idx_n < isr_idx_n));
 
         // 无写且可服务：内部“自动 INTA”清 IRR、置 ISR（非 AEOI）。
+        // o_intr 使用清 IRR 之前的 irq_eligible_n，因此同拍仍可看到中断请求。
         if (!wr && irq_eligible_n) begin
             irr_n[pending_idx_n] = 1'b0;
             if (!aeoi_n) begin

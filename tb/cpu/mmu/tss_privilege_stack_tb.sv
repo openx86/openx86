@@ -105,9 +105,9 @@ module tss_privilege_stack_tb;
             pass_count++;
 
         if (pass_count == 2)
-            $display("tss_privilege_stack_tb PASS");
+            $display("PASS tss_privilege_stack");
         else
-            $fatal(1, "tss_privilege_stack_tb FAIL");
+            $fatal(1, "FAIL tss_privilege_stack");
         $finish;
     end
 

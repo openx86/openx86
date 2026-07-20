@@ -263,27 +263,23 @@ module segment_load_unit (
         input  logic [15: 0] sel,
         input  logic [ 2: 0] target,
         input  logic [ 1: 0] op,
+        input  logic [31: 0] tbl_base_in,
+        input  logic [15: 0] tbl_limit_in,
         output logic         ss_fault,
         output logic         gp_fault
     );
         logic [12: 0] idx;
-        logic         ti;
         logic         sel_null;
         logic         out_of_bounds;
-        logic [31: 0] tbl_base;
-        logic [15: 0] tbl_limit;
         begin
             ss_fault = 1'b0;
             gp_fault = 1'b0;
             if (~i_protected_mode) begin
                 return;
             end
-            idx       = sel[15: 3];
-            ti        = sel[2];
-            sel_null  = (sel[15: 3] == 13'b0);
-            tbl_base  = ti ? ldtr_base : latched_gdtr_base;
-            tbl_limit = ti ? ldtr_limit[15: 0] : latched_gdtr_limit;
-            out_of_bounds = ({3'b0, idx, 3'b0} > {1'b0, tbl_limit});
+            idx            = sel[15: 3];
+            sel_null       = (sel[15: 3] == 13'b0);
+            out_of_bounds  = ({3'b0, idx, 3'b0} > {1'b0, tbl_limit_in});
             if ((op == LP_OP_MOV_SEG) && (target == `sreg_index_CS)) begin
                 gp_fault = 1'b1;
             end else if ((target == `sreg_index_SS) && sel_null) begin
@@ -302,11 +298,40 @@ module segment_load_unit (
         end
     endfunction
 
+    logic [31: 0] entry_tbl_base;
+    logic [15: 0] entry_tbl_limit;
+    logic [31: 0] entry_ldtr_base;
+    logic [19: 0] entry_ldtr_limit;
+    logic         entry_ldtr_unused_b;
+    logic [ 1: 0] entry_ldtr_unused_dpl;
+
+    segment_descriptor_decode u_entry_ldtr_decode (
+        .o_base                                (entry_ldtr_base),
+        .o_limit                               (entry_ldtr_limit),
+        .o_date_or_code_present                (entry_ldtr_unused_b),
+        .o_date_or_code_privilege_level        (entry_ldtr_unused_dpl),
+        .o_available_field                     (entry_ldtr_unused_b),
+        .o_segment_type                        (entry_ldtr_unused_b),
+        .o_date_or_code_granularity            (entry_ldtr_unused_b),
+        .o_date_or_code_default_operation_size (entry_ldtr_unused_b),
+        .o_date_or_code_executable             (entry_ldtr_unused_b),
+        .o_data_expansion_direction            (entry_ldtr_unused_b),
+        .o_data_writeable                      (entry_ldtr_unused_b),
+        .o_code_conforming                     (entry_ldtr_unused_b),
+        .o_code_readable                       (entry_ldtr_unused_b),
+        .o_date_or_code_accessed               (entry_ldtr_unused_b),
+        .i_descriptor                          (i_ldtr_descriptor)
+    );
+
     always_comb begin
         entry_selector = (i_op_type == LP_OP_MOV_SEG) ? i_selector : i_far_selector;
         entry_target   = ((i_op_type == LP_OP_FAR_JMP) || (i_op_type == LP_OP_FAR_CALL) ||
                             (i_op_type == LP_OP_FAR_RET)) ? `sreg_index_CS : i_target_seg_index;
+        // Use current (not latched) GDTR/LDTR so the rise-edge check sees this request
+        entry_tbl_base  = entry_selector[2] ? entry_ldtr_base : i_gdtr_base;
+        entry_tbl_limit = entry_selector[2] ? entry_ldtr_limit[15: 0] : i_gdtr_limit;
         check_selector_faults(entry_selector, entry_target, i_op_type,
+                              entry_tbl_base, entry_tbl_limit,
                               entry_selector_fault_ss, entry_selector_fault_gp);
     end
 
@@ -411,16 +436,16 @@ module segment_load_unit (
             ip_write_enable_r        <= 1'b0;
             ip_write_data_r          <= 32'h0;
         end else begin
-            o_ready            <= 1'b0;
-            seg_write_enable_r <= 1'b0;
-            ip_write_enable_r  <= 1'b0;
-            fault_np_r         <= 1'b0;
-            fault_ss_r         <= 1'b0;
-            fault_gp_r         <= 1'b0;
-
+            o_ready <= 1'b0;
             unique case (state)
                 STATE_IDLE: begin
                     if (i_valid_rise) begin
+                        // Drop previous completion strobes when a new request starts
+                        seg_write_enable_r       <= 1'b0;
+                        ip_write_enable_r        <= 1'b0;
+                        fault_np_r               <= 1'b0;
+                        fault_ss_r               <= 1'b0;
+                        fault_gp_r               <= 1'b0;
                         latched_op_type          <= i_op_type;
                         latched_cpl              <= i_cpl;
                         latched_target_seg_index <= i_target_seg_index;
@@ -511,10 +536,15 @@ module segment_load_unit (
                     if (i_bus_ready) begin
                         logic ret_ss_fault;
                         logic ret_gp_fault;
+                        logic [31: 0] ret_tbl_base;
+                        logic [15: 0] ret_tbl_limit;
                         latched_selector         <= i_bus_data_read[15: 0];
                         latched_target_seg_index <= `sreg_index_CS;
                         latched_far_offset       <= ret_offset_r;
+                        ret_tbl_base  = i_bus_data_read[2] ? ldtr_base : latched_gdtr_base;
+                        ret_tbl_limit = i_bus_data_read[2] ? ldtr_limit[15: 0] : latched_gdtr_limit;
                         check_selector_faults(i_bus_data_read[15: 0], `sreg_index_CS, LP_OP_FAR_RET,
+                                              ret_tbl_base, ret_tbl_limit,
                                               ret_ss_fault, ret_gp_fault);
                         if (ret_gp_fault || ret_ss_fault) begin
                             fault_gp_r <= ret_gp_fault;

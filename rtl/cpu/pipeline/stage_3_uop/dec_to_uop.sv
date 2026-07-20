@@ -528,12 +528,18 @@ module dec_to_uop (
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_has_imm = i_opcode_push_imm;
                 uop_next.uop_immediate = i_dec_immediate;
-            end else if (i_opcode_pusha || i_opcode_pushf) begin
+            end else if (i_opcode_pushf) begin
+                uop_next.uop_opcode = `UOP_PUSH;
+                uop_next.uop_immediate = {24'h0, `UOP_TAG_PUSHF};
+            end else if (i_opcode_pusha) begin
                 uop_next.uop_opcode = `UOP_PUSH;
             end else if (i_opcode_pop_reg || i_opcode_pop_reg_mem) begin
                 uop_next.uop_opcode = `UOP_POP;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
-            end else if (i_opcode_popa || i_opcode_popf) begin
+            end else if (i_opcode_popf) begin
+                uop_next.uop_opcode = `UOP_POP;
+                uop_next.uop_immediate = {24'h0, `UOP_TAG_POPF};
+            end else if (i_opcode_popa) begin
                 uop_next.uop_opcode = `UOP_POP;
             end
 

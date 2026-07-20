@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# CPU-focused Verilator TB regression subset.
+# Verilator TB regression from CI filelist (sim/filelists/ci_verilator_tbs.txt).
 
 set -eu
 
@@ -9,27 +9,23 @@ cd "$ROOT"
 LIST="${VERILATOR_TB_LIST:-sim/filelists/ci_verilator_tbs.txt}"
 FAIL=0
 PASS=0
+SKIP=0
 
 if [ ! -f "$LIST" ]; then
   echo "error: TB list not found: $LIST" >&2
   exit 2
 fi
 
-echo "CPU TB subset from: $LIST"
+echo "Verilator TB regression from: $LIST"
 
 while IFS= read -r tb || [ -n "$tb" ]; do
+  tb=$(printf '%s' "$tb" | tr -d '\r')
   case "$tb" in
     ""|\#*) continue ;;
   esac
-  case "$tb" in
-    tb/cpu/*|tb/openx86_soc_top_tb.sv|tb/cpu/biu/*)
-      ;;
-    *)
-      continue
-      ;;
-  esac
   if [ ! -f "$tb" ]; then
     echo "SKIP missing TB: $tb"
+    SKIP=$((SKIP + 1))
     continue
   fi
   echo "=== RUN $tb ==="
@@ -41,7 +37,7 @@ while IFS= read -r tb || [ -n "$tb" ]; do
   fi
 done <"$LIST"
 
-echo "CPU TB summary: pass=$PASS fail=$FAIL"
+echo "TB summary: pass=$PASS fail=$FAIL skip=$SKIP"
 if [ "$FAIL" -ne 0 ]; then
   exit 1
 fi

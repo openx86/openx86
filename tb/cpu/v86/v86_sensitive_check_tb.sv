@@ -70,9 +70,9 @@ module v86_sensitive_check_tb;
         if (trap_gp) pass_count++;
 
         if (pass_count == 4)
-            $display("v86_sensitive_check_tb PASS");
+            $display("PASS v86_sensitive_check");
         else
-            $fatal(1, "v86_sensitive_check_tb FAIL");
+            $fatal(1, "FAIL v86_sensitive_check");
         $finish;
     end
 

@@ -82,6 +82,7 @@ module i486_cpu_pipeline (
     input  logic [31: 0] i_cr0_data,
     input  logic         i_vm,
     input  logic [ 1: 0] i_iopl,
+    input  logic [31: 0] i_tss_base,
 
     // =========================
     // Write-back to register file
@@ -563,9 +564,11 @@ module i486_cpu_pipeline (
         .i_idtr_limit            (i_idtr_limit),
         .i_current_eip           (i_eip),
         .i_current_cs_selector   (i_segment_selector[`index_reg_seg__CS]),
+        .i_current_ss_selector   (i_segment_selector[`index_reg_seg__SS]),
         .i_current_eflags        (current_eflags),
         .i_current_esp           (i_gpr_esp),
         .i_cpl                   (i_cpl),
+        .i_tss_base              (i_tss_base),
         .i_inta_vector_valid     (inta_vector_valid),
         .i_inta_vector           (inta_vector_mux),
         .o_flush_pipeline        (eiu_flush),
@@ -1007,10 +1010,22 @@ module i486_cpu_pipeline (
     );
 
     // V86 sensitive-opcode checker driven from current REG-stage uop
+    logic v86_op_cli;
+    logic v86_op_sti;
+    logic v86_op_pushf;
+    logic v86_op_popf;
     logic v86_op_int;
     logic v86_op_iret;
     logic v86_op_in;
     logic v86_op_out;
+    assign v86_op_cli = reg_stage_valid & (reg_uop.uop_opcode == `UOP_FLAG_CTRL) &
+                        (reg_uop.uop_immediate[7: 0] == 8'h06);
+    assign v86_op_sti = reg_stage_valid & (reg_uop.uop_opcode == `UOP_FLAG_CTRL) &
+                        (reg_uop.uop_immediate[7: 0] == 8'h07);
+    assign v86_op_pushf = reg_stage_valid & (reg_uop.uop_opcode == `UOP_PUSH) &
+                          (reg_uop.uop_immediate[7: 0] == `UOP_TAG_PUSHF);
+    assign v86_op_popf  = reg_stage_valid & (reg_uop.uop_opcode == `UOP_POP) &
+                          (reg_uop.uop_immediate[7: 0] == `UOP_TAG_POPF);
     assign v86_op_int  = reg_stage_valid & (reg_uop.uop_opcode == `UOP_MISC) &
                          (reg_uop.uop_immediate[7: 0] == `MISC_SUB_INT);
     assign v86_op_iret = reg_stage_valid & (reg_uop.uop_opcode == `UOP_MISC) &
@@ -1022,10 +1037,10 @@ module i486_cpu_pipeline (
     v86_sensitive_check u_v86_sensitive (
         .i_vm       (i_vm),
         .i_iopl     (i_iopl),
-        .i_op_cli   (1'b0),
-        .i_op_sti   (1'b0),
-        .i_op_pushf (1'b0),
-        .i_op_popf  (1'b0),
+        .i_op_cli   (v86_op_cli),
+        .i_op_sti   (v86_op_sti),
+        .i_op_pushf (v86_op_pushf),
+        .i_op_popf  (v86_op_popf),
         .i_op_int   (v86_op_int),
         .i_op_iret  (v86_op_iret),
         .i_op_in    (v86_op_in),

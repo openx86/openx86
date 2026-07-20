@@ -136,14 +136,15 @@ module segmentation_unit #(
     assign is_data_segment        = segment_type & ~date_or_code_executable;
     assign is_read                 = ~i_write_enable;
     assign is_write                = i_write_enable;
-    assign is_granularity_byte    = date_or_code_granularity;
-    assign is_granularity_page    = ~date_or_code_granularity;
+    assign is_granularity_byte    = ~date_or_code_granularity;
+    assign is_granularity_page    = date_or_code_granularity;
     logic [31: 0] limit_ext;
-    logic [31: 0] limit_page_shifted;
+    logic [31: 0] limit_page_scaled;
     assign limit_ext              = {12'h0, limit};
-    assign limit_page_shifted     = limit_ext << 4;
-    assign exception_limit        = (is_granularity_byte & (i_effective_address >= limit_ext)) |
-                                    (is_granularity_page & (i_effective_address >= limit_page_shifted));
+    // G=1: limit is in 4KB units; scale and fill low 12 bits (Intel SDM)
+    assign limit_page_scaled      = {limit, 12'hFFF};
+    assign exception_limit        = (is_granularity_byte & (i_effective_address > limit_ext)) |
+                                    (is_granularity_page & (i_effective_address > limit_page_scaled));
     assign exception_not_present    = i_protected_mode & ~date_or_code_present;
     assign exception_ss_privilege   = i_protected_mode & is_index_SS &
                                       (i_current_privilege_level != date_or_code_privilege_level);

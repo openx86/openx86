@@ -81,5 +81,25 @@ verilator \
   -Mdir "$OBJDIR" \
   -f "$CMDFILE"
 
-"${OBJDIR}/V${TOP}"
+LOG="${OBJDIR}/sim.log"
+set +e
+"${OBJDIR}/V${TOP}" 2>&1 | tee "$LOG"
+SIM_EC=$?
+set -e
+
+if grep -E '^FAIL( |$)|FAIL:' "$LOG" >/dev/null 2>&1; then
+  echo "error: TB reported FAIL: $TOP" >&2
+  exit 1
+fi
+if ! grep -E '^PASS( |$)|PASS:' "$LOG" >/dev/null 2>&1; then
+  # Allow TBs that only $finish without PASS if sim exited cleanly and no FAIL
+  if [ "$SIM_EC" -ne 0 ]; then
+    echo "error: TB exited $SIM_EC without PASS: $TOP" >&2
+    exit 1
+  fi
+fi
+if [ "$SIM_EC" -ne 0 ]; then
+  echo "error: TB simulator exit $SIM_EC: $TOP" >&2
+  exit 1
+fi
 echo "TB completed: $TOP"

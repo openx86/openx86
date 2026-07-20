@@ -18,55 +18,46 @@
 //  Description : chip_8259_pic_tb module
 // ============================================================================
 
-﻿
 // ============================================================================
 // chip_8259_pic testbench — 单主片初始化 + IMR + 中断线（ISA 并行口）
 // ============================================================================
 module chip_8259_pic_tb;
 
-    // ============================================================
-    // test signals
-    // ============================================================
-    logic        clk = 0;
-    logic rst_n;
-    logic        valid;
-    logic        we;
+    logic         clk;
+    logic         rst_n;
+    logic         valid;
+    logic         we;
     logic [15: 0] addr;
-    logic [ 7: 0]  wdata;
-    logic [ 7: 0]  rdata;
+    logic [ 7: 0] wdata;
+    logic [ 7: 0] rdata;
     logic [ 7: 0] ir;
-    logic        intr;
+    logic         intr;
+    logic         hit;
+    logic         cs_n;
+    logic         wr_n;
+    logic         rd_n;
 
-    logic hit   = (addr >= 16'h0020) && (addr <= 16'h0021);
-    logic cs_n  = !(valid && hit);
-    logic wr_n  = !(valid && we && hit);
-    logic rd_n  = !(valid && !we && hit);
+    assign hit  = (addr >= 16'h0020) && (addr <= 16'h0021);
+    assign cs_n = !(valid && hit);
+    assign wr_n = !(valid && we && hit);
+    assign rd_n = !(valid && !we && hit);
 
-    // ============================================================
-    // DUT instantiation
-    // ============================================================
     chip_8259_pic dut (
+        .i_cs_n ( cs_n ),
+        .i_rd_n ( rd_n ),
+        .i_wr_n ( wr_n ),
+        .i_a0   ( addr[0] ),
+        .i_d    ( wdata ),
+        .o_d    ( rdata ),
+        .i_ir   ( ir ),
+        .o_intr ( intr ),
         .clk    ( clk ),
-        .rst_n    ( rst_n ),
-        .i_cs_n     ( cs_n ),
-        .i_rd_n     ( rd_n ),
-        .i_wr_n     ( wr_n ),
-        .i_a0       ( addr[0] ),
-        .i_d        ( wdata ),
-        .o_d        ( rdata ),
-        .i_ir       ( ir ),
-        .o_intr     ( intr )
+        .rst_n  ( rst_n )
     );
 
-    // ============================================================
-    // clock generation
-    // ============================================================
     always #5 clk = ~clk;
 
-    // ============================================================
-    // tasks
-    // ============================================================
-    task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
+    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
         @(posedge clk);
         valid = 1;
         we    = 1;
@@ -76,26 +67,25 @@ module chip_8259_pic_tb;
         valid = 0;
     endtask
 
-    // ============================================================
-    // test procedure
-    // ============================================================
     initial begin : main_test
+        clk   = 1'b0;
         ir    = 8'h0;
-        rst_n = 1;
+        rst_n = 1'b0;
         valid = 0;
         we    = 0;
         addr  = 16'h0020;
         wdata = '0;
         repeat (3) @(posedge clk);
-        rst_n = 0;
+        rst_n = 1'b1;
         repeat (2) @(posedge clk);
 
         wr(16'h0020, 8'h13);
         wr(16'h0021, 8'h08);
         wr(16'h0021, 8'h01);
         wr(16'h0021, 8'hFE);
+        @(negedge clk);
         ir = 8'h01;
-        repeat (2) @(posedge clk);
+        #1;
         if (!intr)
             $display("FAIL pic intr");
         else

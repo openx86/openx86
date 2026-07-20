@@ -176,7 +176,7 @@ module exu_dispatcher_alu_tb;
         check_add();
         check_mov_imm();
         check_cmp();
-        $display("exu_dispatcher_alu_tb: PASS");
+        $display("PASS exu_dispatcher_alu");
         $finish(0);
     end
 

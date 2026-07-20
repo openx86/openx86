@@ -36,10 +36,15 @@ module chip_ns16550_com_tb;
     logic        rx_push;
     logic [ 7: 0] rx_data;
 
-    logic com_hit = (io_addr >= 16'h03F8) && (io_addr <= 16'h03FF);
-    logic cs_n = !(io_valid && com_hit);
-    logic wr_n = !(io_valid && io_we && com_hit);
-    logic rd_n = !(io_valid && !io_we && com_hit);
+    logic com_hit;
+    logic cs_n;
+    logic wr_n;
+    logic rd_n;
+
+    assign com_hit = (io_addr >= 16'h03F8) && (io_addr <= 16'h03FF);
+    assign cs_n    = !(io_valid && com_hit);
+    assign wr_n    = !(io_valid && io_we && com_hit);
+    assign rd_n    = !(io_valid && !io_we && com_hit);
 
     // ============================================================
     // DUT instantiation
@@ -65,23 +70,25 @@ module chip_ns16550_com_tb;
     // ============================================================
     // tasks
     // ============================================================
-    task automatic wr(input logic [15: 0] a, input  logic [ 7: 0] d);
-        @(posedge clk);
+    task automatic wr(input logic [15: 0] a, input logic [ 7: 0] d);
+        @(negedge clk);
         io_valid = 1;
         io_we    = 1;
         io_addr  = a;
         io_wdata = d;
-        @(posedge clk);
+        @(negedge clk);
         io_valid = 0;
+        io_we    = 0;
     endtask
 
     task automatic rd(input logic [15: 0] a, output logic [ 7: 0] d);
-        @(posedge clk);
+        @(negedge clk);
         io_valid = 1;
         io_we    = 0;
         io_addr  = a;
-        @(posedge clk);
+        #1;
         d = io_rdata;
+        @(negedge clk);
         io_valid = 0;
     endtask
 

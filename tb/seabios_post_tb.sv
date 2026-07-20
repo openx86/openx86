@@ -172,7 +172,7 @@ module seabios_post_tb;
                    checkpoint, uart_buf);
         end
 
-        $display("seabios_post_tb PASS (CP=%0d cycles=%0d seabios=%0d)",
+        $display("PASS seabios_post (CP=%0d cycles=%0d seabios=%0d)",
                  checkpoint, c, has_seabios);
         $finish;
     end

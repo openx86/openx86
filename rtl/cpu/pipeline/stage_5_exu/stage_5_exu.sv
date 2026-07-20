@@ -250,6 +250,8 @@ module stage_5_exu (
     logic [15: 0] far_call_far_selector_r;
     logic         far_ret_new_esp_valid;
     logic [31: 0] far_ret_new_esp;
+    logic         exc_ud_valid;
+    logic         exc_de_valid;
 
     logic         mov_seg_real_enable;
     logic [ 2: 0] mov_seg_real_index;

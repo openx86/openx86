@@ -52,11 +52,8 @@ logic [31: 0] i_bus_data_read;
 logic [31: 0] o_bus_data_write;
 
 initial begin
-    clk = 1;
-    rst_n = 1;
-    #(clock_period * 2);
-    rst_n = 0;
-
+    clk = 1'b0;
+    rst_n = 1'b0;
     i_mmu_valid = 0;
     i_mmu_address = 0;
     i_code_valid = 0;
@@ -69,7 +66,8 @@ initial begin
     i_bus_ready = 0;
     i_bus_busy = 0;
     i_bus_data_read = 0;
-
+    #(clock_period * 2);
+    rst_n = 1'b1;
     #(clock_period * 2);
 
     // fetch code
@@ -148,6 +146,7 @@ initial begin
 
     #(clock_period * 4);
 
+    $display("PASS bus_interface_unit");
     $finish;
 end
 

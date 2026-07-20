@@ -283,7 +283,7 @@ module i486_instruction_matrix_tb;
         for (int i = 0; i < LP_NUM_TESTS; i++) begin
             run_case(i);
         end
-        $display("i486_instruction_matrix_tb: PASS (%0d cases)", LP_NUM_TESTS);
+        $display("PASS i486_instruction_matrix_tb (%0d cases)", LP_NUM_TESTS);
         $finish(0);
     end
 
