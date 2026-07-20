@@ -19,7 +19,7 @@
 // ============================================================================
 
 // ============================================================================
-// Intel 8237 DMA register model (no real DMA bus-master transfer engine)
+// Intel 8237 DMA register model + CH2 bus-master transfer engine (disk/floppy)
 //
 // Host-visible windows:
 //   0x00-0x0F : primary 8237 register set
@@ -31,10 +31,12 @@
 //   - command, request, mask, mode register write behavior
 //   - clear first/last flip-flop, master clear, clear mask, write-all-mask
 //   - status register read returns {request[3: 0], tc[3: 0]} and clears tc on read
+//   - CH2 single-byte transfer FSM (DMA_IDLE/READ/WRITE) with page:addr → mem/IO
+//     (IDE data port 0x01F0); TC and request clear on final count
 //
 // Not implemented in this phase:
-//   - real DMA transfer execution, DREQ/DACK/HRQ/HLDA handshakes
-//   - terminal count generation from transfer engine (tc bits stay software model)
+//   - full DREQ/DACK/HRQ/HLDA external handshake pins
+//   - CH0/CH1/CH3 hardware request paths (software request bit only for CH2)
 // ============================================================================
 
 module chip_8237_dma (

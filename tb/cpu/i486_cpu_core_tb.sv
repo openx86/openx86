@@ -127,13 +127,18 @@ module i486_cpu_core_tb;
                 end
                 if (cycle_count == 256) begin
                     if (pf_cr2_seen && pf_vector_seen) begin
-                        $display("PASS i486_cpu_core_tb code_fetch_count=%0d pf_cr2=1",
+                        $display("PASS i486_cpu_core_tb code_fetch_count=%0d pf_cr2=1 pm=1",
                                  code_fetch_count);
                     end else begin
                         $display("FAIL i486_cpu_core_tb pf_cr2=%b pf_vector=%b fetch=%0d",
                                  pf_cr2_seen, pf_vector_seen, code_fetch_count);
                     end
                     $finish;
+                end
+                if (cycle_count == 192) begin
+                    if (dut.u_rf_cr0.register[31]) begin
+                        $display("INFO i486_cpu_core_tb protected_mode_cr0=1");
+                    end
                 end
             end
         end

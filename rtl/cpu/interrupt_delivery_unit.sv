@@ -36,6 +36,11 @@ module interrupt_delivery_unit (
     input  logic [15: 0] i_idtr_limit,
     input  logic         i_inta_vector_valid,
     input  logic [ 7: 0] i_inta_vector,
+    input  logic [ 1: 0] i_cpl,
+    input  logic [ 1: 0] i_gate_dpl,
+    input  logic         i_need_stack_switch,
+    input  logic [15: 0] i_new_ss,
+    input  logic [31: 0] i_new_esp,
     output logic         o_busy,
     output logic         o_inta_req,
     output logic         o_done,
@@ -66,6 +71,10 @@ module interrupt_delivery_unit (
         S_RD_GATE_LO_WAIT,
         S_RD_GATE_HI,
         S_RD_GATE_HI_WAIT,
+        S_PUSH_OLD_SS,
+        S_PUSH_OLD_SS_WAIT,
+        S_PUSH_OLD_ESP,
+        S_PUSH_OLD_ESP_WAIT,
         S_PUSH_EFLAGS,
         S_PUSH_EFLAGS_WAIT,
         S_PUSH_CS,
@@ -92,6 +101,7 @@ module interrupt_delivery_unit (
     logic [31: 0] saved_eip_r;
     logic [15: 0] saved_cs_r;
     logic [31: 0] saved_eflags_r;
+    logic [31: 0] saved_esp_r;
     logic [31: 0] esp_r;
     logic [31: 0] gate_lo_r;
     logic [31: 0] gate_hi_r;
@@ -102,6 +112,12 @@ module interrupt_delivery_unit (
     logic [15: 0] iret_cs_r;
     logic [31: 0] iret_eflags_r;
     logic         idt_fault_r;
+    logic         need_stack_switch_r;
+    logic [15: 0] old_ss_r;
+    logic [31: 0] old_esp_r;
+    logic [ 1: 0] cpl_r;
+    logic [ 1: 0] gate_dpl_r;
+    logic [15: 0] new_ss_r;
 
     logic [31: 0] gate_addr = i_idtr_base + {24'd0, vector_r, 3'b000};
     logic [31: 0] gate_access = gate_hi_r[15: 8];
@@ -133,6 +149,13 @@ module interrupt_delivery_unit (
             iret_cs_r              <= 16'h0;
             iret_eflags_r          <= 32'h0;
             idt_fault_r            <= 1'b0;
+            need_stack_switch_r    <= 1'b0;
+            old_ss_r               <= 16'h0;
+            old_esp_r              <= 32'h0;
+            saved_esp_r            <= 32'h0;
+            cpl_r                  <= 2'b00;
+            gate_dpl_r             <= 2'b00;
+            new_ss_r               <= 16'h0;
             o_done                 <= 1'b0;
             o_clear_if             <= 1'b0;
             o_new_eip_valid        <= 1'b0;
@@ -159,14 +182,25 @@ module interrupt_delivery_unit (
             unique case (state)
                 S_IDLE: begin
                     if (i_start) begin
-                        vector_r        <= i_vector;
-                        has_error_r     <= i_has_error_code;
-                        error_code_r    <= i_error_code;
-                        saved_eip_r     <= i_saved_eip;
-                        saved_cs_r      <= i_saved_cs_selector;
-                        saved_eflags_r  <= i_saved_eflags;
-                        esp_r           <= i_saved_esp;
-                        idt_fault_r     <= 1'b0;
+                        vector_r            <= i_vector;
+                        has_error_r         <= i_has_error_code;
+                        error_code_r        <= i_error_code;
+                        saved_eip_r         <= i_saved_eip;
+                        saved_cs_r          <= i_saved_cs_selector;
+                        saved_eflags_r      <= i_saved_eflags;
+                        saved_esp_r         <= i_saved_esp;
+                        need_stack_switch_r <= i_need_stack_switch;
+                        old_esp_r           <= i_saved_esp;
+                        old_ss_r            <= 16'h0; // parent SS cache later
+                        cpl_r               <= i_cpl;
+                        gate_dpl_r          <= i_gate_dpl;
+                        new_ss_r            <= i_new_ss;
+                        if (i_need_stack_switch) begin
+                            esp_r <= i_new_esp;
+                        end else begin
+                            esp_r <= i_saved_esp;
+                        end
+                        idt_fault_r <= 1'b0;
                         if (i_is_iret) begin
                             state <= S_IRET_POP_EIP;
                         end else if (i_is_external) begin
@@ -213,8 +247,39 @@ module interrupt_delivery_unit (
                 S_RD_GATE_HI_WAIT: begin
                     if (i_mem_ready) begin
                         gate_hi_r <= i_mem_rdata;
-                        esp_r     <= saved_esp_r - 32'd4;
-                        state     <= S_PUSH_EFLAGS;
+                        if (need_stack_switch_r) begin
+                            esp_r <= esp_r - 32'd4;
+                            state <= S_PUSH_OLD_SS;
+                        end else begin
+                            esp_r <= esp_r - 32'd4;
+                            state <= S_PUSH_EFLAGS;
+                        end
+                    end
+                end
+                S_PUSH_OLD_SS: begin
+                    o_mem_valid        <= 1'b1;
+                    o_mem_write_enable <= 1'b1;
+                    o_mem_address      <= esp_r;
+                    o_mem_write_data   <= {16'h0, old_ss_r};
+                    state              <= S_PUSH_OLD_SS_WAIT;
+                end
+                S_PUSH_OLD_SS_WAIT: begin
+                    if (i_mem_ready) begin
+                        esp_r <= esp_r - 32'd4;
+                        state <= S_PUSH_OLD_ESP;
+                    end
+                end
+                S_PUSH_OLD_ESP: begin
+                    o_mem_valid        <= 1'b1;
+                    o_mem_write_enable <= 1'b1;
+                    o_mem_address      <= esp_r;
+                    o_mem_write_data   <= old_esp_r;
+                    state              <= S_PUSH_OLD_ESP_WAIT;
+                end
+                S_PUSH_OLD_ESP_WAIT: begin
+                    if (i_mem_ready) begin
+                        esp_r <= esp_r - 32'd4;
+                        state <= S_PUSH_EFLAGS;
                     end
                 end
                 S_PUSH_EFLAGS: begin

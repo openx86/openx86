@@ -1,28 +1,28 @@
 // ============================================================================
-//  Copyright (c) 2026 Chang Wei
+// Copyright (c) 2026 Chang Wei
 //
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//  copies of the Software, subject to the following conditions:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, subject to the following conditions:
 //
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-//  File        : x87_fpu_core.sv
-//  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : x87 FPU control: decode EXE_X87 sub-ops, drive ST0-ST7
+// File : x87_fpu_core.sv
+// Author : Chang Wei <changwei1006@gmail.com>
+// Description : x87 FPU control: decode EXE_X87 sub-ops, drive ST0-ST7
 // ============================================================================
 
 `include "openx86_defs.h.sv"
 
 module x87_fpu_core (
     input  logic         i_valid,
-    input  logic [ 4: 0] i_x87_subop,
+    input  logic [ 5: 0] i_x87_subop,
     input  logic [ 2: 0] i_sti_index,
     input  logic [31: 0] i_mem_data,
     input  logic [79: 0] i_st0,
@@ -53,6 +53,8 @@ module x87_fpu_core (
     output logic         o_st7_we,
     output logic [15: 0] o_fsw,
     output logic         o_fsw_we,
+    output logic [15: 0] o_fcw,
+    output logic         o_fcw_we,
     output logic         o_stack_push,
     output logic         o_stack_pop,
     output logic         o_mem_valid,
@@ -77,6 +79,7 @@ module x87_fpu_core (
     logic         ls_mem_we;
     logic [15: 0] fsw_next;
     logic [ 2: 0] top_next;
+    logic [15: 0] fcw_next;
 
     logic op_add;
     logic op_sub;
@@ -86,6 +89,10 @@ module x87_fpu_core (
     logic op_store;
     logic op_fld_sti;
     logic op_fxch;
+    logic op_fldcw;
+    logic op_fstcw;
+    logic op_fstsw;
+    logic op_finit;
 
     assign stack_top = i_fsw[11: 13];
     assign phys_sti  = stack_top + i_sti_index;
@@ -110,6 +117,10 @@ module x87_fpu_core (
     assign op_store   = (i_x87_subop == `EXE_X87_FST) | (i_x87_subop == `EXE_X87_FSTP);
     assign op_fld_sti = i_x87_subop == `EXE_X87_FLD_STI;
     assign op_fxch    = i_x87_subop == `EXE_X87_FXCH;
+    assign op_fldcw   = i_x87_subop == `EXE_X87_FLDCW;
+    assign op_fstcw   = i_x87_subop == `EXE_X87_FSTCW;
+    assign op_fstsw   = i_x87_subop == `EXE_X87_FSTSW;
+    assign op_finit   = i_x87_subop == `EXE_X87_FINIT;
 
     x87_fpu_alu u_alu (
         .i_op_add         (op_add),
@@ -140,8 +151,10 @@ module x87_fpu_core (
         end
         st_we      = 8'h0;
         fsw_next   = i_fsw;
+        fcw_next   = i_fcw;
         top_next   = stack_top;
         o_fsw_we   = 1'b0;
+        o_fcw_we   = 1'b0;
         o_fpu_exception = 1'b0;
 
         if (i_valid) begin
@@ -149,7 +162,15 @@ module x87_fpu_core (
             if (alu_div0)
                 fsw_next[14] = 1'b1;
 
-            if (op_fxch) begin
+            if (op_finit) begin
+                fcw_next = 16'h037F;
+                fsw_next = 16'h0000;
+                o_fcw_we = 1'b1;
+                o_fsw_we = 1'b1;
+            end else if (op_fldcw) begin
+                fcw_next = i_mem_data[15: 0];
+                o_fcw_we = 1'b1;
+            end else if (op_fxch) begin
                 st_next[stack_top]       = st_phys[phys_sti[2: 0]];
                 st_next[phys_sti[2: 0]]  = st_phys[stack_top];
                 st_we[stack_top]         = 1'b1;
@@ -166,9 +187,9 @@ module x87_fpu_core (
             end
 
             if (i_x87_subop == `EXE_X87_FSTP) begin
-                top_next       = stack_top + 3'd1;
+                top_next         = stack_top + 3'd1;
                 fsw_next[11: 13] = top_next;
-                o_fsw_we       = 1'b1;
+                o_fsw_we         = 1'b1;
             end
         end
     end
@@ -182,6 +203,7 @@ module x87_fpu_core (
     assign o_st6 = st_next[6];
     assign o_st7 = st_next[7];
     assign o_fsw = fsw_next;
+    assign o_fcw = fcw_next;
 
     assign o_st0_we = i_valid & st_we[0];
     assign o_st1_we = i_valid & st_we[1];
@@ -195,9 +217,14 @@ module x87_fpu_core (
     always_comb begin
         o_stack_push       = 1'b0;
         o_stack_pop        = (i_x87_subop == `EXE_X87_FSTP);
-        o_mem_valid        = 1'b0;
-        o_mem_write_enable = ls_mem_we;
-        o_mem_wdata        = ls_mem_data;
+        o_mem_valid        = i_valid & (op_fstcw | op_fstsw | ls_mem_we);
+        o_mem_write_enable = op_fstcw | op_fstsw | ls_mem_we;
+        if (op_fstcw)
+            o_mem_wdata = {16'h0, i_fcw};
+        else if (op_fstsw)
+            o_mem_wdata = {16'h0, i_fsw};
+        else
+            o_mem_wdata = ls_mem_data;
     end
 
 endmodule

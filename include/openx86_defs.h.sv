@@ -29,24 +29,23 @@
 `define DESCRIPTOR_TYPE_SYSTEM 0
 `define DESCRIPTOR_TYPE_CODE_OR_DATA 1
 
-// CPUID
-// TODO: use real cpuid_max_EAX
-`define cpuid_max_EAX (32'hFFFF_FFFF)
-// 3*32/8=12 bytes { EBX, ECX, EDX }, 12 ascii
+// CPUID — 80486DX identity (family 4). VME enabled at M4 roadmap stage.
+`define cpuid_max_EAX (32'd1)
+// 3*32/8=12 bytes { EBX, EDX, ECX }, 12 ascii
 `define cpuid_manufacturer "OpenX86-Free"
-`define cpuid_stepping_id 4'd4
-`define cpuid_model_id 4'd4
-`define cpuid_family_id 4'd5
+`define cpuid_stepping_id 4'd0
+`define cpuid_model_id 4'd0
+`define cpuid_family_id 4'd4
 `define cpuid_processor_type 2'b0
 `define cpuid_extended_model_id 4'b0
 `define cpuid_extended_family_id 8'b0
-// `define cpuid_revision 1
 
 `define cpuid_brand_index 8'b0
 `define cpuid_CLFLUSH_line_size 16'b0
 `define cpuid_logical_processors_count 8'b0
 `define cpuid_local_APIC_id 8'b0
 
+// Feature EDX bits for leaf 1 (Intel layout). Only FPU is advertised for 486DX.
 `define cpuid_feature_fpu           1'b1
 `define cpuid_feature_vme            1'b0
 `define cpuid_feature_de             1'b0
@@ -59,19 +58,18 @@
 `define cpuid_feature_apic           1'b0
 `define cpuid_feature_sep            1'b0
 `define cpuid_feature_mtrr           1'b0
-`define cpuid_feature_peg            1'b0
+`define cpuid_feature_pge            1'b0
 `define cpuid_feature_mca            1'b0
 `define cpuid_feature_cmov           1'b0
 `define cpuid_feature_pat            1'b0
-// Intel CPUID.1 EDX bit 17：PSE-36（与 bit3 PSE 区分）
 `define cpuid_feature_pse36          1'b0
 `define cpuid_feature_psn            1'b0
 `define cpuid_feature_clfsh          1'b0
 `define cpuid_feature_ds             1'b0
 `define cpuid_feature_acpi           1'b0
-`define cpuid_feature_mmx            1'b1
-`define cpuid_feature_fxsr           1'b1
-`define cpuid_feature_sse            1'b1
+`define cpuid_feature_mmx            1'b0
+`define cpuid_feature_fxsr           1'b0
+`define cpuid_feature_sse            1'b0
 `define cpuid_feature_sse2           1'b0
 `define cpuid_feature_ss             1'b0
 `define cpuid_feature_htt            1'b0
@@ -335,7 +333,7 @@
 
 // execute-unit operation constants (macro form)
 `define EXE_MD_OP_W  3
-`define EXE_X87_OP_W 5
+`define EXE_X87_OP_W 6
 `define EXE_INT_OP_W 6
 
 `define EXE_MD_NOP    3'd0
@@ -344,36 +342,40 @@
 `define EXE_MD_DIVU32 3'd3
 `define EXE_MD_IDIV32 3'd4
 
-`define EXE_X87_NOP     5'd0
-`define EXE_X87_FLD     5'd1
-`define EXE_X87_FSTP    5'd2
-`define EXE_X87_FADD    5'd3
-`define EXE_X87_FSUB    5'd4
-`define EXE_X87_FMUL    5'd5
-`define EXE_X87_FDIV    5'd6
-`define EXE_X87_FCHS    5'd7
-`define EXE_X87_FABS    5'd8
-`define EXE_X87_FXCH    5'd9
-`define EXE_X87_FCOMI   5'd10
-`define EXE_X87_FLD_STI 5'd11
-`define EXE_X87_FST     5'd12
-`define EXE_X87_FFREE   5'd13
-`define EXE_X87_FCOM    5'd14
-`define EXE_X87_FCOMP   5'd15
-`define EXE_X87_FTST    5'd16
-`define EXE_X87_FLD1    5'd17
-`define EXE_X87_FLDZ    5'd18
-`define EXE_X87_FNOP    5'd19
-`define EXE_X87_FADDP   5'd20
-`define EXE_X87_FMULP   5'd21
-`define EXE_X87_FSUBP   5'd22
-`define EXE_X87_FSUBRP  5'd23
-`define EXE_X87_FDIVP   5'd24
-`define EXE_X87_FDIVRP  5'd25
-`define EXE_X87_FCOMIP  5'd26
-`define EXE_X87_FUCOMIP 5'd27
-`define EXE_X87_FSUBR   5'd28
-`define EXE_X87_FDIVR   5'd29
+`define EXE_X87_NOP     6'd0
+`define EXE_X87_FLD     6'd1
+`define EXE_X87_FSTP    6'd2
+`define EXE_X87_FADD    6'd3
+`define EXE_X87_FSUB    6'd4
+`define EXE_X87_FMUL    6'd5
+`define EXE_X87_FDIV    6'd6
+`define EXE_X87_FCHS    6'd7
+`define EXE_X87_FABS    6'd8
+`define EXE_X87_FXCH    6'd9
+`define EXE_X87_FCOMI   6'd10
+`define EXE_X87_FLD_STI 6'd11
+`define EXE_X87_FST     6'd12
+`define EXE_X87_FFREE   6'd13
+`define EXE_X87_FCOM    6'd14
+`define EXE_X87_FCOMP   6'd15
+`define EXE_X87_FTST    6'd16
+`define EXE_X87_FLD1    6'd17
+`define EXE_X87_FLDZ    6'd18
+`define EXE_X87_FNOP    6'd19
+`define EXE_X87_FADDP   6'd20
+`define EXE_X87_FMULP   6'd21
+`define EXE_X87_FSUBP   6'd22
+`define EXE_X87_FSUBRP  6'd23
+`define EXE_X87_FDIVP   6'd24
+`define EXE_X87_FDIVRP  6'd25
+`define EXE_X87_FCOMIP  6'd26
+`define EXE_X87_FUCOMIP 6'd27
+`define EXE_X87_FSUBR   6'd28
+`define EXE_X87_FDIVR   6'd29
+`define EXE_X87_FLDCW   6'd30
+`define EXE_X87_FSTCW   6'd31
+`define EXE_X87_FSTSW   6'd32
+`define EXE_X87_FINIT   6'd33
 
 // Page table entry bit positions (i486 two-level paging)
 `define PTE_BIT_P   0
@@ -452,13 +454,15 @@ typedef struct packed {
     logic [31: 0] uop_immediate;     // Immediate value
     logic [31: 0] uop_displacement;  // Displacement value
     logic [ 3: 0] uop_tttn;          // Condition code for Jcc/SETcc
-    logic [ 4: 0] uop_eee;           // X87 sub-opcode index (EXE_X87_*)
+    logic [ 5: 0] uop_eee;           // X87 sub-opcode index (EXE_X87_*)
     logic [ 2: 0] uop_seg_index;     // Segment register index for mem ops
     logic [ 1: 0] uop_sib_scale;     // SIB scale factor
     logic        uop_has_imm;        // Has immediate operand
     logic        uop_has_disp;       // Has displacement operand
     logic        uop_mem_access;     // Memory access operation
     logic        uop_is_store;       // Store operation (1) vs load (0)
+    logic        uop_rep;            // REP/REPE prefix present
+    logic        uop_repne;          // REPNE prefix present
     logic        uop_valid;          // Micro-op valid flag
 } micro_op_t;
 
@@ -536,5 +540,39 @@ typedef struct packed {
 `define MISC_SUB_OUT      8'h21
 `define MISC_SUB_INT      8'h30
 `define MISC_SUB_IRET     8'h31
+`define MISC_SUB_MOV_SEG  8'h40
+`define MISC_SUB_FAR_JMP  8'h41
+`define MISC_SUB_FAR_CALL 8'h42
+`define MISC_SUB_FAR_RET  8'h43
+`define MISC_SUB_UD       8'h44
+`define MISC_SUB_CLTS     8'h50
+`define MISC_SUB_SMSW     8'h51
+`define MISC_SUB_LLDT     8'h52
+`define MISC_SUB_LTR      8'h53
+`define MISC_SUB_LAR      8'h54
+`define MISC_SUB_LSL      8'h55
+`define MISC_SUB_VERR     8'h56
+`define MISC_SUB_VERW     8'h57
+`define MISC_SUB_LEAVE    8'h58
+`define MISC_SUB_ENTER    8'h59
+`define MISC_SUB_PUSH_SEG 8'h5A
+`define MISC_SUB_POP_SEG  8'h5B
+`define MISC_SUB_CBW      8'h5C
+`define MISC_SUB_CWDE     8'h5D
+`define MISC_SUB_CDQ      8'h5E
+`define MISC_SUB_XLAT     8'h5F
+`define MISC_SUB_AAA      8'h60
+`define MISC_SUB_AAS      8'h61
+`define MISC_SUB_DAA      8'h62
+`define MISC_SUB_DAS      8'h63
+`define MISC_SUB_AAD      8'h64
+`define MISC_SUB_AAM      8'h65
+`define MISC_SUB_BOUND    8'h66
+`define MISC_SUB_ARPL     8'h67
+`define MISC_SUB_LDS      8'h68
+`define MISC_SUB_LES      8'h69
+`define MISC_SUB_LFS      8'h6A
+`define MISC_SUB_LGS      8'h6B
+`define MISC_SUB_LSS      8'h6C
 
 `endif

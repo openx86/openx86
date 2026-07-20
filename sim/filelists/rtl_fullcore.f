@@ -34,7 +34,11 @@ rtl/cpu/load_store_unit/lsu_mmu_translate.sv
 rtl/cpu/load_store_unit/memory_stage.sv
 rtl/cpu/mmu/memory_management_unit.sv
 rtl/cpu/mmu/mmu_bus_arbiter.sv
+rtl/cpu/mmu/paging/tlb_simple.sv
 rtl/cpu/mmu/paging/paging_unit.sv
+rtl/cpu/mmu/tss/tss_privilege_stack.sv
+rtl/cpu/v86/v86_sensitive_check.sv
+rtl/cpu/fpu/x87_cr0_gate.sv
 rtl/cpu/mmu/segmentation/gate_segment_descriptor_decode.sv
 rtl/cpu/mmu/segmentation/segment_descriptor_cache.sv
 rtl/cpu/mmu/segmentation/segment_descriptor_decode.sv

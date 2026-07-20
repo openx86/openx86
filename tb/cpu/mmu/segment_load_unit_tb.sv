@@ -24,7 +24,9 @@
 
 module segment_load_unit_tb;
 
-    localparam logic [ 1: 0] LP_OP_MOV_SEG = 2'b00;
+    localparam logic [ 1: 0] LP_OP_MOV_SEG   = 2'b00;
+    localparam logic [ 1: 0] LP_OP_FAR_JMP  = 2'b01;
+    localparam logic [ 1: 0] LP_OP_FAR_RET  = 2'b11;
 
     logic         clk;
     logic         rst_n;
@@ -126,6 +128,24 @@ module segment_load_unit_tb;
 
     assign bus_ready = bus_ready_r;
 
+    task automatic do_far_op(
+        input logic [ 1: 0] op,
+        input logic [31: 0] f_offset,
+        input logic [15: 0] f_selector
+    );
+        begin
+            op_type      = op;
+            far_offset   = f_offset;
+            far_selector = f_selector;
+            valid        = 1'b0;
+            @(posedge clk);
+            valid        = 1'b1;
+            while (~ready) @(posedge clk);
+            valid        = 1'b0;
+            @(posedge clk);
+        end
+    endtask
+
     task automatic do_mov_ds(input logic [15: 0] sel);
         begin
             selector          = sel;
@@ -184,6 +204,38 @@ module segment_load_unit_tb;
         end
         if (ip_write_enable) begin
             $display("FAIL MOV DS unexpected IP write");
+            $finish(1);
+        end
+        pass_count++;
+
+        mem[32'h8000 >> 2] = 32'h0000_1234;
+        mem[32'h8004 >> 2] = 32'h0000_0018;
+        protected_mode     = 1'b1;
+        do_far_op(LP_OP_FAR_JMP, 32'h0000_5678, 16'h0018);
+        if (segment_not_present || stack_segment_fault || segment_fault) begin
+            $display("FAIL FAR JMP fault np=%b ss=%b gp=%b", segment_not_present,
+                     stack_segment_fault, segment_fault);
+            $finish(1);
+        end
+        if (~seg_write_enable || (seg_write_index != `sreg_index_CS) ||
+            (seg_write_selector != 16'h0018) || (seg_write_descriptor != expected_descriptor) ||
+            ~ip_write_enable || (ip_write_data != 32'h0000_5678)) begin
+            $display("FAIL FAR JMP cs=%h ip=%h en=%b", seg_write_selector, ip_write_data,
+                     seg_write_enable);
+            $finish(1);
+        end
+        pass_count++;
+
+        do_far_op(LP_OP_FAR_RET, 32'h0000_8000, 16'h0);
+        if (segment_not_present || stack_segment_fault || segment_fault) begin
+            $display("FAIL FAR RET fault np=%b ss=%b gp=%b", segment_not_present,
+                     stack_segment_fault, segment_fault);
+            $finish(1);
+        end
+        if (~seg_write_enable || (seg_write_index != `sreg_index_CS) ||
+            (seg_write_selector != 16'h0018) || ~ip_write_enable ||
+            (ip_write_data != 32'h0000_1234)) begin
+            $display("FAIL FAR RET cs=%h ip=%h", seg_write_selector, ip_write_data);
             $finish(1);
         end
         pass_count++;

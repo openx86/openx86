@@ -8,8 +8,15 @@ tb/cpu/exception_interrupt_unit_tb.sv
 tb/cpu/interrupt_delivery_unit_tb.sv
 tb/cpu/i486_cpu_core_tb.sv
 tb/cpu/mmu/paging_unit_tb.sv
+tb/cpu/mmu/tlb_simple_tb.sv
+tb/cpu/mmu/tss_privilege_stack_tb.sv
+tb/cpu/mmu/segment_load_unit_tb.sv
+tb/cpu/mmu/memory_management_unit_tb.sv
+tb/cpu/v86/v86_sensitive_check_tb.sv
 tb/cpu/pipeline/stage_2_dec/decode_x87_tb.sv
 tb/cpu/fpu/x87_smoke_tb.sv
+tb/cpu/fpu/x87_cr0_gate_tb.sv
+tb/cpu/isa/instruction_footprint_tb.sv
 tb/cpu/pipeline/stage_4_reg_read/stage_4_reg_read_tb.sv
 tb/cpu/pipeline/stage_3_uop/pipeline_reg_tb.sv
 tb/cpu/pipeline/stage_5_exu/exu_dispatcher_alu_tb.sv
@@ -17,3 +24,5 @@ tb/cpu/pipeline/stage_5_exu/i486_instruction_matrix_tb.sv
 tb/chipset/chip_8259_pic_tb.sv
 tb/chipset/chip_ns16550_com_tb.sv
 tb/device/vga/vga_graphics_adapter_tb.sv
+tb/seabios_post_tb.sv
+tb/win95_boot_tb.sv

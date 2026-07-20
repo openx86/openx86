@@ -151,6 +151,12 @@ module chip_ns16550_com (
             iir_code = LP_IIR_NONE;
     end
 
+    // Simulation TX probe — hierarchical path:
+    //   dut.u_bus_controller.u_chip_com1.thr_shadow
+    //   dut.u_bus_controller.u_chip_com1.thr_write_pulse
+    logic [ 7: 0] thr_shadow;
+    logic         thr_write_pulse;
+
     // 寄存器与简化发送/接收路径、MSR 边沿与读清逻辑。
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
@@ -168,10 +174,13 @@ module chip_ns16550_com (
             tx_empty         <= 1'b1;
             tx_drain_pending <= 1'b0;
             thre_irq_pending <= 1'b1;
+            thr_shadow       <= 8'h0;
+            thr_write_pulse  <= 1'b0;
 
             msr_status_prev <= 4'b0000;
             msr_delta       <= 4'b0000;
         end else begin
+            thr_write_pulse <= 1'b0;
             if (tx_drain_pending) begin
                 tx_drain_pending <= 1'b0;
                 thr_empty        <= 1'b1;
@@ -203,6 +212,8 @@ module chip_ns16550_com (
                             tx_empty         <= 1'b0;
                             tx_drain_pending <= 1'b1;
                             thre_irq_pending <= 1'b0;
+                            thr_shadow       <= i_d;
+                            thr_write_pulse  <= 1'b1;
 
                             if (mcr[4]) begin
                                 rbr       <= i_d;

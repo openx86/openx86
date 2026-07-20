@@ -47,6 +47,7 @@ module i486_dec_uop_stage (
     logic              w_dec_index_reg_is_present;
     logic [ 1: 0]      w_dec_modrm_mod;
     logic [ 2: 0]      w_dec_segment_reg_index;
+    logic [ 2: 0]      w_dec_target_sreg_index;
     logic [ 1: 0]      w_dec_sib_scale_factor;
     logic [ 2: 0]      w_eee;
     logic              w_opcode_aaa;
@@ -303,6 +304,7 @@ module i486_dec_uop_stage (
         .o_dec_index_reg_is_present                 (w_dec_index_reg_is_present),
         .o_dec_modrm_mod                            (w_dec_modrm_mod),
         .o_dec_segment_reg_index                    (w_dec_segment_reg_index),
+        .o_dec_target_sreg_index                    (w_dec_target_sreg_index),
         .o_dec_sib_scale_factor                     (w_dec_sib_scale_factor),
         .o_eee                                      (w_eee),
         .o_opcode_aaa                               (w_opcode_aaa),
@@ -542,6 +544,7 @@ module i486_dec_uop_stage (
         .i_dec_index_reg_is_present                 (w_dec_index_reg_is_present),
         .i_dec_modrm_mod                            (w_dec_modrm_mod),
         .i_dec_segment_reg_index                    (w_dec_segment_reg_index),
+        .i_dec_target_sreg_index                    (w_dec_target_sreg_index),
         .i_dec_sib_scale_factor                     (w_dec_sib_scale_factor),
         .i_eee                                      (w_eee),
         .i_opcode_aaa                               (w_opcode_aaa),

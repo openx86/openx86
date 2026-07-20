@@ -23,7 +23,7 @@
 
 module exu_x87 (
     input  logic         i_valid,
-    input  logic [ 4: 0] i_x87_subop,
+    input  logic [ 5: 0] i_x87_subop,
     input  logic [ 2: 0] i_sti_index,
     input  logic [31: 0] i_mem_data,
     input  logic [79: 0] i_st0,
@@ -97,6 +97,8 @@ module exu_x87 (
         .o_st7_we            (o_st7_we),
         .o_fsw               (o_fsw),
         .o_fsw_we            (o_fsw_we),
+        .o_fcw               (),
+        .o_fcw_we            (),
         .o_stack_push        (),
         .o_stack_pop         (),
         .o_mem_valid         (mem_valid),

@@ -79,6 +79,9 @@ module i486_cpu_pipeline (
     input  logic [31: 0] i_gdtr_base,
     input  logic [15: 0] i_gdtr_limit,
     input  logic [31: 0] i_eip,
+    input  logic [31: 0] i_cr0_data,
+    input  logic         i_vm,
+    input  logic [ 1: 0] i_iopl,
 
     // =========================
     // Write-back to register file
@@ -267,8 +270,24 @@ module i486_cpu_pipeline (
     logic                slu_ready;
     logic                slu_active_r;
     logic                slu_start_pulse;
-    logic [ 2: 0]        exu_seg_load_index;
     logic [15: 0]        exu_seg_load_selector;
+    logic                exu_seg_load_valid;
+    logic [ 1: 0]        exu_seg_load_op_type;
+    logic [ 2: 0]        exu_seg_load_target_index;
+    logic [31: 0]        exu_seg_load_far_offset;
+    logic [15: 0]        exu_seg_load_far_selector;
+    logic                exu_exc_ud_valid;
+    logic                exu_exc_de_valid;
+    logic                exu_far_ret_new_esp_valid;
+    logic [31: 0]        exu_far_ret_new_esp;
+    logic [31: 0]        slu_far_ret_new_esp_r;
+    logic                slu_far_ret_esp_we;
+    logic                idu_slu_req;
+    logic [ 1: 0]        slu_op_type_r;
+    logic [31: 0]        slu_far_offset_r;
+    logic [15: 0]        slu_far_selector_r;
+    logic [ 2: 0]        slu_target_index_r;
+    logic [15: 0]        slu_selector_r;
     logic                exu_gpr_esp_we;
     logic [31: 0]        exu_gpr_esp_data;
     logic                exu_software_int_valid;
@@ -290,6 +309,8 @@ module i486_cpu_pipeline (
     logic [ 7: 0]        inta_vector_mux;
     logic                exc_valid;
     logic [ 7: 0]        exc_vector;
+    logic                v86_trap_gp;
+    logic                x87_nm;
     logic                exc_has_ec;
     logic [31: 0]        exc_error_code;
 
@@ -389,10 +410,18 @@ module i486_cpu_pipeline (
                             lsu_page_fault ? lsu_fault_present : 1'b0};
 
     assign exc_valid      = seg_fault_event | page_fault_event |
-                            slu_seg_np_fault | slu_seg_ss_fault | slu_seg_gp_fault;
-    assign exc_vector     = slu_seg_np_fault ? 8'd11 :
+                            slu_seg_np_fault | slu_seg_ss_fault | slu_seg_gp_fault |
+                            exu_exc_ud_valid | exu_exc_de_valid |
+                            ifu_dec_error | (fpu_exception_r & exu_valid) |
+                            v86_trap_gp | x87_nm;
+    assign exc_vector     = exu_exc_de_valid ? 8'd0 :
+                            x87_nm ? 8'd7 :
+                            exu_exc_ud_valid ? 8'd6 :
+                            ifu_dec_error ? 8'd6 :
+                            (fpu_exception_r & exu_valid) ? 8'd16 :
+                            slu_seg_np_fault ? 8'd11 :
                             slu_seg_ss_fault ? 8'd12 :
-                            (slu_seg_gp_fault | seg_fault_event) ? 8'd13 :
+                            (slu_seg_gp_fault | seg_fault_event | v86_trap_gp) ? 8'd13 :
                             page_fault_event ? 8'd14 : 8'd13;
     assign exc_has_ec     = page_fault_event;
     assign exc_error_code = pf_error_code;
@@ -442,42 +471,64 @@ module i486_cpu_pipeline (
     assign o_data_data_write = slu_busy ? slu_bus_wdata :
                                    idu_busy ? eiu_mem_wdata : pipe_mem_wdata;
 
-    assign exu_seg_load_req = i_protected_mode & exu_valid &
-        (exu_seg_es | exu_seg_cs | exu_seg_ss | exu_seg_ds | exu_seg_fs | exu_seg_gs);
-    assign exu_seg_load_selector = exu_seg_selector;
-    assign exu_seg_load_index    = exu_seg_es ? 3'd0 :
-                                   exu_seg_cs ? 3'd1 :
-                                   exu_seg_ss ? 3'd2 :
-                                   exu_seg_ds ? 3'd3 :
-                                   exu_seg_fs ? 3'd4 : 3'd5;
-
-    assign slu_start_pulse = exu_seg_load_req & ~slu_active_r;
+    assign idu_slu_req = eiu_cs_valid & i_protected_mode;
+    assign slu_start_pulse = ((exu_seg_load_valid & exu_valid & i_protected_mode) |
+                              idu_slu_req) & ~slu_active_r;
     assign slu_busy        = slu_active_r;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            slu_active_r <= 1'b0;
-        end else if (slu_start_pulse) begin
-            slu_active_r <= 1'b1;
-        end else if (slu_active_r & slu_ready) begin
-            slu_active_r <= 1'b0;
+            slu_active_r          <= 1'b0;
+            slu_op_type_r         <= 2'b00;
+            slu_far_offset_r      <= 32'h0;
+            slu_far_selector_r    <= 16'h0;
+            slu_target_index_r    <= 3'b0;
+            slu_selector_r        <= 16'h0;
+            slu_far_ret_new_esp_r <= 32'h0;
+            slu_far_ret_esp_we    <= 1'b0;
+        end else begin
+            slu_far_ret_esp_we <= 1'b0;
+            if (slu_start_pulse) begin
+                slu_active_r <= 1'b1;
+                if (idu_slu_req) begin
+                    slu_op_type_r      <= 2'b01;
+                    slu_far_offset_r   <= eiu_new_eip;
+                    slu_far_selector_r <= eiu_cs_selector;
+                    slu_target_index_r <= `sreg_index_CS;
+                    slu_selector_r     <= eiu_cs_selector;
+                end else begin
+                    slu_op_type_r      <= exu_seg_load_op_type;
+                    slu_far_offset_r   <= exu_seg_load_far_offset;
+                    slu_far_selector_r <= exu_seg_load_far_selector;
+                    slu_target_index_r <= exu_seg_load_target_index;
+                    slu_selector_r     <= exu_seg_load_selector;
+                    if (exu_seg_load_op_type == 2'b11) begin
+                        slu_far_ret_new_esp_r <= exu_far_ret_new_esp;
+                    end
+                end
+            end else if (slu_active_r & slu_ready) begin
+                slu_active_r <= 1'b0;
+                if (slu_op_type_r == 2'b11) begin
+                    slu_far_ret_esp_we <= 1'b1;
+                end
+            end
         end
     end
 
     segment_load_unit u_seg_load (
         .i_valid                 (slu_start_pulse),
         .o_ready                 (slu_ready),
-        .i_op_type               (2'b00),
+        .i_op_type               (slu_op_type_r),
         .i_protected_mode        (i_protected_mode),
         .i_cpl                   (i_cpl),
-        .i_selector              (exu_seg_load_selector),
-        .i_target_seg_index      (exu_seg_load_index),
+        .i_selector              (slu_selector_r),
+        .i_target_seg_index      (slu_target_index_r),
         .i_gdtr_base             (i_gdtr_base),
         .i_gdtr_limit            (i_gdtr_limit),
         .i_ldtr_selector         (16'h0),
         .i_ldtr_descriptor       (64'h0),
-        .i_far_offset            (32'h0),
-        .i_far_selector          (16'h0),
+        .i_far_offset            (slu_far_offset_r),
+        .i_far_selector          (slu_far_selector_r),
         .o_seg_write_enable      (slu_seg_write_enable),
         .o_seg_write_index       (slu_seg_write_index),
         .o_seg_write_selector    (slu_seg_write_selector),
@@ -688,6 +739,11 @@ module i486_cpu_pipeline (
         .i_idtr_limit            (i_idtr_limit),
         .i_src1_data             (reg_src1),
         .i_src2_data             (reg_src2),
+        .i_gpr_esp               (i_gpr_esp),
+        .i_gpr_ebp               (i_gpr_ebp),
+        .i_cr0_data              (i_cr0_data),
+        .i_eip                   (i_eip),
+        .i_cs_selector           (i_segment_selector[`index_reg_seg__CS]),
         .i_cf                    (reg_cf),
         .i_pf                    (reg_pf),
         .i_af                    (reg_af),
@@ -726,6 +782,16 @@ module i486_cpu_pipeline (
         .o_wrb_seg_enable_gs     (exu_seg_gs),
         .o_wrb_seg_selector      (exu_seg_selector),
         .o_wrb_seg_descriptor    (exu_seg_descriptor),
+        .o_seg_load_valid        (exu_seg_load_valid),
+        .o_seg_load_op_type      (exu_seg_load_op_type),
+        .o_seg_load_target_index (exu_seg_load_target_index),
+        .o_seg_load_selector     (exu_seg_load_selector),
+        .o_seg_load_far_offset   (exu_seg_load_far_offset),
+        .o_seg_load_far_selector (exu_seg_load_far_selector),
+        .o_exc_ud_valid          (exu_exc_ud_valid),
+        .o_exc_de_valid          (exu_exc_de_valid),
+        .o_far_ret_new_esp_valid (exu_far_ret_new_esp_valid),
+        .o_far_ret_new_esp       (exu_far_ret_new_esp),
         .o_wrb_gpr_data_EAX      (o_wrb_gpr_write_data_EAX),
         .o_wrb_gpr_data_AX       (o_wrb_gpr_write_data_AX),
         .o_wrb_gpr_data_AL       (o_wrb_gpr_write_data_AL),
@@ -819,13 +885,15 @@ module i486_cpu_pipeline (
         .o_gpr_write_data        (),
         .i_sreg_write_enable     (slu_seg_write_enable |
                                    ((exu_seg_es | exu_seg_cs | exu_seg_ss | exu_seg_ds |
-                                     exu_seg_fs | exu_seg_gs | eiu_cs_valid) &
-                                    ~i_protected_mode) | eiu_cs_valid),
-        .i_sreg_write_index      (slu_seg_write_enable ? slu_seg_write_index : 3'd0),
-        .i_sreg_write_selector   (slu_seg_write_enable ? slu_seg_write_selector :
-                                   (eiu_cs_valid ? eiu_cs_selector : exu_seg_selector)),
-        .i_sreg_write_descriptor (slu_seg_write_enable ? slu_seg_write_descriptor :
-                                   exu_seg_descriptor),
+                                     exu_seg_fs | exu_seg_gs) & ~i_protected_mode)),
+        .i_sreg_write_index      (slu_seg_write_enable ? slu_seg_write_index :
+                                   (exu_seg_gs ? 3'd5 :
+                                    exu_seg_fs ? 3'd4 :
+                                    exu_seg_ds ? 3'd3 :
+                                    exu_seg_ss ? 3'd2 :
+                                    exu_seg_cs ? 3'd1 : 3'd0)),
+        .i_sreg_write_selector   (slu_seg_write_enable ? slu_seg_write_selector : exu_seg_selector),
+        .i_sreg_write_descriptor (slu_seg_write_enable ? slu_seg_write_descriptor : exu_seg_descriptor),
         .o_sreg_write_enable     (),
         .o_sreg_write_index      (),
         .o_sreg_write_selector   (wbu_seg_selector),
@@ -836,7 +904,8 @@ module i486_cpu_pipeline (
                                    (eiu_clear_if ? eflags_if_cleared : exu_flags_data)),
         .o_flags_write_enable    (o_wrb_FLAGS_write_enable),
         .o_flags_write_data      (o_wrb_FLAGS_write_data),
-        .i_ip_write_enable       (exu_ip_enable | eiu_ip_valid | slu_ip_write_enable),
+        .i_ip_write_enable       (exu_ip_enable |
+                                   (eiu_ip_valid & ~i_protected_mode) | slu_ip_write_enable),
         .i_ip_write_data         (slu_ip_write_enable ? slu_ip_write_data :
                                    (eiu_ip_valid ? eiu_new_eip : exu_ip_data)),
         .o_ip_write_enable       (wbu_ip_enable),
@@ -895,9 +964,10 @@ module i486_cpu_pipeline (
     assign o_wrb_cr_write_data    = page_fault_event ? pf_cr2_addr : wbu_cr_write_data;
     assign o_wrb_seg_es_write_enable = (exu_seg_es & ~i_protected_mode) |
                                         (slu_seg_write_enable & (slu_seg_write_index == 3'd0));
-    assign o_wrb_gpr_write_enable_ESP = exu_gpr_esp_we | eiu_esp_we;
-    assign o_wrb_gpr_write_data_ESP   = eiu_esp_we ? eiu_esp_data : exu_gpr_esp_data;
-    assign o_wrb_seg_cs_write_enable  = (exu_seg_cs & ~i_protected_mode) | eiu_cs_valid |
+    assign o_wrb_gpr_write_enable_ESP = exu_gpr_esp_we | eiu_esp_we | slu_far_ret_esp_we;
+    assign o_wrb_gpr_write_data_ESP   = slu_far_ret_esp_we ? slu_far_ret_new_esp_r :
+                                          eiu_esp_we ? eiu_esp_data : exu_gpr_esp_data;
+    assign o_wrb_seg_cs_write_enable  = (exu_seg_cs & ~i_protected_mode) |
                                          (slu_seg_write_enable & (slu_seg_write_index == 3'd1));
     assign o_wrb_seg_write_selector   = wbu_seg_selector;
     assign o_wrb_seg_ss_write_enable = (exu_seg_ss & ~i_protected_mode) |
@@ -934,6 +1004,41 @@ module i486_cpu_pipeline (
         .i_mem_ready    (pipe_mem_ready),
         .clk            (clk),
         .rst_n          (rst_n)
+    );
+
+    // V86 sensitive-opcode checker driven from current REG-stage uop
+    logic v86_op_int;
+    logic v86_op_iret;
+    logic v86_op_in;
+    logic v86_op_out;
+    assign v86_op_int  = reg_stage_valid & (reg_uop.uop_opcode == `UOP_MISC) &
+                         (reg_uop.uop_immediate[7: 0] == `MISC_SUB_INT);
+    assign v86_op_iret = reg_stage_valid & (reg_uop.uop_opcode == `UOP_MISC) &
+                         (reg_uop.uop_immediate[7: 0] == `MISC_SUB_IRET);
+    assign v86_op_in   = reg_stage_valid & (reg_uop.uop_opcode == `UOP_MISC) &
+                         (reg_uop.uop_immediate[7: 0] == `MISC_SUB_IN);
+    assign v86_op_out  = reg_stage_valid & (reg_uop.uop_opcode == `UOP_MISC) &
+                         (reg_uop.uop_immediate[7: 0] == `MISC_SUB_OUT);
+    v86_sensitive_check u_v86_sensitive (
+        .i_vm       (i_vm),
+        .i_iopl     (i_iopl),
+        .i_op_cli   (1'b0),
+        .i_op_sti   (1'b0),
+        .i_op_pushf (1'b0),
+        .i_op_popf  (1'b0),
+        .i_op_int   (v86_op_int),
+        .i_op_iret  (v86_op_iret),
+        .i_op_in    (v86_op_in),
+        .i_op_out   (v86_op_out),
+        .o_trap_gp  (v86_trap_gp)
+    );
+
+    // x87 #NM gate (EM|TS) → exception vector 7 via exc_valid/exc_vector
+    x87_cr0_gate u_x87_cr0_gate (
+        .i_x87_op       (reg_stage_valid & (reg_uop.uop_opcode == `UOP_X87)),
+        .i_cr0_em       (i_cr0_data[2]),
+        .i_cr0_ts       (i_cr0_data[3]),
+        .o_nm_exception (x87_nm)
     );
 
 endmodule

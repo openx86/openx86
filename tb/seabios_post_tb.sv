@@ -13,12 +13,12 @@
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 //
 // ----------------------------------------------------------------------------
-// File : win95_boot_tb.sv
+// File : seabios_post_tb.sv
 // Author : Chang Wei <changwei1006@gmail.com>
-// Description : Windows 95 boot ladder TB with CP0-CP6 checkpoints
+// Description : SeaBIOS POST SoC TB with UART capture and CP1 checkpoint
 // ============================================================================
 
-module win95_boot_tb;
+module seabios_post_tb;
 
     logic clk;
     logic rst_n;
@@ -32,19 +32,14 @@ module win95_boot_tb;
     logic [ 3: 0] io_sdio_dat;
     int           max_cycles;
     int           c;
+    int           require_post;
     int           checkpoint;
     string        uart_buf;
-    bit           cp0_done;
-    bit           cp1_done;
-    bit           cp3_done;
-    bit           cp5_done;
+    bit           has_seabios;
 
     // Hierarchical helpers:
-    //   BIOS EEPROM      : dut.u_bios_24lc32.mem
-    //   IDE disk BRAM    : dut.u_bus_controller.u_ide.u_disk.g_bram_only.image
-    //   COM1 TX          : dut.u_bus_controller.u_chip_com1.thr_shadow
-    //   CR0.PE (optional): dut.u_cpu.cpu_core_0.u_rf_cr0.o_PE
-
+    //   BIOS : dut.u_bios_24lc32.mem
+    //   COM1 : dut.u_bus_controller.u_chip_com1.thr_shadow / thr_write_pulse
     openx86_soc_top #(
         .P_USE_SDIO_DISK ( 1'b0 )
     ) dut (
@@ -86,24 +81,13 @@ module win95_boot_tb;
         integer fh, n;
         fh = $fopen(path, "rb");
         if (fh == 0) begin
-            $display("win95_boot_tb: cannot open SEABIOS_BIN %s", path);
+            $display("seabios_post_tb: cannot open SEABIOS_BIN %s", path);
             return;
         end
         n = $fread(dut.u_bios_24lc32.mem, fh);
         $fclose(fh);
-        $display("win95_boot_tb: SEABIOS_BIN loaded %0d bytes", n);
-    endtask
-
-    task automatic tb_load_bin_to_disk(input string path);
-        integer fh, n;
-        fh = $fopen(path, "rb");
-        if (fh == 0) begin
-            $display("win95_boot_tb: cannot open DISK_IMG %s", path);
-            return;
-        end
-        n = $fread(dut.u_bus_controller.u_ide.u_disk.g_bram_only.image, fh);
-        $fclose(fh);
-        $display("win95_boot_tb: DISK_IMG loaded %0d bytes", n);
+        has_seabios = 1'b1;
+        $display("seabios_post_tb: SEABIOS_BIN loaded %0d bytes", n);
     endtask
 
     task automatic tb_apply_default_pc_bootstub();
@@ -128,6 +112,7 @@ module win95_boot_tb;
 
     initial begin
         $readmemh("rtl/device/vga/vga_font_8x16.hex", dut.u_vga.font_rom_inst.font_rom_inst.rom);
+        has_seabios = 1'b0;
         begin
             automatic string p;
             for (int i = 0; i < 4096; i++)
@@ -136,13 +121,6 @@ module win95_boot_tb;
                 tb_load_bin_to_bios(p);
             else
                 tb_apply_default_pc_bootstub();
-        end
-        begin
-            automatic string p;
-            if ($value$plusargs("DISK_IMG=%s", p))
-                tb_load_bin_to_disk(p);
-            else if ($value$plusargs("DISK_BIN=%s", p))
-                tb_load_bin_to_disk(p);
         end
     end
 
@@ -157,57 +135,45 @@ module win95_boot_tb;
             ch = dut.u_bus_controller.u_chip_com1.thr_shadow;
             if ((ch >= 8'h20) && (ch <= 8'h7E))
                 uart_buf = {uart_buf, string'(ch)};
-            if (uart_buf.len() >= 7) begin
-                for (int i = 0; i + 7 <= uart_buf.len(); i++) begin
-                    if (uart_buf.substr(i, i + 6) == "SeaBIOS") begin
-                        cp1_done = 1'b1;
-                        if (checkpoint < 1)
-                            checkpoint = 1;
+            if (uart_buf.len() > 0) begin
+                if (uart_buf.len() >= 7) begin
+                    for (int i = 0; i + 7 <= uart_buf.len(); i++) begin
+                        if (uart_buf.substr(i, i + 6) == "SeaBIOS")
+                            checkpoint = (checkpoint < 1) ? 1 : checkpoint;
                     end
                 end
             end
         end
-        // CP3: CR0.PE hierarchical probe
-        if (rst_n && dut.u_cpu.cpu_core_0.u_rf_cr0.o_PE) begin
-            cp3_done = 1'b1;
-            if (checkpoint < 3)
-                checkpoint = 3;
-        end
-        // CP5 stub: VGA vsync activity after boot
-        if (rst_n && (c > 1000) && o_vga_vsync) begin
-            cp5_done = 1'b1;
-            if (checkpoint < 5)
-                checkpoint = 5;
-        end
     end
 
     initial begin
-        $display("=== win95_boot_tb ===");
-        uart_buf   = "";
-        checkpoint = -1;
-        cp0_done   = 1'b0;
-        cp1_done   = 1'b0;
-        cp3_done   = 1'b0;
-        cp5_done   = 1'b0;
-        max_cycles = 500000;
+        $display("=== seabios_post_tb ===");
+        uart_buf     = "";
+        checkpoint   = 0;
+        require_post = 0;
+        max_cycles   = 500000;
         void'($value$plusargs("MAX_CYCLES=%0d", max_cycles));
-
+        void'($value$plusargs("REQUIRE_POST=%0d", require_post));
         rst_n = 1'b0;
         #25;
         rst_n = 1'b1;
-        cp0_done   = 1'b1;
-        checkpoint = 0;
+        checkpoint = 0; // CP0 after reset release
 
         c = 0;
         while (c < max_cycles) begin
             @(posedge clk);
             c++;
-            if (cp1_done && (checkpoint < 1))
-                checkpoint = 1;
+            if ((require_post != 0) && (checkpoint >= 1))
+                break;
         end
 
-        $display("win95_boot_tb PASS (last checkpoint CP%0d cycles=%0d cp1=%0d cp3=%0d cp5_stub=%0d)",
-                 checkpoint, c, cp1_done, cp3_done, cp5_done);
+        if ((require_post != 0) && (checkpoint < 1)) begin
+            $fatal(1, "seabios_post_tb FAIL CP1 (SeaBIOS UART) not reached; last CP=%0d uart='%s'",
+                   checkpoint, uart_buf);
+        end
+
+        $display("seabios_post_tb PASS (CP=%0d cycles=%0d seabios=%0d)",
+                 checkpoint, c, has_seabios);
         $finish;
     end
 

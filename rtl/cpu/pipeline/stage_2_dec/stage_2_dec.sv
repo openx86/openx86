@@ -280,6 +280,7 @@ module stage_2_dec (
     output logic                o_dec_index_reg_is_present,
     output logic [ 2: 0]        o_dec_index_reg_index,
     output logic [ 2: 0]        o_dec_segment_reg_index,
+    output logic [ 2: 0]        o_dec_target_sreg_index,
     output logic [ 1: 0]        o_dec_sib_scale_factor,
     output logic [ 1: 0]        o_dec_modrm_mod,
 
@@ -617,6 +618,7 @@ module stage_2_dec (
     logic                     operand_index_reg_valid;
     logic [ 2: 0]             operand_index_reg_index;
     logic [ 2: 0]             operand_seg_reg_index_addr;
+    logic [ 2: 0]             operand_target_sreg_index;
     logic [ 1: 0]             operand_scale;
     logic [ 1: 0]             operand_mod;
     logic [31: 0]             operand_disp_value;
@@ -1037,6 +1039,7 @@ module stage_2_dec (
     assign o_dec_index_reg_is_present  = operand_index_reg_valid;
     assign o_dec_index_reg_index       = operand_index_reg_index;
     assign o_dec_segment_reg_index     = operand_seg_reg_index_addr;
+    assign o_dec_target_sreg_index     = operand_target_sreg_index;
     assign o_dec_sib_scale_factor      = operand_scale;
     assign o_dec_modrm_mod             = operand_mod;
 
@@ -1485,7 +1488,7 @@ module stage_2_dec (
         .o_gpr_reg_index_valid       (),
         .o_gpr_reg_index             (),
         .o_seg_reg_index_valid       (),
-        .o_seg_reg_index             (),
+        .o_seg_reg_index             (operand_target_sreg_index),
         .o_w_valid                   (),
         .o_w                         (),
         .o_s_valid                   (),

@@ -257,6 +257,7 @@ module stage_3_uop (
     input  logic                i_dec_index_reg_is_present,
     input  logic [ 2: 0]        i_dec_index_reg_index,
     input  logic [ 2: 0]        i_dec_segment_reg_index,
+    input  logic [ 2: 0]        i_dec_target_sreg_index,
     input  logic [ 1: 0]        i_dec_sib_scale_factor,
     input  logic [ 1: 0]        i_dec_modrm_mod,
 
@@ -547,6 +548,7 @@ module stage_3_uop (
         .i_dec_index_reg_is_present ( i_dec_index_reg_is_present ),
         .i_dec_index_reg_index      ( i_dec_index_reg_index ),
         .i_dec_segment_reg_index    ( i_dec_segment_reg_index ),
+        .i_dec_target_sreg_index    ( i_dec_target_sreg_index ),
         .i_dec_sib_scale_factor     ( i_dec_sib_scale_factor ),
         .i_dec_modrm_mod            ( i_dec_modrm_mod ),
 

@@ -83,7 +83,12 @@ function automatic logic exu_opcode_is_bitmanip(input logic [ 5: 0] opcode);
 endfunction
 
 function automatic logic exu_opcode_is_misc_simple(input logic [ 7: 0] subcode);
-    return (subcode == `MISC_SUB_BSWAP) | (subcode == `MISC_SUB_CPUID);
+    return (subcode == `MISC_SUB_BSWAP) | (subcode == `MISC_SUB_CPUID) |
+           (subcode == `MISC_SUB_CBW)   | (subcode == `MISC_SUB_CWDE) |
+           (subcode == `MISC_SUB_CDQ)   | (subcode == `MISC_SUB_AAA) |
+           (subcode == `MISC_SUB_AAS)   | (subcode == `MISC_SUB_DAA) |
+           (subcode == `MISC_SUB_DAS)   | (subcode == `MISC_SUB_AAD) |
+           (subcode == `MISC_SUB_AAM);
 endfunction
 
 function automatic logic exu_opcode_dispatched(input logic [ 5: 0] opcode);

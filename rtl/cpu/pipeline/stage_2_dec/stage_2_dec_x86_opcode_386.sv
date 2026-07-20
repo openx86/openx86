@@ -72,7 +72,7 @@ assign o_opcode_x86_BTS_reg_mem_with_imm              = (i_instruction[0][7: 0] 
 assign o_opcode_x86_BTS_reg_mem_with_reg              = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 0] == 8'b1010_1011);
 
 assign o_opcode_x86_CDQ_convert_double_word_to_quad_word = (i_instruction[0][7: 0] == 8'b1001_1001);
-assign o_opcode_x86_CWDE_convert_word_to_double         = (i_instruction[0][7: 0] == 8'b1001_1001);
+assign o_opcode_x86_CWDE_convert_word_to_double         = (i_instruction[0][7: 0] == 8'b1001_1000);
 
 assign o_opcode_x86_Jcc_jump_if_cond_is_met_full_disp   = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 4] == 4'b1000);
 

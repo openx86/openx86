@@ -74,6 +74,11 @@ module openx86_soc_top_tb;
         .io_sdram_dq   ( sdram_dq )
     );
 
+    // Hierarchical image paths (P_USE_SDIO_DISK=0):
+    //   BIOS EEPROM : dut.u_bios_24lc32.mem
+    //   IDE disk BRAM : dut.u_bus_controller.u_ide.u_disk.g_bram_only.image
+    //   COM1 TX probe : dut.u_bus_controller.u_chip_com1.thr_shadow
+    //                   dut.u_bus_controller.u_chip_com1.thr_write_pulse
     task automatic tb_load_bin_to_bios(input string path);
         integer fh, n;
         fh = $fopen(path, "rb");
@@ -87,14 +92,15 @@ module openx86_soc_top_tb;
     endtask
 
     task automatic tb_load_bin_to_disk(input string path);
-        integer fh;
+        integer fh, n;
         fh = $fopen(path, "rb");
         if (fh == 0) begin
-            $display("soc_top_tb: cannot open DISK_BIN %s", path);
+            $display("soc_top_tb: cannot open DISK_IMG %s", path);
             return;
         end
+        n = $fread(dut.u_bus_controller.u_ide.u_disk.g_bram_only.image, fh);
         $fclose(fh);
-        $display("soc_top_tb: DISK_BIN %s opened (smoke TB skips image preload)", path);
+        $display("soc_top_tb: DISK_IMG loaded %0d bytes into IDE BRAM", n);
     endtask
 
     task automatic tb_apply_default_pc_bootstub();
@@ -134,7 +140,9 @@ module openx86_soc_top_tb;
 
         begin
             automatic string p;
-            if ($value$plusargs("DISK_BIN=%s", p))
+            if ($value$plusargs("DISK_IMG=%s", p))
+                tb_load_bin_to_disk(p);
+            else if ($value$plusargs("DISK_BIN=%s", p))
                 tb_load_bin_to_disk(p);
         end
     end

@@ -27,7 +27,7 @@ module x87_smoke_tb;
     logic         clk;
     logic         rst_n;
     logic         valid;
-    logic [ 4: 0] subop;
+    logic [ 5: 0] subop;
     logic [ 2: 0] sti;
     logic [31: 0] mem_data;
     logic [79: 0] st0;
@@ -89,6 +89,8 @@ module x87_smoke_tb;
         .o_st7_we            (),
         .o_fsw               (fsw_out),
         .o_fsw_we            (fsw_we),
+        .o_fcw               (),
+        .o_fcw_we            (),
         .o_stack_push        (),
         .o_stack_pop         (),
         .o_mem_valid         (),

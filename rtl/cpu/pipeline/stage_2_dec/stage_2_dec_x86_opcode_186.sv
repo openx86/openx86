@@ -212,7 +212,7 @@ assign o_opcode_x86_CMP_imm_to_acc                  = (i_instruction[0][7: 1] ==
 
 assign o_opcode_x86_CMPS_compare_string_operands    = (i_instruction[0][7: 1] == 7'b1010_011);
 
-assign o_opcode_x86_CWD_convert_word_to_double      = (i_instruction[0][7: 0] == 8'b1001_1000);
+assign o_opcode_x86_CWD_convert_word_to_double      = (i_instruction[0][7: 0] == 8'b1001_1001);
 
 assign o_opcode_x86_DAA_decimal_adjust_AL_after_add = (i_instruction[0][7: 0] == 8'b0010_0111);
 assign o_opcode_x86_DAS_decimal_adjust_AL_after_sub = (i_instruction[0][7: 0] == 8'b0010_1111);

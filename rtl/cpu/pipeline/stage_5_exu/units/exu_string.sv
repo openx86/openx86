@@ -15,7 +15,7 @@
 // ----------------------------------------------------------------------------
 //  File        : exu_string.sv
 //  Author      : Chang Wei <changwei1006@gmail.com>
-//  Description : STRING execution unit — single-step MOVS/STOS/CMPS/SCAS
+//  Description : STRING execution — pointer update + REP/ECX restart hints
 // ============================================================================
 
 `include "openx86_defs.h.sv"
@@ -24,14 +24,25 @@
 module exu_string (
     input  logic [31: 0] i_src1_data,
     input  logic [31: 0] i_src2_data,
+    input  logic [31: 0] i_ecx,
     input  logic         i_is_store,
     input  logic         i_df,
-    output exu_result_t  o_result
+    input  logic         i_rep,
+    input  logic         i_repne,
+    input  logic         i_zf,
+    output exu_result_t  o_result,
+    output logic         o_rep_restart,
+    output logic [31: 0] o_ecx_next
 );
 
     logic [31: 0] step;
+    logic         cond_ok;
 
-    assign step = i_df ? 32'hFFFF_FFFC : 32'd4;
+    assign step     = i_df ? 32'hFFFF_FFFC : 32'd4;
+    // REPE continues while ZF=1; REPNE while ZF=0; plain REP ignores ZF
+    assign cond_ok  = i_repne ? ~i_zf : 1'b1;
+    assign o_ecx_next = (i_ecx == 32'd0) ? 32'd0 : (i_ecx - 32'd1);
+    assign o_rep_restart = (i_rep | i_repne) & (i_ecx > 32'd1) & cond_ok;
 
     always_comb begin
         o_result.result           = i_src1_data + step;

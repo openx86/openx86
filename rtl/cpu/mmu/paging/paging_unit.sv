@@ -27,6 +27,9 @@ module paging_unit (
     input  logic [31: 0] i_page_directory_base,
     input  logic [ 1: 0] i_cpl,
     input  logic         i_is_write,
+    input  logic         i_tlb_invall,
+    input  logic         i_tlb_invlpg,
+    input  logic [31: 0] i_tlb_invlpg_linear,
     output logic [31: 0] o_physical_address,
     output logic         o_page_fault,
     output logic         o_fault_present,
@@ -80,7 +83,30 @@ module paging_unit (
     logic         i_valid_rise;
     logic [ 1: 0] latched_cpl;
     logic         latched_is_write;
+    logic         tlb_lookup_valid;
+    logic         tlb_hit;
+    logic [31: 0] tlb_phys_page;
+    logic         tlb_fill_valid;
+    logic [31: 0] tlb_fill_linear;
+    logic [31: 0] tlb_fill_phys;
+    logic         tlb_hit_done_r;
+    logic [31: 0] tlb_phys_latched_r;
     assign i_valid_rise = i_valid & ~i_valid_r;
+    tlb_simple u_tlb (
+        .i_lookup_valid     (tlb_lookup_valid),
+        .i_lookup_linear    (i_linear_address),
+        .o_hit              (tlb_hit),
+        .o_phys_page_base   (tlb_phys_page),
+        .i_fill_valid       (tlb_fill_valid),
+        .i_fill_linear      (tlb_fill_linear),
+        .i_fill_phys_page   (tlb_fill_phys),
+        .i_invall           (i_tlb_invall),
+        .i_invlpg           (i_tlb_invlpg),
+        .i_invlpg_linear    (i_tlb_invlpg_linear),
+        .clk                (clk),
+        .rst_n              (rst_n)
+    );
+    assign tlb_lookup_valid = i_valid_rise;
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             i_valid_r <= 1'b0;
@@ -89,7 +115,9 @@ module paging_unit (
         end
     end
     always_comb begin
-        o_physical_address     = frame_base(pte_entry_r) + 32'(page_frame_offset);
+        o_physical_address     = tlb_hit_done_r ?
+                                 (tlb_phys_latched_r + 32'(page_frame_offset)) :
+                                 (frame_base(pte_entry_r) + 32'(page_frame_offset));
         o_fault_linear_address = latched_linear_address;
         o_page_fault           = fault_r;
         o_fault_present        = fault_present_r;
@@ -122,8 +150,15 @@ module paging_unit (
             latched_is_write       <= 1'b0;
             fault_r                <= 1'b0;
             fault_present_r        <= 1'b0;
+            tlb_fill_valid         <= 1'b0;
+            tlb_fill_linear        <= 32'h0;
+            tlb_fill_phys          <= 32'h0;
+            tlb_hit_done_r         <= 1'b0;
+            tlb_phys_latched_r     <= 32'h0;
         end else begin
-            o_ready <= 1'b0;
+            o_ready        <= 1'b0;
+            tlb_fill_valid <= 1'b0;
+            tlb_hit_done_r <= 1'b0;
             unique case (state)
                 STATE_IDLE: begin
                     if (i_valid_rise) begin
@@ -133,7 +168,14 @@ module paging_unit (
                         latched_cpl            <= i_cpl;
                         latched_is_write       <= i_is_write;
                         pte_addr_armed_r       <= 1'b0;
-                        state                  <= STATE_READ_PDE;
+                        if (tlb_hit) begin
+                            tlb_hit_done_r     <= 1'b1;
+                            tlb_phys_latched_r <= tlb_phys_page;
+                            o_ready            <= 1'b1;
+                            state              <= STATE_IDLE;
+                        end else begin
+                            state <= STATE_READ_PDE;
+                        end
                     end
                 end
                 STATE_READ_PDE: begin
@@ -167,8 +209,11 @@ module paging_unit (
                             fault_r         <= 1'b1;
                             fault_present_r <= 1'b1;
                         end else begin
-                            fault_r         <= 1'b0;
-                            fault_present_r <= 1'b0;
+                            fault_r          <= 1'b0;
+                            fault_present_r  <= 1'b0;
+                            tlb_fill_valid   <= 1'b1;
+                            tlb_fill_linear  <= latched_linear_address;
+                            tlb_fill_phys    <= frame_base(i_bus_data_read);
                         end
                     end
                 end

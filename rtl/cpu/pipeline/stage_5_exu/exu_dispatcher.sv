@@ -527,11 +527,17 @@ module exu_dispatcher (
     );
 
     exu_string u_string (
-        .i_src1_data (i_src1_data),
-        .i_src2_data (i_src2_data),
-        .i_is_store  (i_is_store),
-        .i_df        (i_sf),
-        .o_result    (string_r)
+        .i_src1_data   (i_src1_data),
+        .i_src2_data   (i_src2_data),
+        .i_ecx         (32'd0),
+        .i_is_store    (i_is_store),
+        .i_df          (i_sf),
+        .i_rep         (1'b0),
+        .i_repne       (1'b0),
+        .i_zf          (i_zf),
+        .o_result      (string_r),
+        .o_rep_restart ( ),
+        .o_ecx_next    ( )
     );
 
     exu_flag_ctrl u_flag_ctrl (

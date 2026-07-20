@@ -32,6 +32,7 @@ module exu_flag_ctrl (
     output exu_result_t  o_result
 );
 
+    // result[10]=DF shadow, result[9]=IF shadow for parent merge (CLD/STD/CLI/STI)
     always_comb begin
         o_result.result           = 32'd0;
         o_result.cf               = i_cf;
@@ -46,9 +47,13 @@ module exu_flag_ctrl (
         o_result.mem_write_data   = 32'd0;
 
         unique case (i_immediate[7: 0])
-            8'h01: o_result.cf = 1'b0;
-            8'h02: o_result.cf = 1'b1;
-            8'h03: o_result.cf = ~i_cf;
+            8'h01: o_result.cf = 1'b0;           // CLC
+            8'h02: o_result.cf = 1'b1;           // STC
+            8'h03: o_result.cf = ~i_cf;          // CMC
+            8'h04: o_result.result[10] = 1'b0;   // CLD → DF=0
+            8'h05: o_result.result[10] = 1'b1;   // STD → DF=1
+            8'h06: o_result.result[9]  = 1'b0;   // CLI → IF=0
+            8'h07: o_result.result[9]  = 1'b1;   // STI → IF=1
             default: ;
         endcase
     end

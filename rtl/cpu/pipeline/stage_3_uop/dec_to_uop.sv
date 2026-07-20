@@ -257,6 +257,7 @@ module dec_to_uop (
     input  logic                i_dec_index_reg_is_present,
     input  logic [ 2: 0]        i_dec_index_reg_index,
     input  logic [ 2: 0]        i_dec_segment_reg_index,
+    input  logic [ 2: 0]        i_dec_target_sreg_index,
     input  logic [ 1: 0]        i_dec_sib_scale_factor,
     input  logic [ 1: 0]        i_dec_modrm_mod,
 
@@ -286,13 +287,15 @@ module dec_to_uop (
         uop_immediate:   32'd0,
         uop_displacement: 32'd0,
         uop_tttn:        4'b0,
-        uop_eee:         5'b0,
+        uop_eee:         6'b0,
         uop_seg_index:   `index_reg_seg__DS,
         uop_sib_scale:   2'b0,
         uop_has_imm:     1'b0,
         uop_has_disp:    1'b0,
         uop_mem_access:  1'b0,
         uop_is_store:    1'b0,
+        uop_rep:         1'b0,
+        uop_repne:       1'b0,
         uop_valid:       1'b0
     };
 
@@ -303,12 +306,18 @@ module dec_to_uop (
         if (i_stage2_valid) begin
             uop_next.uop_valid    = 1'b1;
             uop_next.uop_tttn       = i_tttn;
-            uop_next.uop_eee        = i_eee;
+            uop_next.uop_eee        = {3'b0, i_eee};
             uop_next.uop_seg_index  = i_dec_segment_reg_index;
             uop_next.uop_sib_scale  = i_dec_sib_scale_factor;
 
             // Data transfer instructions: MOV, MOVSX, MOVZX, XCHG, LEA
-            if (i_opcode_mov_reg_to_reg_mem || i_opcode_mov_reg_mem_to_reg) begin
+            if (i_opcode_mov_reg_mem_to_sreg) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {13'h0, i_dec_target_sreg_index, `MISC_SUB_MOV_SEG};
+                uop_next.uop_mem_access = (i_dec_modrm_mod != 2'b11);
+                uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
+                uop_next.uop_displacement = i_dec_displacement;
+            end else if (i_opcode_mov_reg_to_reg_mem || i_opcode_mov_reg_mem_to_reg) begin
                 uop_next.uop_opcode = `UOP_MOV;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_src1_reg = i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0;
@@ -529,20 +538,44 @@ module dec_to_uop (
             end
 
             // Control flow instructions: JMP, CALL, RET, LOOP, Jcc
-            else if (i_opcode_jmp_short || i_opcode_jmp_near_direct || i_opcode_jmp_near_indirect ||
-                     i_opcode_jmp_far_direct || i_opcode_jmp_far_indirect) begin
+            else if (i_opcode_jmp_far_direct) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {8'h0, i_dec_immediate[15: 0], `MISC_SUB_FAR_JMP};
+                uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_has_disp = 1'b1;
+            end else if (i_opcode_jmp_far_indirect) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_FAR_JMP};
+                uop_next.uop_mem_access = 1'b1;
+                uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
+                uop_next.uop_displacement = i_dec_displacement;
+            end else if (i_opcode_call_far_direct) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {8'h0, i_dec_immediate[15: 0], `MISC_SUB_FAR_CALL};
+                uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_has_disp = 1'b1;
+            end else if (i_opcode_call_far_indirect) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_FAR_CALL};
+                uop_next.uop_mem_access = 1'b1;
+                uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
+                uop_next.uop_displacement = i_dec_displacement;
+            end else if (i_opcode_ret_far || i_opcode_ret_far_imm) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_FAR_RET};
+                uop_next.uop_has_disp = (i_opcode_ret_far_imm);
+                uop_next.uop_displacement = i_dec_displacement;
+            end else if (i_opcode_jmp_short || i_opcode_jmp_near_direct || i_opcode_jmp_near_indirect) begin
                 uop_next.uop_opcode = `UOP_BRANCH;
                 uop_next.uop_has_disp = 1'b1;
                 uop_next.uop_displacement = i_dec_displacement;
-            end else if (i_opcode_call_near_direct || i_opcode_call_near_indirect ||
-                         i_opcode_call_far_direct || i_opcode_call_far_indirect) begin
+            end else if (i_opcode_call_near_direct || i_opcode_call_near_indirect) begin
                 uop_next.uop_opcode = `UOP_CALL;
                 uop_next.uop_has_disp = 1'b1;
                 uop_next.uop_displacement = i_dec_displacement;
-            end else if (i_opcode_ret_near || i_opcode_ret_near_imm ||
-                         i_opcode_ret_far || i_opcode_ret_far_imm) begin
+            end else if (i_opcode_ret_near || i_opcode_ret_near_imm) begin
                 uop_next.uop_opcode = `UOP_RET;
-                uop_next.uop_has_disp = (i_opcode_ret_near_imm || i_opcode_ret_far_imm);
+                uop_next.uop_has_disp = i_opcode_ret_near_imm;
                 uop_next.uop_displacement = i_dec_displacement;
             end else if (i_opcode_loop || i_opcode_loopz || i_opcode_loopnz || i_opcode_jcxz) begin
                 uop_next.uop_opcode = `UOP_BRANCH;
@@ -592,10 +625,24 @@ module dec_to_uop (
             end
 
             // Flag control instructions: CLC, STC, CMC, CLD, STD, CLI, STI, LAHF, SAHF
-            else if (i_opcode_clc || i_opcode_stc || i_opcode_cmc ||
-                     i_opcode_cld || i_opcode_std || i_opcode_cli || i_opcode_sti ||
+            else if (i_opcode_clc) begin
+                uop_next.uop_opcode = `UOP_FLAG_CTRL;
+                uop_next.uop_immediate = {24'h0, 8'h01};
+            end else if (i_opcode_stc) begin
+                uop_next.uop_opcode = `UOP_FLAG_CTRL;
+                uop_next.uop_immediate = {24'h0, 8'h02};
+            end else if (i_opcode_cmc) begin
+                uop_next.uop_opcode = `UOP_FLAG_CTRL;
+                uop_next.uop_immediate = {24'h0, 8'h03};
+            end else if (i_opcode_cld || i_opcode_std || i_opcode_cli || i_opcode_sti ||
                      i_opcode_lahf || i_opcode_sahf) begin
                 uop_next.uop_opcode = `UOP_FLAG_CTRL;
+                uop_next.uop_immediate = {24'h0,
+                    i_opcode_cld ? 8'h04 :
+                    i_opcode_std ? 8'h05 :
+                    i_opcode_cli ? 8'h06 :
+                    i_opcode_sti ? 8'h07 :
+                    i_opcode_lahf ? 8'h08 : 8'h09};
             end
 
             // Other instructions: NOP, BSWAP, XADD, CMPXCHG, SETcc, XLAT, CBW, CWDE, CDQ
@@ -618,14 +665,29 @@ module dec_to_uop (
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
             end else if (i_opcode_xlat) begin
                 uop_next.uop_opcode = `UOP_MISC;
-            end else if (i_opcode_cbw || i_opcode_cwde || i_opcode_cdq) begin
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_XLAT};
+                uop_next.uop_mem_access = 1'b1;
+            end else if (i_opcode_cbw) begin
                 uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_CBW};
+                uop_next.uop_dest_reg = 3'd0; // EAX/AX
+                uop_next.uop_src1_reg = 3'd0;
+            end else if (i_opcode_cwde) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_CWDE};
+                uop_next.uop_dest_reg = 3'd0;
+                uop_next.uop_src1_reg = 3'd0;
+            end else if (i_opcode_cdq || i_opcode_cwd) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_CDQ};
+                uop_next.uop_dest_reg = 3'd2; // EDX
+                uop_next.uop_src1_reg = 3'd0; // EAX
             end
 
             // x87 instructions
             else if (i_opcode_x87_esc) begin
                 uop_next.uop_opcode     = `UOP_X87;
-                uop_next.uop_eee        = i_x87_exe_subop;
+                uop_next.uop_eee        = {1'b0, i_x87_exe_subop};
                 uop_next.uop_src2_reg   = i_x87_sti;
                 uop_next.uop_mem_access = i_x87_mem_access;
                 uop_next.uop_is_store   = i_x87_is_store;
@@ -637,28 +699,39 @@ module dec_to_uop (
                 end
             end
 
-            // MMX instructions
-            else if (i_opcode_mmx_emms) begin
-                uop_next.uop_opcode = `UOP_EMMS;
-            end else if (i_opcode_mmx_any) begin
-                uop_next.uop_opcode = `UOP_MMX;
-            end
-
-            // SSE instructions
-            else if (i_opcode_sse_any) begin
-                uop_next.uop_opcode = `UOP_SSE;
+            // Post-486 decode noise: raise #UD (not in 80486DX ISA contract)
+            else if (i_opcode_mmx_emms || i_opcode_mmx_any || i_opcode_sse_any) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_UD};
             end
 
             // CPUID
             else if (i_opcode_cpuid) begin
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_CPUID};
+                uop_next.uop_src1_reg = 3'd0; // EAX
+                uop_next.uop_src2_reg = 3'd1; // ECX
             end
 
-            // Other special instructions (AAA, AAD, AAM, AAS, DAA, DAS, etc.)
-            else if (i_opcode_aaa || i_opcode_aad || i_opcode_aam || i_opcode_aas ||
-                     i_opcode_daa || i_opcode_das) begin
+            // BCD adjust
+            else if (i_opcode_aaa) begin
                 uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_AAA};
+            end else if (i_opcode_aas) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_AAS};
+            end else if (i_opcode_daa) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_DAA};
+            end else if (i_opcode_das) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_DAS};
+            end else if (i_opcode_aad) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_AAD};
+            end else if (i_opcode_aam) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_AAM};
             end
 
             // System instructions (HLT, INT, IRET, etc.)
@@ -688,8 +761,13 @@ module dec_to_uop (
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_IRET};
             end else if (i_opcode_invpcid ||
                      i_opcode_rdmsr || i_opcode_wrmsr || i_opcode_rdtsc || i_opcode_rdtscp ||
-                     i_opcode_rdpmc || i_opcode_rsm || i_opcode_wait) begin
+                     i_opcode_rdpmc || i_opcode_rsm) begin
+                // Post-486 / unimplemented system → #UD
                 uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_UD};
+            end else if (i_opcode_wait) begin
+                // WAIT: treat as NOP when no pending FPU exception (486DX subset)
+                uop_next.uop_opcode = `UOP_NOP;
             end
 
             // Segment/Privilege instructions
@@ -722,12 +800,74 @@ module dec_to_uop (
             end else if (i_opcode_lmsw || i_opcode_mov_cr_from_reg) begin
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {24'h0, i_opcode_lmsw ? `MISC_SUB_LMSW : `MISC_SUB_MOV_CR};
-            end else if (i_opcode_arpl || i_opcode_bound || i_opcode_lar || i_opcode_lsl ||
-                     i_opcode_verr || i_opcode_verw || i_opcode_lldt ||
-                     i_opcode_smsw || i_opcode_ltr || i_opcode_str || i_opcode_clts ||
-                     i_opcode_lds || i_opcode_les || i_opcode_lfs || i_opcode_lgs ||
-                     i_opcode_lss || i_opcode_leave) begin
+            end else if (i_opcode_clts) begin
                 uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_CLTS};
+            end else if (i_opcode_smsw) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_SMSW};
+                uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+            end else if (i_opcode_lldt) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LLDT};
+            end else if (i_opcode_ltr) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LTR};
+            end else if (i_opcode_lar) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LAR};
+            end else if (i_opcode_lsl) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LSL};
+            end else if (i_opcode_verr) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_VERR};
+            end else if (i_opcode_verw) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_VERW};
+            end else if (i_opcode_arpl) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_ARPL};
+            end else if (i_opcode_bound) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_BOUND};
+                uop_next.uop_mem_access = 1'b1;
+            end else if (i_opcode_leave) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LEAVE};
+                uop_next.uop_dest_reg = 3'd5; // EBP receives POP; ESP via special enable
+            end else if (i_opcode_lds) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LDS};
+                uop_next.uop_mem_access = 1'b1;
+            end else if (i_opcode_les) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LES};
+                uop_next.uop_mem_access = 1'b1;
+            end else if (i_opcode_lfs) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LFS};
+                uop_next.uop_mem_access = 1'b1;
+            end else if (i_opcode_lgs) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LGS};
+                uop_next.uop_mem_access = 1'b1;
+            end else if (i_opcode_lss) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_LSS};
+                uop_next.uop_mem_access = 1'b1;
+            end else if (i_opcode_push_sreg_2 || i_opcode_push_sreg_3) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {13'h0, i_dec_target_sreg_index, `MISC_SUB_PUSH_SEG};
+            end else if (i_opcode_pop_sreg_2 || i_opcode_pop_sreg_3) begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {13'h0, i_dec_target_sreg_index, `MISC_SUB_POP_SEG};
+            end else if (i_opcode_str || i_opcode_sldt || i_opcode_mov_reg_from_cr ||
+                         i_opcode_mov_dr_from_reg || i_opcode_mov_reg_from_dr ||
+                         i_opcode_mov_tr_from_reg || i_opcode_mov_reg_from_tr) begin
+                // Partially wired control/debug/test register ops — #UD until complete
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_UD};
             end
 
             // I/O instructions (IN, OUT)
@@ -739,9 +879,16 @@ module dec_to_uop (
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_OUT};
             end
 
-            // Undefined instructions
+            // Explicit undefined opcodes
             else if (i_opcode_ud0 || i_opcode_ud1 || i_opcode_ud2) begin
-                uop_next.uop_opcode = `UOP_NOP; // Trigger exception
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_UD};
+            end
+
+            // Unmapped decode → architectural #UD (never silent NOP)
+            else begin
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_UD};
             end
         end
     end
