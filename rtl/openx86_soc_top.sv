@@ -89,6 +89,7 @@ module openx86_soc_top #(
     logic [31: 0] bus_addr;
     logic [31: 0] bus_rdata;
     logic [31: 0] bus_wdata;
+    logic [ 3: 0] bus_be_n;
 
     // ============================================================
     // VGA memory interface
@@ -119,6 +120,7 @@ module openx86_soc_top #(
     logic        o_sdram_we;
     logic [23: 0] o_sdram_addr_off;
     logic [31: 0] o_sdram_wdata;
+    logic [ 3: 0] o_sdram_be_n;
     logic [31: 0] i_sdram_rdata;
     logic        i_sdram_ready;
     logic        i_sdram_busy;
@@ -177,6 +179,7 @@ module openx86_soc_top #(
         .i_data_out         (cpu_data_out),
         .i_data_oe          (cpu_data_oe),
         .o_data_in          (cpu_data_in),
+        .i_be_n             (cpu_be_n),
         .i_wr_n             (cpu_wr_n),
         .i_mio_n            (cpu_mio_n),
         .i_blast_n          (cpu_blast_n),
@@ -189,6 +192,7 @@ module openx86_soc_top #(
         .o_bus_address      (bus_addr),
         .i_bus_read_data    (bus_rdata),
         .o_bus_write_data   (bus_wdata),
+        .o_bus_be_n         (bus_be_n),
         .clk                (clk),
         .rst_n              (rst_n)
     );
@@ -235,6 +239,7 @@ module openx86_soc_top #(
         .o_bus_busy         (bus_busy),
         .i_bus_write_enable (bus_we),
         .i_bus_io_access    (bus_io),
+        .i_bus_be_n         (bus_be_n),
         .i_bus_address      (bus_addr),
         .o_bus_data_read    (bus_rdata),
         .i_bus_data_write   (bus_wdata),
@@ -258,6 +263,7 @@ module openx86_soc_top #(
         .o_sdram_we         (o_sdram_we),
         .o_sdram_addr_off   (o_sdram_addr_off),
         .o_sdram_wdata      (o_sdram_wdata),
+        .o_sdram_be_n       (o_sdram_be_n),
         .i_sdram_rdata      (i_sdram_rdata),
         .i_sdram_ready      (i_sdram_ready),
         .i_sdram_busy       (i_sdram_busy),
@@ -318,6 +324,7 @@ module openx86_soc_top #(
         .i_we           (o_sdram_we),
         .i_addr_off     (o_sdram_addr_off),
         .i_wdata        (o_sdram_wdata),
+        .i_be_n         (o_sdram_be_n),
         .o_rdata        (i_sdram_rdata),
         .o_ready        (i_sdram_ready),
         .o_busy         (i_sdram_busy),

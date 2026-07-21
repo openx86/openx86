@@ -69,15 +69,46 @@ Win95 disk/BIOS images are **not** committed; load via `+SEABIOS_BIN=` / `+DISK_
 - [x] BIOS ROM 128KiB linear map (`E0000–FFFFF` / high alias) + PC reset `CS=F000 EIP=FFF0`
 - [x] IDE BRAM ≥1.44MiB (2880 sectors); VGA text window CPU read path
 - [x] 8237 DMA CH2 master transfer engine documented
+- [x] Behavioral SDRAM byte/halfword merge (BE + RMW) + string step by width
+- [x] Cache fill ready gated by completed beat PA (`o_req_ready_addr`); burst ADS/BRDY arm
 - [ ] Full SeaBIOS port probe compatibility (ongoing)
-- [ ] Behavioral SDRAM byte/halfword merge (dword stores OK; guest STOSB/IVT word stores need care)
 
 ### M7 — SeaBIOS POST + FreeDOS DIR
 
 - [x] `tb/seabios_post_tb.sv` + `REQUIRE_POST=1` (UART “SeaBIOS”)
-- [x] `tb/dos_boot_tb.sv` CP1–CP4 + `REQUIRE_DOS=1` (SeaBIOS → disk → prompt → DIR)
-- [x] Scripts: `fetch_build_seabios.sh`, `fetch_freedos_img.sh`, `build_openx86_dos_bios.py`
-- [ ] Full FreeDOS kernel without TB VGA assist (guest VGA/seg stores still fragile)
+- [x] `tb/dos_boot_tb.sv` CP1–CP4 + `REQUIRE_DOS=1` (real `bios.bin` + FreeDOS; no TB VGA/IVT plant)
+- [x] Scripts: `fetch_build_seabios.sh` → `_patch_seabios_good.py` (incl. skip THRE poll), `fetch_freedos_img.sh`
+- [x] IDE data port 16-bit PIO; `CONFIG_ATA_PIO32=n`
+- [x] Real-mode IVT INT (`IDTR` reset limit `3FFh`) + CS reload on delivery
+- [x] BIU: IO IN/OUT keep payload in low bytes (no mem-style lane steer by port[1:0]) — fixes IDE `1F7` IDENTIFY
+- [x] `REQUIRE_DOS=1` CP2: UART `Booting` + guest ATA READ LBA0 → `0000:7C00` (crumb `J`); no TB plant
+- [ ] CP3/CP4: FreeDOS FD13 boot uses INT13 AH=41/42 then CHS; direct ATA INT13 stub added (`handle_13`) but KERNEL still not verified at `0060:0000` (mem@600 often 0). Need working `insw_fl` + packet parse + INT10 text. IRQ0/`handle_08` reboots — TB soft-ticks BDA `0x46C`. VGA halfword BE→two-byte write in `bus_controller`.
+- [ ] `call16_int(0x19)` path still fragile; `startBoot` uses direct LBA0 + real-mode far jump
+
+### FreeDOS ladder status (2026-07-21)
+
+| CP | `REQUIRE_DOS=1` | Notes |
+|----|-----------------|-------|
+| CP1 | PASS | UART `SeaBIOS` |
+| CP2 | PASS | `…OPDEQTBooting…J`, then guest at `CS=0060` |
+| CP3 | FAIL | No guest prompt / no INT10 echo yet |
+| CP4 | FAIL | DIR not reached |
+
+`seabios_post REQUIRE_POST=1`: PASS (~2k cycles).
+
+Live SeaBIOS tree under `artifacts/seabios/src` has more patches than `_patch_seabios_good.py` alone (INT10 stub, INT13 ATA PIO, map_hd minimal, debug_enter/isr stubs, skip e820 in bda_init). Rebuild in-tree; do not `checkout -f` without re-applying.
+
+### Known-good SeaBIOS rebuild
+
+```bash
+git -C artifacts/seabios/src checkout -f -- src/
+python3 scripts/_patch_seabios_good.py artifacts/seabios/src
+# or: ./scripts/fetch_build_seabios.sh
+make -C artifacts/seabios/src PYTHON=python3 olddefconfig && make -j"$(nproc)"
+cp artifacts/seabios/src/out/bios.bin artifacts/seabios/bios.bin
+```
+
+WSL CI gate: `./scripts/verilator_lint.sh` then `./scripts/test_cpu.sh`.
 
 ### M8 — Windows 95 desktop
 
@@ -119,11 +150,11 @@ scripts/fetch_freedos_img.sh            # → artifacts/freedos/disk.img
 scripts/sim_tb_verilator.sh --tb tb/seabios_post_tb.sv -- \
   +SEABIOS_BIN=artifacts/seabios/bios.bin +REQUIRE_POST=1 +MAX_CYCLES=200000
 
-# FreeDOS ladder to prompt + DIR (forced; CI uses dos_bios bring-up ROM)
+# FreeDOS ladder to prompt + DIR (forced; real SeaBIOS, no TB VGA/IVT assist)
 scripts/sim_tb_verilator.sh --tb tb/dos_boot_tb.sv -- \
-  +SEABIOS_BIN=artifacts/seabios/dos_bios.bin \
+  +SEABIOS_BIN=artifacts/seabios/bios.bin \
   +DISK_IMG=artifacts/freedos/disk.img \
-  +REQUIRE_DOS=1 +MAX_CYCLES=200000
+  +REQUIRE_DOS=1 +MAX_CYCLES=5000000
 
 # Optional local MS-DOS (not in CI): same plusargs with +DISK_IMG=/path/to/msdos.img
 

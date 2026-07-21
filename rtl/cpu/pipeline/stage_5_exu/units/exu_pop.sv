@@ -26,12 +26,15 @@ module exu_pop (
     input  logic [31: 0] i_src2_data,
     input  logic [31: 0] i_immediate,
     input  logic         i_has_imm,
+    input  logic [ 1: 0] i_mem_size,
     output exu_result_t   o_result
 );
 
     logic [31: 0] new_esp;
+    logic [31: 0] stack_delta;
 
-    assign new_esp = i_src1_data + 32'd4;
+    assign stack_delta = (i_mem_size == 2'b01) ? 32'd2 : 32'd4;
+    assign new_esp = i_src1_data + stack_delta;
 
     assign o_result.result           = new_esp;
     assign o_result.cf               = 1'b0;

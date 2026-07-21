@@ -31,7 +31,10 @@ module exu_movzx (
 
     logic [31: 0] src_data;
 
-    assign src_data = i_has_imm ? i_immediate : {24'h0, i_src2_data[7: 0]};
+    // imm[0]=1: zero-extend word (0F B7); else byte (0F B6).
+    // Do not use has_imm as a data source — imm only carries the width flag.
+    assign src_data = i_immediate[0] ? {16'h0, i_src2_data[15: 0]}
+                                     : {24'h0, i_src2_data[ 7: 0]};
 
     assign o_result.result           = src_data;
     assign o_result.cf               = 1'b0;

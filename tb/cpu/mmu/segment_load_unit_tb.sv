@@ -140,9 +140,9 @@ module segment_load_unit_tb;
             valid        = 1'b0;
             @(posedge clk);
             valid        = 1'b1;
+            // Sample completion strobes on the ready cycle (IDLE clears them next).
             while (~ready) @(posedge clk);
             valid        = 1'b0;
-            @(posedge clk);
         end
     endtask
 
@@ -156,7 +156,6 @@ module segment_load_unit_tb;
             valid             = 1'b1;
             while (~ready) @(posedge clk);
             valid             = 1'b0;
-            @(posedge clk);
         end
     endtask
 
@@ -233,7 +232,9 @@ module segment_load_unit_tb;
 
         protected_mode = 1'b0;
         do_mov_ds(16'h0020);
-        if (~seg_write_enable || (seg_write_selector != 16'h0020) || (seg_write_descriptor != 64'h0)) begin
+        // Real-mode loads fill hidden cache: base=sel<<4, limit=FFFF, AR=93
+        if (~seg_write_enable || (seg_write_selector != 16'h0020) ||
+            (seg_write_descriptor != 64'h0200_FFFF_0000_9300)) begin
             $fatal(1, "FAIL real-mode MOV DS sel=%h desc=%h", seg_write_selector, seg_write_descriptor);
         end
         pass_count++;

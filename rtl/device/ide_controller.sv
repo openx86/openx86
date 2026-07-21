@@ -30,8 +30,8 @@ module ide_controller #(
     input  logic         i_rd_n,
     input  logic         i_wr_n,
     input  logic [15: 0] i_addr,
-    input  logic [ 7: 0] i_wdata,
-    output logic [ 7: 0] o_rdata,
+    input  logic [15: 0] i_wdata,
+    output logic [15: 0] o_rdata,
 
     // =========================
     // SDIO PHY interface
@@ -70,6 +70,8 @@ module ide_controller #(
     logic [ 7: 0] lba_lo, lba_mid, lba_hi;
     logic [ 7: 0] drv_head;
     logic [ 7: 0] status_r;
+    logic         identify_active;
+    logic [ 8: 0] identify_words;
 
     // ============================================================
     // data path signals
@@ -78,9 +80,12 @@ module ide_controller #(
     logic [31: 0] mem_off;
     logic [31: 0] disk_waddr;
     logic [ 7: 0] disk_wdata;
+    logic [ 7: 0] disk_wdata_hi;
     logic         disk_we;
+    logic         disk_we_hi;
     logic         wr_data_d;
     logic         rd_data_d;
+    logic [ 4: 0] rd_advance_cool_r;
     logic [ 7: 0] sectors_left;
 
     // ============================================================
@@ -88,6 +93,7 @@ module ide_controller #(
     // ============================================================
     logic [31: 0] disk_raddr;
     logic [ 7: 0] disk_rdata;
+    logic [ 7: 0] disk_rdata_next;
     logic         disk_sector_ready;
     logic         disk_sector_req;
 
@@ -110,7 +116,9 @@ module ide_controller #(
     assign disk_raddr = byte_addr;
     assign disk_waddr = byte_addr;
     assign disk_we    = wr && (i_addr == 16'h01F0) && (state == ST_WRITE_DRQ);
-    assign disk_wdata = i_wdata;
+    assign disk_we_hi = disk_we;
+    assign disk_wdata = i_wdata[7: 0];
+    assign disk_wdata_hi = i_wdata[15: 8];
     assign disk_sector_req = async_on && (state == ST_WAIT_SECTOR);
 
     logic wr;
@@ -128,9 +136,12 @@ module ide_controller #(
     ) u_disk (
         .i_disk_raddr         ( disk_raddr ),
         .o_disk_rdata         ( disk_rdata ),
+        .o_disk_rdata_next    ( disk_rdata_next ),
         .i_disk_waddr         ( disk_waddr ),
         .i_disk_wdata         ( disk_wdata ),
+        .i_disk_wdata_hi      ( disk_wdata_hi ),
         .i_disk_we            ( disk_we ),
+        .i_disk_we_hi         ( disk_we_hi ),
         .i_disk_sector_req    ( disk_sector_req ),
         .o_disk_sector_ready  ( disk_sector_ready ),
         .o_sdcard_controller_phy_clk     ( o_sdio_clk ),
@@ -157,8 +168,11 @@ module ide_controller #(
             buf_ptr    <= '0;
             mem_off    <= '0;
             rd_data_d  <= 1'b0;
+            rd_advance_cool_r <= 5'd0;
             wr_data_d  <= 1'b0;
             sectors_left <= 8'h0;
+            identify_active <= 1'b0;
+            identify_words  <= '0;
         end else begin
             if (async_on && (state == ST_WAIT_SECTOR) && disk_sector_ready) begin
                 state    <= ST_DRQ;
@@ -166,16 +180,17 @@ module ide_controller #(
                 status_r <= LP_ST_DRQ | LP_ST_RDY;
             end else if (wr) begin
                 unique case (i_addr)
-                    16'h01F2: sector_cnt <= i_wdata;
-                    16'h01F3: lba_lo  <= i_wdata;
-                    16'h01F4: lba_mid <= i_wdata;
-                    16'h01F5: lba_hi  <= i_wdata;
-                    16'h01F6: drv_head <= i_wdata;
+                    16'h01F2: sector_cnt <= i_wdata[7: 0];
+                    16'h01F3: lba_lo  <= i_wdata[7: 0];
+                    16'h01F4: lba_mid <= i_wdata[7: 0];
+                    16'h01F5: lba_hi  <= i_wdata[7: 0];
+                    16'h01F6: drv_head <= i_wdata[7: 0];
                     16'h01F7: begin
-                        if (i_wdata == 8'h20) begin
+                        if (i_wdata[7: 0] == 8'h20) begin
                             mem_off      <= {8'b0, lba_hi, lba_mid, lba_lo};
                             buf_ptr      <= '0;
                             sectors_left <= sector_cnt;
+                            identify_active <= 1'b0;
                             if (async_on) begin
                                 state    <= ST_WAIT_SECTOR;
                                 status_r <= LP_ST_BSY;
@@ -183,12 +198,21 @@ module ide_controller #(
                                 state    <= ST_DRQ;
                                 status_r <= LP_ST_DRQ | LP_ST_RDY;
                             end
-                        end else if (i_wdata == 8'h30) begin
+                        end else if (i_wdata[7: 0] == 8'h30) begin
                             mem_off      <= {8'b0, lba_hi, lba_mid, lba_lo};
                             buf_ptr      <= '0;
                             sectors_left <= sector_cnt;
+                            identify_active <= 1'b0;
                             state        <= ST_WRITE_DRQ;
                             status_r     <= LP_ST_DRQ | LP_ST_RDY;
+                        end else if (i_wdata[7: 0] == 8'hEC) begin
+                            // IDENTIFY DEVICE — 256 words of canned geometry
+                            buf_ptr         <= '0;
+                            identify_words  <= '0;
+                            identify_active <= 1'b1;
+                            sectors_left    <= 8'h01;
+                            state           <= ST_DRQ;
+                            status_r        <= LP_ST_DRQ | LP_ST_RDY;
                         end
                     end
                     16'h03F6: ;
@@ -196,8 +220,24 @@ module ide_controller #(
                 endcase
             end
 
-            if (rd_data_d && !(rd && (i_addr == 16'h01F0) && (state == ST_DRQ))) begin
-                if (buf_ptr == (9'(P_SECTOR_BYTES) - 9'd1)) begin
+            if (rd_advance_cool_r != 5'd0)
+                rd_advance_cool_r <= rd_advance_cool_r - 5'd1;
+            // Falling edge of data-port read advances the sector cursor.
+            // Cooldown suppresses a second advance from a duplicated ADS#/valid
+            // pulse (was skipping every other ATA word → boot 3ceb|4452).
+            if (rd_data_d && !(rd && (i_addr == 16'h01F0) && (state == ST_DRQ)) &&
+                (rd_advance_cool_r == 5'd0)) begin
+                rd_advance_cool_r <= 5'd16;
+                if (identify_active) begin
+                    if (identify_words >= 9'd255) begin
+                        state           <= ST_IDLE;
+                        status_r        <= LP_ST_RDY;
+                        identify_active <= 1'b0;
+                        identify_words  <= '0;
+                        buf_ptr         <= '0;
+                    end else
+                        identify_words <= identify_words + 9'd1;
+                end else if (buf_ptr >= (9'(P_SECTOR_BYTES) - 9'd2)) begin
                     if (sectors_left <= 8'd1) begin
                         state    <= ST_IDLE;
                         status_r <= LP_ST_RDY;
@@ -215,11 +255,11 @@ module ide_controller #(
                         end
                     end
                 end else
-                    buf_ptr <= buf_ptr + 9'h1;
+                    buf_ptr <= buf_ptr + 9'd2;
             end
 
             if (wr_data_d && !(wr && (i_addr == 16'h01F0) && (state == ST_WRITE_DRQ))) begin
-                if (buf_ptr == (9'(P_SECTOR_BYTES) - 9'd1)) begin
+                if (buf_ptr >= (9'(P_SECTOR_BYTES) - 9'd2)) begin
                     if (sectors_left <= 8'd1) begin
                         state    <= ST_IDLE;
                         status_r <= LP_ST_RDY;
@@ -232,7 +272,7 @@ module ide_controller #(
                         status_r     <= LP_ST_DRQ | LP_ST_RDY;
                     end
                 end else
-                    buf_ptr <= buf_ptr + 9'h1;
+                    buf_ptr <= buf_ptr + 9'd2;
             end
 
             rd_data_d <= (rd && (i_addr == 16'h01F0) && (state == ST_DRQ));
@@ -240,31 +280,49 @@ module ide_controller #(
         end
     end
 
-    // 读路径组合：默认 FF；译码各寄存器口与数据口
+    // Minimal ATA IDENTIFY DEVICE payload (little-endian words on the wire).
+    function automatic logic [15: 0] f_identify_word(input logic [ 8: 0] idx);
+        unique case (idx)
+            9'd1:  f_identify_word = 16'd16383; // cylinders
+            9'd3:  f_identify_word = 16'd16;    // heads
+            9'd6:  f_identify_word = 16'd63;    // sectors/track
+            9'd49: f_identify_word = 16'h0200;  // LBA supported
+            9'd53: f_identify_word = 16'h0001;  // fields valid
+            9'd60: f_identify_word = 16'(P_SECTOR_COUNT);
+            9'd61: f_identify_word = 16'(P_SECTOR_COUNT >> 16);
+            9'd80: f_identify_word = 16'h0010;  // ATA-4
+            9'd83: f_identify_word = 16'h0000;  // no LBA48
+            default: f_identify_word = 16'h0000;
+        endcase
+    endfunction
+
+    // 读路径组合：默认 FF；译码各寄存器口与数据口（1F0 = 16-bit little-endian）
     always_comb begin
-        o_rdata = 8'hFF;
+        o_rdata = 16'hFFFF;
         if (rd) begin
             unique case (i_addr)
                 16'h01F0: begin
                     if (state == ST_DRQ) begin
-                        if (byte_addr < mem_bytes)
-                            o_rdata = disk_rdata;
+                        if (identify_active)
+                            o_rdata = f_identify_word(identify_words);
+                        else if (byte_addr < mem_bytes)
+                            o_rdata = {disk_rdata_next, disk_rdata};
                         else
-                            o_rdata = 8'h00;
+                            o_rdata = 16'h0000;
                     end else if (state == ST_WRITE_DRQ) begin
-                        o_rdata = 8'h00;
+                        o_rdata = 16'h0000;
                     end else
-                        o_rdata = 8'h00;
+                        o_rdata = 16'h0000;
                 end
-                16'h01F1: o_rdata = 8'h00; // 错误（当前模型恒 0）
-                16'h01F2: o_rdata = sector_cnt;
-                16'h01F3: o_rdata = lba_lo;
-                16'h01F4: o_rdata = lba_mid;
-                16'h01F5: o_rdata = lba_hi;
-                16'h01F6: o_rdata = drv_head;
-                16'h01F7: o_rdata = status_r; // 主状态
-                16'h03F6: o_rdata = status_r; // 辅助状态
-                default: o_rdata = 8'hFF; // 未实现口
+                16'h01F1: o_rdata = {8'hFF, 8'h00}; // 错误（当前模型恒 0）
+                16'h01F2: o_rdata = {8'hFF, sector_cnt};
+                16'h01F3: o_rdata = {8'hFF, lba_lo};
+                16'h01F4: o_rdata = {8'hFF, lba_mid};
+                16'h01F5: o_rdata = {8'hFF, lba_hi};
+                16'h01F6: o_rdata = {8'hFF, drv_head};
+                16'h01F7: o_rdata = {status_r, status_r}; // both lanes (odd-port IN)
+                16'h03F6: o_rdata = {status_r, status_r}; // 辅助状态
+                default: o_rdata = 16'hFFFF; // 未实现口
             endcase
         end
     end

@@ -46,11 +46,15 @@ module stage_5_exu (
     // =========================
     input  logic [31: 0]        i_src1_data,
     input  logic [31: 0]        i_src2_data,
+    input  logic [31: 0]        i_gpr_eax,
+    input  logic [31: 0]        i_gpr_edx,
     input  logic [31: 0]        i_gpr_esp,
     input  logic [31: 0]        i_gpr_ebp,
+    input  logic [31: 0]        i_gpr_ecx,
     input  logic [31: 0]        i_cr0_data,
     input  logic [31: 0]        i_eip,
     input  logic [15: 0]        i_cs_selector,
+    input  logic [ 5: 0][15: 0] i_segment_selector,
     input  logic                i_slu_ready,
 
     // =========================
@@ -158,8 +162,12 @@ module stage_5_exu (
 
     output logic                o_mem_valid,
     output logic                o_mem_write_enable,
+    output logic [ 1: 0]        o_mem_size,
     output logic [31: 0]        o_mem_address,
     output logic [31: 0]        o_mem_write_data,
+    // MOVS load phase forces DS while uop_seg_index stays ES for the store.
+    output logic                o_lsu_seg_force,
+    output logic [ 2: 0]        o_lsu_seg_index,
 
     input  logic [79: 0]        i_fpu_st0,
     input  logic [79: 0]        i_fpu_st1,
@@ -193,6 +201,7 @@ module stage_5_exu (
 
     output logic                o_software_int_valid,
     output logic [ 7: 0]        o_software_int_vector,
+    output logic [31: 0]        o_software_int_eip,
     output logic                o_iret_valid,
 
     // =========================
@@ -252,15 +261,31 @@ module stage_5_exu (
     logic [ 7: 0] misc_subcode_r;
     logic         ret_pending_r;
     logic [ 1: 0] far_ind_step_r;
+    // MOVS dual-pointer: phase0=load DS:SI, phase1=store ES:DI; may loop on REP.
+    logic         movs_active_r;
+    logic         movs_store_phase_r;
+    logic [31: 0] movs_data_r;
+    logic [31: 0] movs_si_r;
+    logic [31: 0] movs_di_r;
+    logic [31: 0] movs_cx_r;
+    logic         movs_rep_r;
+    logic [ 1: 0] movs_size_r;
+    logic         movs_df_r;
+    logic         movs_finish_r;
+    logic         alu_rmw_store_r; // ADD/SUB imm → mem: load done, store pending
+    logic [31: 0] alu_rmw_data_r;
     logic [31: 0] far_ind_offset_r;
     logic [31: 0] far_ind_addr_r;
     // LGDT/LIDT beat2: set when beat0 is latched and addr+4 is issued; next mem_done
-    // commits base[31:16]. Prevents reusing beat0 rdata (→ gdtr=003779f0 bug).
+    // commits base[31:16]. Arm after one cycle so beat0's done/rdata cannot commit.
+    // (Do not use rdata!=beat0: real-mode IDT base=0 makes beat1==0 while a stale
+    //  beat0 replay of limit|base_lo can hang LIDT forever.)
     logic         far_ind_beat2_issued_r;
+    logic         far_ind_beat2_arm_r;
+    logic         far_ind_beat2_gap_r;
     logic [31: 0] far_ind_hi_r;
     logic         far_ind_gdtr_commit_r;
     logic         far_ind_beat2_ok;
-    logic         far_ind_beat2_rdata_fresh;
     logic         seg_load_valid;
     logic [ 1: 0] seg_load_op_type;
     logic [ 2: 0] seg_load_target_index;
@@ -293,30 +318,39 @@ module stage_5_exu (
     logic         uop_changed;
     logic [ 7: 0] mem_op_gen_eff;
     logic         mem_op_complete_eff;
-    assign uop_fp = {18'b0, i_uop.uop_opcode, i_uop.uop_dest_reg, i_uop.uop_immediate};
+    // Include src1/has_imm/EIP[7:0] so consecutive identical PUSH encodings at
+    // different PCs stay distinct (SeaBIOS insert_e820 / function prologs).
+    // Do NOT fingerprint live ESP: PUSH/PUSH_SEG write ESP on mem_done, which
+    // looked like a new uop, cleared sticky complete, and re-issued forever
+    // (irqentry_arg hung on `push ds` at F000:D884 while ESP drained).
+    assign uop_fp = {13'b0, i_uop.uop_opcode, i_uop.uop_dest_reg,
+                     i_uop.uop_src1_reg, i_uop.uop_has_imm,
+                     i_eip[7: 0], i_uop.uop_immediate[23: 0]};
     assign uop_changed = i_uop_valid & (uop_fp != uop_fp_r);
     assign mem_op_gen_eff = mem_op_gen_r + (uop_changed ? 8'd1 : 8'd0);
-    // ALU/branch after IN/OUT must not inherit sticky complete (would skip NOT/TEST
-    // writeback in SeaBIOS serial wait: in/not/test/jz).
+    // ALU / register Jcc after IN/OUT must not inherit sticky complete.
+    // Memory JMP/CALL (FF /4) still need sticky complete so the load is not
+    // re-issued forever (SeaBIOS putc: jmp *(%eax) into BIOS ROM).
+    // Mem-form ADD/SUB must KEEP sticky — excluding them left mem_valid=1 with
+    // mem_op_complete_r=1 so load_pending never armed (FreeDOS ADD SI,[BP+disp]).
     assign mem_op_complete_eff = mem_op_complete_r &
                                  (mem_op_complete_gen_r == mem_op_gen_eff) &
                                  (uop_opcode != `UOP_NOT) &
                                  (uop_opcode != `UOP_TEST) &
-                                 (uop_opcode != `UOP_BRANCH) &
+                                 ~((uop_opcode == `UOP_BRANCH) & ~mem_access) &
                                  (uop_opcode != `UOP_AND) &
                                  (uop_opcode != `UOP_OR) &
                                  (uop_opcode != `UOP_XOR) &
-                                 (uop_opcode != `UOP_ADD) &
-                                 (uop_opcode != `UOP_SUB) &
+                                 ~((uop_opcode == `UOP_ADD) & ~mem_access) &
+                                 ~((uop_opcode == `UOP_SUB) & ~mem_access) &
                                  (uop_opcode != `UOP_INC) &
                                  (uop_opcode != `UOP_DEC);
 
     assign far_ind_beat2_ok =
         far_ind_beat2_issued_r &&
+        far_ind_beat2_arm_r &&
         (far_ind_step_r != 2'd0) &&
         (mem_hold_addr_r == (far_ind_addr_r + 32'd4));
-    // Reject stale completions that replay beat0's dword (seen as gdtr=003779f0).
-    assign far_ind_beat2_rdata_fresh = (i_mem_rdata != far_ind_offset_r);
 
     logic         mov_seg_real_enable;
     logic [ 2: 0] mov_seg_real_index;
@@ -336,6 +370,7 @@ module stage_5_exu (
     logic         data_io_access;
     logic         software_int_valid;
     logic [ 7: 0] software_int_vector;
+    logic [31: 0] software_int_eip;
     logic         iret_valid;
 
     logic         x87_valid;
@@ -375,6 +410,21 @@ module stage_5_exu (
     assign mem_access = i_uop.uop_mem_access;
     assign is_store = i_uop.uop_is_store;
     assign uop_opcode = i_uop.uop_opcode;
+    logic [ 1: 0] string_kind;
+    logic         string_is_movs;
+    logic [31: 0] string_elem_bytes;
+    logic [31: 0] string_step;
+    assign string_kind    = i_uop.uop_immediate[3: 2];
+    assign string_is_movs = (uop_opcode == `UOP_STRING) &
+                            (string_kind == `STRING_KIND_MOVS);
+    always_comb begin
+        unique case (i_uop.uop_mem_size)
+            2'b00:   string_elem_bytes = 32'd1;
+            2'b01:   string_elem_bytes = 32'd2;
+            default: string_elem_bytes = 32'd4;
+        endcase
+    end
+    assign string_step = i_df ? (~string_elem_bytes + 32'd1) : string_elem_bytes;
     // EA = base + (index << scale) + disp. Index-only SIB (e.g. jmp *disp(,%ecx,4))
     // uses agu_index + src2; plain [reg] uses agu_base + src1.
     logic [31: 0] agu_addr;
@@ -388,6 +438,64 @@ module stage_5_exu (
     logic         disp_handled;
     exu_dispatch_out_t disp_out;
 
+    logic [63: 0] muldiv_dividend;
+    logic [31: 0] muldiv_hi_r;
+    logic [31: 0] muldiv_hi_wb;
+    logic         muldiv_wb;
+
+    // Byte DIV/MUL use AX only; word uses DX:AX; dword uses EDX:EAX.
+    assign muldiv_dividend = (i_uop.uop_mem_size == 2'b00) ?
+                             {48'h0, i_gpr_eax[15: 0]} :
+                             (i_uop.uop_mem_size == 2'b01) ?
+                             {32'h0, i_gpr_edx[15: 0], i_gpr_eax[15: 0]} :
+                             {i_gpr_edx, i_gpr_eax};
+
+    assign muldiv_wb = i_uop_valid & ~load_pending_r & ~far_call_pending_r &
+                       ((uop_opcode == `UOP_MUL) |
+                        (uop_opcode == `UOP_DIV) | (uop_opcode == `UOP_IDIV));
+
+    // Lane-select mem operand for MUL/DIV (cache returns aligned dword).
+    logic [31: 0] muldiv_mem_lane;
+    logic [31: 0] muldiv_mem_op;
+    always_comb begin
+        unique case (mem_hold_addr_r[1: 0])
+            2'b00:   muldiv_mem_lane = i_mem_rdata;
+            2'b01:   muldiv_mem_lane = { 8'h0, i_mem_rdata[31: 8]};
+            2'b10:   muldiv_mem_lane = {16'h0, i_mem_rdata[31:16]};
+            default: muldiv_mem_lane = {24'h0, i_mem_rdata[31:24]};
+        endcase
+        unique case (i_uop.uop_mem_size)
+            2'b00:   muldiv_mem_op = {24'h0, muldiv_mem_lane[7: 0]};
+            2'b01:   muldiv_mem_op = {16'h0, muldiv_mem_lane[15: 0]};
+            default: muldiv_mem_op = muldiv_mem_lane;
+        endcase
+    end
+    // High half for EDX/DX: dispatcher (reg form) or mem-completion path.
+    // Byte MUL: product in AX only — leave DX unchanged (hi unused).
+    logic [15: 0] muldiv_byte_rem;
+    assign muldiv_byte_rem = muldiv_dividend[15: 0] % {8'h0, muldiv_mem_op[7: 0]};
+    always_comb begin
+        muldiv_hi_wb = muldiv_hi_r;
+        if (load_pending_r & i_mem_done & mem_access) begin
+            if (uop_opcode == `UOP_MUL) begin
+                if (i_uop.uop_mem_size == 2'b00)
+                    muldiv_hi_wb = 32'h0;
+                else if (i_uop.uop_mem_size == 2'b01)
+                    muldiv_hi_wb = {16'h0,
+                        ({16'h0, i_gpr_eax[15: 0]} * muldiv_mem_op) >> 16};
+                else
+                    muldiv_hi_wb = ({{32{1'b0}}, i_gpr_eax} * {{32{1'b0}}, muldiv_mem_op}) >> 32;
+            end else if ((uop_opcode == `UOP_DIV) | (uop_opcode == `UOP_IDIV)) begin
+                if ((i_uop.uop_mem_size == 2'b00) && (muldiv_mem_op[7: 0] != 8'h0))
+                    muldiv_hi_wb = {24'h0, muldiv_byte_rem[7: 0]};
+                else if ((i_uop.uop_mem_size == 2'b01) && (muldiv_mem_op[15: 0] != 16'h0))
+                    muldiv_hi_wb = {16'h0, muldiv_dividend[31: 0] % muldiv_mem_op[15: 0]};
+                else if ((i_uop.uop_mem_size == 2'b10) && (muldiv_mem_op != 32'h0))
+                    muldiv_hi_wb = muldiv_dividend % {{32{1'b0}}, muldiv_mem_op};
+            end
+        end
+    end
+
     exu_dispatcher u_dispatcher (
         .i_valid         (i_uop_valid & ~load_pending_r),
         .i_uop_opcode    (uop_opcode),
@@ -395,11 +503,13 @@ module stage_5_exu (
         .i_src2_data     (src2_data),
         .i_immediate     (immediate),
         .i_displacement  (displacement),
+        .i_ecx           (i_gpr_ecx),
         .i_cf            (i_cf),
         .i_has_imm       (has_imm),
         .i_has_disp      (has_disp),
         .i_mem_access    (mem_access),
         .i_is_store      (is_store),
+        .i_mem_size      (i_uop.uop_mem_size),
         .i_agu_base      (i_uop.uop_agu_base),
         .i_agu_index     (i_uop.uop_agu_index),
         .i_sib_scale     (i_uop.uop_sib_scale),
@@ -409,10 +519,14 @@ module stage_5_exu (
         .i_zf            (i_zf),
         .i_sf            (i_sf),
         .i_of            (i_of),
-        .i_dividend      ({src1_data, src2_data}),
+        .i_df            (i_df),
+        .i_rep           (i_uop.uop_rep),
+        .i_repne         (i_uop.uop_repne),
+        .i_dividend      (muldiv_dividend),
         .i_cpuid_eax     (cpuid_eax),
         .o_handled       (disp_handled),
-        .o_dispatch      (disp_out)
+        .o_dispatch      (disp_out),
+        .o_result_high   (muldiv_hi_r)
     );
 
     assign x87_valid = i_uop_valid & (uop_opcode == `UOP_X87) & ~load_pending_r;
@@ -529,6 +643,7 @@ module stage_5_exu (
         data_io_access   = 1'b0;
         software_int_valid  = 1'b0;
         software_int_vector = 8'h0;
+        software_int_eip    = 32'h0;
         iret_valid          = 1'b0;
         seg_load_valid      = 1'b0;
         seg_load_op_type    = 2'b00;
@@ -545,8 +660,14 @@ module stage_5_exu (
         mov_seg_real_selector = 16'h0;
 
         if (i_uop_valid && ~load_pending_r && ~mem_op_complete_eff) begin
-            // Memory-form CMP: load first; ALU compare runs on i_mem_done.
-            if (mem_access && (uop_opcode == `UOP_CMP) && ~is_store) begin
+            // Memory-form CMP/MUL/DIV/ADD/SUB: load operand first; finish on i_mem_done.
+            if (mem_access && ~is_store &&
+                ((uop_opcode == `UOP_CMP) |
+                 (uop_opcode == `UOP_ADD) |
+                 (uop_opcode == `UOP_SUB) |
+                 (uop_opcode == `UOP_MUL) |
+                 (uop_opcode == `UOP_DIV) |
+                 (uop_opcode == `UOP_IDIV))) begin
                 mem_address      = agu_addr;
                 mem_valid        = 1'b1;
                 mem_write_enable = 1'b0;
@@ -569,19 +690,103 @@ module stage_5_exu (
                 // (mem_start needs exu_mem_valid & lsu_done). Gating with
                 // ~load_pending dropped the request after the first cycle.
                 mem_valid        = disp_out.data.mem_valid;
+                // MOVS: replace STOS-like dispatcher with DS:SI load first.
+                // REP CX=0 is a no-op. Internal FSM continues elements without
+                // re-fetch (movs_active_r).
+                if (string_is_movs) begin
+                    write_gpr        = 1'b0;
+                    write_flags      = 1'b0;
+                    write_ip         = 1'b0;
+                    begin
+                        logic [31: 0] movs_cx_chk;
+                        movs_cx_chk = (i_uop.uop_mem_size == 2'b10) ?
+                                      i_gpr_ecx : {16'h0, i_gpr_ecx[15: 0]};
+                        if (i_uop.uop_rep & (movs_cx_chk == 32'd0) & ~movs_active_r) begin
+                            mem_valid        = 1'b0;
+                            mem_write_enable = 1'b0;
+                        end else if (~movs_active_r | ~movs_store_phase_r) begin
+                            mem_address      = movs_active_r ? movs_si_r : src1_data;
+                            mem_valid        = 1'b1;
+                            mem_write_enable = 1'b0;
+                            mem_write_data   = 32'd0;
+                        end else begin
+                            mem_address      = movs_di_r;
+                            mem_valid        = 1'b1;
+                            mem_write_enable = 1'b1;
+                            mem_write_data   = movs_data_r;
+                        end
+                    end
+                end
+                // Non-mem CMP: size-mask AL/AX/EAX vs imm/r/m so ZF matches ISA
+                // (full-width EAX−EAX when has_imm was lost made JNZ never fire).
+                // eee[0]=1 → AH/CH/DH/BH lane ([15:8]) for byte CMP.
+                if ((uop_opcode == `UOP_CMP) & ~mem_access) begin
+                    begin
+                        logic [31: 0] cmp_a_raw;
+                        logic [31: 0] cmp_b_raw;
+                        logic [31: 0] cmp_a;
+                        logic [31: 0] cmp_b;
+                        logic [31: 0] cmp_d;
+                        cmp_a_raw = src1_data;
+                        cmp_b_raw = has_imm ? immediate : src2_data;
+                        unique case (i_uop.uop_mem_size)
+                            2'b00: begin
+                                cmp_a = {24'h0, i_uop.uop_eee[0] ? cmp_a_raw[15: 8]
+                                                                 : cmp_a_raw[7: 0]};
+                                // Imm or r8 low-lane in [7:0]; *H vs *H uses eee on src2
+                                // only when both are high (src2 path sets eee separately).
+                                cmp_b = {24'h0, (~has_imm & i_uop.uop_eee[0]) ? cmp_b_raw[15: 8]
+                                                                              : cmp_b_raw[7: 0]};
+                            end
+                            2'b01: begin
+                                cmp_a = {16'h0, cmp_a_raw[15: 0]};
+                                cmp_b = {16'h0, cmp_b_raw[15: 0]};
+                            end
+                            default: begin
+                                cmp_a = cmp_a_raw;
+                                cmp_b = cmp_b_raw;
+                            end
+                        endcase
+                        cmp_d       = cmp_a - cmp_b;
+                        new_cf      = compute_cf_sub(cmp_a, cmp_b);
+                        new_pf      = compute_pf(cmp_d);
+                        new_af      = compute_af(cmp_a, cmp_b, 1'b1);
+                        new_zf      = compute_zf(cmp_d);
+                        new_sf      = (i_uop.uop_mem_size == 2'b00) ? cmp_d[7] :
+                                     (i_uop.uop_mem_size == 2'b01) ? cmp_d[15] : cmp_d[31];
+                        new_of      = compute_of_sub(cmp_a, cmp_b);
+                        write_flags = 1'b1;
+                        write_gpr   = 1'b0;
+                    end
+                end
+                // B4–B7 MOV AH/CH/DH/BH,Ib: place imm in [15:8] for *H write port
+                if ((uop_opcode == `UOP_MOV) & ~mem_access & has_imm &
+                    (i_uop.uop_mem_size == 2'b00) & i_uop.uop_eee[0]) begin
+                    tmp_result = {16'h0, immediate[7: 0], 8'h0};
+                end
                 // POP: mem data → dest on done; do not write new_esp to dest on issue
                 if (uop_opcode == `UOP_POP) begin
                     write_gpr = 1'b0;
+                end
+                // FF /4 mem JMP: dispatcher branch_entry has mem_valid=0 and would
+                // early-write IP to the AGU displacement (often 0). Load the
+                // target dword and redirect only on mem_done.
+                if ((uop_opcode == `UOP_BRANCH) && mem_access) begin
+                    write_ip         = 1'b0;
+                    ip_data          = 32'd0;
+                    mem_address      = agu_addr;
+                    mem_valid        = ~mem_op_complete_eff;
+                    mem_write_enable = 1'b0;
                 end
             end else begin
             case (uop_opcode)
                 `UOP_MOV: begin
                     if (mem_access) begin
-                        mem_address = src1_data + displacement;
+                        mem_address = agu_addr;
                         mem_valid   = ~load_pending_r & ~mem_op_complete_eff;
                         if (is_store) begin
                             mem_write_enable = 1'b1;
-                            mem_write_data   = src2_data;
+                            mem_write_data   = has_imm ? immediate : src2_data;
                         end else begin
                             mem_write_enable = 1'b0;
                         end
@@ -595,11 +800,12 @@ module stage_5_exu (
                     end
                 end
                 `UOP_BRANCH: begin
-                    // FF /4 mem: load target dword then redirect (not disp-as-target).
                     if (mem_access) begin
                         mem_address      = agu_addr;
                         mem_valid        = ~load_pending_r & ~mem_op_complete_eff;
                         mem_write_enable = 1'b0;
+                        write_ip         = 1'b0;
+                        ip_data          = 32'd0;
                     end
                 end
                 `UOP_LOAD: begin
@@ -700,6 +906,8 @@ module stage_5_exu (
                         `MISC_SUB_INT: begin
                             software_int_valid  = 1'b1;
                             software_int_vector = immediate[15: 8];
+                            // Return EIP from decode (insn_eip+len); fall back to i_eip
+                            software_int_eip    = has_disp ? displacement : i_eip;
                         end
                         `MISC_SUB_IRET: begin
                             iret_valid = 1'b1;
@@ -720,6 +928,47 @@ module stage_5_exu (
                                 mov_seg_real_index  = immediate[10: 8];
                                 mov_seg_real_selector = src2_data[15: 0];
                             end
+                        end
+                        `MISC_SUB_STORE_SEG: begin
+                            // 8C: store Sreg selector to r/m
+                            unique case (immediate[10: 8])
+                                `sreg_index_ES: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__ES]};
+                                `sreg_index_CS: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__CS]};
+                                `sreg_index_SS: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__SS]};
+                                `sreg_index_DS: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__DS]};
+                                `sreg_index_FS: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__FS]};
+                                default:        mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__GS]};
+                            endcase
+                            if (mem_access) begin
+                                mem_address      = agu_addr;
+                                mem_valid        = ~load_pending_r & ~mem_op_complete_eff;
+                                mem_write_enable = 1'b1;
+                            end else begin
+                                tmp_result = mem_write_data;
+                                write_gpr  = 1'b1;
+                            end
+                        end
+                        `MISC_SUB_PUSH_SEG: begin
+                            // 06/0E/16/1E: PUSH Sreg (16-bit stack in real mode)
+                            unique case (immediate[10: 8])
+                                `sreg_index_ES: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__ES]};
+                                `sreg_index_CS: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__CS]};
+                                `sreg_index_SS: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__SS]};
+                                `sreg_index_DS: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__DS]};
+                                `sreg_index_FS: mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__FS]};
+                                default:        mem_write_data = {16'h0, i_segment_selector[`index_reg_seg__GS]};
+                            endcase
+                            mem_address      = i_gpr_esp - ((i_uop.uop_mem_size == 2'b01) ? 32'd2 : 32'd4);
+                            mem_valid        = ~load_pending_r & ~mem_op_complete_eff;
+                            mem_write_enable = 1'b1;
+                            tmp_result       = mem_address;
+                            write_gpr        = 1'b0; // ESP on mem_done
+                        end
+                        `MISC_SUB_POP_SEG: begin
+                            // 07/17/1F: POP Sreg — same issue gating as UOP_POP
+                            mem_address      = i_gpr_esp;
+                            mem_valid        = ~load_pending_r & ~mem_op_complete_eff;
+                            mem_write_enable = 1'b0;
                         end
                         `MISC_SUB_FAR_JMP: begin
                             seg_load_op_type = 2'b01;
@@ -767,6 +1016,15 @@ module stage_5_exu (
                             far_ret_new_esp     = i_gpr_esp + (has_disp ? displacement : 32'd0) + 32'd8;
                             far_ret_new_esp_valid = 1'b1;
                         end
+                        // LDS/LES/LFS/LGS/LSS: load far pointer (16:16 in 16-bit opsize).
+                        `MISC_SUB_LDS, `MISC_SUB_LES, `MISC_SUB_LFS,
+                        `MISC_SUB_LGS, `MISC_SUB_LSS: begin
+                            if (~misc_load_pending_r) begin
+                                mem_address      = agu_addr;
+                                mem_valid        = 1'b1;
+                                mem_write_enable = 1'b0;
+                            end
+                        end
                         `MISC_SUB_UD: begin
                             exc_ud_valid = 1'b1;
                         end
@@ -797,9 +1055,17 @@ module stage_5_exu (
             end
 
             if (disp_handled &&
-                ((uop_opcode == `UOP_DIV) | (uop_opcode == `UOP_IDIV)) &&
-                (src1_data == 32'd0)) begin
-                exc_de_valid = 1'b1;
+                ((uop_opcode == `UOP_DIV) | (uop_opcode == `UOP_IDIV))) begin
+                // Divisor is src1 (r/m). Also #DE on quotient overflow.
+                if (((i_uop.uop_mem_size == 2'b01) ? {16'h0, src1_data[15: 0]} : src1_data) == 32'd0)
+                    exc_de_valid = 1'b1;
+                else if ((i_uop.uop_mem_size == 2'b01) && (src1_data[15: 0] != 16'd0) &&
+                         ((muldiv_dividend[31: 0] /
+                           {16'h0, src1_data[15: 0]}) > 32'h0000_FFFF))
+                    exc_de_valid = 1'b1;
+                else if ((i_uop.uop_mem_size != 2'b01) &&
+                         (i_gpr_edx >= src1_data) && (src1_data != 32'd0))
+                    exc_de_valid = 1'b1;
             end
 
             flags_data = pack_eflags_status(eflags_base, new_cf, new_pf, new_af, new_zf, new_sf, new_of);
@@ -810,19 +1076,180 @@ module stage_5_exu (
                 write_ip = 1'b1;
                 ip_data  = i_mem_rdata;
             end else if (uop_opcode == `UOP_CMP) begin
-                new_cf      = compute_cf_sub(i_mem_rdata, has_imm ? immediate : src2_data);
-                new_pf      = compute_pf(i_mem_rdata - (has_imm ? immediate : src2_data));
-                new_af      = compute_af(i_mem_rdata, has_imm ? immediate : src2_data, 1'b1);
-                new_zf      = compute_zf(i_mem_rdata - (has_imm ? immediate : src2_data));
-                new_sf      = compute_sf(i_mem_rdata - (has_imm ? immediate : src2_data));
-                new_of      = compute_of_sub(i_mem_rdata, has_imm ? immediate : src2_data);
+                begin
+                    logic [31: 0] cmp_op_a;
+                    logic [31: 0] cmp_op_b;
+                    if (has_imm) begin
+                        // CMP r/m, imm or CMP acc, imm — mem already in i_mem_rdata lane
+                        cmp_op_a = i_mem_rdata;
+                        cmp_op_b = immediate;
+                    end else if (immediate[8]) begin
+                        // CMP r, r/m — eee - mem
+                        cmp_op_a = src2_data;
+                        cmp_op_b = i_mem_rdata;
+                    end else begin
+                        // CMP r/m, r — mem - eee
+                        cmp_op_a = i_mem_rdata;
+                        cmp_op_b = src2_data;
+                    end
+                    new_cf      = compute_cf_sub(cmp_op_a, cmp_op_b);
+                    new_pf      = compute_pf(cmp_op_a - cmp_op_b);
+                    new_af      = compute_af(cmp_op_a, cmp_op_b, 1'b1);
+                    new_zf      = compute_zf(cmp_op_a - cmp_op_b);
+                    new_sf      = compute_sf(cmp_op_a - cmp_op_b);
+                    new_of      = compute_of_sub(cmp_op_a, cmp_op_b);
+                    write_flags = 1'b1;
+                    write_gpr   = 1'b0;
+                    flags_data  = pack_eflags_status(eflags_base, new_cf, new_pf, new_af, new_zf, new_sf, new_of);
+                end
+            end else if ((uop_opcode == `UOP_ADD) & mem_access & ~alu_rmw_store_r) begin
+                // r := r + r/m, or RMW mem := mem + imm
+                begin
+                    logic [31: 0] add_mem_lane;
+                    logic [31: 0] add_op_mem;
+                    logic [31: 0] add_sum;
+                    unique case (mem_hold_addr_r[1: 0])
+                        2'b00:   add_mem_lane = i_mem_rdata;
+                        2'b01:   add_mem_lane = { 8'h0, i_mem_rdata[31: 8]};
+                        2'b10:   add_mem_lane = {16'h0, i_mem_rdata[31:16]};
+                        default: add_mem_lane = {24'h0, i_mem_rdata[31:24]};
+                    endcase
+                    unique case (i_uop.uop_mem_size)
+                        2'b00:   add_op_mem = {24'h0, add_mem_lane[7: 0]};
+                        2'b01:   add_op_mem = {16'h0, add_mem_lane[15: 0]};
+                        default: add_op_mem = add_mem_lane;
+                    endcase
+                    if (has_imm) begin
+                        add_sum     = add_op_mem + immediate;
+                        tmp_result  = add_sum;
+                        new_cf      = compute_cf_add(add_op_mem, immediate);
+                        new_pf      = compute_pf(add_sum);
+                        new_af      = compute_af(add_op_mem, immediate, 1'b0);
+                        new_zf      = (i_uop.uop_mem_size == 2'b00) ? (add_sum[7: 0] == 8'h0) :
+                                     (i_uop.uop_mem_size == 2'b01) ? (add_sum[15: 0] == 16'h0) :
+                                     compute_zf(add_sum);
+                        new_sf      = (i_uop.uop_mem_size == 2'b00) ? add_sum[7] :
+                                     (i_uop.uop_mem_size == 2'b01) ? add_sum[15] :
+                                     compute_sf(add_sum);
+                        new_of      = compute_of_add(add_op_mem, immediate);
+                        write_gpr   = 1'b0;
+                        write_flags = 1'b1;
+                        flags_data  = pack_eflags_status(eflags_base, new_cf, new_pf, new_af, new_zf, new_sf, new_of);
+                    end else begin
+                        add_sum     = src2_data + add_op_mem;
+                        tmp_result  = add_sum;
+                        new_cf      = compute_cf_add(src2_data, add_op_mem);
+                        new_pf      = compute_pf(add_sum);
+                        new_af      = compute_af(src2_data, add_op_mem, 1'b0);
+                        new_zf      = compute_zf(add_sum);
+                        new_sf      = compute_sf(add_sum);
+                        new_of      = compute_of_add(src2_data, add_op_mem);
+                        write_gpr   = 1'b1;
+                        write_flags = 1'b1;
+                        flags_data  = pack_eflags_status(eflags_base, new_cf, new_pf, new_af, new_zf, new_sf, new_of);
+                    end
+                end
+            end else if ((uop_opcode == `UOP_SUB) & mem_access & ~alu_rmw_store_r) begin
+                begin
+                    logic [31: 0] sub_mem_lane;
+                    logic [31: 0] sub_op_mem;
+                    logic [31: 0] sub_diff;
+                    unique case (mem_hold_addr_r[1: 0])
+                        2'b00:   sub_mem_lane = i_mem_rdata;
+                        2'b01:   sub_mem_lane = { 8'h0, i_mem_rdata[31: 8]};
+                        2'b10:   sub_mem_lane = {16'h0, i_mem_rdata[31:16]};
+                        default: sub_mem_lane = {24'h0, i_mem_rdata[31:24]};
+                    endcase
+                    unique case (i_uop.uop_mem_size)
+                        2'b00:   sub_op_mem = {24'h0, sub_mem_lane[7: 0]};
+                        2'b01:   sub_op_mem = {16'h0, sub_mem_lane[15: 0]};
+                        default: sub_op_mem = sub_mem_lane;
+                    endcase
+                    if (has_imm) begin
+                        // RMW: mem := mem - imm (EXEPACK cs:[si+12] -= 10h)
+                        sub_diff    = sub_op_mem - immediate;
+                        tmp_result  = sub_diff;
+                        new_cf      = compute_cf_sub(sub_op_mem, immediate);
+                        new_pf      = compute_pf(sub_diff);
+                        new_af      = compute_af(sub_op_mem, immediate, 1'b1);
+                        new_zf      = (i_uop.uop_mem_size == 2'b00) ? (sub_diff[7: 0] == 8'h0) :
+                                     (i_uop.uop_mem_size == 2'b01) ? (sub_diff[15: 0] == 16'h0) :
+                                     compute_zf(sub_diff);
+                        new_sf      = (i_uop.uop_mem_size == 2'b00) ? sub_diff[7] :
+                                     (i_uop.uop_mem_size == 2'b01) ? sub_diff[15] :
+                                     compute_sf(sub_diff);
+                        new_of      = compute_of_sub(sub_op_mem, immediate);
+                        write_gpr   = 1'b0;
+                        write_flags = 1'b1;
+                        flags_data  = pack_eflags_status(eflags_base, new_cf, new_pf, new_af, new_zf, new_sf, new_of);
+                    end else begin
+                        sub_diff    = src2_data - sub_op_mem;
+                        tmp_result  = sub_diff;
+                        new_cf      = compute_cf_sub(src2_data, sub_op_mem);
+                        new_pf      = compute_pf(sub_diff);
+                        new_af      = compute_af(src2_data, sub_op_mem, 1'b1);
+                        new_zf      = compute_zf(sub_diff);
+                        new_sf      = compute_sf(sub_diff);
+                        new_of      = compute_of_sub(src2_data, sub_op_mem);
+                        write_gpr   = 1'b1;
+                        write_flags = 1'b1;
+                        flags_data  = pack_eflags_status(eflags_base, new_cf, new_pf, new_af, new_zf, new_sf, new_of);
+                    end
+                end
+            end else if ((uop_opcode == `UOP_MUL) & mem_access) begin
+                if (i_uop.uop_mem_size == 2'b00)
+                    // Byte MUL: AX := AL * r/m8 (hi in AH).
+                    tmp_result = {16'h0, i_gpr_eax[7: 0]} * muldiv_mem_op;
+                else if (i_uop.uop_mem_size == 2'b01)
+                    // Word MUL: DX:AX product; AX writeback takes [15:0].
+                    tmp_result = ({16'h0, i_gpr_eax[15: 0]} * muldiv_mem_op);
+                else
+                    tmp_result = i_gpr_eax * muldiv_mem_op;
+                write_gpr   = 1'b1;
                 write_flags = 1'b1;
-                write_gpr   = 1'b0;
+                if (i_uop.uop_mem_size == 2'b00)
+                    new_cf = (tmp_result[15: 8] != 8'h0);
+                else
+                    new_cf = (muldiv_hi_wb != 32'h0);
+                new_of      = new_cf;
                 flags_data  = pack_eflags_status(eflags_base, new_cf, new_pf, new_af, new_zf, new_sf, new_of);
+            end else if (((uop_opcode == `UOP_DIV) | (uop_opcode == `UOP_IDIV)) & mem_access) begin
+                if (muldiv_mem_op == 32'd0) begin
+                    exc_de_valid = 1'b1;
+                end else if (i_uop.uop_mem_size == 2'b00) begin
+                    // Byte DIV: AH:AL / r/m8 → AL=quot, AH=rem (pack in AX)
+                    tmp_result = {16'h0, muldiv_hi_wb[7: 0],
+                                  muldiv_dividend[15: 0] / muldiv_mem_op[7: 0]};
+                    write_gpr  = 1'b1;
+                end else if (i_uop.uop_mem_size == 2'b01) begin
+                    tmp_result = {16'h0, muldiv_dividend[31: 0] / muldiv_mem_op};
+                    write_gpr  = 1'b1;
+                end else begin
+                    tmp_result = muldiv_dividend / {{32{1'b0}}, muldiv_mem_op};
+                    write_gpr  = 1'b1;
+                end
+            end else if ((uop_opcode == `UOP_STRING) & ~is_store & ~string_is_movs) begin
+                // LODS: ESI already bumped on issue; write AL/AX/EAX from mem.
+                begin
+                    logic [31: 0] lods_lane;
+                    unique case (mem_hold_addr_r[1: 0])
+                        2'b00:   lods_lane = i_mem_rdata;
+                        2'b01:   lods_lane = { 8'h0, i_mem_rdata[31: 8]};
+                        2'b10:   lods_lane = {16'h0, i_mem_rdata[31:16]};
+                        default: lods_lane = {24'h0, i_mem_rdata[31:24]};
+                    endcase
+                    unique case (i_uop.uop_mem_size)
+                        2'b00:   tmp_result = {24'h0, lods_lane[7: 0]};
+                        2'b01:   tmp_result = {16'h0, lods_lane[15: 0]};
+                        default: tmp_result = lods_lane;
+                    endcase
+                    write_gpr = 1'b1;
+                end
             end else if (~((uop_opcode == `UOP_PUSH) | (uop_opcode == `UOP_CALL) |
                   (uop_opcode == `UOP_RET) |
                   (uop_opcode == `UOP_STORE) |
                   (uop_opcode == `UOP_BRANCH) |
+                  (uop_opcode == `UOP_STRING) |
                   ((uop_opcode == `UOP_MOV) & is_store) |
                   ((uop_opcode == `UOP_MISC) &
                    ((misc_subcode_r == `MISC_SUB_MOV_SEG) |
@@ -830,17 +1257,36 @@ module stage_5_exu (
                     (misc_subcode_r == `MISC_SUB_FAR_CALL) |
                     (misc_subcode_r == `MISC_SUB_LGDT) |
                     (misc_subcode_r == `MISC_SUB_LIDT) |
+                    (misc_subcode_r == `MISC_SUB_LDS) |
+                    (misc_subcode_r == `MISC_SUB_LES) |
+                    (misc_subcode_r == `MISC_SUB_LFS) |
+                    (misc_subcode_r == `MISC_SUB_LGS) |
+                    (misc_subcode_r == `MISC_SUB_LSS) |
+                    (misc_subcode_r == `MISC_SUB_PUSH_SEG) |
+                    (misc_subcode_r == `MISC_SUB_POP_SEG) |
                     (misc_subcode_r == `MISC_SUB_OUT))))) begin
-                // Cache/BIU return an aligned dword; select lane from EA[1:0].
-                // MOVSX/MOVZX mem forms are byte (0F BE/B6) unless imm[0]=1 (word).
+                // Cache returns aligned dword (lane-select), except:
+                //  - spanning halfword EA[1:0]==11 (size-extracted to low 16)
+                //  - unaligned dword EA[1:0]!=00 (size-extracted to low 32)
+                // IO: BIU payload is already in low bits.
                 begin
                     logic [31: 0] lane_data;
-                    unique case (mem_hold_addr_r[1: 0])
-                        2'b00: lane_data = i_mem_rdata;
-                        2'b01: lane_data = { 8'h0, i_mem_rdata[31: 8]};
-                        2'b10: lane_data = {16'h0, i_mem_rdata[31:16]};
-                        2'b11: lane_data = {24'h0, i_mem_rdata[31:24]};
-                    endcase
+                    logic         sized_extract;
+                    sized_extract = mem_hold_io_r |
+                                    ((mem_hold_addr_r[1: 0] == 2'b11) &
+                                     (i_uop.uop_mem_size == 2'b01)) |
+                                    ((mem_hold_addr_r[1: 0] != 2'b00) &
+                                     (i_uop.uop_mem_size == 2'b10));
+                    if (sized_extract) begin
+                        lane_data = i_mem_rdata;
+                    end else begin
+                        unique case (mem_hold_addr_r[1: 0])
+                            2'b00: lane_data = i_mem_rdata;
+                            2'b01: lane_data = { 8'h0, i_mem_rdata[31: 8]};
+                            2'b10: lane_data = {16'h0, i_mem_rdata[31:16]};
+                            2'b11: lane_data = {24'h0, i_mem_rdata[31:24]};
+                        endcase
+                    end
                     if (uop_opcode == `UOP_MOVZX) begin
                         if (immediate[0])
                             tmp_result = {16'h0, lane_data[15: 0]};
@@ -852,20 +1298,56 @@ module stage_5_exu (
                         else
                             tmp_result = {{24{lane_data[7]}}, lane_data[7: 0]};
                     end else begin
-                        tmp_result = i_mem_rdata;
+                        unique case (i_uop.uop_mem_size)
+                            2'b00:   tmp_result = {24'h0, lane_data[7: 0]};
+                            2'b01:   tmp_result = {16'h0, lane_data[15: 0]};
+                            default: tmp_result = lane_data;
+                        endcase
                     end
                 end
                 write_gpr  = 1'b1;
             end
             // CALL: commit ESP and redirect only after return address is stored.
             if (uop_opcode == `UOP_CALL) begin
-                tmp_result = src2_data - 32'd4;
+                tmp_result = src2_data - ((i_uop.uop_mem_size == 2'b01) ? 32'd2 : 32'd4);
                 write_gpr  = 1'b1;
                 write_ip   = 1'b1;
-                ip_data    = has_disp ? displacement : immediate;
+                // Match dispatcher call_target: direct uses disp; reg-indirect uses src1.
+                // Do not use immediate here — that is the return EIP on the stack.
+                ip_data    = has_disp ? displacement : src1_data;
+            end
+            // RET: commit ESP and redirect only after return address is loaded.
+            // Cache returns the containing dword; SP is often 2-aligned in real
+            // mode (FreeDOS call/print trick), so lane-select like UOP_POP/IDU.
+            if (uop_opcode == `UOP_RET) begin
+                tmp_result = has_imm ? (src1_data + immediate) :
+                             (src1_data + ((i_uop.uop_mem_size == 2'b01) ? 32'd2 : 32'd4));
+                write_gpr  = 1'b1;
+                write_ip   = 1'b1;
+                begin
+                    logic [31: 0] ret_lane;
+                    unique case (mem_hold_addr_r[1: 0])
+                        2'b00:   ret_lane = i_mem_rdata;
+                        2'b01:   ret_lane = { 8'h0, i_mem_rdata[31: 8]};
+                        2'b10:   ret_lane = {16'h0, i_mem_rdata[31:16]};
+                        default: ret_lane = {24'h0, i_mem_rdata[31:24]};
+                    endcase
+                    ip_data = (i_uop.uop_mem_size == 2'b01) ?
+                              {16'h0, ret_lane[15: 0]} : ret_lane;
+                end
             end
             if (ret_pending_r) begin
-                ip_data  = i_mem_rdata;
+                begin
+                    logic [31: 0] ret_lane;
+                    unique case (mem_hold_addr_r[1: 0])
+                        2'b00:   ret_lane = i_mem_rdata;
+                        2'b01:   ret_lane = { 8'h0, i_mem_rdata[31: 8]};
+                        2'b10:   ret_lane = {16'h0, i_mem_rdata[31:16]};
+                        default: ret_lane = {24'h0, i_mem_rdata[31:24]};
+                    endcase
+                    ip_data = (i_uop.uop_mem_size == 2'b01) ?
+                              {16'h0, ret_lane[15: 0]} : ret_lane;
+                end
                 write_ip = 1'b1;
             end
             if ((uop_opcode == `UOP_MISC) && (misc_subcode_r == `MISC_SUB_MOV_SEG)) begin
@@ -876,6 +1358,47 @@ module stage_5_exu (
                 mov_seg_real_enable   = 1'b1;
                 mov_seg_real_index    = immediate[10: 8];
                 mov_seg_real_selector = i_mem_rdata[15: 0];
+            end else if ((uop_opcode == `UOP_MISC) && (misc_subcode_r == `MISC_SUB_POP_SEG)) begin
+                // POP Sreg: 16-bit selector; lane-select like UOP_POP (SP often odd/2-aligned)
+                begin
+                    logic [31: 0] pop_seg_lane;
+                    unique case (mem_hold_addr_r[1: 0])
+                        2'b00:   pop_seg_lane = i_mem_rdata;
+                        2'b01:   pop_seg_lane = { 8'h0, i_mem_rdata[31: 8]};
+                        2'b10:   pop_seg_lane = {16'h0, i_mem_rdata[31:16]};
+                        default: pop_seg_lane = {24'h0, i_mem_rdata[31:24]};
+                    endcase
+                    mov_seg_real_enable   = 1'b1;
+                    mov_seg_real_index    = immediate[10: 8];
+                    mov_seg_real_selector = pop_seg_lane[15: 0];
+                end
+                tmp_result = i_gpr_esp + ((i_uop.uop_mem_size == 2'b01) ? 32'd2 : 32'd4);
+                write_gpr  = 1'b1;
+            end else if ((uop_opcode == `UOP_MISC) && (misc_subcode_r == `MISC_SUB_PUSH_SEG)) begin
+                tmp_result = i_gpr_esp - ((i_uop.uop_mem_size == 2'b01) ? 32'd2 : 32'd4);
+                write_gpr  = 1'b1;
+            end else if ((uop_opcode == `UOP_MISC) &&
+                         ((misc_subcode_r == `MISC_SUB_LDS) |
+                          (misc_subcode_r == `MISC_SUB_LES) |
+                          (misc_subcode_r == `MISC_SUB_LFS) |
+                          (misc_subcode_r == `MISC_SUB_LGS) |
+                          (misc_subcode_r == `MISC_SUB_LSS))) begin
+                // Far pointer: [15:0]=offset → GPR, [31:16]=selector → sreg
+                tmp_result = {16'h0, i_mem_rdata[15: 0]};
+                write_gpr  = 1'b1;
+                mov_seg_real_enable   = 1'b1;
+                mov_seg_real_selector = i_mem_rdata[31: 16];
+                unique case (misc_subcode_r)
+                    `MISC_SUB_LES: mov_seg_real_index = `sreg_index_ES;
+                    `MISC_SUB_LDS: mov_seg_real_index = `sreg_index_DS;
+                    `MISC_SUB_LFS: mov_seg_real_index = `sreg_index_FS;
+                    `MISC_SUB_LGS: mov_seg_real_index = `sreg_index_GS;
+                    default:       mov_seg_real_index = `sreg_index_SS;
+                endcase
+                seg_load_valid        = 1'b1;
+                seg_load_op_type      = 2'b00;
+                seg_load_target_index = mov_seg_real_index;
+                seg_load_selector     = i_mem_rdata[31: 16];
             end else if ((uop_opcode == `UOP_MISC) &&
                          ((misc_subcode_r == `MISC_SUB_FAR_JMP) ||
                           (misc_subcode_r == `MISC_SUB_FAR_CALL))) begin
@@ -906,26 +1429,43 @@ module stage_5_exu (
             // Sticky POP retirement: dest write used latched mem rdata path via
             // load_pending&done; ESP adjust is enabled separately below.
             write_gpr = 1'b0;
-        end else if (load_pending_r & (uop_opcode == `UOP_CMP)) begin
+        end else if (load_pending_r &
+                     ((uop_opcode == `UOP_CMP) |
+                      (uop_opcode == `UOP_ADD) |
+                      (uop_opcode == `UOP_SUB))) begin
             // Hold mem request until MMU+memory complete (one-cycle pulse is not enough).
             // Drop valid on the done beat so the cache cannot re-issue from IDLE.
-            mem_address      = agu_addr;
+            // Imm RMW store beat: write enable via hold.
+            mem_address      = mem_hold_addr_r;
             mem_valid        = ~i_mem_done;
-            mem_write_enable = 1'b0;
+            mem_write_enable = alu_rmw_store_r;
+            mem_write_data   = alu_rmw_data_r;
         end else if (load_pending_r &
                      (((uop_opcode == `UOP_MOV) & ~is_store) |
                       (uop_opcode == `UOP_MOVZX) |
                       (uop_opcode == `UOP_MOVSX) |
                       (uop_opcode == `UOP_BRANCH))) begin
-            mem_address      = (uop_opcode == `UOP_BRANCH) ? mem_hold_addr_r :
-                               (src1_data + displacement);
+            mem_address      = (uop_opcode == `UOP_BRANCH) ? mem_hold_addr_r : agu_addr;
             mem_valid        = ~i_mem_done;
             mem_write_enable = 1'b0;
+        end else if (load_pending_r & (uop_opcode == `UOP_STRING)) begin
+            // Hold LODS/STOS/MOVS request until LSU completes.
+            if (string_is_movs | movs_active_r) begin
+                mem_address      = movs_store_phase_r ? movs_di_r : movs_si_r;
+                mem_valid        = ~i_mem_done;
+                mem_write_enable = movs_store_phase_r;
+                mem_write_data   = movs_data_r;
+            end else begin
+                mem_address      = mem_hold_addr_r;
+                mem_valid        = ~i_mem_done;
+                mem_write_enable = is_store;
+                mem_write_data   = mem_hold_wdata_r;
+            end
         end else if (load_pending_r & (uop_opcode == `UOP_MOV) & is_store) begin
-            mem_address      = src1_data + displacement;
+            mem_address      = agu_addr;
             mem_valid        = ~i_mem_done;
             mem_write_enable = 1'b1;
-            mem_write_data   = src2_data;
+            mem_write_data   = has_imm ? immediate : src2_data;
         end else if (load_pending_r & (uop_opcode == `UOP_MISC) &
                      ((misc_subcode_r == `MISC_SUB_LGDT) |
                       (misc_subcode_r == `MISC_SUB_LIDT))) begin
@@ -935,6 +1475,19 @@ module stage_5_exu (
                                (far_ind_addr_r + 32'd4);
             mem_valid        = ~i_mem_done;
             mem_write_enable = 1'b0;
+        end else if (load_pending_r & (uop_opcode == `UOP_MISC) &
+                     ((misc_subcode_r == `MISC_SUB_LDS) |
+                      (misc_subcode_r == `MISC_SUB_LES) |
+                      (misc_subcode_r == `MISC_SUB_LFS) |
+                      (misc_subcode_r == `MISC_SUB_LGS) |
+                      (misc_subcode_r == `MISC_SUB_LSS) |
+                      (misc_subcode_r == `MISC_SUB_MOV_SEG) |
+                      (misc_subcode_r == `MISC_SUB_PUSH_SEG) |
+                      (misc_subcode_r == `MISC_SUB_POP_SEG))) begin
+            mem_address      = mem_hold_addr_r;
+            mem_valid        = ~i_mem_done;
+            mem_write_enable = (misc_subcode_r == `MISC_SUB_PUSH_SEG);
+            mem_write_data   = mem_hold_wdata_r;
         end else if (load_pending_r & (uop_opcode == `UOP_MISC) &
                      ((misc_subcode_r == `MISC_SUB_IN) |
                       (misc_subcode_r == `MISC_SUB_OUT))) begin
@@ -1005,9 +1558,23 @@ module stage_5_exu (
             misc_subcode_r       <= 8'h0;
             ret_pending_r        <= 1'b0;
             far_ind_step_r       <= 2'd0;
+            movs_active_r        <= 1'b0;
+            movs_store_phase_r   <= 1'b0;
+            movs_data_r          <= 32'd0;
+            movs_si_r            <= 32'd0;
+            movs_di_r            <= 32'd0;
+            movs_cx_r            <= 32'd0;
+            movs_rep_r           <= 1'b0;
+            movs_size_r          <= 2'b00;
+            movs_df_r            <= 1'b0;
+            movs_finish_r        <= 1'b0;
+            alu_rmw_store_r      <= 1'b0;
+            alu_rmw_data_r       <= 32'd0;
             far_ind_offset_r     <= 32'd0;
             far_ind_addr_r       <= 32'd0;
             far_ind_beat2_issued_r <= 1'b0;
+            far_ind_beat2_arm_r    <= 1'b0;
+            far_ind_beat2_gap_r    <= 1'b0;
             far_ind_hi_r         <= 32'd0;
             far_ind_gdtr_commit_r <= 1'b0;
             far_call_pending_r   <= 1'b0;
@@ -1021,6 +1588,8 @@ module stage_5_exu (
             mem_hold_addr_r      <= 32'h0;
             mem_hold_wdata_r     <= 32'h0;
         end else begin
+            if (movs_finish_r)
+                movs_finish_r <= 1'b0;
             // Keep mem_op_complete sticky across brief ~valid bubbles (IFU reload
             // after CALL write_ip). Clearing it here allowed the same CALL uop to
             // re-arm and push a second return address over the stack argument.
@@ -1044,6 +1613,7 @@ module stage_5_exu (
             end else if (uop_changed) begin
                 mem_op_complete_r    <= 1'b0;
                 alu_wb_done_r        <= 1'b0;
+                alu_rmw_store_r      <= 1'b0;
                 mem_op_gen_r         <= mem_op_gen_eff;
                 uop_fp_r             <= uop_fp;
             end
@@ -1058,6 +1628,21 @@ module stage_5_exu (
             if (far_ind_gdtr_commit_r) begin
                 far_ind_gdtr_commit_r <= 1'b0;
             end
+            // Arm beat2 one cycle after issue so beat0 done/rdata cannot commit.
+            if (far_ind_beat2_issued_r & ~far_ind_beat2_arm_r) begin
+                far_ind_beat2_arm_r <= 1'b1;
+            end
+            // LGDT/LIDT: one-cycle request gap after beat0 so BIU/cache drop
+            // the old beat before addr+4 is issued (avoids base=limit<<16).
+            if (far_ind_beat2_gap_r) begin
+                far_ind_beat2_gap_r    <= 1'b0;
+                mem_hold_addr_r        <= far_ind_addr_r + 32'd4;
+                mem_hold_valid_r       <= 1'b1;
+                mem_hold_we_r          <= 1'b0;
+                mem_hold_io_r          <= 1'b0;
+                far_ind_beat2_issued_r <= 1'b1;
+                far_ind_beat2_arm_r    <= 1'b0;
+            end
             // Protected-mode segment loads: wait for SLU before retiring (avoids re-issue).
             if (i_uop_valid & i_wrb_ready & i_cr0_data[0] & ~load_pending_r &
                 ~far_call_pending_r & ~seg_load_pending_r & ~seg_load_complete_r &
@@ -1068,7 +1653,7 @@ module stage_5_exu (
                 seg_load_complete_r <= 1'b1;
             end
             if (i_uop_valid & i_wrb_ready & ~load_pending_r & ~far_call_pending_r &
-                ~seg_load_pending_r & ~mem_op_complete_r & mem_valid) begin
+                ~seg_load_pending_r & ~mem_op_complete_eff & mem_valid) begin
                 load_pending_r <= 1'b1;
                 load_dest_r    <= dest_reg;
                 mem_hold_valid_r <= 1'b1;
@@ -1076,6 +1661,21 @@ module stage_5_exu (
                 mem_hold_io_r    <= data_io_access;
                 mem_hold_addr_r  <= mem_address;
                 mem_hold_wdata_r <= mem_write_data;
+                if (string_is_movs) begin
+                    movs_active_r      <= 1'b1;
+                    movs_store_phase_r <= 1'b0;
+                    movs_finish_r      <= 1'b0;
+                    movs_si_r          <= src1_data;
+                    movs_di_r          <= src2_data;
+                    // REP count follows Address/Operand size: 16-bit uses CX only.
+                    movs_cx_r          <= i_uop.uop_rep ?
+                                         ((i_uop.uop_mem_size == 2'b10) ?
+                                          i_gpr_ecx : {16'h0, i_gpr_ecx[15: 0]}) :
+                                         32'd1;
+                    movs_rep_r         <= i_uop.uop_rep;
+                    movs_size_r        <= i_uop.uop_mem_size;
+                    movs_df_r          <= i_df;
+                end
                 if (uop_opcode == `UOP_RET) begin
                     ret_pending_r <= 1'b1;
                 end
@@ -1092,6 +1692,8 @@ module stage_5_exu (
                         far_ind_step_r         <= 2'd0;
                         far_ind_addr_r         <= mem_address;
                         far_ind_beat2_issued_r <= 1'b0;
+                        far_ind_beat2_arm_r    <= 1'b0;
+                        far_ind_beat2_gap_r    <= 1'b0;
                         far_ind_gdtr_commit_r  <= 1'b0;
                     end
                 end else begin
@@ -1102,6 +1704,7 @@ module stage_5_exu (
                     misc_subcode_r         <= 8'h0;
                     far_ind_step_r         <= 2'd0;
                     far_ind_beat2_issued_r <= 1'b0;
+                    far_ind_beat2_arm_r    <= 1'b0;
                 end
             end else if (i_uop_valid & i_wrb_ready & ~load_pending_r & ~far_call_pending_r &
                          (uop_opcode == `UOP_MISC) &&
@@ -1112,6 +1715,88 @@ module stage_5_exu (
                 far_call_far_offset_r <= displacement;
                 far_call_far_selector_r <= immediate[23: 8];
             end else if (load_pending_r & i_mem_done) begin
+                // MOVS: load → store → (next element | finish). Keep uop in EXU.
+                if (movs_active_r | (string_is_movs & i_uop_valid)) begin
+                    if (~movs_store_phase_r) begin
+                        begin
+                            logic [31: 0] movs_lane;
+                            logic [31: 0] movs_elem;
+                            unique case (mem_hold_addr_r[1: 0])
+                                2'b00:   movs_lane = i_mem_rdata;
+                                2'b01:   movs_lane = { 8'h0, i_mem_rdata[31: 8]};
+                                2'b10:   movs_lane = {16'h0, i_mem_rdata[31:16]};
+                                default: movs_lane = {24'h0, i_mem_rdata[31:24]};
+                            endcase
+                            unique case (movs_size_r)
+                                2'b00:   movs_elem = {24'h0, movs_lane[7: 0]};
+                                2'b01:   movs_elem = {16'h0, movs_lane[15: 0]};
+                                default: movs_elem = movs_lane;
+                            endcase
+                            movs_data_r        <= movs_elem;
+                            mem_hold_wdata_r   <= movs_elem;
+                        end
+                        movs_store_phase_r <= 1'b1;
+                        load_pending_r     <= 1'b1;
+                        mem_hold_valid_r   <= 1'b1;
+                        mem_hold_we_r      <= 1'b1;
+                        mem_hold_io_r      <= 1'b0;
+                        mem_hold_addr_r    <= movs_di_r;
+                    end else begin
+                        begin
+                            logic [31: 0] step_c;
+                            logic [31: 0] si_n;
+                            logic [31: 0] di_n;
+                            logic [31: 0] cx_n;
+                            step_c = movs_df_r ? (~((movs_size_r == 2'b00) ? 32'd1 :
+                                                   (movs_size_r == 2'b01) ? 32'd2 : 32'd4) + 32'd1) :
+                                                 ((movs_size_r == 2'b00) ? 32'd1 :
+                                                  (movs_size_r == 2'b01) ? 32'd2 : 32'd4);
+                            if (movs_size_r == 2'b10) begin
+                                si_n = movs_si_r + step_c;
+                                di_n = movs_di_r + step_c;
+                            end else begin
+                                si_n = {16'h0, movs_si_r[15: 0] + step_c[15: 0]};
+                                di_n = {16'h0, movs_di_r[15: 0] + step_c[15: 0]};
+                            end
+                            cx_n = movs_cx_r - 32'd1;
+                            movs_si_r <= si_n;
+                            movs_di_r <= di_n;
+                            movs_cx_r <= cx_n;
+                            if (movs_rep_r & (cx_n != 32'd0)) begin
+                                movs_store_phase_r <= 1'b0;
+                                load_pending_r     <= 1'b1;
+                                mem_hold_valid_r   <= 1'b1;
+                                mem_hold_we_r      <= 1'b0;
+                                mem_hold_io_r      <= 1'b0;
+                                mem_hold_addr_r    <= si_n;
+                            end else begin
+                                movs_active_r      <= 1'b0;
+                                movs_store_phase_r <= 1'b0;
+                                movs_finish_r      <= 1'b1;
+                                load_pending_r     <= 1'b0;
+                                mem_hold_valid_r   <= 1'b0;
+                                mem_op_complete_r  <= 1'b1;
+                                mem_op_complete_gen_r <= mem_op_gen_eff;
+                            end
+                        end
+                    end
+                end else if (((uop_opcode == `UOP_ADD) | (uop_opcode == `UOP_SUB)) & has_imm &
+                             ~alu_rmw_store_r) begin
+                    // Imm→mem RMW: load done — commit flags/result, arm store beat.
+                    alu_rmw_store_r    <= 1'b1;
+                    alu_rmw_data_r     <= tmp_result;
+                    load_pending_r     <= 1'b1;
+                    mem_hold_valid_r   <= 1'b1;
+                    mem_hold_we_r      <= 1'b1;
+                    mem_hold_wdata_r   <= tmp_result;
+                    mem_hold_io_r      <= 1'b0;
+                end else if (alu_rmw_store_r) begin
+                    alu_rmw_store_r       <= 1'b0;
+                    load_pending_r        <= 1'b0;
+                    mem_hold_valid_r      <= 1'b0;
+                    mem_op_complete_r     <= 1'b1;
+                    mem_op_complete_gen_r <= mem_op_gen_eff;
+                end else begin
                 load_pending_r      <= 1'b0;
                 mem_hold_valid_r    <= 1'b0;
                 if ((uop_opcode == `UOP_CMP) ||
@@ -1134,19 +1819,27 @@ module stage_5_exu (
                         far_ind_offset_r    <= i_mem_rdata;
                         load_pending_r      <= 1'b1;
                         misc_load_pending_r <= 1'b1;
-                        // Immediately issue beat2 at addr+4 (no gap). Beat0's done
-                        // pulse ends this cycle, so the next done is beat2's.
-                        far_ind_step_r         <= 2'd1;
-                        mem_hold_addr_r        <= far_ind_addr_r + 32'd4;
-                        mem_hold_valid_r       <= 1'b1;
-                        mem_hold_we_r          <= 1'b0;
-                        mem_hold_io_r          <= 1'b0;
-                        far_ind_beat2_issued_r <= ((misc_subcode_r == `MISC_SUB_LGDT) |
-                                                   (misc_subcode_r == `MISC_SUB_LIDT));
+                        far_ind_step_r      <= 2'd1;
+                        if ((misc_subcode_r == `MISC_SUB_LGDT) ||
+                            (misc_subcode_r == `MISC_SUB_LIDT)) begin
+                            // Drop request for one cycle, then issue addr+4.
+                            mem_hold_valid_r       <= 1'b0;
+                            far_ind_beat2_gap_r    <= 1'b1;
+                            far_ind_beat2_issued_r <= 1'b0;
+                            far_ind_beat2_arm_r    <= 1'b0;
+                        end else begin
+                            mem_hold_addr_r        <= far_ind_addr_r + 32'd4;
+                            mem_hold_valid_r       <= 1'b1;
+                            mem_hold_we_r          <= 1'b0;
+                            mem_hold_io_r          <= 1'b0;
+                            far_ind_beat2_issued_r <= 1'b0;
+                            far_ind_beat2_arm_r    <= 1'b0;
+                        end
                     end else if (misc_subcode_r == `MISC_SUB_FAR_CALL) begin
                         misc_load_pending_r   <= 1'b0;
                         far_ind_step_r        <= 2'd0;
                         far_ind_beat2_issued_r <= 1'b0;
+                        far_ind_beat2_arm_r    <= 1'b0;
                         far_call_pending_r    <= 1'b1;
                         far_call_step_r       <= 2'd0;
                         far_call_esp_base_r   <= i_gpr_esp;
@@ -1154,16 +1847,18 @@ module stage_5_exu (
                         far_call_far_selector_r <= i_mem_rdata[15: 0];
                     end else if ((misc_subcode_r == `MISC_SUB_LGDT) ||
                                  (misc_subcode_r == `MISC_SUB_LIDT)) begin
-                        if (far_ind_beat2_ok & far_ind_beat2_rdata_fresh) begin
+                        if (far_ind_beat2_ok) begin
                             far_ind_hi_r           <= i_mem_rdata;
                             far_ind_gdtr_commit_r  <= 1'b1;
                             misc_load_pending_r    <= 1'b0;
                             far_ind_step_r         <= 2'd0;
                             far_ind_beat2_issued_r <= 1'b0;
+                            far_ind_beat2_arm_r    <= 1'b0;
+                            far_ind_beat2_gap_r    <= 1'b0;
                             mem_op_complete_r      <= 1'b1;
                             mem_op_complete_gen_r  <= mem_op_gen_eff;
                         end else begin
-                            // Stale/spurious done (rdata still beat0): re-issue addr+4
+                            // Wait for armed beat2 done (or re-issue addr+4)
                             load_pending_r         <= 1'b1;
                             misc_load_pending_r    <= 1'b1;
                             mem_hold_addr_r        <= far_ind_addr_r + 32'd4;
@@ -1171,11 +1866,14 @@ module stage_5_exu (
                             mem_hold_we_r          <= 1'b0;
                             far_ind_step_r         <= 2'd1;
                             far_ind_beat2_issued_r <= 1'b1;
+                            far_ind_beat2_arm_r    <= 1'b0;
                         end
                     end else begin
+                        // FAR_JMP beat1
                         misc_load_pending_r    <= 1'b0;
                         far_ind_step_r         <= 2'd0;
                         far_ind_beat2_issued_r <= 1'b0;
+                        far_ind_beat2_arm_r    <= 1'b0;
                         mem_op_complete_r      <= 1'b1;
                         mem_op_complete_gen_r  <= mem_op_gen_eff;
                     end
@@ -1190,6 +1888,7 @@ module stage_5_exu (
                     mem_op_complete_gen_r <= mem_op_gen_eff;
                 end
                 ret_pending_r <= 1'b0;
+                end // ~movs
             end else if (far_call_pending_r & i_mem_done) begin
                 if (far_call_step_r == 2'd0) begin
                     far_call_step_r <= 2'd1;
@@ -1210,12 +1909,15 @@ module stage_5_exu (
     // Keep multi-beat uops in EXU until the final data beat retires.
     // LGDT/LIDT: retire on beat2 done (far_ind_beat2_ok).
     // Far-ind JMP/CALL: retire only after selector beat (step!=0 + done).
+    // MOVS REP: keep uop until all elements finish.
     assign multi_beat_mid =
-        load_pending_r & (uop_opcode == `UOP_MISC) &
+        (movs_active_r & ~movs_finish_r) |
+        (alu_rmw_store_r) |
+        (load_pending_r & (uop_opcode == `UOP_MISC) &
         (((misc_subcode_r == `MISC_SUB_LGDT) | (misc_subcode_r == `MISC_SUB_LIDT)) ?
-         ~(far_ind_beat2_ok & far_ind_beat2_rdata_fresh & i_mem_done) :
+         ~(far_ind_beat2_ok & i_mem_done) :
          (((misc_subcode_r == `MISC_SUB_FAR_JMP) | (misc_subcode_r == `MISC_SUB_FAR_CALL)) &
-          (far_ind_step_r == 2'd0)));
+          (far_ind_step_r == 2'd0))));
 
     // Allow ready on the mem_done beat even while load_pending is still set,
     // otherwise IN/OUT never handshake and re-issue forever after each done pulse.
@@ -1229,17 +1931,21 @@ module stage_5_exu (
                                  (seg_load_pending_r & ~i_slu_ready) |
                                  (mem_needs_wait & ~load_pending_r);
     assign o_stage_valid       = (i_uop_valid & mem_op_complete_eff) |
+                                 (movs_finish_r) |
                                  ((load_pending_r | far_call_pending_r) & i_mem_done &
                                   ~multi_beat_mid) |
                                  (seg_load_pending_r & i_slu_ready) |
                                  (i_uop_valid & seg_load_complete_r) |
                                  (i_uop_valid & ~load_pending_r & ~far_call_pending_r &
                                   ~seg_load_pending_r & ~seg_load_complete_r & ~mem_needs_wait &
+                                  ~movs_active_r &
                                   ~(i_cr0_data[0] & seg_load_valid));
 
     always_comb begin
         logic [2:0] active_dest;
         active_dest = (far_call_pending_r & i_mem_done) ? 3'd4 :
+                      (load_pending_r & i_mem_done &
+                       (uop_opcode == `UOP_STRING) & ~is_store & ~string_is_movs) ? 3'd0 :
                       (load_pending_r & i_mem_done) ? load_dest_r : dest_reg;
 
         o_wrb_gpr_enable_EAX = 1'b0;
@@ -1319,16 +2025,126 @@ module stage_5_exu (
                 end
             endcase
         end
+        // Byte MOV r8,imm: only AL/*L or AH/*H (eee[0]), never full EAX/ESP.
+        if (i_uop_valid & ~load_pending_r & ~far_call_pending_r & ~mem_op_complete_eff &
+            (uop_opcode == `UOP_MOV) & ~mem_access & has_imm &
+            (i_uop.uop_mem_size == 2'b00) & write_gpr) begin
+            o_wrb_gpr_enable_EAX = 1'b0;
+            o_wrb_gpr_enable_AX  = 1'b0;
+            o_wrb_gpr_enable_AL  = 1'b0;
+            o_wrb_gpr_enable_AH  = 1'b0;
+            o_wrb_gpr_enable_ECX = 1'b0;
+            o_wrb_gpr_enable_CX  = 1'b0;
+            o_wrb_gpr_enable_CL  = 1'b0;
+            o_wrb_gpr_enable_CH  = 1'b0;
+            o_wrb_gpr_enable_EDX = 1'b0;
+            o_wrb_gpr_enable_DX  = 1'b0;
+            o_wrb_gpr_enable_DL  = 1'b0;
+            o_wrb_gpr_enable_DH  = 1'b0;
+            o_wrb_gpr_enable_EBX = 1'b0;
+            o_wrb_gpr_enable_BX  = 1'b0;
+            o_wrb_gpr_enable_BL  = 1'b0;
+            o_wrb_gpr_enable_BH  = 1'b0;
+            o_wrb_gpr_enable_ESP = 1'b0;
+            o_wrb_gpr_enable_SP  = 1'b0;
+            if (i_uop.uop_eee[0]) begin
+                unique case (active_dest)
+                    3'd0: o_wrb_gpr_enable_AH = 1'b1;
+                    3'd1: o_wrb_gpr_enable_CH = 1'b1;
+                    3'd2: o_wrb_gpr_enable_DH = 1'b1;
+                    3'd3: o_wrb_gpr_enable_BH = 1'b1;
+                    default: ;
+                endcase
+            end else begin
+                unique case (active_dest)
+                    3'd0: o_wrb_gpr_enable_AL = 1'b1;
+                    3'd1: o_wrb_gpr_enable_CL = 1'b1;
+                    3'd2: o_wrb_gpr_enable_DL = 1'b1;
+                    3'd3: o_wrb_gpr_enable_BL = 1'b1;
+                    default: ;
+                endcase
+            end
+        end
+        // Byte shift/rotate (ROR CL, SHR AL, …): only the selected *L/*H lane.
+        // Full ECX/CX/CH enables were clearing CH during FreeDOS LBA→CHS (ROR CL).
+        if (i_uop_valid & ~load_pending_r & ~far_call_pending_r & ~mem_op_complete_eff &
+            write_gpr & (i_uop.uop_mem_size == 2'b00) & ~mem_access &
+            exu_opcode_is_shift(uop_opcode)) begin
+            o_wrb_gpr_enable_EAX = 1'b0;
+            o_wrb_gpr_enable_AX  = 1'b0;
+            o_wrb_gpr_enable_AL  = 1'b0;
+            o_wrb_gpr_enable_AH  = 1'b0;
+            o_wrb_gpr_enable_ECX = 1'b0;
+            o_wrb_gpr_enable_CX  = 1'b0;
+            o_wrb_gpr_enable_CL  = 1'b0;
+            o_wrb_gpr_enable_CH  = 1'b0;
+            o_wrb_gpr_enable_EDX = 1'b0;
+            o_wrb_gpr_enable_DX  = 1'b0;
+            o_wrb_gpr_enable_DL  = 1'b0;
+            o_wrb_gpr_enable_DH  = 1'b0;
+            o_wrb_gpr_enable_EBX = 1'b0;
+            o_wrb_gpr_enable_BX  = 1'b0;
+            o_wrb_gpr_enable_BL  = 1'b0;
+            o_wrb_gpr_enable_BH  = 1'b0;
+            o_wrb_gpr_enable_ESP = 1'b0;
+            o_wrb_gpr_enable_SP  = 1'b0;
+            o_wrb_gpr_enable_EBP = 1'b0;
+            o_wrb_gpr_enable_BP  = 1'b0;
+            o_wrb_gpr_enable_ESI = 1'b0;
+            o_wrb_gpr_enable_SI  = 1'b0;
+            o_wrb_gpr_enable_EDI = 1'b0;
+            o_wrb_gpr_enable_DI  = 1'b0;
+            if (i_uop.uop_eee[0]) begin
+                unique case (active_dest)
+                    3'd0: o_wrb_gpr_enable_AH = 1'b1;
+                    3'd1: o_wrb_gpr_enable_CH = 1'b1;
+                    3'd2: o_wrb_gpr_enable_DH = 1'b1;
+                    3'd3: o_wrb_gpr_enable_BH = 1'b1;
+                    default: ;
+                endcase
+            end else begin
+                unique case (active_dest)
+                    3'd0: o_wrb_gpr_enable_AL = 1'b1;
+                    3'd1: o_wrb_gpr_enable_CL = 1'b1;
+                    3'd2: o_wrb_gpr_enable_DL = 1'b1;
+                    3'd3: o_wrb_gpr_enable_BL = 1'b1;
+                    default: ;
+                endcase
+            end
+        end
+        // LODSB/LODSW: only touch AL or AX; do not clear AH via full EAX enable.
+        if (load_pending_r & i_mem_done & (uop_opcode == `UOP_STRING) & ~is_store &
+            ~string_is_movs & write_gpr) begin
+            o_wrb_gpr_enable_EAX = (i_uop.uop_mem_size == 2'b10);
+            o_wrb_gpr_enable_AX  = (i_uop.uop_mem_size != 2'b00);
+            o_wrb_gpr_enable_AL  = 1'b1;
+            o_wrb_gpr_enable_AH  = (i_uop.uop_mem_size != 2'b00);
+        end
+        // MOVS: write final SI/DI/CX after the last element.
+        if (movs_finish_r) begin
+            o_wrb_gpr_enable_ESI = 1'b1;
+            o_wrb_gpr_enable_SI  = 1'b1;
+            o_wrb_gpr_enable_EDI = 1'b1;
+            o_wrb_gpr_enable_DI  = 1'b1;
+            o_wrb_gpr_enable_ECX = 1'b1;
+            o_wrb_gpr_enable_CX  = 1'b1;
+            o_wrb_gpr_enable_CL  = 1'b1;
+            o_wrb_gpr_enable_CH  = 1'b1;
+        end
         // LEAVE: also write ESP := EBP+4 on issue cycle
         if (i_uop_valid & ~load_pending_r & ~far_call_pending_r &
             (uop_opcode == `UOP_MISC) & (immediate[7: 0] == `MISC_SUB_LEAVE)) begin
             o_wrb_gpr_enable_ESP = 1'b1;
             o_wrb_gpr_enable_SP  = 1'b1;
         end
-        // POP: update ESP := ESP+4 only on the mem_done cycle (not while
+        // POP/RET: update ESP only on the mem_done cycle (not while
         // mem_op_complete is sticky — RF may already hold ESP+4 and src1 may
         // have been refreshed, which would add 4 again).
-        if (load_pending_r & i_mem_done & (uop_opcode == `UOP_POP)) begin
+        if (load_pending_r & i_mem_done &
+            ((uop_opcode == `UOP_POP) | (uop_opcode == `UOP_RET) |
+             ((uop_opcode == `UOP_MISC) &
+              ((misc_subcode_r == `MISC_SUB_POP_SEG) |
+               (misc_subcode_r == `MISC_SUB_PUSH_SEG))))) begin
             o_wrb_gpr_enable_ESP = 1'b1;
             o_wrb_gpr_enable_SP  = 1'b1;
         end
@@ -1360,37 +2176,89 @@ module stage_5_exu (
             o_wrb_gpr_enable_DL  = 1'b1;
             o_wrb_gpr_enable_DH  = 1'b1;
         end
+        // MUL/DIV: write EAX/AX; EDX/DX only for word/dword forms
+        if ((muldiv_wb | (load_pending_r & i_mem_done & mem_access &
+             ((uop_opcode == `UOP_MUL) | (uop_opcode == `UOP_DIV) |
+              (uop_opcode == `UOP_IDIV)))) & ~exc_de_valid) begin
+            o_wrb_gpr_enable_EAX = 1'b1;
+            o_wrb_gpr_enable_AX  = 1'b1;
+            o_wrb_gpr_enable_AL  = 1'b1;
+            o_wrb_gpr_enable_AH  = 1'b1;
+            if (i_uop.uop_mem_size != 2'b00) begin
+                o_wrb_gpr_enable_EDX = 1'b1;
+                o_wrb_gpr_enable_DX  = 1'b1;
+                o_wrb_gpr_enable_DL  = 1'b1;
+                o_wrb_gpr_enable_DH  = 1'b1;
+            end
+        end
+        // XCHG r,acc: also write EAX := old r (src2)
+        if (i_uop_valid & ~load_pending_r & ~far_call_pending_r &
+            (uop_opcode == `UOP_XCHG) & (dest_reg != 3'd0)) begin
+            o_wrb_gpr_enable_EAX = 1'b1;
+            o_wrb_gpr_enable_AX  = 1'b1;
+            o_wrb_gpr_enable_AL  = 1'b1;
+            o_wrb_gpr_enable_AH  = 1'b1;
+        end
     end
 
     logic         cpuid_wb;
     assign cpuid_wb = i_uop_valid & ~load_pending_r & ~far_call_pending_r &
                       (uop_opcode == `UOP_MISC) & (immediate[7: 0] == `MISC_SUB_CPUID);
 
-    assign o_wrb_gpr_data_EAX = cpuid_wb ? cpuid_eax : tmp_result;
-    assign o_wrb_gpr_data_AX  = cpuid_wb ? cpuid_eax[15: 0] : tmp_result[15: 0];
-    assign o_wrb_gpr_data_AL  = cpuid_wb ? cpuid_eax[ 7: 0] : tmp_result[ 7: 0];
-    assign o_wrb_gpr_data_AH  = cpuid_wb ? cpuid_eax[15: 8] : tmp_result[15: 8];
+    assign o_wrb_gpr_data_EAX = cpuid_wb ? cpuid_eax :
+                                ((i_uop_valid & ~load_pending_r &
+                                  (uop_opcode == `UOP_XCHG) & (dest_reg != 3'd0)) ?
+                                 src2_data : tmp_result);
+    assign o_wrb_gpr_data_AX  = cpuid_wb ? cpuid_eax[15: 0] :
+                                ((i_uop_valid & ~load_pending_r &
+                                  (uop_opcode == `UOP_XCHG) & (dest_reg != 3'd0)) ?
+                                 src2_data[15: 0] : tmp_result[15: 0]);
+    assign o_wrb_gpr_data_AL  = cpuid_wb ? cpuid_eax[ 7: 0] :
+                                ((i_uop_valid & ~load_pending_r &
+                                  (uop_opcode == `UOP_XCHG) & (dest_reg != 3'd0)) ?
+                                 src2_data[ 7: 0] : tmp_result[ 7: 0]);
+    assign o_wrb_gpr_data_AH  = cpuid_wb ? cpuid_eax[15: 8] :
+                                ((i_uop_valid & ~load_pending_r &
+                                  (uop_opcode == `UOP_XCHG) & (dest_reg != 3'd0)) ?
+                                 src2_data[15: 8] : tmp_result[15: 8]);
     assign o_wrb_gpr_data_EBX = cpuid_wb ? cpuid_ebx : tmp_result;
     assign o_wrb_gpr_data_BX  = cpuid_wb ? cpuid_ebx[15: 0] : tmp_result[15: 0];
     assign o_wrb_gpr_data_BL  = cpuid_wb ? cpuid_ebx[ 7: 0] : tmp_result[ 7: 0];
     assign o_wrb_gpr_data_BH  = cpuid_wb ? cpuid_ebx[15: 8] : tmp_result[15: 8];
-    assign o_wrb_gpr_data_ECX = cpuid_wb ? cpuid_ecx : tmp_result;
-    assign o_wrb_gpr_data_CX  = cpuid_wb ? cpuid_ecx[15: 0] : tmp_result[15: 0];
-    assign o_wrb_gpr_data_CL  = cpuid_wb ? cpuid_ecx[ 7: 0] : tmp_result[ 7: 0];
-    assign o_wrb_gpr_data_CH  = cpuid_wb ? cpuid_ecx[15: 8] : tmp_result[15: 8];
-    assign o_wrb_gpr_data_EDX = cpuid_wb ? cpuid_edx : tmp_result;
-    assign o_wrb_gpr_data_DX  = cpuid_wb ? cpuid_edx[15: 0] : tmp_result[15: 0];
-    assign o_wrb_gpr_data_DL  = cpuid_wb ? cpuid_edx[ 7: 0] : tmp_result[ 7: 0];
-    assign o_wrb_gpr_data_DH  = cpuid_wb ? cpuid_edx[15: 8] : tmp_result[15: 8];
-    assign o_wrb_gpr_data_ESP = (load_pending_r & i_mem_done & (uop_opcode == `UOP_POP)) ?
-                                (src1_data + 32'd4) : tmp_result;
+    assign o_wrb_gpr_data_ECX = cpuid_wb ? cpuid_ecx :
+                                movs_finish_r ? movs_cx_r : tmp_result;
+    assign o_wrb_gpr_data_CX  = cpuid_wb ? cpuid_ecx[15: 0] :
+                                movs_finish_r ? movs_cx_r[15: 0] : tmp_result[15: 0];
+    assign o_wrb_gpr_data_CL  = cpuid_wb ? cpuid_ecx[ 7: 0] :
+                                movs_finish_r ? movs_cx_r[ 7: 0] : tmp_result[ 7: 0];
+    assign o_wrb_gpr_data_CH  = cpuid_wb ? cpuid_ecx[15: 8] :
+                                movs_finish_r ? movs_cx_r[15: 8] : tmp_result[15: 8];
+    assign o_wrb_gpr_data_EDX = cpuid_wb ? cpuid_edx :
+                                ((muldiv_wb | (load_pending_r & i_mem_done & mem_access &
+                                  ((uop_opcode == `UOP_MUL) | (uop_opcode == `UOP_DIV) |
+                                   (uop_opcode == `UOP_IDIV)))) ? muldiv_hi_wb : tmp_result);
+    assign o_wrb_gpr_data_DX  = o_wrb_gpr_data_EDX[15: 0];
+    assign o_wrb_gpr_data_DL  = o_wrb_gpr_data_EDX[ 7: 0];
+    assign o_wrb_gpr_data_DH  = o_wrb_gpr_data_EDX[15: 8];
+    assign o_wrb_gpr_data_ESP = (load_pending_r & i_mem_done &
+                                 ((uop_opcode == `UOP_POP) | (uop_opcode == `UOP_RET) |
+                                  ((uop_opcode == `UOP_MISC) &
+                                   ((misc_subcode_r == `MISC_SUB_POP_SEG) |
+                                    (misc_subcode_r == `MISC_SUB_PUSH_SEG))))) ?
+                                ((uop_opcode == `UOP_MISC) &
+                                 (misc_subcode_r == `MISC_SUB_PUSH_SEG)) ?
+                                (i_gpr_esp - ((i_uop.uop_mem_size == 2'b01) ? 32'd2 : 32'd4)) :
+                                (has_imm && (uop_opcode == `UOP_RET) ?
+                                 (src1_data + immediate) :
+                                 (src1_data + ((i_uop.uop_mem_size == 2'b01) ? 32'd2 : 32'd4))) :
+                                tmp_result;
     assign o_wrb_gpr_data_SP  = o_wrb_gpr_data_ESP[15: 0];
     assign o_wrb_gpr_data_EBP = tmp_result;
     assign o_wrb_gpr_data_BP  = tmp_result[15: 0];
-    assign o_wrb_gpr_data_ESI = tmp_result;
-    assign o_wrb_gpr_data_SI  = tmp_result[15: 0];
-    assign o_wrb_gpr_data_EDI = tmp_result;
-    assign o_wrb_gpr_data_DI  = tmp_result[15: 0];
+    assign o_wrb_gpr_data_ESI = movs_finish_r ? movs_si_r : tmp_result;
+    assign o_wrb_gpr_data_SI  = movs_finish_r ? movs_si_r[15: 0] : tmp_result[15: 0];
+    assign o_wrb_gpr_data_EDI = movs_finish_r ? movs_di_r : tmp_result;
+    assign o_wrb_gpr_data_DI  = movs_finish_r ? movs_di_r[15: 0] : tmp_result[15: 0];
 
     assign o_wrb_seg_enable_es = mov_seg_real_enable & (mov_seg_real_index == `sreg_index_ES);
     assign o_wrb_seg_enable_cs = mov_seg_real_enable & (mov_seg_real_index == `sreg_index_CS);
@@ -1442,9 +2310,15 @@ module stage_5_exu (
                                 ((i_uop_valid | far_call_pending_r) && mem_valid);
     assign o_mem_write_enable = load_pending_r ? mem_hold_we_r :
                                 (i_uop_valid && mem_write_enable);
+    assign o_mem_size         = (movs_active_r | movs_finish_r) ? movs_size_r :
+                                i_uop.uop_mem_size;
     assign o_mem_address      = load_pending_r ? mem_hold_addr_r : mem_address;
     assign o_mem_write_data   = load_pending_r ? mem_hold_wdata_r : mem_write_data;
     assign o_data_io_access   = load_pending_r ? mem_hold_io_r : data_io_access;
+    // MOVS load uses DS; store uses ES from uop_seg_index.
+    assign o_lsu_seg_force    = (movs_active_r | string_is_movs) & ~movs_store_phase_r &
+                                (load_pending_r | mem_valid);
+    assign o_lsu_seg_index    = `index_reg_seg__DS;
 
     assign o_gdtr_write_enable = gdtr_we;
     assign o_gdtr_write_limit  = gdtr_limit;
@@ -1459,6 +2333,7 @@ module stage_5_exu (
     assign o_wbinvd               = wbinvd_cmd;
     assign o_software_int_valid   = software_int_valid & i_uop_valid & ~load_pending_r;
     assign o_software_int_vector  = software_int_vector;
+    assign o_software_int_eip     = software_int_eip;
     assign o_iret_valid           = iret_valid & i_uop_valid & ~load_pending_r;
 
 endmodule

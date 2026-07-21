@@ -81,21 +81,30 @@ module i486_instruction_matrix_tb;
         .i_src2_data    (src2),
         .i_immediate    (imm),
         .i_displacement (disp),
+        .i_ecx          (32'd0),
         .i_cf           (cf_in),
         .i_has_imm      (has_imm),
         .i_has_disp     (has_disp),
         .i_mem_access   (mem_access),
         .i_is_store     (is_store),
+        .i_mem_size     (2'b10),
+        .i_agu_base     (1'b0),
+        .i_agu_index    (1'b0),
+        .i_sib_scale    (2'b00),
         .i_tttn         (tttn),
         .i_pf           (pf_in),
         .i_af           (af_in),
         .i_zf           (zf_in),
         .i_sf           (sf_in),
         .i_of           (of_in),
+        .i_df           (1'b0),
+        .i_rep          (1'b0),
+        .i_repne        (1'b0),
         .i_dividend     (dividend),
         .i_cpuid_eax    (cpuid_eax),
         .o_handled      (handled),
-        .o_dispatch     (dispatch)
+        .o_dispatch     (dispatch),
+        .o_result_high  ()
     );
 
     task automatic init_rom;
@@ -117,7 +126,7 @@ module i486_instruction_matrix_tb;
                     exp_result: 32'hFFFF_FFFE, exp_handled: 1'b1, check_flags: 1'b0,
                     exp_cf: 1'b0, exp_zf: 1'b0, exp_write_ip: 1'b0, exp_ip: 32'd0,
                     exp_mem_valid: 1'b0, exp_mem_we: 1'b0};
-        rom[3]  = '{opcode: `UOP_DIV, src1: 32'd0, src2: 32'h0000_0100, imm: 32'd0,
+        rom[3]  = '{opcode: `UOP_DIV, src1: 32'h0000_0100, src2: 32'h0000_0100, imm: 32'd0,
                     disp: 32'd0, has_imm: 1'b0, has_disp: 1'b0, tttn: 4'h0,
                     cf_in: 1'b0, pf_in: 1'b0, zf_in: 1'b0, sf_in: 1'b0, of_in: 1'b0,
                     exp_result: 32'd1, exp_handled: 1'b1, check_flags: 1'b0,
@@ -159,8 +168,9 @@ module i486_instruction_matrix_tb;
                     exp_result: 32'd1, exp_handled: 1'b1, check_flags: 1'b0,
                     exp_cf: 1'b0, exp_zf: 1'b0, exp_write_ip: 1'b0, exp_ip: 32'd0,
                     exp_mem_valid: 1'b0, exp_mem_we: 1'b0};
-        rom[10] = '{opcode: `UOP_BRANCH, src1: 32'd0, src2: 32'd0, imm: 32'h0000_2000,
-                    disp: 32'd0, has_imm: 1'b1, has_disp: 1'b0, tttn: 4'hF,
+        // Unconditional JMP: has_imm && imm[0]; target in src1 (not imm).
+        rom[10] = '{opcode: `UOP_BRANCH, src1: 32'h0000_2000, src2: 32'd0, imm: 32'h0000_0001,
+                    disp: 32'd0, has_imm: 1'b1, has_disp: 1'b0, tttn: 4'h0,
                     cf_in: 1'b0, pf_in: 1'b0, zf_in: 1'b0, sf_in: 1'b0, of_in: 1'b0,
                     exp_result: 32'h0000_2000, exp_handled: 1'b1, check_flags: 1'b0,
                     exp_cf: 1'b0, exp_zf: 1'b0, exp_write_ip: 1'b1, exp_ip: 32'h0000_2000,
@@ -175,7 +185,7 @@ module i486_instruction_matrix_tb;
                     imm: 32'h0000_2000, disp: 32'd0, has_imm: 1'b1, has_disp: 1'b0,
                     tttn: 4'h0, cf_in: 1'b0, pf_in: 1'b0, zf_in: 1'b0, sf_in: 1'b0, of_in: 1'b0,
                     exp_result: 32'h0000_0FFC, exp_handled: 1'b1, check_flags: 1'b0,
-                    exp_cf: 1'b0, exp_zf: 1'b0, exp_write_ip: 1'b1, exp_ip: 32'h0000_2000,
+                    exp_cf: 1'b0, exp_zf: 1'b0, exp_write_ip: 1'b0, exp_ip: 32'h0000_2000,
                     exp_mem_valid: 1'b1, exp_mem_we: 1'b1};
         rom[13] = '{opcode: `UOP_MISC, src1: 32'h1234_5678, src2: 32'd0,
                     imm: {24'd0, `MISC_SUB_BSWAP}, disp: 32'd0,
@@ -219,7 +229,11 @@ module i486_instruction_matrix_tb;
             of_in      = entry.of_in;
             mem_access = 1'b0;
             is_store   = 1'b0;
-            dividend   = {entry.src1, entry.src2};
+            // DIV/IDIV: src1=divisor, DX:AX/EDX:EAX via i_dividend (use src2 as low half)
+            if ((entry.opcode == `UOP_DIV) || (entry.opcode == `UOP_IDIV))
+                dividend = {32'h0, entry.src2};
+            else
+                dividend = {entry.src1, entry.src2};
             cpuid_eax  = 32'h0000_0001;
             af_in      = 1'b0;
             #1;

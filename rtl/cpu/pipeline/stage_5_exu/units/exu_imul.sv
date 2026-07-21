@@ -25,6 +25,8 @@
 module exu_imul (
     input  logic [31: 0] i_src1_data,
     input  logic [31: 0] i_src2_data,
+    input  logic [31: 0] i_immediate,
+    input  logic         i_has_imm,
     output exu_result_t   o_result,
     output logic [31: 0] o_result_high
 );
@@ -35,8 +37,9 @@ module exu_imul (
     logic [31: 0] result_low;
     logic [31: 0] result_high;
 
+    // 69/6B IMUL r,r/m,imm: src1=r/m, operand2=imm; else 2-operand forms use src2.
     assign operand1 = $signed(i_src1_data);
-    assign operand2 = $signed(i_src2_data);
+    assign operand2 = $signed(i_has_imm ? i_immediate : i_src2_data);
     assign result = operand1 * operand2;
     assign result_low  = result[31: 0];
     assign result_high = result[63: 32];

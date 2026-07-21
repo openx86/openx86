@@ -24,6 +24,7 @@
 module exu_shrd (
     input  logic [31: 0] i_src1_data,
     input  logic [31: 0] i_src2_data,
+    input  logic [31: 0] i_ecx,
     input  logic [31: 0] i_immediate,
     input  logic         i_has_imm,
     output exu_result_t   o_result
@@ -38,7 +39,7 @@ module exu_shrd (
 
     assign dest = i_src1_data;
     assign src = i_src2_data;
-    assign shift_count = i_has_imm ? i_immediate[4: 0] : i_src2_data[4: 0];
+    assign shift_count = i_has_imm ? i_immediate[4: 0] : i_ecx[4: 0];
     assign combined = {dest, src};
     assign shifted = combined >> shift_count;
     assign result = shifted[31: 0];

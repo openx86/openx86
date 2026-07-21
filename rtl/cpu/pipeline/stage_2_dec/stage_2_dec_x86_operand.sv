@@ -27,6 +27,7 @@ module stage_2_dec_x86_operand (
     input  logic [ 7: 0][ 7: 0] i_instruction_bytes,
     input  logic [ 2: 0]        i_default_op_size,
     input  logic                i_opsz_override,
+    input  logic                i_adsz_override,
 
     // =========================
     // opcode hit signals (passed through to field module)
@@ -607,12 +608,19 @@ stage_2_dec_x86_operand_field u_field (
 );
 
 // ModRM module instantiation
+// Address size (CS.D XOR 0x67) selects 16-bit vs 32-bit ModRM/SIB forms.
+// Operand size (CS.D XOR 0x66) selects GPR width for mod=11 / W-bit forms.
+logic effective_adsz32;
+logic effective_opsz32_modrm;
+assign effective_adsz32 = (i_default_op_size[0] == `default_operation_size_32) ^ i_adsz_override;
+assign effective_opsz32_modrm = (i_default_op_size[0] == `default_operation_size_32) ^ i_opsz_override;
 stage_2_dec_x86_operand_mod_rm u_modrm (
     .i_mod               (field_mod),
     .i_rm                (field_rm),
     .i_w_present         (field_w_valid),
     .i_w                 (field_w),
-    .i_default_op_size   (i_default_op_size),
+    .i_address_size_32   (effective_adsz32),
+    .i_operand_size_32   (effective_opsz32_modrm),
     .o_seg_reg_index     (modrm_seg_reg_index),
     .o_base_reg_valid    (modrm_base_reg_valid),
     .o_base_reg_index    (modrm_base_reg_index),
@@ -726,10 +734,35 @@ assign alu_wbit_imm_ib =
      i_opcode_x86_TEST_imm_and_reg_mem) &
     ~i_instruction_bytes[0][0];
 
-assign imm_size_1b   = field_imm_size_8b | alu_grp1_imm_ib | alu_wbit_imm_ib;
-assign imm_size_2b   = field_imm_size_16b;
-assign imm_size_4b   = field_imm_size_full & ~alu_grp1_imm_ib & ~alu_wbit_imm_ib;
-assign imm_size_full = field_imm_size_full & ~alu_grp1_imm_ib & ~alu_wbit_imm_ib;
+// B0–B7 MOV r8,imm8: opcode[3]=0 → imm8 (opsz must NOT promote to imm32).
+// B8–BF MOV r16/r32,imm: opcode[3]=1 → iw/id. C6 vs C7 uses opcode[0] as W.
+logic mov_imm_ib;
+assign mov_imm_ib =
+    (i_opcode_x86_MOV_imm_to_reg & ~i_instruction_bytes[0][3]) |
+    (i_opcode_x86_MOV_imm_to_reg_mem & ~i_instruction_bytes[0][0]);
+
+// 6A PUSH Ib (sign-extended); 68 PUSH Iz (iw/id). Field marks both as full.
+// Without this, 6A consumed 4 imm bytes and skipped real pushes before e820_add,
+// corrupting the stack return address after insert_e820.
+logic push_imm_ib;
+assign push_imm_ib = i_opcode_x86_PUSH_imm & i_instruction_bytes[0][1];
+
+// 6B IMUL r,r/m,Ib; 69 IMUL r,r/m,Iz. Same grouping as PUSH 6A/68.
+logic imul_imm_ib;
+assign imul_imm_ib = i_opcode_x86_IMUL_reg_mem_with_imm_to_reg & i_instruction_bytes[0][1];
+
+// Operand-size–dependent immediates (B8–BF, C7, 81, 3D, 68, 69, ...): 66 → iw, else id.
+// Without this, 66 C7 (movw imm16,mem) consumed 4 imm bytes and desynced
+// ivt_init (ADD/CMP/JNE), so EAX never reset to 0x20 for the IRQ loop.
+logic imm_opsz;
+assign imm_opsz = field_imm_size_full & ~alu_grp1_imm_ib & ~alu_wbit_imm_ib &
+                  ~mov_imm_ib & ~push_imm_ib & ~imul_imm_ib;
+
+assign imm_size_1b   = field_imm_size_8b | alu_grp1_imm_ib | alu_wbit_imm_ib |
+                       mov_imm_ib | push_imm_ib | imul_imm_ib;
+assign imm_size_2b   = field_imm_size_16b | (imm_opsz & ~effective_opsz32);
+assign imm_size_4b   = imm_opsz & effective_opsz32;
+assign imm_size_full = imm_opsz & effective_opsz32;
 
 // Disp/imm window starts after opcode (+ ModRM + SIB when present)
 logic [ 3: 0] disp_imm_byte_offset;

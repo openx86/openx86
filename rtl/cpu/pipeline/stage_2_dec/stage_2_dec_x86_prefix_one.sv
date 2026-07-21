@@ -55,12 +55,13 @@ logic segment_override_FS;
 logic segment_override_GS;
 logic segment_override_SS;
 
+// Intel SDM Vol.2: 2E=CS, 36=SS, 3E=DS, 26=ES, 64=FS, 65=GS
 assign segment_override_CS = i_instruction[7: 0] == 8'h2E;
-assign segment_override_DS = i_instruction[7: 0] == 8'h36;
-assign segment_override_ES = i_instruction[7: 0] == 8'h3E;
-assign segment_override_FS = i_instruction[7: 0] == 8'h26;
-assign segment_override_GS = i_instruction[7: 0] == 8'h64;
-assign segment_override_SS = i_instruction[7: 0] == 8'h65;
+assign segment_override_SS = i_instruction[7: 0] == 8'h36;
+assign segment_override_DS = i_instruction[7: 0] == 8'h3E;
+assign segment_override_ES = i_instruction[7: 0] == 8'h26;
+assign segment_override_FS = i_instruction[7: 0] == 8'h64;
+assign segment_override_GS = i_instruction[7: 0] == 8'h65;
 
 assign o_group_1_lock_bus            = i_instruction[7: 0] == 8'hF0;
 assign o_group_1_repeat_not_equal    = i_instruction[7: 0] == 8'hF2;

@@ -82,6 +82,7 @@ assign o_opcode_x86_LSS_load_pointer_to_SS             = (i_instruction[0][7: 0]
 
 assign o_opcode_x86_MOVSX_move_with_sign_extend_mem_reg_to_reg = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 1] == 7'b1011_111);
 assign o_opcode_x86_MOVZX_move_with_zero_extend_mem_reg_to_reg = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 1] == 7'b1011_011);
+// Distinguish 0F B6 (byte→r32) vs 0F B7 (word→r32) via instruction[1][0] for EXU.
 
 assign o_opcode_x86_MOV_CR_from_reg    = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 0] == 8'b0010_0010);
 assign o_opcode_x86_MOV_reg_from_CR    = (i_instruction[0][7: 0] == 8'b0000_1111) & (i_instruction[1][7: 0] == 8'b0010_0000);

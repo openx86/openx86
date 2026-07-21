@@ -28,11 +28,13 @@ module exu_dispatcher (
     input  logic [31: 0] i_src2_data,
     input  logic [31: 0] i_immediate,
     input  logic [31: 0] i_displacement,
+    input  logic [31: 0] i_ecx,
     input  logic         i_cf,
     input  logic         i_has_imm,
     input  logic         i_has_disp,
     input  logic         i_mem_access,
     input  logic         i_is_store,
+    input  logic [ 1: 0] i_mem_size,
     input  logic         i_agu_base,
     input  logic         i_agu_index,
     input  logic [ 1: 0] i_sib_scale,
@@ -42,10 +44,14 @@ module exu_dispatcher (
     input  logic         i_zf,
     input  logic         i_sf,
     input  logic         i_of,
+    input  logic         i_df,
+    input  logic         i_rep,
+    input  logic         i_repne,
     input  logic [63: 0] i_dividend,
     input  logic [31: 0] i_cpuid_eax,
     output logic         o_handled,
-    output exu_dispatch_out_t o_dispatch
+    output exu_dispatch_out_t o_dispatch,
+    output logic [31: 0] o_result_high
 );
 
     localparam int LP_NUM_ENTRIES = 48;
@@ -109,6 +115,7 @@ module exu_dispatcher (
     exu_dispatch_out_t xchg_entry;
     exu_dispatch_out_t branch_entry;
     exu_dispatch_out_t call_entry;
+    exu_dispatch_out_t ret_entry;
 
     logic [ 5: 0] select_idx;
     logic         reg_mov_only;
@@ -121,7 +128,9 @@ module exu_dispatcher (
     assign misc_simple  = (i_uop_opcode == `UOP_MISC) &
                           exu_opcode_is_misc_simple(i_immediate[7: 0]);
     assign branch_target = i_has_disp ? i_displacement : i_src1_data;
-    assign call_target   = i_has_disp ? i_displacement : i_immediate;
+    // Near CALL: disp = direct target; !has_disp → indirect reg target in src1.
+    // (Immediate always holds the return EIP from dec_to_uop.)
+    assign call_target   = i_has_disp ? i_displacement : i_src1_data;
     // JMP marks unconditional with has_imm && imm[0]; Jcc leaves has_imm=0.
     assign condition_met = (i_has_imm & i_immediate[0]) |
                            compute_condition(i_tttn, i_of, i_cf, i_zf, i_sf, i_pf);
@@ -259,6 +268,7 @@ module exu_dispatcher (
         .i_src2_data (i_src2_data),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
+        .i_mem_size  (i_mem_size),
         .o_result    (cmp_r)
     );
 
@@ -275,6 +285,7 @@ module exu_dispatcher (
         .i_src2_data (i_src2_data),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
+        .i_mem_size  (i_mem_size),
         .o_result    (shl_r)
     );
 
@@ -283,6 +294,7 @@ module exu_dispatcher (
         .i_src2_data (i_src2_data),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
+        .i_mem_size  (i_mem_size),
         .o_result    (shr_r)
     );
 
@@ -299,6 +311,7 @@ module exu_dispatcher (
         .i_src2_data (i_src2_data),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
+        .i_mem_size  (i_mem_size),
         .o_result    (rol_r)
     );
 
@@ -307,6 +320,7 @@ module exu_dispatcher (
         .i_src2_data (i_src2_data),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
+        .i_mem_size  (i_mem_size),
         .o_result    (ror_r)
     );
 
@@ -331,6 +345,7 @@ module exu_dispatcher (
     exu_shld u_shld (
         .i_src1_data (i_src1_data),
         .i_src2_data (i_src2_data),
+        .i_ecx       (i_ecx),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
         .o_result    (shld_r)
@@ -339,6 +354,7 @@ module exu_dispatcher (
     exu_shrd u_shrd (
         .i_src1_data (i_src1_data),
         .i_src2_data (i_src2_data),
+        .i_ecx       (i_ecx),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
         .o_result    (shrd_r)
@@ -391,6 +407,7 @@ module exu_dispatcher (
         .i_displacement (i_displacement),
         .i_has_imm      (i_has_imm),
         .i_has_disp     (i_has_disp),
+        .i_mem_size     (i_mem_size),
         .o_result       (call_r)
     );
 
@@ -399,6 +416,7 @@ module exu_dispatcher (
         .i_src2_data (i_src2_data),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
+        .i_mem_size  (i_mem_size),
         .o_result    (ret_r)
     );
 
@@ -407,6 +425,7 @@ module exu_dispatcher (
         .i_src2_data (i_src2_data),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
+        .i_mem_size  (i_mem_size),
         .o_result    (push_r)
     );
 
@@ -415,12 +434,13 @@ module exu_dispatcher (
         .i_src2_data (i_src2_data),
         .i_immediate (i_immediate),
         .i_has_imm   (i_has_imm),
+        .i_mem_size  (i_mem_size),
         .o_result    (pop_r)
     );
 
     exu_mul u_mul (
-        .i_src1_data   (i_src1_data),
-        .i_src2_data   (i_src2_data),
+        .i_src1_data   ((i_mem_size == 2'b01) ? {16'h0, i_src1_data[15: 0]} : i_src1_data),
+        .i_src2_data   ((i_mem_size == 2'b01) ? {16'h0, i_src2_data[15: 0]} : i_src2_data),
         .o_result      (mul_r),
         .o_result_high (mul_hi_r)
     );
@@ -428,12 +448,14 @@ module exu_dispatcher (
     exu_imul u_imul (
         .i_src1_data   (i_src1_data),
         .i_src2_data   (i_src2_data),
+        .i_immediate   (i_immediate),
+        .i_has_imm     (i_has_imm),
         .o_result      (imul_r),
         .o_result_high (imul_hi_r)
     );
 
     exu_div u_div (
-        .i_src1_data (i_src2_data),
+        .i_src1_data ((i_mem_size == 2'b01) ? {16'h0, i_src1_data[15: 0]} : i_src1_data),
         .i_src2_data (i_src2_data),
         .i_dividend  (i_dividend),
         .o_result    (div_r),
@@ -441,7 +463,7 @@ module exu_dispatcher (
     );
 
     exu_idiv u_idiv (
-        .i_src1_data (i_src2_data),
+        .i_src1_data ((i_mem_size == 2'b01) ? {16'h0, i_src1_data[15: 0]} : i_src1_data),
         .i_src2_data (i_src2_data),
         .i_dividend  ($signed(i_dividend)),
         .o_result    (idiv_r),
@@ -537,11 +559,12 @@ module exu_dispatcher (
     exu_string u_string (
         .i_src1_data   (i_src1_data),
         .i_src2_data   (i_src2_data),
-        .i_ecx         (32'd0),
+        .i_ecx         (i_ecx),
+        .i_mem_size    (i_mem_size),
         .i_is_store    (i_is_store),
-        .i_df          (i_sf),
-        .i_rep         (1'b0),
-        .i_repne       (1'b0),
+        .i_df          (i_df),
+        .i_rep         (i_rep),
+        .i_repne       (i_repne),
         .i_zf          (i_zf),
         .o_result      (string_r),
         .o_rep_restart ( ),
@@ -596,7 +619,16 @@ module exu_dispatcher (
     assign entries[25] = pack_gpr_only(lea_r);
     assign entries[26] = branch_entry;
     assign entries[27] = call_entry;
-    assign entries[28] = pack_mem_gpr(ret_r);
+    // Defer RET ESP writeback until pop completes (same hazard as CALL): early
+    // write_gpr is often blocked by sticky mem_op_complete after OUT/POP, so ESP
+    // never advances; fall-through then walks into panic and low RAM.
+    always_comb begin
+        ret_entry           = pack_mem_gpr(ret_r);
+        ret_entry.write_gpr = 1'b0;
+        ret_entry.write_ip  = 1'b0;
+        ret_entry.ip_data   = 32'd0;
+    end
+    assign entries[28] = ret_entry;
     assign entries[29] = pack_mem_gpr(push_r);
     assign entries[30] = pack_mem_gpr(pop_r);
     assign entries[31] = pack_gpr_flags(mul_r);
@@ -718,6 +750,26 @@ module exu_dispatcher (
     );
 
     assign o_dispatch = (i_uop_opcode == `UOP_XCHG) ? xchg_entry : mux_out;
+
+    // High half for MUL/IMUL/DIV/IDIV → EDX writeback in EXU.
+    always_comb begin
+        unique case (i_uop_opcode)
+            `UOP_MUL: begin
+                // Byte: AX only (hi unused). Word: DX = product[31:16].
+                // Dword: EDX = mul_hi_r.
+                if (i_mem_size == 2'b00)
+                    o_result_high = 32'h0;
+                else if (i_mem_size == 2'b01)
+                    o_result_high = {16'h0, mul_r.result[31: 16]};
+                else
+                    o_result_high = mul_hi_r;
+            end
+            `UOP_IMUL:   o_result_high = imul_hi_r;
+            `UOP_DIV:    o_result_high = div_hi_r;
+            `UOP_IDIV:   o_result_high = idiv_hi_r;
+            default:     o_result_high = 32'h0;
+        endcase
+    end
 
     assign o_handled = i_valid & (
         exu_opcode_dispatched(i_uop_opcode) |

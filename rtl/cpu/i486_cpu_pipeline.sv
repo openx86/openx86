@@ -39,6 +39,7 @@ module i486_cpu_pipeline (
     input  logic         i_data_ready,
     output logic         o_data_write_enable,
     output logic         o_data_io_access,
+    output logic [ 1: 0] o_data_size,
     output logic [31: 0] o_data_address,
     input  logic [31: 0] i_data_data_read,
     output logic [31: 0] o_data_data_write,
@@ -249,6 +250,16 @@ module i486_cpu_pipeline (
     logic [31: 0]        eiu_new_eip;
     logic                eiu_cs_valid;
     logic [15: 0]        eiu_cs_selector;
+    logic [63: 0]        eiu_cs_real_desc;
+    // Real-mode INT/IRET CS reload: base = selector<<4, limit = FFFFh, code access
+    assign eiu_cs_real_desc = {
+        {eiu_cs_selector[11: 0], 4'h0},
+        16'hFFFF,
+        8'h00,
+        8'h00,
+        8'h9B,
+        {4'h0, eiu_cs_selector[15: 12]}
+    };
     logic                eiu_esp_we;
     logic [31: 0]        eiu_esp_data;
     logic                eiu_eflags_we;
@@ -300,6 +311,7 @@ module i486_cpu_pipeline (
     logic [31: 0]        exu_gpr_esp_data;
     logic                exu_software_int_valid;
     logic [ 7: 0]        exu_software_int_vector;
+    logic [31: 0]        exu_software_int_eip;
     logic                exu_iret_valid;
     logic [31: 0]        current_eflags;
     logic [31: 0]        eflags_if_cleared;
@@ -310,8 +322,16 @@ module i486_cpu_pipeline (
     logic                pipe_mem_ready;
     logic                eiu_mem_valid;
     logic                eiu_mem_we;
+    logic [ 1: 0]        eiu_mem_size;
     logic [31: 0]        eiu_mem_addr;
     logic [31: 0]        eiu_mem_wdata;
+    logic [31: 0]        eiu_ss_base;
+    // SS.base from descriptor cache: {base31:24, base23:16, base15:0}
+    assign eiu_ss_base = {
+        i_segment_descriptor[`index_reg_seg__SS][31: 24],
+        i_segment_descriptor[`index_reg_seg__SS][ 7:  0],
+        i_segment_descriptor[`index_reg_seg__SS][63: 48]
+    };
     logic                inta_vector_valid;
     logic [15: 0]        wbu_seg_selector;
     logic [ 7: 0]        inta_vector_mux;
@@ -327,8 +347,11 @@ module i486_cpu_pipeline (
 
     logic                exu_mem_valid;
     logic                exu_mem_we;
+    logic [ 1: 0]        exu_mem_size;
     logic [31: 0]        exu_mem_addr;
     logic [31: 0]        exu_mem_wdata;
+    logic                exu_lsu_seg_force;
+    logic [ 2: 0]        exu_lsu_seg_index;
     logic                exu_data_io;
     logic [31: 0]        mem_rdata;
     logic                mem_done;
@@ -380,6 +403,7 @@ module i486_cpu_pipeline (
     logic                lsu_fault_present;
     logic [31: 0]        lsu_fault_linear;
     logic [ 2: 0]        lsu_seg_index;
+    logic [ 2: 0]        lsu_seg_hold_r;
     logic                mem_translate_done;
     logic                mem_start;
     logic [31: 0]        mem_phys_addr;
@@ -407,19 +431,33 @@ module i486_cpu_pipeline (
     logic                lsu_hold_addr_match;
     logic                lsu_hold_addr_mismatch;
 
+    // Requested segment for this EXU mem op (before hold override).
+    // MOVS load (DS) → store (ES) often keeps the same SI/DI offset; matching on
+    // offset alone would reuse the DS phys addr for the ES store and hang/corrupt.
+    logic [2: 0] lsu_seg_req;
+    assign lsu_seg_req = exu_lsu_seg_force ? exu_lsu_seg_index :
+                         ((reg_uop.uop_opcode == `UOP_PUSH) |
+                          (reg_uop.uop_opcode == `UOP_POP)  |
+                          (reg_uop.uop_opcode == `UOP_CALL) |
+                          (reg_uop.uop_opcode == `UOP_RET)  |
+                          ((reg_uop.uop_opcode == `UOP_MISC) &
+                           ((reg_uop.uop_immediate[7: 0] == `MISC_SUB_PUSH_SEG) |
+                            (reg_uop.uop_immediate[7: 0] == `MISC_SUB_POP_SEG)))
+                          ? `index_reg_seg__SS : reg_uop.uop_seg_index);
     assign lsu_hold_addr_match    = lsu_result_hold_r &
-                                    (exu_mem_addr == lsu_hold_eff_addr_r);
+                                    (exu_mem_addr == lsu_hold_eff_addr_r) &
+                                    (lsu_seg_req == lsu_seg_hold_r);
     assign lsu_hold_addr_mismatch = lsu_result_hold_r &
-                                    (exu_mem_addr != lsu_hold_eff_addr_r);
+                                    ((exu_mem_addr != lsu_hold_eff_addr_r) |
+                                     (lsu_seg_req != lsu_seg_hold_r));
 
     assign lsu_mmu_start = exu_mem_valid & ~exu_data_io & ~lsu_mmu_busy &
                            (~lsu_result_hold_r | lsu_hold_addr_mismatch);
 
-    assign lsu_seg_index = (reg_uop.uop_opcode == `UOP_PUSH) |
-                           (reg_uop.uop_opcode == `UOP_POP)  |
-                           (reg_uop.uop_opcode == `UOP_CALL) |
-                           (reg_uop.uop_opcode == `UOP_RET)
-                           ? `index_reg_seg__SS : reg_uop.uop_seg_index;
+    // Latch segment for the outstanding data access so a later uop (default DS)
+    // cannot change LSU translation while CMP/LGDT still holds mem_valid.
+    assign lsu_seg_index = (lsu_mmu_busy | lsu_result_hold_r) ? lsu_seg_hold_r :
+                           lsu_seg_req;
 
     assign page_fault_event = ifu_page_fault | lsu_page_fault;
     assign seg_fault_event  = ifu_segment_fault | lsu_seg_fault;
@@ -462,17 +500,23 @@ module i486_cpu_pipeline (
         if (~rst_n) begin
             lsu_result_hold_r   <= 1'b0;
             lsu_hold_eff_addr_r <= 32'h0;
-        end else if (lsu_mmu_done) begin
-            lsu_result_hold_r   <= 1'b1;
-            lsu_hold_eff_addr_r <= exu_mem_addr;
-        end else if (lsu_hold_addr_mismatch |
-                     (mem_start & ~exu_data_io & ~mem_busy) |
-                     // Keep translate hold until EXU drops the request; clearing on
-                     // mem_done while exu_mem_valid is still high restarts LSU and
-                     // re-fires access_memory (POP then increments ESP forever).
-                     (mem_done & ~exu_mem_valid) |
-                     (~exu_mem_valid & ~lsu_mmu_busy)) begin
-            lsu_result_hold_r <= 1'b0;
+            lsu_seg_hold_r      <= 3'b0;
+        end else begin
+            if (lsu_mmu_start) begin
+                lsu_seg_hold_r <= lsu_seg_req;
+            end
+            if (lsu_mmu_done) begin
+                lsu_result_hold_r   <= 1'b1;
+                lsu_hold_eff_addr_r <= exu_mem_addr;
+            end else if (lsu_hold_addr_mismatch |
+                         (mem_start & ~exu_data_io & ~mem_busy) |
+                         // Keep translate hold until EXU drops the request; clearing on
+                         // mem_done while exu_mem_valid is still high restarts LSU and
+                         // re-fires access_memory (POP then increments ESP forever).
+                         (mem_done & ~exu_mem_valid) |
+                         (~exu_mem_valid & ~lsu_mmu_busy)) begin
+                lsu_result_hold_r <= 1'b0;
+            end
         end
     end
 
@@ -602,9 +646,12 @@ module i486_cpu_pipeline (
         .i_if_flag               (i_if_flag),
         .i_software_int_valid    (exu_software_int_valid),
         .i_software_int_vector   (exu_software_int_vector),
+        .i_software_int_eip      (exu_software_int_eip),
         .i_iret_valid            (exu_iret_valid),
         .i_idtr_base             (i_idtr_base),
         .i_idtr_limit            (i_idtr_limit),
+        .i_protected_mode        (i_protected_mode),
+        .i_ss_base               (eiu_ss_base),
         .i_current_eip           (i_eip),
         .i_current_cs_selector   (i_segment_selector[`index_reg_seg__CS]),
         .i_current_ss_selector   (i_segment_selector[`index_reg_seg__SS]),
@@ -632,6 +679,7 @@ module i486_cpu_pipeline (
         .o_mem_valid             (eiu_mem_valid),
         .i_mem_ready             (i_data_ready & idu_busy),
         .o_mem_write_enable      (eiu_mem_we),
+        .o_mem_size              (eiu_mem_size),
         .o_mem_address           (eiu_mem_addr),
         .o_mem_write_data        (eiu_mem_wdata),
         .i_mem_rdata             (i_data_data_read),
@@ -786,11 +834,15 @@ module i486_cpu_pipeline (
         .i_idtr_limit            (i_idtr_limit),
         .i_src1_data             (reg_src1),
         .i_src2_data             (reg_src2),
+        .i_gpr_eax               (i_gpr_eax),
+        .i_gpr_edx               (i_gpr_edx),
         .i_gpr_esp               (i_gpr_esp),
         .i_gpr_ebp               (i_gpr_ebp),
+        .i_gpr_ecx               (i_gpr_ecx),
         .i_cr0_data              (i_cr0_data),
         .i_eip                   (i_eip),
         .i_cs_selector           (i_segment_selector[`index_reg_seg__CS]),
+        .i_segment_selector      (i_segment_selector),
         .i_slu_ready             (slu_ready),
         .i_cf                    (reg_cf),
         .i_pf                    (reg_pf),
@@ -885,8 +937,11 @@ module i486_cpu_pipeline (
         .o_data_io_access        (exu_data_io),
         .o_mem_valid             (exu_mem_valid),
         .o_mem_write_enable      (exu_mem_we),
+        .o_mem_size              (exu_mem_size),
         .o_mem_address           (exu_mem_addr),
         .o_mem_write_data        (exu_mem_wdata),
+        .o_lsu_seg_force         (exu_lsu_seg_force),
+        .o_lsu_seg_index         (exu_lsu_seg_index),
         .i_fpu_st0               (i_fpu_st0),
         .i_fpu_st1               (i_fpu_st1),
         .i_fpu_st2               (i_fpu_st2),
@@ -918,6 +973,7 @@ module i486_cpu_pipeline (
         .o_fpu_exception         (fpu_exception_r),
         .o_software_int_valid    (exu_software_int_valid),
         .o_software_int_vector   (exu_software_int_vector),
+        .o_software_int_eip      (exu_software_int_eip),
         .o_iret_valid            (exu_iret_valid),
         .clk                     (clk),
         .rst_n                   (rst_n)
@@ -935,16 +991,22 @@ module i486_cpu_pipeline (
         .o_gpr_write_index       (),
         .o_gpr_write_data        (),
         .i_sreg_write_enable     (slu_seg_write_enable |
+                                   (eiu_cs_valid & ~i_protected_mode) |
                                    ((exu_seg_es | exu_seg_cs | exu_seg_ss | exu_seg_ds |
                                      exu_seg_fs | exu_seg_gs) & ~i_protected_mode)),
         .i_sreg_write_index      (slu_seg_write_enable ? slu_seg_write_index :
-                                   (exu_seg_gs ? 3'd5 :
-                                    exu_seg_fs ? 3'd4 :
-                                    exu_seg_ds ? 3'd3 :
-                                    exu_seg_ss ? 3'd2 :
-                                    exu_seg_cs ? 3'd1 : 3'd0)),
-        .i_sreg_write_selector   (slu_seg_write_enable ? slu_seg_write_selector : exu_seg_selector),
-        .i_sreg_write_descriptor (slu_seg_write_enable ? slu_seg_write_descriptor : exu_seg_descriptor),
+                                   ((eiu_cs_valid & ~i_protected_mode) ? 3'd1 :
+                                    (exu_seg_gs ? 3'd5 :
+                                     exu_seg_fs ? 3'd4 :
+                                     exu_seg_ds ? 3'd3 :
+                                     exu_seg_ss ? 3'd2 :
+                                     exu_seg_cs ? 3'd1 : 3'd0))),
+        .i_sreg_write_selector   (slu_seg_write_enable ? slu_seg_write_selector :
+                                   ((eiu_cs_valid & ~i_protected_mode) ? eiu_cs_selector :
+                                    exu_seg_selector)),
+        .i_sreg_write_descriptor (slu_seg_write_enable ? slu_seg_write_descriptor :
+                                   ((eiu_cs_valid & ~i_protected_mode) ? eiu_cs_real_desc :
+                                    exu_seg_descriptor)),
         .o_sreg_write_enable     (),
         .o_sreg_write_index      (),
         .o_sreg_write_selector   (wbu_seg_selector),
@@ -1019,8 +1081,10 @@ module i486_cpu_pipeline (
     assign o_wrb_gpr_write_data_ESP   = slu_far_ret_esp_we ? slu_far_ret_new_esp_r :
                                           eiu_esp_we ? eiu_esp_data : exu_gpr_esp_data;
     assign o_wrb_seg_cs_write_enable  = (exu_seg_cs & ~i_protected_mode) |
+                                         (eiu_cs_valid & ~i_protected_mode) |
                                          (slu_seg_write_enable & (slu_seg_write_index == 3'd1));
-    assign o_wrb_seg_write_selector   = wbu_seg_selector;
+    assign o_wrb_seg_write_selector   = (eiu_cs_valid & ~i_protected_mode) ?
+                                         eiu_cs_selector : wbu_seg_selector;
     assign o_wrb_seg_ss_write_enable = (exu_seg_ss & ~i_protected_mode) |
                                         (slu_seg_write_enable & (slu_seg_write_index == 3'd2));
     assign o_wrb_seg_ds_write_enable = (exu_seg_ds & ~i_protected_mode) |
@@ -1034,6 +1098,8 @@ module i486_cpu_pipeline (
                               (reg_uop.uop_immediate[7: 0] == `MISC_SUB_HLT) &
                               reg_stage_valid;
     assign o_data_io_access = exu_data_io;
+    assign o_data_size      = slu_busy ? 2'b10 :
+                              (idu_busy ? eiu_mem_size : exu_mem_size);
     assign o_fpu_exception  = fpu_exception_r;
 
     memory_stage u_mem (

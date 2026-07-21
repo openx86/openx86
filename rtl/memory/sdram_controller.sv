@@ -49,6 +49,7 @@ module sdram_controller #(
     input  logic          i_we, // 1=写，0=读（在 i_en 有效时锁存）
     input  logic [23: 0] i_addr_off, // 字节窗口内偏移（映射见文件头；半字地址由高位推导）
     input  logic [31: 0] i_wdata, // 写数据（32b，分两拍 16b 下发到 DQ）
+    input  logic [ 3: 0] i_be_n, // active-low byte enables (0 = write that byte)
     output logic [31: 0] o_rdata, // 读回数据（两拍 16b 拼成）
     output logic         o_ready, // 单周期完成脉冲：事务结束可接受新请求
     output logic         o_busy, // 非空闲：初始化/刷新/传输任一进行中
@@ -71,7 +72,7 @@ module sdram_controller #(
     // SDRAM clk is the same as system clk for bring-up
     assign o_sdram_clk = clk;
     assign o_sdram_cke = 1'b1;
-    assign o_sdram_dqm = 2'b00;
+    // o_sdram_dqm driven after lat_be_n is declared (see below)
 
     // ------------------------------------------------------------------------
     // Command encoding (active low)
@@ -207,6 +208,12 @@ module sdram_controller #(
     logic         lat_we;      // 锁存的读写方向
     logic [31: 0] lat_wdata;  // 锁存的写数据
     logic [23: 0] lat_addr_off; // 锁存的主机字节偏移（behavioral mem 用）
+    logic [ 3: 0] lat_be_n;   // 锁存的字节使能（低有效）
+    // PHY DQM: active-high mask from active-low BE (low / high halfword)
+    assign o_sdram_dqm = {&lat_be_n[3: 2], &lat_be_n[1: 0]};
+    logic [31: 0] be_byte_mask;
+    assign be_byte_mask = {{8{~lat_be_n[3]}}, {8{~lat_be_n[2]}},
+                           {8{~lat_be_n[1]}}, {8{~lat_be_n[0]}}};
 
     // Optional on-chip backing store for host data (Verilator / no PHY DRAM).
     logic [31: 0] behav_mem [0: P_BEHAVIORAL_WORDS - 1];
@@ -281,6 +288,8 @@ module sdram_controller #(
             o_rdata  <= 32'h0;
             lat_we   <= 1'b0;
             lat_wdata<= 32'h0;
+            lat_be_n <= 4'h0;
+            lat_addr_off <= 24'h0;
             dq_out_r <= 16'h0;
             dq_oe_r  <= 1'b0;
         end else begin
@@ -359,6 +368,7 @@ module sdram_controller #(
                     end else if (i_en & ~o_ready) begin
                         lat_we       <= i_we;
                         lat_wdata    <= i_wdata;
+                        lat_be_n     <= i_be_n;
                         lat_addr_off <= i_addr_off;
                         st           <= ST_ACTIVATE;
                         ctr          <= 0;
@@ -430,13 +440,24 @@ module sdram_controller #(
                 ST_WRITE_BEAT0: begin
                     dq_out_r <= lat_wdata[15: 0];
                     dq_oe_r  <= 1'b1;
+                    // Low halfword lanes [1:0]; high lanes applied in BEAT1.
                     if (P_BEHAVIORAL_MEM)
-                        behav_mem[behav_word_idx] <= lat_wdata;
+                        behav_mem[behav_word_idx] <=
+                            (behav_mem[behav_word_idx] &
+                             ~{{16{1'b0}}, {8{~lat_be_n[1]}}, {8{~lat_be_n[0]}}}) |
+                            (lat_wdata &
+                             {{16{1'b0}}, {8{~lat_be_n[1]}}, {8{~lat_be_n[0]}}});
                     st       <= ST_WRITE_BEAT1;
                 end
                 ST_WRITE_BEAT1: begin
                     dq_out_r <= lat_wdata[31: 16];
                     dq_oe_r  <= 1'b1;
+                    if (P_BEHAVIORAL_MEM)
+                        behav_mem[behav_word_idx] <=
+                            (behav_mem[behav_word_idx] &
+                             ~{{8{~lat_be_n[3]}}, {8{~lat_be_n[2]}}, {16{1'b0}}}) |
+                            (lat_wdata &
+                             {{8{~lat_be_n[3]}}, {8{~lat_be_n[2]}}, {16{1'b0}}});
                     ctr      <= 0;
                     st       <= ST_TWR;
                 end

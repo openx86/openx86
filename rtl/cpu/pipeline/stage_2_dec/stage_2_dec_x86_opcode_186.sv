@@ -294,13 +294,23 @@ assign o_opcode_x86_OUTS_output_string                 = (i_instruction[0][7: 1]
 
 assign o_opcode_x86_POP_reg_mem                    = (i_instruction[0][7: 0] == 8'b1000_1111) & (i_instruction[1][5: 3] == 3'b000);
 assign o_opcode_x86_POP_reg                        = (i_instruction[0][7: 3] == 5'b0101_1);
-assign o_opcode_x86_POP_sreg_2                     = (i_instruction[0][7: 5] == 3'b000) & (i_instruction[0][4: 3] != 2'b01) & (i_instruction[0][2: 0] == 3'b111) & (i_instruction[1][5: 3] != 3'b110) & (i_instruction[1][5: 3] != 3'b111);
+// One-byte POP ES/SS/DS (07/17/1F). Do not sample instruction[1] — that is the
+// next opcode (e.g. FreeDOS boot self-mod ends with 1F before B9 MOV CX).
+assign o_opcode_x86_POP_sreg_2                     =
+    (i_instruction[0][7: 0] == 8'h07) |
+    (i_instruction[0][7: 0] == 8'h17) |
+    (i_instruction[0][7: 0] == 8'h1F);
 assign o_opcode_x86_POPA_popa_gpr  = (i_instruction[0][7: 0] == 8'b0110_0001);
 assign o_opcode_x86_POPF_popf_flags = (i_instruction[0][7: 0] == 8'b1001_1101);
 
 assign o_opcode_x86_PUSH_reg_mem                   = (i_instruction[0][7: 0] == 8'b1111_1111) & (i_instruction[1][5: 3] == 3'b110);
 assign o_opcode_x86_PUSH_reg                       = (i_instruction[0][7: 3] == 5'b0101_0);
-assign o_opcode_x86_PUSH_sreg_2                    = (i_instruction[0][7: 5] == 3'b000) & (i_instruction[0][2: 0] == 3'b110);
+// One-byte PUSH ES/CS/SS/DS (06/0E/16/1E)
+assign o_opcode_x86_PUSH_sreg_2                    =
+    (i_instruction[0][7: 0] == 8'h06) |
+    (i_instruction[0][7: 0] == 8'h0E) |
+    (i_instruction[0][7: 0] == 8'h16) |
+    (i_instruction[0][7: 0] == 8'h1E);
 assign o_opcode_x86_PUSH_imm                       = (i_instruction[0][7: 2] == 6'b0110_10) & (i_instruction[0][0] == 1'b0);
 assign o_opcode_x86_PUSH_pusha_gpr     = (i_instruction[0][7: 0] == 8'b0110_0000);
 assign o_opcode_x86_PUSHF_pushf_flags    = (i_instruction[0][7: 0] == 8'b1001_1100);

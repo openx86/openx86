@@ -286,6 +286,10 @@ module stage_2_dec (
     output logic [ 2: 0]        o_dec_target_sreg_index,
     output logic [ 1: 0]        o_dec_sib_scale_factor,
     output logic [ 1: 0]        o_dec_modrm_mod,
+    output logic [ 2: 0]        o_gpr_bit_width,
+    output logic                o_dec_rep,
+    output logic                o_dec_repne,
+    output logic                o_dec_opsz_32,
 
     // =========================
     // Clock and reset
@@ -627,6 +631,7 @@ module stage_2_dec (
     logic [ 2: 0]             operand_target_sreg_index;
     logic [ 1: 0]             operand_scale;
     logic [ 1: 0]             operand_mod;
+    logic [ 2: 0]             operand_gpr_bit_width;
     logic [31: 0]             operand_disp_value;
     logic [31: 0]             operand_imm_value;
     logic [ 3: 0]             operand_consume_byte_count;
@@ -1063,6 +1068,10 @@ module stage_2_dec (
     assign o_dec_target_sreg_index     = operand_target_sreg_index;
     assign o_dec_sib_scale_factor      = operand_scale;
     assign o_dec_modrm_mod             = operand_mod;
+    assign o_gpr_bit_width             = operand_gpr_bit_width;
+    assign o_dec_rep                   = prefix_group_1_repeat_equal;
+    assign o_dec_repne                 = prefix_group_1_repeat_not_equal;
+    assign o_dec_opsz_32               = i_default_size_32 ^ stage2_group_3_operand_size_r;
 
     // ============================================================
     // Prefix module instantiation (bytes[0:3])
@@ -1321,6 +1330,7 @@ module stage_2_dec (
         .o_opcode_x86_WBINVD_writeback_and_invalidate_data_cache       (opcode_wbinvd),
         .o_opcode_x86_WRMSR_write_to_model_specific_register     (opcode_wrmsr),
         .o_opcode_x86_XADD_exchange_and_add                    (opcode_xadd),
+        .o_opcode_x86_XCHG_reg_mem_with_reg                (opcode_xchg_reg_mem),
         .o_opcode_x86_XCHG_reg_with_acc_short              (opcode_xchg_acc),
         .o_opcode_x86_XLAT_table_look_up_translation               (opcode_xlat),
         .o_opcode_x86_XOR_reg_to_reg_mem                      (opcode_xor_reg_to_reg_mem),
@@ -1504,6 +1514,7 @@ module stage_2_dec (
         // CS.D (and real-mode default 16): drives ModR/M 16/32 and operand size.
         .i_default_op_size           ({2'b0, i_default_size_32}),
         .i_opsz_override             (stage2_group_3_operand_size_r),
+        .i_adsz_override             (stage2_group_4_address_size_r),
         .o_tttn                      (operand_tttn),
         .o_gpr_reg_index_valid       (operand_field_gpr_valid),
         .o_gpr_reg_index             (operand_field_gpr_index),
@@ -1534,7 +1545,7 @@ module stage_2_dec (
         .o_index_reg_index          (operand_index_reg_index),
         .o_gpr_reg_valid            (),
         .o_gpr_reg_index_addr        (),
-        .o_gpr_reg_bit_width        (),
+        .o_gpr_reg_bit_width        (operand_gpr_bit_width),
         .o_disp_present_addr        (),
         .o_disp_size_8b_addr        (),
         .o_disp_size_16b            (),

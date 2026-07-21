@@ -50,6 +50,8 @@ module interrupt_delivery_unit_tb;
     logic [31: 0] saved_esp;
     logic [31: 0] idtr_base;
     logic [15: 0] idtr_limit;
+    logic         protected_mode;
+    logic [31: 0] ss_base;
     logic         inta_vector_valid;
     logic [ 7: 0] inta_vector;
     logic [ 1: 0] cpl;
@@ -74,6 +76,7 @@ module interrupt_delivery_unit_tb;
     logic         mem_valid;
     logic         mem_ready;
     logic         mem_write_enable;
+    logic [ 1: 0] mem_size;
     logic [31: 0] mem_address;
     logic [31: 0] mem_write_data;
     logic [31: 0] mem_rdata;
@@ -82,6 +85,8 @@ module interrupt_delivery_unit_tb;
     logic         mem_ready_r;
     int           pass_count;
     int           wait_timeout;
+    logic [31: 0] mem_lane_wdata;
+    logic [31: 0] mem_lane_mask;
 
     always #1 clk = ~clk;
 
@@ -90,6 +95,23 @@ module interrupt_delivery_unit_tb;
     assign inta_vector       = 8'h21;
     assign inta_vector_valid = inta_req;
 
+    always_comb begin
+        unique case (mem_size)
+            2'b00: begin
+                mem_lane_mask  = 32'h0000_00FF << (mem_address[1: 0] * 8);
+                mem_lane_wdata = {24'h0, mem_write_data[7: 0]} << (mem_address[1: 0] * 8);
+            end
+            2'b01: begin
+                mem_lane_mask  = 32'h0000_FFFF << (mem_address[1: 0] * 8);
+                mem_lane_wdata = {16'h0, mem_write_data[15: 0]} << (mem_address[1: 0] * 8);
+            end
+            default: begin
+                mem_lane_mask  = 32'hFFFF_FFFF;
+                mem_lane_wdata = mem_write_data;
+            end
+        endcase
+    end
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             mem_ready_r <= 1'b0;
@@ -97,7 +119,8 @@ module interrupt_delivery_unit_tb;
             // One-cycle delayed ready; deassert after accept so master can issue next beat
             mem_ready_r <= mem_valid & ~mem_ready_r;
             if (mem_valid & mem_ready_r & mem_write_enable) begin
-                mem[mem_address >> 2] <= mem_write_data;
+                mem[mem_address >> 2] <= (mem[mem_address >> 2] & ~mem_lane_mask) |
+                                         (mem_lane_wdata & mem_lane_mask);
             end
         end
     end
@@ -115,6 +138,8 @@ module interrupt_delivery_unit_tb;
         .i_saved_esp            (saved_esp),
         .i_idtr_base            (idtr_base),
         .i_idtr_limit           (idtr_limit),
+        .i_protected_mode       (protected_mode),
+        .i_ss_base              (ss_base),
         .i_inta_vector_valid    (inta_vector_valid),
         .i_inta_vector          (inta_vector),
         .i_cpl                  (cpl),
@@ -139,6 +164,7 @@ module interrupt_delivery_unit_tb;
         .o_mem_valid            (mem_valid),
         .i_mem_ready            (mem_ready),
         .o_mem_write_enable     (mem_write_enable),
+        .o_mem_size             (mem_size),
         .o_mem_address          (mem_address),
         .o_mem_write_data       (mem_write_data),
         .i_mem_rdata            (mem_rdata),
@@ -177,6 +203,8 @@ module interrupt_delivery_unit_tb;
         saved_esp         = LP_SAVED_ESP;
         idtr_base         = LP_IDTR_BASE;
         idtr_limit        = LP_IDTR_LIMIT;
+        protected_mode    = 1'b1;
+        ss_base           = 32'h0;
         cpl               = 2'b00;
         gate_dpl          = 2'b00;
         need_stack_switch = 1'b0;
@@ -207,8 +235,8 @@ module interrupt_delivery_unit_tb;
             $finish(1);
         end
         if (~clear_if) begin
-            $display("FAIL interrupt gate did not clear IF clear_if_r=%b gate_type=%h gate_hi=%h",
-                     dut.clear_if_r, dut.gate_type, dut.gate_hi_r);
+            $display("FAIL interrupt gate did not clear IF clear_if=%b gate_type=%h gate_hi=%h",
+                     clear_if, dut.gate_type, dut.gate_hi_r);
             $finish(1);
         end
         if (mem[(LP_SAVED_ESP - 32'd4) >> 2] !== LP_SAVED_EFLAGS) begin
@@ -273,6 +301,72 @@ module interrupt_delivery_unit_tb;
         if (esp_write_data !== (LP_NEW_ESP - 32'd20)) begin
             // SS+ESP+EFLAGS+CS+EIP = 5 dwords
             $display("FAIL stack-switch new ESP got %h", esp_write_data);
+            $finish(1);
+        end
+        pass_count++;
+
+        // Real-mode IVT: one dword at base+vector*4 = {CS, IP}; 16-bit stack frame
+        protected_mode    = 1'b0;
+        need_stack_switch = 1'b0;
+        ss_base           = 32'h0;
+        idtr_base         = 32'h0;
+        idtr_limit        = 16'h03FF;
+        vector            = 8'h10;
+        saved_esp         = LP_SAVED_ESP;
+        is_iret           = 1'b0;
+        mem[(32'h10 << 2) >> 2] = {16'hF000, 16'hE05B};
+        start = 1'b1;
+        @(posedge clk);
+        start = 1'b0;
+        wait_done();
+        if (new_eip !== 32'h0000_E05B) begin
+            $display("FAIL real-mode IVT EIP got %h", new_eip);
+            $finish(1);
+        end
+        if (new_cs_selector !== 16'hF000) begin
+            $display("FAIL real-mode IVT CS got %h", new_cs_selector);
+            $finish(1);
+        end
+        if (esp_write_data !== (LP_SAVED_ESP - 32'd6)) begin
+            $display("FAIL real-mode ESP got %h expected %h",
+                     esp_write_data, LP_SAVED_ESP - 32'd6);
+            $finish(1);
+        end
+        // FLAGS at ESP-2 ([31:16]), CS at ESP-4 ([15:0]), IP at ESP-6 ([31:16])
+        if (mem[(LP_SAVED_ESP - 32'd2) >> 2][31: 16] !== LP_SAVED_EFLAGS[15: 0]) begin
+            $display("FAIL real-mode stack FLAGS got %h",
+                     mem[(LP_SAVED_ESP - 32'd2) >> 2][31: 16]);
+            $finish(1);
+        end
+        if (mem[(LP_SAVED_ESP - 32'd4) >> 2][15: 0] !== LP_SAVED_CS) begin
+            $display("FAIL real-mode stack CS got %h",
+                     mem[(LP_SAVED_ESP - 32'd4) >> 2][15: 0]);
+            $finish(1);
+        end
+        if (mem[(LP_SAVED_ESP - 32'd6) >> 2][31: 16] !== LP_SAVED_EIP[15: 0]) begin
+            $display("FAIL real-mode stack IP got %h",
+                     mem[(LP_SAVED_ESP - 32'd6) >> 2][31: 16]);
+            $finish(1);
+        end
+        pass_count++;
+
+        // Real-mode IRET pops 16-bit frame
+        saved_esp = LP_SAVED_ESP - 32'd6;
+        is_iret   = 1'b1;
+        start     = 1'b1;
+        @(posedge clk);
+        start = 1'b0;
+        wait_done();
+        if (new_eip !== {16'h0, LP_SAVED_EIP[15: 0]}) begin
+            $display("FAIL real-mode IRET EIP got %h", new_eip);
+            $finish(1);
+        end
+        if (new_cs_selector !== LP_SAVED_CS) begin
+            $display("FAIL real-mode IRET CS got %h", new_cs_selector);
+            $finish(1);
+        end
+        if (esp_write_data !== LP_SAVED_ESP) begin
+            $display("FAIL real-mode IRET ESP got %h", esp_write_data);
             $finish(1);
         end
         pass_count++;

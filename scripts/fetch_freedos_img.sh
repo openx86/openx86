@@ -67,6 +67,19 @@ cp -f "$IMG" "$OUT_IMG"
 SIZE=$(wc -c <"$OUT_IMG" | tr -d ' ')
 echo "FreeDOS disk ready: $OUT_IMG ($SIZE bytes)"
 
+# OpenX86 loads this image into IDE BRAM; SeaBIOS INT13 must use DL=0x80.
+# Floppy BPB often leaves offset 0x24 as 0x00 — force HDD unit number.
+python3 - <<PY
+from pathlib import Path
+p = Path("$OUT_IMG")
+data = bytearray(p.read_bytes())
+if len(data) > 0x24:
+    old = data[0x24]
+    data[0x24] = 0x80
+    p.write_bytes(data)
+    print(f"BPB drive byte @0x24: 0x{old:02x} -> 0x80")
+PY
+
 # Pad to 1.44MiB if smaller (IDE BRAM expects up to 2880 sectors)
 TARGET=$((512 * 2880))
 if [ "$SIZE" -lt "$TARGET" ]; then

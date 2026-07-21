@@ -463,6 +463,7 @@ typedef struct packed {
     logic        uop_agu_index;      // src2 is AGU index (scaled by uop_sib_scale)
     logic        uop_mem_access;     // Memory access operation
     logic        uop_is_store;       // Store operation (1) vs load (0)
+    logic [ 1: 0] uop_mem_size;      // 0=byte, 1=halfword, 2=dword
     logic        uop_rep;            // REP/REPE prefix present
     logic        uop_repne;          // REPNE prefix present
     logic        uop_valid;          // Micro-op valid flag
@@ -524,6 +525,11 @@ typedef struct packed {
 `define UOP_MMX        6'd52
 `define UOP_SSE        6'd53
 `define UOP_EMMS       6'd54
+// STRING kind in uop_immediate[3: 2] (mem_size in [1: 0])
+`define STRING_KIND_STOS 2'd0
+`define STRING_KIND_LODS 2'd1
+`define STRING_KIND_MOVS 2'd2
+`define STRING_KIND_CMPS 2'd3
 
 // MISC micro-op subcodes (carried in uop_immediate[7: 0])
 `define MISC_SUB_BSWAP    8'h01
@@ -577,6 +583,7 @@ typedef struct packed {
 `define MISC_SUB_LFS      8'h6A
 `define MISC_SUB_LGS      8'h6B
 `define MISC_SUB_LSS      8'h6C
+`define MISC_SUB_STORE_SEG 8'h6D
 // Stack / flag tags carried in uop_immediate[7:0] for PUSH/POP variants
 `define UOP_TAG_PUSHF     8'hFA
 `define UOP_TAG_POPF      8'hFB

@@ -27,6 +27,7 @@ module i486_soc_bus_bridge (
     input  logic [31: 0] i_data_out,
     input  logic         i_data_oe,
     output logic [31: 0] o_data_in,
+    input  logic [ 3: 0] i_be_n,
     input  logic         i_wr_n,
     input  logic         i_mio_n,
     input  logic         i_blast_n,
@@ -43,6 +44,7 @@ module i486_soc_bus_bridge (
     output logic [31: 0] o_bus_address,
     input  logic [31: 0] i_bus_read_data,
     output logic [31: 0] o_bus_write_data,
+    output logic [ 3: 0] o_bus_be_n,
 
     input  logic         clk,
     input  logic         rst_n
@@ -74,6 +76,7 @@ module i486_soc_bus_bridge (
             o_bus_io_access   <= 1'b0;
             o_bus_address     <= 32'h0;
             o_bus_write_data  <= 32'h0;
+            o_bus_be_n        <= 4'h0;
             latched_write     <= 1'b0;
             latched_io        <= 1'b0;
             latched_addr      <= 32'h0;
@@ -95,6 +98,7 @@ module i486_soc_bus_bridge (
                         o_bus_io_access  <= i_mio_n;
                         o_bus_address    <= i_address;
                         o_bus_write_data <= i_data_out;
+                        o_bus_be_n       <= i_be_n;
                         o_bready_n       <= 1'b1;
                         state            <= S_WAIT_SOC;
                     end
@@ -104,19 +108,27 @@ module i486_soc_bus_bridge (
                     // historically also busy; requiring ~busy dropped the pulse.
                     if (i_bus_ready) begin
                         latched_rdata <= i_bus_read_data;
-                        o_bus_valid <= 1'b0;
-                        o_bready_n  <= 1'b0;
-                        state       <= S_DONE;
+                        o_bus_valid   <= 1'b0;
+                        // Do NOT assert BRDY in this cycle. Burst samples
+                        // i_data_in (= latched_rdata) when BRDY falls; a
+                        // same-cycle latch+BRDY NBA race delivers the previous
+                        // beat's data (often 0), so cache fills saw zeros while
+                        // SDRAM already held the correct word (e.g. CALL return
+                        // addr at 6ffc). Assert BRDY only in S_DONE.
+                        state <= S_DONE;
                     end
                 end
                 S_DONE: begin
-                    // Hold BRDY until the CPU drops BLAST# (end of beat). Clearing
-                    // BRDY on the first DONE cycle races the burst FSM and drops
-                    // the ready pulse before BIU/cache observe it on SDRAM paths.
+                    // BRDY with stable latched_rdata. Hold until BLAST# rises so
+                    // the burst FSM cannot miss a 1-cycle pulse.
                     o_bready_n <= 1'b0;
                     if (i_blast_n) begin
                         o_bready_n <= 1'b1;
-                        state      <= S_IDLE;
+                        // Always return to IDLE. Do NOT accept back-to-back ADS#
+                        // here: the burst controller holds ADS# for two cycles, so
+                        // a same-pulse re-accept issued a second IDE data read and
+                        // skipped every other ATA word (boot got 3ceb|4452).
+                        state <= S_IDLE;
                     end
                 end
                 default: state <= S_IDLE;

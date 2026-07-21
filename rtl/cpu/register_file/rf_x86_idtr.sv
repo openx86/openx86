@@ -30,12 +30,12 @@ module rf_x86_idtr (
 
 // SIDT 读出 / LIDT 写入的架构寄存器快照
 always_ff @(posedge clk or negedge rst_n) begin
-    if (~rst_n) begin  // 复位：基址与限长清零
-        idtr_limit <= 16'b0;
-        idtr_base <= 32'b0;
+    if (~rst_n) begin  // Reset: real-mode default IDTR base=0, limit=3FFh
+        idtr_limit <= 16'h03FF;
+        idtr_base  <= 32'h0;
     end else if (idtr_write_enable) begin  // 加载 IDTR（通常来自 LIDT）
         idtr_limit <= idtr_write_data_limit;
-        idtr_base <= idtr_write_data_base;
+        idtr_base  <= idtr_write_data_base;
     end
 end
 

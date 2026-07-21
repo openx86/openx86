@@ -4,6 +4,8 @@ tb/common/edge_detect_tb.sv
 tb/openx86_soc_top_tb.sv
 tb/cpu/biu/bus_interface_unit_tb.sv
 tb/cpu/i486_soc_bus_bridge_tb.sv
+tb/memory/sdram_controller_tb.sv
+tb/cpu/pipeline/stage_5_exu/units/exu_string_tb.sv
 tb/cpu/exception_interrupt_unit_tb.sv
 tb/cpu/interrupt_delivery_unit_tb.sv
 tb/cpu/i486_cpu_core_tb.sv

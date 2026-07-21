@@ -26,12 +26,15 @@ module exu_ret (
     input  logic [31: 0] i_src2_data,
     input  logic [31: 0] i_immediate,
     input  logic         i_has_imm,
+    input  logic [ 1: 0] i_mem_size,
     output exu_result_t   o_result
 );
 
     logic [31: 0] new_esp;
+    logic [31: 0] stack_delta;
 
-    assign new_esp = i_has_imm ? (i_src1_data + i_immediate) : (i_src1_data + 32'd4);
+    assign stack_delta = (i_mem_size == 2'b01) ? 32'd2 : 32'd4;
+    assign new_esp = i_has_imm ? (i_src1_data + i_immediate) : (i_src1_data + stack_delta);
 
     assign o_result.result           = new_esp;
     assign o_result.cf               = 1'b0;
@@ -43,6 +46,6 @@ module exu_ret (
     assign o_result.mem_valid        = 1'b1;
     assign o_result.mem_write_enable = 1'b0;
     assign o_result.mem_address      = i_src1_data;
-    assign o_result.mem_write_data   = 32'd0;
+    assign o_result.mem_write_data   = 32'h0;
 
 endmodule

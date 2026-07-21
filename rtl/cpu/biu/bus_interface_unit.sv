@@ -42,6 +42,7 @@ module bus_interface_unit (
     output logic         o_data_ready,
     input  logic         i_data_write_enable,
     input  logic         i_data_io_access,
+    input  logic [ 1: 0] i_data_size,
     input  logic [31: 0] i_data_address,
     output logic [31: 0] o_data_data_read,
     input  logic [31: 0] i_data_data_write,
@@ -54,6 +55,7 @@ module bus_interface_unit (
     input  logic         i_bus_busy,
     output logic         o_bus_write_enable,
     output logic         o_bus_io_access,
+    output logic [ 1: 0] o_bus_size,
     output logic [31: 0] o_bus_address,
     input  logic [31: 0] i_bus_data_read,
     output logic [31: 0] o_bus_data_write,
@@ -98,6 +100,7 @@ module bus_interface_unit (
         o_bus_valid <= 1'b0;
         o_bus_write_enable <= 1'b0;
         o_bus_io_access <= 1'b0;
+        o_bus_size <= 2'b10;
         o_bus_address <= 32'h0;
         o_bus_data_write <= 32'h0;
         o_mmu_ready <= 1'b0;
@@ -125,6 +128,7 @@ module bus_interface_unit (
                         o_bus_valid         <= 1'b1;
                         o_bus_write_enable  <= 1'b0;
                         o_bus_io_access     <= 1'b0;
+                        o_bus_size          <= 2'b10;
                         o_bus_address       <= i_mmu_address;
                         o_bus_data_write    <= 32'h0;
                     end else if (i_code_valid) begin  // 次之：取指
@@ -132,6 +136,7 @@ module bus_interface_unit (
                         o_bus_valid         <= 1'b1;
                         o_bus_write_enable  <= 1'b0;
                         o_bus_io_access     <= 1'b0;
+                        o_bus_size          <= 2'b10;
                         o_bus_address       <= i_code_address;
                         o_bus_data_write    <= 32'h0;
                     end else if (i_data_valid) begin  // 最后：数据访存
@@ -139,6 +144,7 @@ module bus_interface_unit (
                         o_bus_valid         <= 1'b1;
                         o_bus_write_enable  <= i_data_write_enable;
                         o_bus_io_access     <= i_data_io_access;
+                        o_bus_size          <= i_data_size;
                         o_bus_address       <= i_data_address;
                         o_bus_data_write    <= i_data_data_write;
                     end

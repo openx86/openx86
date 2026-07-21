@@ -28,16 +28,20 @@ module exu_call (
     input  logic [31: 0] i_displacement,
     input  logic         i_has_imm,
     input  logic         i_has_disp,
+    input  logic [ 1: 0] i_mem_size,
     output exu_result_t  o_result
 );
 
     logic [31: 0] return_addr;
     logic [31: 0] new_esp;
+    logic [31: 0] stack_delta;
 
+    // 16-bit opsize (real mode / 66-prefix): near CALL pushes a 16-bit IP.
+    assign stack_delta = (i_mem_size == 2'b01) ? 32'd2 : 32'd4;
     // Return address: prefer explicit imm (insn_eip+len from dec_to_uop);
     // fall back to src1 for legacy/indirect forms.
     assign return_addr = i_has_imm ? i_immediate : i_src1_data;
-    assign new_esp     = i_src2_data - 32'd4;
+    assign new_esp     = i_src2_data - stack_delta;
 
     assign o_result.result           = new_esp;
     assign o_result.cf               = 1'b0;

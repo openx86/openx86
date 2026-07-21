@@ -25,6 +25,7 @@ module exu_string (
     input  logic [31: 0] i_src1_data,
     input  logic [31: 0] i_src2_data,
     input  logic [31: 0] i_ecx,
+    input  logic [ 1: 0] i_mem_size,
     input  logic         i_is_store,
     input  logic         i_df,
     input  logic         i_rep,
@@ -35,10 +36,18 @@ module exu_string (
     output logic [31: 0] o_ecx_next
 );
 
+    logic [31: 0] elem_bytes;
     logic [31: 0] step;
     logic         cond_ok;
 
-    assign step     = i_df ? 32'hFFFF_FFFC : 32'd4;
+    always_comb begin
+        unique case (i_mem_size)
+            2'b00:   elem_bytes = 32'd1;
+            2'b01:   elem_bytes = 32'd2;
+            default: elem_bytes = 32'd4;
+        endcase
+    end
+    assign step = i_df ? (~elem_bytes + 32'd1) : elem_bytes;
     // REPE continues while ZF=1; REPNE while ZF=0; plain REP ignores ZF
     assign cond_ok  = i_repne ? ~i_zf : 1'b1;
     assign o_ecx_next = (i_ecx == 32'd0) ? 32'd0 : (i_ecx - 32'd1);

@@ -54,21 +54,30 @@ module exu_dispatcher_alu_tb;
         .i_src2_data    (src2),
         .i_immediate    (imm),
         .i_displacement (disp),
+        .i_ecx          (32'd0),
         .i_cf           (cf_in),
         .i_has_imm      (has_imm),
         .i_has_disp     (has_disp),
         .i_mem_access   (mem_access),
         .i_is_store     (is_store),
+        .i_mem_size     (2'b10),
+        .i_agu_base     (1'b0),
+        .i_agu_index    (1'b0),
+        .i_sib_scale    (2'b00),
         .i_tttn         (tttn),
         .i_pf           (pf_in),
         .i_af           (af_in),
         .i_zf           (zf_in),
         .i_sf           (sf_in),
         .i_of           (of_in),
+        .i_df           (1'b0),
+        .i_rep          (1'b0),
+        .i_repne        (1'b0),
         .i_dividend     (dividend),
         .i_cpuid_eax    (cpuid_eax),
         .o_handled      (handled),
-        .o_dispatch     (dispatch)
+        .o_dispatch     (dispatch),
+        .o_result_high  ()
     );
 
     task automatic check_add;

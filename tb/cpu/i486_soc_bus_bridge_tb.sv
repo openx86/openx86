@@ -83,6 +83,7 @@ module i486_soc_bus_bridge_tb;
         .i_data_out         (data_out),
         .i_data_oe          (data_oe),
         .o_data_in          (data_in),
+        .i_be_n             (4'h0),
         .i_wr_n             (wr_n),
         .i_mio_n            (mio_n),
         .i_blast_n          (blast_n),
@@ -95,6 +96,7 @@ module i486_soc_bus_bridge_tb;
         .o_bus_address      (bus_address),
         .i_bus_read_data    (bus_read_data),
         .o_bus_write_data   (bus_write_data),
+        .o_bus_be_n         (),
         .clk                (clk),
         .rst_n              (rst_n)
     );

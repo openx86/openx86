@@ -57,6 +57,7 @@ module i486_cpu (
     logic        data_ready;
     logic        data_write_enable;
     logic        data_io_access;
+    logic [ 1: 0] data_mem_size;
     logic [31: 0] data_address;
     logic [31: 0] data_data_read;
     logic [31: 0] data_data_write;
@@ -70,6 +71,7 @@ module i486_cpu (
     logic        cache_data_ready;
     logic        cache_data_write_enable;
     logic        cache_data_io_access;
+    logic [ 1: 0] cache_data_size;
     logic [31: 0] cache_data_address;
     logic [31: 0] cache_data_wdata;
     logic [31: 0] cache_data_rdata;
@@ -82,11 +84,13 @@ module i486_cpu (
     logic [31: 0] cache_mem_address;
     logic [31: 0] cache_mem_wdata;
     logic [31: 0] cache_mem_rdata;
+    logic [ 1: 0] cache_mem_size;
 
     logic        biu_bus_valid;
     logic        biu_bus_ready;
     logic        biu_bus_write_enable;
     logic        biu_bus_io_access;
+    logic [ 1: 0] biu_bus_size;
     logic [31: 0] biu_bus_address;
     logic [31: 0] biu_bus_read_data;
     logic [31: 0] biu_bus_write_data;
@@ -96,9 +100,12 @@ module i486_cpu (
     logic        burst_req_write;
     logic        burst_req_io;
     logic        burst_req_code;
+    logic [ 1: 0] burst_req_size;
     logic [31: 0] burst_req_address;
     logic [31: 0] burst_req_wdata;
     logic [31: 0] burst_req_rdata;
+    logic [31: 0] burst_beat_addr;
+    logic         burst_ready_for_biu;
 
     logic        invalidate_cache;
     logic        wbinvd_cmd;
@@ -116,6 +123,7 @@ module i486_cpu (
         .i_data_ready       (cache_data_ready),
         .o_data_write_enable(cache_data_write_enable),
         .o_data_io_access   (cache_data_io_access),
+        .o_data_size        (cache_data_size),
         .o_data_address     (cache_data_address),
         .i_data_data_read   (cache_data_rdata),
         .o_data_data_write  (cache_data_wdata),
@@ -137,6 +145,7 @@ module i486_cpu (
         .o_data_ready        (cache_data_ready),
         .i_data_write_enable (cache_data_write_enable),
         .i_data_io_access    (cache_data_io_access),
+        .i_data_size         (cache_data_size),
         .i_data_address      (cache_data_address),
         .i_data_wdata        (cache_data_wdata),
         .o_data_rdata        (cache_data_rdata),
@@ -145,6 +154,7 @@ module i486_cpu (
         .o_mem_write         (cache_mem_write),
         .o_mem_io            (cache_mem_io),
         .o_mem_code          (cache_mem_code),
+        .o_mem_size          (cache_mem_size),
         .o_mem_address       (cache_mem_address),
         .o_mem_wdata         (cache_mem_wdata),
         .i_mem_rdata         (cache_mem_rdata),
@@ -161,8 +171,16 @@ module i486_cpu (
     assign data_write_enable = cache_mem_write;
     assign data_io_access    = cache_mem_io;
     assign data_data_write   = cache_mem_wdata;
-    assign cache_mem_ready   = cache_mem_code ? code_ready : data_ready;
-    assign cache_mem_rdata   = cache_mem_code ? code_data_read : data_data_read;
+    assign data_mem_size     = cache_mem_size;
+    // Gate stale READ ready to the in-flight beat PA. Writes stay ungated:
+    // requiring a PA match on write-through deadlocked SeaBIOS IVT stores.
+    // Ungated data *fills* previously latched the prior beat's rdata into the
+    // next dword (IVT[0x4C] got INT12's entry → soft INT13 jumped to entry_12).
+    assign burst_ready_for_biu = burst_req_ready &
+                                 (burst_req_write |
+                                  (burst_beat_addr == burst_req_address));
+    assign cache_mem_ready     = cache_mem_code ? code_ready : data_ready;
+    assign cache_mem_rdata     = cache_mem_code ? code_data_read : data_data_read;
 
     bus_interface_unit biu_0 (
         .i_mmu_valid        (mmu_valid),
@@ -177,14 +195,16 @@ module i486_cpu (
         .o_data_ready       (data_ready),
         .i_data_write_enable(data_write_enable),
         .i_data_io_access   (data_io_access),
+        .i_data_size        (data_mem_size),
         .i_data_address     (data_address),
         .o_data_data_read   (data_data_read),
         .i_data_data_write  (data_data_write),
         .o_bus_valid        (biu_bus_valid),
-        .i_bus_ready        (burst_req_ready),
+        .i_bus_ready        (burst_ready_for_biu),
         .i_bus_busy         (1'b0),
         .o_bus_write_enable (biu_bus_write_enable),
         .o_bus_io_access    (biu_bus_io_access),
+        .o_bus_size         (biu_bus_size),
         .o_bus_address      (biu_bus_address),
         .i_bus_data_read    (biu_bus_read_data),
         .o_bus_data_write   (biu_bus_write_data),
@@ -196,6 +216,7 @@ module i486_cpu (
     assign biu_bus_read_data = burst_req_rdata;
     assign burst_req_write   = biu_bus_write_enable;
     assign burst_req_io      = biu_bus_io_access;
+    assign burst_req_size    = biu_bus_size;
     assign burst_req_address = biu_bus_address;
     assign burst_req_wdata   = biu_bus_write_data;
     assign burst_req_code    = code_valid;
@@ -206,10 +227,12 @@ module i486_cpu (
         .i_req_write   (burst_req_write),
         .i_req_io      (burst_req_io),
         .i_req_code    (burst_req_code),
+        .i_req_size    (burst_req_size),
         .i_req_address (burst_req_address),
         .i_req_wdata   (burst_req_wdata),
-        .o_req_rdata   (burst_req_rdata),
-        .o_ads_n       (o_ads_n),
+        .o_req_rdata      (burst_req_rdata),
+        .o_req_beat_addr  (burst_beat_addr),
+        .o_ads_n          (o_ads_n),
         .o_address     (o_address),
         .o_data_out    (o_data_out),
         .o_data_oe     (o_data_oe),

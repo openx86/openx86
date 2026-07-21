@@ -51,6 +51,10 @@ module i486_dec_uop_stage (
     logic [ 2: 0]      w_dec_segment_reg_index;
     logic [ 2: 0]      w_dec_target_sreg_index;
     logic [ 1: 0]      w_dec_sib_scale_factor;
+    logic [ 2: 0]      w_gpr_bit_width;
+    logic              w_dec_rep;
+    logic              w_dec_repne;
+    logic              w_dec_opsz_32;
     logic [ 2: 0]      w_eee;
     logic              w_opcode_aaa;
     logic              w_opcode_aad;
@@ -309,6 +313,10 @@ module i486_dec_uop_stage (
         .o_dec_segment_reg_index                    (w_dec_segment_reg_index),
         .o_dec_target_sreg_index                    (w_dec_target_sreg_index),
         .o_dec_sib_scale_factor                     (w_dec_sib_scale_factor),
+        .o_gpr_bit_width                            (w_gpr_bit_width),
+        .o_dec_rep                                  (w_dec_rep),
+        .o_dec_repne                                (w_dec_repne),
+        .o_dec_opsz_32                              (w_dec_opsz_32),
         .o_eee                                      (w_eee),
         .o_opcode_aaa                               (w_opcode_aaa),
         .o_opcode_aad                               (w_opcode_aad),
@@ -549,6 +557,10 @@ module i486_dec_uop_stage (
         .i_dec_segment_reg_index                    (w_dec_segment_reg_index),
         .i_dec_target_sreg_index                    (w_dec_target_sreg_index),
         .i_dec_sib_scale_factor                     (w_dec_sib_scale_factor),
+        .i_gpr_bit_width                            (w_gpr_bit_width),
+        .i_dec_rep                                  (w_dec_rep),
+        .i_dec_repne                                (w_dec_repne),
+        .i_dec_opsz_32                              (w_dec_opsz_32),
         .i_eee                                      (w_eee),
         .i_insn_eip                                 (i_ifu_eip),
         .i_insn_len                                 (o_ifu_dec_consume_bytes),

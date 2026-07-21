@@ -140,13 +140,47 @@ module seabios_post_tb;
     int           thr_cyc;
     int           thr_last_cyc;
     logic         thr_have_pending;
+    logic [31: 0] eip_probe;
+    logic [31: 0] esp_probe;
+    bit           saw_mutable;
+    bit           saw_dopost;
+    bit           saw_main;
+    bit           saw_low;
     always @(posedge clk) begin
         if (!rst_n) begin
-            thr_cyc         = 0;
-            thr_last_cyc    = 0;
+            thr_cyc          = 0;
+            thr_last_cyc     = 0;
             thr_have_pending = 1'b0;
+            saw_mutable      = 1'b0;
+            saw_dopost       = 1'b0;
+            saw_main         = 1'b0;
+            saw_low          = 1'b0;
         end else begin
-            thr_cyc = thr_cyc + 1;
+            thr_cyc   = thr_cyc + 1;
+            eip_probe = dut.u_cpu.cpu_core_0.u_pipeline.u_ifu.eip_r;
+            esp_probe = dut.u_cpu.cpu_core_0.u_rf_gpr_esp.o_ESP;
+            if (!saw_mutable && (eip_probe == 32'h000F_63B0)) begin
+                saw_mutable = 1'b1;
+                $display("TRACE code_mutable enter c=%0d esp=%h stack6ffc=%h",
+                         thr_cyc, esp_probe,
+                         dut.u_sdram.behav_mem[32'h6FFC >> 2]);
+            end
+            if (!saw_dopost && (eip_probe == 32'h000F_5F8E)) begin
+                saw_dopost = 1'b1;
+                $display("TRACE dopost enter c=%0d esp=%h", thr_cyc, esp_probe);
+            end
+            if (!saw_main && (eip_probe == 32'h000F_517A)) begin
+                saw_main = 1'b1;
+                $display("TRACE maininit enter c=%0d esp=%h uart='%s'",
+                         thr_cyc, esp_probe, uart_buf);
+            end
+            if (saw_mutable && !saw_low && (eip_probe < 32'h000E_0000) &&
+                (dut.u_cpu.cpu_core_0.u_rf_cr0.o_data[0])) begin
+                saw_low = 1'b1;
+                $display("TRACE LOW eip c=%0d eip=%h esp=%h stack6ffc=%h",
+                         thr_cyc, eip_probe, esp_probe,
+                         dut.u_sdram.behav_mem[32'h6FFC >> 2]);
+            end
             if (dut.u_bus_controller.u_chip_com1.thr_write_pulse) begin
                 automatic logic [7: 0] ch;
                 thr_count = thr_count + 1;
@@ -197,12 +231,18 @@ module seabios_post_tb;
         while (c < max_cycles) begin
             @(posedge clk);
             c++;
-            if ((c == 10000) || (c == 100000) || (c == 500000) || (c == 1000000)) begin
-                $display("dbg c=%0d eip=%h uart_len=%0d uart='%s'",
+            if ((c == 2000) || (c == 5000) || (c == 10000) || (c == 50000) ||
+                (c == 100000) || (c == 200000) || ((c % 50000) == 0 && c > 0)) begin
+                $display("dbg c=%0d eip=%h cs=%h ds=%h esp=%h pe=%b thr=%0d uart_len=%0d uart='%s'",
                          c,
                          dut.u_cpu.cpu_core_0.u_pipeline.u_ifu.eip_r,
+                         dut.u_cpu.cpu_core_0.u_rf_seg_cs.o_selector,
+                         dut.u_cpu.cpu_core_0.u_rf_seg_ds.o_selector,
+                         dut.u_cpu.cpu_core_0.u_rf_gpr_esp.o_ESP,
+                         dut.u_cpu.cpu_core_0.u_rf_cr0.o_data[0],
+                         thr_count,
                          uart_buf.len(),
-                         uart_buf);
+                         uart_buf.len() > 80 ? uart_buf.substr(uart_buf.len()-80, uart_buf.len()-1) : uart_buf);
             end
             if ((require_post != 0) && (checkpoint >= 1))
                 break;

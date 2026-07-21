@@ -31,9 +31,12 @@ module exception_interrupt_unit (
     input  logic         i_if_flag,
     input  logic         i_software_int_valid,
     input  logic [ 7: 0] i_software_int_vector,
+    input  logic [31: 0] i_software_int_eip,
     input  logic         i_iret_valid,
     input  logic [31: 0] i_idtr_base,
     input  logic [15: 0] i_idtr_limit,
+    input  logic         i_protected_mode,
+    input  logic [31: 0] i_ss_base,
     input  logic [31: 0] i_current_eip,
     input  logic [15: 0] i_current_cs_selector,
     input  logic [15: 0] i_current_ss_selector,
@@ -61,6 +64,7 @@ module exception_interrupt_unit (
     output logic         o_mem_valid,
     input  logic         i_mem_ready,
     output logic         o_mem_write_enable,
+    output logic [ 1: 0] o_mem_size,
     output logic [31: 0] o_mem_address,
     output logic [31: 0] o_mem_write_data,
     input  logic [31: 0] i_mem_rdata,
@@ -94,11 +98,18 @@ module exception_interrupt_unit (
     logic         latched_need_switch;
     logic [15: 0] latched_new_ss;
     logic [31: 0] latched_new_esp;
+    logic [31: 0] latched_eip;
+    logic [15: 0] latched_cs;
+    logic [15: 0] latched_ss;
+    logic [31: 0] latched_eflags;
+    logic [31: 0] latched_esp;
+    logic [31: 0] latched_ss_base;
 
     logic         idu_busy;
     logic         idu_start;
     logic         idu_mem_valid;
     logic         idu_mem_we;
+    logic [ 1: 0] idu_mem_size;
     logic [31: 0] idu_mem_addr;
     logic [31: 0] idu_mem_wdata;
     logic         idu_flush;
@@ -150,13 +161,15 @@ module exception_interrupt_unit (
     end
 
     // Privilege change toward ring 0: fetch ESP0/SS0 from TSS when base is valid
-    assign need_tss_fetch = pending_intr & ~pending_iret &
+    // (protected mode only — real-mode INT must not touch TSS)
+    assign need_tss_fetch = pending_intr & ~pending_iret & i_protected_mode &
                             (i_cpl != 2'b00) & (i_tss_base != 32'h0);
 
     assign o_idu_busy = (state != EIU_IDLE) | idu_busy | tss_busy;
 
     assign o_mem_valid        = (state == EIU_TSS) ? tss_bus_valid : idu_mem_valid;
     assign o_mem_write_enable = (state == EIU_TSS) ? tss_bus_we    : idu_mem_we;
+    assign o_mem_size         = (state == EIU_TSS) ? 2'b10         : idu_mem_size;
     assign o_mem_address      = (state == EIU_TSS) ? tss_bus_addr  : idu_mem_addr;
     assign o_mem_write_data   = (state == EIU_TSS) ? tss_bus_wdata : idu_mem_wdata;
 
@@ -177,6 +190,12 @@ module exception_interrupt_unit (
             latched_need_switch <= 1'b0;
             latched_new_ss      <= 16'h0;
             latched_new_esp     <= 32'h0;
+            latched_eip         <= 32'h0;
+            latched_cs          <= 16'h0;
+            latched_ss          <= 16'h0;
+            latched_eflags      <= 32'h0;
+            latched_esp         <= 32'h0;
+            latched_ss_base     <= 32'h0;
             tss_started_r       <= 1'b0;
         end else begin
             unique case (state)
@@ -192,6 +211,18 @@ module exception_interrupt_unit (
                         latched_need_switch <= 1'b0;
                         latched_new_ss      <= 16'h0;
                         latched_new_esp     <= 32'h0;
+                        // Soft INT: push next EIP from EXU. Faults/NMI/IRQ: faulting EIP.
+                        latched_eip         <= (!pending_iret && i_software_int_valid &&
+                                                !i_exception_valid && !i_nmi &&
+                                                !(i_external_intr & i_if_flag)) ?
+                                               i_software_int_eip : i_current_eip;
+                        latched_cs          <= i_current_cs_selector;
+                        latched_ss          <= i_current_ss_selector;
+                        latched_eflags      <= i_current_eflags;
+                        latched_esp         <= i_current_esp;
+                        // Real mode: SS.base = selector<<4 (ignore stale PM descriptor)
+                        latched_ss_base     <= i_protected_mode ? i_ss_base :
+                                               {12'h0, i_current_ss_selector, 4'h0};
                         if (need_tss_fetch) begin
                             state <= EIU_TSS;
                         end else begin
@@ -245,12 +276,14 @@ module exception_interrupt_unit (
         .i_vector               (latched_vector),
         .i_has_error_code       (latched_has_ec),
         .i_error_code           (latched_error_code),
-        .i_saved_eip            (i_current_eip),
-        .i_saved_cs_selector    (i_current_cs_selector),
-        .i_saved_eflags         (i_current_eflags),
-        .i_saved_esp            (i_current_esp),
+        .i_saved_eip            (latched_eip),
+        .i_saved_cs_selector    (latched_cs),
+        .i_saved_eflags         (latched_eflags),
+        .i_saved_esp            (latched_esp),
         .i_idtr_base            (i_idtr_base),
         .i_idtr_limit           (i_idtr_limit),
+        .i_protected_mode       (i_protected_mode),
+        .i_ss_base              (latched_ss_base),
         .i_inta_vector_valid    (i_inta_vector_valid),
         .i_inta_vector          (i_inta_vector),
         .i_cpl                  (i_cpl),
@@ -258,7 +291,7 @@ module exception_interrupt_unit (
         .i_need_stack_switch    (latched_need_switch),
         .i_new_ss               (latched_new_ss),
         .i_new_esp              (latched_new_esp),
-        .i_current_ss           (i_current_ss_selector),
+        .i_current_ss           (latched_ss),
         .o_busy                 (idu_busy),
         .o_inta_req             (idu_inta_req),
         .o_done                 (),
@@ -275,6 +308,7 @@ module exception_interrupt_unit (
         .o_mem_valid            (idu_mem_valid),
         .i_mem_ready            (i_mem_ready & (state == EIU_IDU)),
         .o_mem_write_enable     (idu_mem_we),
+        .o_mem_size             (idu_mem_size),
         .o_mem_address          (idu_mem_addr),
         .o_mem_write_data       (idu_mem_wdata),
         .i_mem_rdata            (i_mem_rdata),

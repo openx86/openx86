@@ -29,7 +29,8 @@ module exu_xchg (
     output exu_result_t   o_result
 );
 
-    assign o_result.result           = i_src2_data;
+    // dest := src1; EXU dual-WB also writes EAX/other from src2 for XCHG r,acc
+    assign o_result.result           = i_src1_data;
     assign o_result.cf               = 1'b0;
     assign o_result.pf               = 1'b0;
     assign o_result.af               = 1'b0;

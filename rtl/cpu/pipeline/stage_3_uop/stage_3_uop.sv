@@ -262,6 +262,10 @@ module stage_3_uop (
     input  logic [ 2: 0]        i_dec_target_sreg_index,
     input  logic [ 1: 0]        i_dec_sib_scale_factor,
     input  logic [ 1: 0]        i_dec_modrm_mod,
+    input  logic [ 2: 0]        i_gpr_bit_width,
+    input  logic                i_dec_rep,
+    input  logic                i_dec_repne,
+    input  logic                i_dec_opsz_32,
 
     // =========================
     // stage handshake/control
@@ -554,6 +558,10 @@ module stage_3_uop (
         .i_dec_target_sreg_index    ( i_dec_target_sreg_index ),
         .i_dec_sib_scale_factor     ( i_dec_sib_scale_factor ),
         .i_dec_modrm_mod            ( i_dec_modrm_mod ),
+        .i_gpr_bit_width            ( i_gpr_bit_width ),
+        .i_dec_rep                  ( i_dec_rep ),
+        .i_dec_repne                ( i_dec_repne ),
+        .i_dec_opsz_32              ( i_dec_opsz_32 ),
 
         // Stage handshake
         .i_stage2_valid             ( i_stage2_valid ),

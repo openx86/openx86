@@ -60,7 +60,9 @@ always_comb begin
             instruction_for_immediate[1] = i_instruction_bytes[2];
             instruction_for_immediate[2] = i_instruction_bytes[3];
             instruction_for_immediate[3] = i_instruction_bytes[4];
-            o_disp_value               = {24'b0, i_instruction_bytes[0][7: 0]};
+            // ModRM/SIB disp8 is sign-extended (FreeDOS MOV [BP-40h],imm used
+            // C0 as unsigned and corrupted LES at BP+C0).
+            o_disp_value               = {{24{i_instruction_bytes[0][7]}}, i_instruction_bytes[0][7: 0]};
         end
         i_disp_size_2b: begin
             instruction_for_immediate[0] = i_instruction_bytes[2];

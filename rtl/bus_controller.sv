@@ -35,6 +35,7 @@ module bus_controller #(
     input  logic         i_bus_valid,
     input  logic         i_bus_write_enable,
     input  logic         i_bus_io_access,
+    input  logic [ 3: 0] i_bus_be_n,
     output logic         o_bus_ready,
     output logic         o_bus_busy,
 
@@ -62,6 +63,7 @@ module bus_controller #(
     output logic         o_sdram_we,
     output logic [23: 0] o_sdram_addr_off,
     output logic [31: 0] o_sdram_wdata,
+    output logic [ 3: 0] o_sdram_be_n,
 
     // =========================
     // VGA VRAM interface
@@ -239,12 +241,23 @@ logic sdram_ready_internal;
 logic io_ready_internal;
 logic vram_rd_pend_r;
 logic vram_rd_ready_r;
+logic vram_wr_pend_r;
+logic [19: 0] vram_wr_addr_r;
+logic [ 7: 0] vram_wr_data_r;
+logic [ 3: 0] mux_be_act;
+logic         vram_wr_twobyte;
 logic [ 7: 0] io_byte_data;
+
+assign mux_be_act = dma_master_valid ? 4'b0001 : ~i_bus_be_n;
+assign vram_wr_twobyte = is_vram_access && mux_valid && mux_we &&
+                         mux_be_act[0] && mux_be_act[1] && (mux_addr[1: 0] == 2'b00);
 
 assign chipset_io_hit = chip_io_vld & (hit_dma | hit_pic_m | hit_pic_s | hit_pit | hit_ps2 | hit_rtc | hit_com | hit_lpt | hit_ide | hit_pci);
 assign bios_data_selected = is_sys_bios_access ? i_bios_rdata : 32'h0;
 assign ext_bios_data_selected = is_ext_bios_access ? i_ext_bios_rdata : 32'h0;
-assign vram_ready_internal = (o_vga_mem_en_w | vram_rd_ready_r) ? 1'b1 : 1'b0;
+assign vram_ready_internal = vram_wr_pend_r ? 1'b1 :
+                             vram_wr_twobyte ? 1'b0 :
+                             ((is_vram_access && mux_valid && mux_we) || vram_rd_ready_r);
 assign bios_ready_internal = is_sys_bios_access ? 1'b1 : 1'b0;
 assign ext_bios_ready_internal = is_ext_bios_access ? 1'b1 : 1'b0;
 assign sdram_ready_internal = (is_ram_access || is_sdram_access) ? i_sdram_ready : 1'b0;
@@ -262,7 +275,8 @@ assign chip_io_addr = mux_addr[15: 0];
 assign chip_io_vld  = mux_valid && mux_io && is_chipset_io;
 assign chip_io_we   = mux_we;
 
-logic [ 7: 0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
+logic [ 7: 0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt;
+logic [15: 0] r_ide;
 logic [31: 0] r_pci;
 
 logic hit_dma;
@@ -516,7 +530,7 @@ ide_controller #(
     .i_rd_n        (rd_ide_n),
     .i_wr_n        (wr_ide_n),
     .i_addr        (chip_io_addr),
-    .i_wdata       (i_bus_data_write[7: 0]),
+    .i_wdata       (i_bus_data_write[15: 0]),
     .o_rdata       (r_ide),
     .o_sdio_clk    (o_sdio_clk),
     .o_sdio_cmd_out (o_sdio_cmd_o),
@@ -561,7 +575,7 @@ always_comb begin
         else if (hit_lpt)
             chipset_io_rdata = r_lpt;
         else if (hit_ide)
-            chipset_io_rdata = r_ide;
+            chipset_io_rdata = r_ide[7: 0];
         else if (hit_pci)
             chipset_io_rdata = r_pci[7: 0];
     end
@@ -569,27 +583,33 @@ end
 
 assign o_pic_intr = intr_m;
 
-// 注意：VGA VRAM 支持 CPU 读（1 周期延迟）；写同拍完成
+// 注意：VGA VRAM 读 1 周期延迟；写可按 BE 拆成 2 拍（stosw → B8000）
 
 // ============================================================================
 // 地址转换（将物理地址转换为外设内部地址）
 // ============================================================================
 
-// VRAM 地址：减去基地址，使用低 20 位（128KB = 2^17，但为了对齐使用 20 位）
-assign o_vga_mem_addr   = mux_addr[19: 0] - MEM_BASE_VRAM[19: 0];
-
 // ============================================================================
 // 外设使能信号生成
 // ============================================================================
 
-// VRAM 访问控制（字节写 / 字节读）
+// VRAM 访问控制：读 1 周期延迟；写按 BE 拆成逐字节（FreeDOS stosw → B8000）
 always_ff @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
         vram_rd_pend_r  <= 1'b0;
         vram_rd_ready_r <= 1'b0;
+        vram_wr_pend_r  <= 1'b0;
+        vram_wr_addr_r  <= 20'h0;
+        vram_wr_data_r  <= 8'h0;
     end else begin
         vram_rd_ready_r <= 1'b0;
-        if (is_vram_access && mux_valid && ~mux_we) begin
+        if (vram_wr_pend_r) begin
+            vram_wr_pend_r <= 1'b0;
+        end else if (vram_wr_twobyte) begin
+            vram_wr_pend_r <= 1'b1;
+            vram_wr_addr_r <= (mux_addr[19: 0] - MEM_BASE_VRAM[19: 0]) + 20'd1;
+            vram_wr_data_r <= mux_wdata[15: 8];
+        end else if (is_vram_access && mux_valid && ~mux_we) begin
             if (~vram_rd_pend_r) begin
                 vram_rd_pend_r <= 1'b1;
             end else begin
@@ -602,9 +622,16 @@ always_ff @(posedge clk or negedge rst_n) begin
     end
 end
 
-assign o_vga_mem_en_w   = is_vram_access && mux_valid && mux_we;
-assign o_vga_mem_en_r   = is_vram_access && mux_valid && ~mux_we;
-assign o_vga_mem_data_w = mux_wdata[ 7: 0];
+assign o_vga_mem_en_w = vram_wr_pend_r ||
+                        (is_vram_access && mux_valid && mux_we);
+assign o_vga_mem_en_r = is_vram_access && mux_valid && ~mux_we;
+assign o_vga_mem_addr = vram_wr_pend_r ? vram_wr_addr_r :
+                        (mux_addr[19: 0] - MEM_BASE_VRAM[19: 0]);
+assign o_vga_mem_data_w = vram_wr_pend_r ? vram_wr_data_r :
+                          (mux_addr[1: 0] == 2'b01) ? mux_wdata[15: 8] :
+                          (mux_addr[1: 0] == 2'b10) ? mux_wdata[23:16] :
+                          (mux_addr[1: 0] == 2'b11) ? mux_wdata[31:24] :
+                          mux_wdata[ 7: 0];
 
 // BIOS 窗口：低位 E0000–FFFFF 与高位 FFFE0000–FFFFFFFF 共用 128KiB 映像
 assign o_bios_addr = (mux_addr >= MEM_BASE_BIOS_HI) ?
@@ -620,6 +647,7 @@ assign o_sdram_we       = mux_we;
 assign o_sdram_addr_off = is_ram_access ? mux_addr[23: 0]
                                         : (mux_addr[23: 0] - MEM_BASE_SDRAM[23: 0]);
 assign o_sdram_wdata    = mux_wdata;
+assign o_sdram_be_n     = i_bus_be_n;
 
 // VGA I/O 端口访问控制
 assign o_vga_io_en_w   = is_vga_io_access && mux_valid && mux_we;
@@ -643,7 +671,8 @@ logic [31: 0] pci_io_rdata;
 assign pci_io_rdata = r_pci >> (8 * chip_io_addr[1: 0]);
 assign io_data_selected = is_io_access ?
                           (hit_pci && chip_io_vld ? pci_io_rdata :
-                           ((is_vga_io_access || chipset_io_hit) ? {24'h0, io_byte_data} : 32'hFFFF_FFFF)) :
+                           (hit_ide && chip_io_vld ? {16'h0, r_ide} :
+                            ((is_vga_io_access || chipset_io_hit) ? {24'h0, io_byte_data} : 32'hFFFF_FFFF))) :
                           32'h0;
 
 // CPU 读数据总线：按访问类型选择 SDRAM/BIOS/VGA I/O/chipset 等。

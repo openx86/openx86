@@ -69,12 +69,15 @@ addressing modes.
 `include "openx86_defs.h.sv"
 
 module stage_2_dec_x86_operand_mod_rm (
-    // ModR/M 输入：mod/rm + W/默认操作数尺寸 → 寻址分量与位移宽度
+    // ModR/M 输入：mod/rm + W + address/operand size → 寻址分量与位移宽度
     input  logic [ 1: 0] i_mod,
     input  logic [ 2: 0] i_rm,
     input  logic         i_w_present,
     input  logic         i_w,
-    input  logic         i_default_op_size,
+    // Address size (CS.D XOR 0x67) — SIB / base / disp form
+    input  logic         i_address_size_32,
+    // Operand size (CS.D XOR 0x66) — mod=11 GPR width
+    input  logic         i_operand_size_32,
     output logic [ 2: 0] o_seg_reg_index,
     output logic         o_base_reg_valid,
     output logic [ 2: 0] o_base_reg_index,
@@ -107,6 +110,8 @@ logic rm_111;
 
 logic default_operation_size_16;
 logic default_operation_size_32;
+logic operand_size_16;
+logic operand_size_32;
 
 assign mod_00 = (i_mod == 2'b00);
 assign mod_01 = (i_mod == 2'b01);
@@ -120,8 +125,10 @@ assign rm_100 = (i_rm == 3'b100);
 assign rm_101 = (i_rm == 3'b101);
 assign rm_110 = (i_rm == 3'b110);
 assign rm_111 = (i_rm == 3'b111);
-assign default_operation_size_16 = (i_default_op_size == `default_operation_size_16);
-assign default_operation_size_32 = (i_default_op_size == `default_operation_size_32);
+assign default_operation_size_16 = ~i_address_size_32;
+assign default_operation_size_32 =  i_address_size_32;
+assign operand_size_16           = ~i_operand_size_32;
+assign operand_size_32           =  i_operand_size_32;
 
 // segment register
 
@@ -290,8 +297,8 @@ logic gpr_reg_bit_width_16;
 logic gpr_reg_bit_width_32;
 
 assign gpr_reg_bit_width__8 = i_w_present ? (~i_w) : 1'b0;
-assign gpr_reg_bit_width_16 = i_w_present ? (i_w & default_operation_size_16) : default_operation_size_16;
-assign gpr_reg_bit_width_32 = i_w_present ? (i_w & default_operation_size_32) : default_operation_size_32;
+assign gpr_reg_bit_width_16 = i_w_present ? (i_w & operand_size_16) : operand_size_16;
+assign gpr_reg_bit_width_32 = i_w_present ? (i_w & operand_size_32) : operand_size_32;
 // mod=11：r/m 字段直接编码通用寄存器及其位宽
 always_comb begin
     unique case (1'b1)

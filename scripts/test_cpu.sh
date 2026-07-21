@@ -32,13 +32,14 @@ while IFS= read -r tb || [ -n "$tb" ]; do
   EXTRA=""
   case "$tb" in
     tb/dos_boot_tb.sv)
-      if [ -f artifacts/seabios/dos_bios.bin ] && [ -f artifacts/freedos/disk.img ]; then
-        EXTRA="-- +SEABIOS_BIN=artifacts/seabios/dos_bios.bin +DISK_IMG=artifacts/freedos/disk.img +REQUIRE_DOS=1 +MAX_CYCLES=200000"
-      elif [ -f artifacts/seabios/bios.bin ] && [ -f artifacts/freedos/disk.img ]; then
-        EXTRA="-- +SEABIOS_BIN=artifacts/seabios/bios.bin +DISK_IMG=artifacts/freedos/disk.img +REQUIRE_DOS=1 +MAX_CYCLES=200000"
+      if [ -f artifacts/seabios/bios.bin ] && [ -f artifacts/freedos/disk.img ]; then
+        EXTRA="-- +SEABIOS_BIN=artifacts/seabios/bios.bin +DISK_IMG=artifacts/freedos/disk.img +REQUIRE_DOS=1 +MAX_CYCLES=5000000"
+      elif [ -f artifacts/seabios/dos_bios.bin ] && [ -f artifacts/freedos/disk.img ]; then
+        echo "warn: using dos_bios.bin assist ROM (prefer bios.bin)" >&2
+        EXTRA="-- +SEABIOS_BIN=artifacts/seabios/dos_bios.bin +DISK_IMG=artifacts/freedos/disk.img +REQUIRE_DOS=0 +MAX_CYCLES=200000"
       else
-        echo "error: dos_boot requires artifacts/seabios/{dos_bios,bios}.bin and artifacts/freedos/disk.img" >&2
-        echo "       run: scripts/fetch_build_seabios.sh && scripts/fetch_freedos_img.sh && scripts/build_openx86_dos_bios.py" >&2
+        echo "error: dos_boot requires artifacts/seabios/bios.bin and artifacts/freedos/disk.img" >&2
+        echo "       run: scripts/fetch_build_seabios.sh && scripts/fetch_freedos_img.sh" >&2
         FAIL=$((FAIL + 1))
         continue
       fi

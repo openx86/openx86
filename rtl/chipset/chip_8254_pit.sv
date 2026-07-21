@@ -217,20 +217,39 @@ module chip_8254_pit (
                 pending_lsb[ri]      <= 8'h00;
                 write_wait_msb[ri]   <= 1'b1;
                 load_pending[ri]     <= 1'b0;
-                run_en[ri]           <= 1'b0;
+                // Ch0 free-runs after reset so SeaBIOS timer_read (PIT path)
+                // advances even when clock_setup/IRQ0 programming is skipped.
+                run_en[ri]           <= (ri == 0) ? 1'b1 : 1'b0;
                 out_r[ri]            <= 1'b1;
                 latch_valid[ri]      <= 1'b0;
                 read_msb_phase[ri]   <= 1'b0;
                 mode2_low_pulse[ri]  <= 1'b0;
                 mode45_low_pulse[ri] <= 1'b0;
                 mode3_phase_high[ri] <= 1'b1;
-                mode3_high_ticks[ri] <= 17'd1;
-                mode3_low_ticks[ri]  <= 17'd1;
-                mode3_phase_ticks[ri] <= 17'd1;
+                mode3_high_ticks[ri] <= 17'd32768;
+                mode3_low_ticks[ri]  <= 17'd32768;
+                mode3_phase_ticks[ri] <= 17'd32768;
             end
         end else begin
             if (wr && (i_a == 2'b11)) begin
-                if (i_d[ 7: 6] != 2'b11) begin
+                if (i_d[ 7: 6] == 2'b11) begin
+                    // Read-back command: latch selected counters (SeaBIOS timer_read)
+                    if (i_d[1]) begin
+                        latch_count[0]    <= count[0];
+                        latch_valid[0]    <= 1'b1;
+                        read_msb_phase[0] <= 1'b0;
+                    end
+                    if (i_d[2]) begin
+                        latch_count[1]    <= count[1];
+                        latch_valid[1]    <= 1'b1;
+                        read_msb_phase[1] <= 1'b0;
+                    end
+                    if (i_d[3]) begin
+                        latch_count[2]    <= count[2];
+                        latch_valid[2]    <= 1'b1;
+                        read_msb_phase[2] <= 1'b0;
+                    end
+                end else begin
                     ch    = i_d[ 7:  6];
                     cw_rw = i_d[ 5: 4];
 

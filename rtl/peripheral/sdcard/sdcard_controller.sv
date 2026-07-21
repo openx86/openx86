@@ -24,9 +24,12 @@ module sdcard_controller #(
 ) (
     input  logic [31: 0] i_disk_raddr, // 磁盘线性字节读地址
     output logic [ 7: 0] o_disk_rdata, // 当前地址读出的字节
+    output logic [ 7: 0] o_disk_rdata_next, // byte at raddr+1 (ATA PIO16)
     input  logic [31: 0] i_disk_waddr, // 磁盘线性字节写地址
     input  logic [ 7: 0] i_disk_wdata, // 写入字节
+    input  logic [ 7: 0] i_disk_wdata_hi, // high byte for 16-bit PIO write
     input  logic         i_disk_we,    // 写使能（BRAM 映像路径）
+    input  logic         i_disk_we_hi, // write enable for waddr+1
     input  logic         i_disk_sector_req, // SDIO 模式：请求确保当前 LBA 扇区已载入缓冲
     output logic         o_disk_sector_ready, // 当前读地址所在扇区已在 sector_buf 就绪（脉冲/保持见逻辑）
     output logic         o_sdcard_controller_phy_clk, // 下至 PHY/卡的 SD 时钟
@@ -51,6 +54,8 @@ module sdcard_controller #(
             always_ff @(posedge clk) begin
                 if (i_disk_we && (i_disk_waddr < P_BYTE_DEPTH))
                     image[i_disk_waddr[LP_AW-1: 0]] <= i_disk_wdata;
+                if (i_disk_we_hi && ((i_disk_waddr + 32'd1) < P_BYTE_DEPTH))
+                    image[i_disk_waddr[LP_AW-1: 0] + 1'b1] <= i_disk_wdata_hi;
             end
 
             // 纯 BRAM：组合读 image，越界返回 0
@@ -59,6 +64,10 @@ module sdcard_controller #(
                     o_disk_rdata = image[i_disk_raddr[LP_AW-1: 0]];
                 else
                     o_disk_rdata = 8'h00; // 越界读保护
+                if ((i_disk_raddr + 32'd1) < P_BYTE_DEPTH)
+                    o_disk_rdata_next = image[i_disk_raddr[LP_AW-1: 0] + 1'b1];
+                else
+                    o_disk_rdata_next = 8'h00;
             end
             assign o_disk_sector_ready = 1'b0;
             assign o_sdcard_controller_phy_clk     = 1'b0;
@@ -122,10 +131,13 @@ module sdcard_controller #(
 
             // 仅当读地址落在已载入 LBA 的扇区内时返回缓冲字节，否则 0（防陈旧数据）
             always_comb begin
-                if (sector_loaded && ((i_disk_raddr >> 9) == hold_lba))
-                    o_disk_rdata = sector_buf[i_disk_raddr[8: 0]];
-                else
-                    o_disk_rdata = 8'h00;
+                if (sector_loaded && ((i_disk_raddr >> 9) == hold_lba)) begin
+                    o_disk_rdata      = sector_buf[i_disk_raddr[8: 0]];
+                    o_disk_rdata_next = sector_buf[i_disk_raddr[8: 0] + 9'd1];
+                end else begin
+                    o_disk_rdata      = 8'h00;
+                    o_disk_rdata_next = 8'h00;
+                end
             end
 
             assign o_disk_sector_ready = sector_ready_hold;
