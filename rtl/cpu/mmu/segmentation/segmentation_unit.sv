@@ -172,7 +172,11 @@ module segmentation_unit #(
                                        o_stack_segment_fault |
                                        o_segment_fault;
 
-    // Linear address = segment base + offset (32-bit flat model)
-    assign o_linear_address = base + i_effective_address;
+    // Linear address = segment base + offset.
+    // Real mode: base = selector << 4 (hidden descriptor is unused until PE=1).
+    // Protected mode: base from descriptor cache/decode.
+    logic [31: 0] effective_base;
+    assign effective_base   = i_protected_mode ? base : {12'h0, current_selector, 4'h0};
+    assign o_linear_address = effective_base + i_effective_address;
 
 endmodule

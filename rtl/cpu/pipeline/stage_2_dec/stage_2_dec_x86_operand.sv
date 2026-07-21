@@ -26,6 +26,7 @@ module stage_2_dec_x86_operand (
     // =========================
     input  logic [ 7: 0][ 7: 0] i_instruction_bytes,
     input  logic [ 2: 0]        i_default_op_size,
+    input  logic                i_opsz_override,
 
     // =========================
     // opcode hit signals (passed through to field module)
@@ -227,6 +228,7 @@ module stage_2_dec_x86_operand (
     input  logic                i_opcode_x86_SUB_imm_to_reg_mem,
     input  logic                i_opcode_x86_SUB_imm_to_acc,
     input  logic                i_opcode_x86_PUSH_reg_mem_and_reg,
+    input  logic                i_opcode_x86_TEST_reg_mem_and_reg,
     input  logic                i_opcode_x86_TEST_imm_and_reg_mem,
     input  logic                i_opcode_x86_TEST_imm_and_acc,
     input  logic                i_opcode_x86_UD0_undefined_instruction,
@@ -559,6 +561,7 @@ stage_2_dec_x86_operand_field u_field (
     .i_opcode_x86_SUB_imm_to_reg_mem       (i_opcode_x86_SUB_imm_to_reg_mem),
     .i_opcode_x86_SUB_imm_to_acc           (i_opcode_x86_SUB_imm_to_acc),
     .i_opcode_x86_PUSH_reg_mem_and_reg    (i_opcode_x86_PUSH_reg_mem_and_reg),
+    .i_opcode_x86_TEST_reg_mem_and_reg    (i_opcode_x86_TEST_reg_mem_and_reg),
     .i_opcode_x86_TEST_imm_and_reg_mem    (i_opcode_x86_TEST_imm_and_reg_mem),
     .i_opcode_x86_TEST_imm_and_acc        (i_opcode_x86_TEST_imm_and_acc),
     .i_opcode_x86_UD0_undefined_instruction (i_opcode_x86_UD0_undefined_instruction),
@@ -605,31 +608,46 @@ stage_2_dec_x86_operand_field u_field (
 
 // ModRM module instantiation
 stage_2_dec_x86_operand_mod_rm u_modrm (
-    .i_mod              (field_mod),
-    .i_rm               (field_rm),
-    .i_w_present        (field_w_valid),
-    .i_w                (field_w),
-    .i_default_op_size  (i_default_op_size),
-    .o_base_reg_valid   (modrm_base_reg_valid),
-    .o_base_reg_index   (modrm_base_reg_index),
-    .o_index_reg_valid  (modrm_index_reg_valid),
-    .o_index_reg_index  (modrm_index_reg_index),
-    .o_gpr_reg_valid    (modrm_gpr_reg_valid),
+    .i_mod               (field_mod),
+    .i_rm                (field_rm),
+    .i_w_present         (field_w_valid),
+    .i_w                 (field_w),
+    .i_default_op_size   (i_default_op_size),
+    .o_seg_reg_index     (modrm_seg_reg_index),
+    .o_base_reg_valid    (modrm_base_reg_valid),
+    .o_base_reg_index    (modrm_base_reg_index),
+    .o_index_reg_valid   (modrm_index_reg_valid),
+    .o_index_reg_index   (modrm_index_reg_index),
+    .o_gpr_reg_valid     (modrm_gpr_reg_valid),
+    .o_gpr_reg_index     (modrm_gpr_reg_index),
     .o_gpr_reg_bit_width (modrm_gpr_reg_bit_width),
-    .o_disp_size_16b    (modrm_disp_size_16b),
-    .o_disp_size_32b    (modrm_disp_size_32b),
-    .o_sib_present      (modrm_sib_present)
+    .o_disp_present      (modrm_disp_present),
+    .o_disp_size_8b      (modrm_disp_size_8b),
+    .o_disp_size_16b     (modrm_disp_size_16b),
+    .o_disp_size_32b     (modrm_disp_size_32b),
+    .o_sib_present       (modrm_sib_present)
 );
+
+// SIB is only meaningful when the opcode actually has a ModR/M byte.
+// Otherwise rel8/imm8 (e.g. Jcc 75 04) can look like mod=00 rm=100 and
+// falsely add a SIB byte to the instruction length (75 04 84 → LEAVE).
+logic sib_present_eff;
+assign sib_present_eff = field_modrm_present & modrm_sib_present;
 
 // SIB module instantiation (only when SIB is present)
 logic [ 7: 0] sib_byte;
-assign sib_byte = i_instruction_bytes[field_opcode_byte_1 ? 2 : 
+assign sib_byte = i_instruction_bytes[field_opcode_byte_1 ? 2 :
                      field_opcode_byte_2 ? 3 : 4];
 
 stage_2_dec_x86_operand_sib u_sib (
     .i_sib_byte         (sib_byte),
     .i_mod_from_modrm   (field_mod),
     .o_scale            (sib_scale),
+    .o_seg_reg_index    (sib_seg_reg_index),
+    .o_index_reg_valid  (sib_index_reg_valid),
+    .o_index_reg_index  (sib_index_reg_index),
+    .o_base_reg_valid   (sib_base_reg_valid),
+    .o_base_reg_index   (sib_base_reg_index),
     .o_disp_size_1b     (sib_disp_size_1b),
     .o_disp_size_4b     (sib_disp_size_4b),
     .o_ea_undefined     (sib_ea_undefined)
@@ -644,22 +662,91 @@ logic imm_size_2b;
 logic imm_size_4b;
 logic imm_size_full;
 
-// Combine displacement sizes from field, modrm, and sib
+// Combine displacement sizes from field, modrm, and sib.
+// Far JMP/CALL direct: ptr16:16 (opsz16) or ptr16:32 (opsz32 / 0x66 in real mode).
+// Near Jcc/JMP/CALL full displacement follows operand size (rel16 vs rel32).
+// Note: 0x66 must NOT change ModRM address size (that is 0x67) — only opsz here.
+logic far_direct_ptr;
+logic far_direct_ptr16;
+logic far_direct_ptr32;
+logic near_rel_full_16;
+logic effective_opsz32;
+assign effective_opsz32 = (i_default_op_size[0] == `default_operation_size_32) ^ i_opsz_override;
+assign far_direct_ptr =
+    i_opcode_x86_JMP_to_other_segment_direct |
+    i_opcode_x86_CALL_in_other_segment_direct;
+assign far_direct_ptr16 = far_direct_ptr & ~effective_opsz32;
+assign far_direct_ptr32 = far_direct_ptr &  effective_opsz32;
+assign near_rel_full_16 =
+    (i_opcode_x86_Jcc_jump_if_cond_is_met_full_disp |
+     i_opcode_x86_JMP_to_same_segment_direct |
+     i_opcode_x86_CALL_in_same_segment_direct) &
+    ~effective_opsz32;
+
 always_comb begin
-    disp_size_1b = field_disp_size_8b | modrm_disp_size_8b | sib_disp_size_1b;
-    disp_size_2b = modrm_disp_size_16b;
-    disp_size_4b = field_disp_size_full | modrm_disp_size_32b | sib_disp_size_4b;
+    // Gate ModRM/SIB displacement sizes — raw mod/rm bits are don't-care
+    // when the opcode has no ModRM (e.g. far JMP EA / Jcc rel8).
+    disp_size_1b = field_disp_size_8b |
+                   (field_modrm_present & modrm_disp_size_8b) |
+                   (sib_present_eff & sib_disp_size_1b);
+    disp_size_2b = (field_modrm_present & modrm_disp_size_16b) |
+                   (field_disp_size_full & far_direct_ptr16) |
+                   (field_disp_size_full & near_rel_full_16);
+    disp_size_4b = (field_disp_size_full & ~far_direct_ptr & ~near_rel_full_16) |
+                   (field_disp_size_full & far_direct_ptr32) |
+                   (field_modrm_present & modrm_disp_size_32b) |
+                   (sib_present_eff & sib_disp_size_4b);
 end
 
-// Immediate sizes from field
-assign imm_size_1b  = field_imm_size_8b;
-assign imm_size_2b  = field_imm_size_16b;
-assign imm_size_4b  = field_imm_size_full;
-assign imm_size_full = field_imm_size_full;
+// 80/82/83 : imm8; 81 : full imm (iw/id). Field marks the whole group as full.
+logic alu_grp1_imm_ib;
+assign alu_grp1_imm_ib =
+    (i_opcode_x86_ADC_imm_to_reg_mem |
+     i_opcode_x86_ADD_imm_to_reg_mem |
+     i_opcode_x86_AND_imm_to_reg_mem |
+     i_opcode_x86_CMP_imm_with_reg_mem |
+     i_opcode_x86_OR_imm_to_reg_mem |
+     i_opcode_x86_SBB_imm_to_reg_mem |
+     i_opcode_x86_SUB_imm_to_reg_mem |
+     i_opcode_x86_XOR_imm_to_reg_mem) &
+    (i_instruction_bytes[0][1: 0] != 2'b01);
 
-// Disp_imm module instantiation
+// Acc imm (04/0C/.../A8) and F6 TEST: W=0 → imm8; W=1 → full (iw/id).
+logic alu_wbit_imm_ib;
+assign alu_wbit_imm_ib =
+    (i_opcode_x86_ADC_imm_to_acc |
+     i_opcode_x86_ADD_imm_to_acc |
+     i_opcode_x86_AND_imm_to_acc |
+     i_opcode_x86_CMP_imm_with_acc |
+     i_opcode_x86_OR_imm_to_acc |
+     i_opcode_x86_SBB_imm_to_acc |
+     i_opcode_x86_SUB_imm_to_acc |
+     i_opcode_x86_XOR_imm_to_acc |
+     i_opcode_x86_TEST_imm_and_acc |
+     i_opcode_x86_TEST_imm_and_reg_mem) &
+    ~i_instruction_bytes[0][0];
+
+assign imm_size_1b   = field_imm_size_8b | alu_grp1_imm_ib | alu_wbit_imm_ib;
+assign imm_size_2b   = field_imm_size_16b;
+assign imm_size_4b   = field_imm_size_full & ~alu_grp1_imm_ib & ~alu_wbit_imm_ib;
+assign imm_size_full = field_imm_size_full & ~alu_grp1_imm_ib & ~alu_wbit_imm_ib;
+
+// Disp/imm window starts after opcode (+ ModRM + SIB when present)
+logic [ 3: 0] disp_imm_byte_offset;
+logic [ 7: 0][ 7: 0] disp_imm_instruction_bytes;
+assign disp_imm_byte_offset =
+    (field_opcode_byte_1 ? 4'd1 : field_opcode_byte_2 ? 4'd2 : field_opcode_byte_3 ? 4'd3 : 4'd1) +
+    (field_modrm_present ? 4'd1 : 4'd0) +
+    (sib_present_eff ? 4'd1 : 4'd0);
+
+always_comb begin
+    for (int unsigned i = 0; i < 8; i++) begin
+        disp_imm_instruction_bytes[i] = i_instruction_bytes[disp_imm_byte_offset + 4'(i)];
+    end
+end
+
 stage_2_dec_x86_operand_disp_imm u_disp_imm (
-    .i_instruction_bytes (i_instruction_bytes),
+    .i_instruction_bytes (disp_imm_instruction_bytes),
     .i_disp_size_1b     (disp_size_1b),
     .i_disp_size_2b     (disp_size_2b),
     .i_disp_size_4b     (disp_size_4b),
@@ -700,11 +787,11 @@ assign o_opcode_byte_2       = field_opcode_byte_2;
 assign o_opcode_byte_3       = field_opcode_byte_3;
 
 // Addressing mode outputs (select between modrm and sib based on sib_present)
-assign o_seg_reg_index_addr   = modrm_sib_present ? sib_seg_reg_index : modrm_seg_reg_index;
-assign o_base_reg_valid       = modrm_sib_present ? sib_base_reg_valid : modrm_base_reg_valid;
-assign o_base_reg_index       = modrm_sib_present ? sib_base_reg_index : modrm_base_reg_index;
-assign o_index_reg_valid      = modrm_sib_present ? sib_index_reg_valid : modrm_index_reg_valid;
-assign o_index_reg_index      = modrm_sib_present ? sib_index_reg_index : modrm_index_reg_index;
+assign o_seg_reg_index_addr   = sib_present_eff ? sib_seg_reg_index : modrm_seg_reg_index;
+assign o_base_reg_valid       = sib_present_eff ? sib_base_reg_valid : modrm_base_reg_valid;
+assign o_base_reg_index       = sib_present_eff ? sib_base_reg_index : modrm_base_reg_index;
+assign o_index_reg_valid      = sib_present_eff ? sib_index_reg_valid : modrm_index_reg_valid;
+assign o_index_reg_index      = sib_present_eff ? sib_index_reg_index : modrm_index_reg_index;
 assign o_gpr_reg_valid        = modrm_gpr_reg_valid;
 assign o_gpr_reg_index_addr   = modrm_gpr_reg_index;
 assign o_gpr_reg_bit_width   = modrm_gpr_reg_bit_width;
@@ -712,7 +799,7 @@ assign o_disp_present_addr    = modrm_disp_present;
 assign o_disp_size_8b_addr    = modrm_disp_size_8b;
 assign o_disp_size_16b       = modrm_disp_size_16b;
 assign o_disp_size_32b       = modrm_disp_size_32b;
-assign o_sib_present          = modrm_sib_present;
+assign o_sib_present          = sib_present_eff;
 assign o_scale               = sib_scale;
 assign o_index_reg_valid_sib  = sib_index_reg_valid;
 assign o_index_reg_index_sib  = sib_index_reg_index;
@@ -725,7 +812,10 @@ assign o_ea_undefined        = sib_ea_undefined;
 // Displacement and immediate values
 assign o_disp_value           = disp_imm_disp_value;
 assign o_imm_value            = disp_imm_imm_value;
-assign o_consume_byte_count   = disp_imm_consume_byte_count;
+// Count ModRM/SIB as well as displacement/immediate bytes
+assign o_consume_byte_count   = disp_imm_consume_byte_count +
+                                (field_modrm_present ? 4'd1 : 4'd0) +
+                                (sib_present_eff ? 4'd1 : 4'd0);
 
 // Aggregate error signals
 assign o_decode_error         = field_decode_error | disp_imm_decode_error;

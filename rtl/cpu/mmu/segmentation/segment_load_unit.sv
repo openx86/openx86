@@ -297,6 +297,27 @@ module segment_load_unit (
             end
         end
     endfunction
+    // Real-mode segment loads must fill the hidden descriptor cache so a later
+    // PE=1 transition keeps selector<<4 base / 64K limit until a far reload.
+    function automatic logic [63: 0] real_mode_descriptor(
+        input logic [15: 0] sel,
+        input logic         is_code
+    );
+        logic [31: 0] base_v;
+        logic [ 7: 0] access_v;
+        begin
+            base_v   = {12'h0, sel, 4'h0};
+            access_v = is_code ? 8'h9B : 8'h93;
+            real_mode_descriptor = {
+                base_v[15: 0],
+                16'hFFFF,
+                base_v[31: 24],
+                8'h00,
+                access_v,
+                base_v[23: 16]
+            };
+        end
+    endfunction
 
     logic [31: 0] entry_tbl_base;
     logic [15: 0] entry_tbl_limit;
@@ -439,6 +460,12 @@ module segment_load_unit (
             o_ready <= 1'b0;
             unique case (state)
                 STATE_IDLE: begin
+                    // One-cycle completion strobes: drop after DONE→ready handshake
+                    seg_write_enable_r <= 1'b0;
+                    ip_write_enable_r  <= 1'b0;
+                    fault_np_r         <= 1'b0;
+                    fault_ss_r         <= 1'b0;
+                    fault_gp_r         <= 1'b0;
                     if (i_valid_rise) begin
                         // Drop previous completion strobes when a new request starts
                         seg_write_enable_r       <= 1'b0;
@@ -466,7 +493,7 @@ module segment_load_unit (
                                 state      <= STATE_DONE;
                             end else if (~i_protected_mode) begin
                                 seg_write_selector_r   <= i_far_selector;
-                                seg_write_descriptor_r <= 64'h0;
+                                seg_write_descriptor_r <= real_mode_descriptor(i_far_selector, 1'b1);
                                 seg_write_index_r      <= `sreg_index_CS;
                                 seg_write_enable_r     <= 1'b1;
                                 ip_write_data_r        <= i_far_offset;
@@ -484,7 +511,8 @@ module segment_load_unit (
                                 state      <= STATE_DONE;
                             end else if (~i_protected_mode) begin
                                 seg_write_selector_r   <= i_selector;
-                                seg_write_descriptor_r <= 64'h0;
+                                seg_write_descriptor_r <= real_mode_descriptor(
+                                    i_selector, (i_target_seg_index == `sreg_index_CS));
                                 seg_write_index_r      <= i_target_seg_index;
                                 seg_write_enable_r     <= 1'b1;
                                 state                  <= STATE_DONE;
@@ -552,7 +580,7 @@ module segment_load_unit (
                             state      <= STATE_DONE;
                         end else if (~i_protected_mode) begin
                             seg_write_selector_r   <= i_bus_data_read[15: 0];
-                            seg_write_descriptor_r <= 64'h0;
+                            seg_write_descriptor_r <= real_mode_descriptor(i_bus_data_read[15: 0], 1'b1);
                             seg_write_index_r      <= `sreg_index_CS;
                             seg_write_enable_r     <= 1'b1;
                             ip_write_data_r        <= ret_offset_r;

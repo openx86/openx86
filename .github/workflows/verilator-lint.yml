@@ -52,6 +52,13 @@ jobs:
       - name: Verify Verilator
         run: verilator --version
 
+      - name: Fetch SeaBIOS + FreeDOS artifacts
+        run: |
+          chmod +x scripts/fetch_build_seabios.sh scripts/fetch_freedos_img.sh scripts/build_openx86_dos_bios.py
+          ./scripts/fetch_build_seabios.sh
+          python3 scripts/build_openx86_dos_bios.py artifacts/seabios/dos_bios.bin
+          ./scripts/fetch_freedos_img.sh
+
       - name: Lint all rtl/*.sv (verilator --lint-only)
         run: |
           chmod +x scripts/verilator_lint.sh

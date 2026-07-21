@@ -59,8 +59,11 @@ module i486_soc_bus_bridge (
     logic          latched_io;
     logic [31: 0]  latched_addr;
     logic [31: 0]  latched_wdata;
+    // BRDY is registered one cycle after i_bus_ready, when o_bus_valid is already
+    // low. Chipset IO then drives idle 0xFF — latch the beat while valid is high.
+    logic [31: 0]  latched_rdata;
 
-    assign o_data_in = i_bus_ready ? i_bus_read_data : 32'h0;
+    assign o_data_in = latched_rdata;
 
     always_ff @(posedge clk or negedge rst_n) begin : ff_bridge
         if (~rst_n) begin
@@ -75,6 +78,7 @@ module i486_soc_bus_bridge (
             latched_io        <= 1'b0;
             latched_addr      <= 32'h0;
             latched_wdata     <= 32'h0;
+            latched_rdata     <= 32'h0;
         end else begin
             o_bready_n <= 1'b1;
 
@@ -96,16 +100,23 @@ module i486_soc_bus_bridge (
                     end
                 end
                 S_WAIT_SOC: begin
-                    if (i_bus_ready & ~i_bus_busy) begin
+                    // Retire on ready alone. SDRAM asserts ready in ST_DONE while
+                    // historically also busy; requiring ~busy dropped the pulse.
+                    if (i_bus_ready) begin
+                        latched_rdata <= i_bus_read_data;
                         o_bus_valid <= 1'b0;
                         o_bready_n  <= 1'b0;
                         state       <= S_DONE;
                     end
                 end
                 S_DONE: begin
-                    o_bready_n <= 1'b1;
-                    if (~i_blast_n) begin
-                        state <= S_IDLE;
+                    // Hold BRDY until the CPU drops BLAST# (end of beat). Clearing
+                    // BRDY on the first DONE cycle races the burst FSM and drops
+                    // the ready pulse before BIU/cache observe it on SDRAM paths.
+                    o_bready_n <= 1'b0;
+                    if (i_blast_n) begin
+                        o_bready_n <= 1'b1;
+                        state      <= S_IDLE;
                     end
                 end
                 default: state <= S_IDLE;

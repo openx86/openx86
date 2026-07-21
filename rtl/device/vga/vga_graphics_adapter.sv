@@ -33,8 +33,10 @@ module vga_graphics_adapter (
     // CPU memory access (VRAM window)
     // =========================
     input  logic          mem_en_w,
+    input  logic          mem_en_r,
     input  logic [19: 0]  mem_addr,
     input  logic [ 7: 0]  mem_data_w,
+    output logic [ 7: 0]  mem_data_r,
 
     // =========================
     // VGA physical signals
@@ -87,35 +89,31 @@ module vga_graphics_adapter (
     logic [ 1: 0] vga_mode;
 
     // ============================================================
-    // VRAM: using read/write separated RAM, CPU write + VGA read
+    // VRAM: true dual-port — port A CPU R/W, port B VGA scan
     // ============================================================
     logic [VRAM_ADDR_WIDTH-1: 0] vram_rd_addr;
     logic [ 7: 0]                 vram_rd_data;
+    logic [VRAM_ADDR_WIDTH-1: 0] vram_cpu_addr;
+    logic [ 7: 0]                 vram_cpu_rdata;
 
-    // CPU write address truncated to VRAM depth (avoid out-of-bounds synthesis)
-    logic [VRAM_ADDR_WIDTH-1: 0] vram_wr_addr;
+    assign vram_cpu_addr = mem_addr[VRAM_ADDR_WIDTH-1:0];
+    assign mem_data_r    = vram_cpu_rdata;
 
-    assign vram_wr_addr = mem_addr[VRAM_ADDR_WIDTH-1:0];
-
-    // ============================================================
-    // simple dual-port RAM instance: write port for CPU, read port for VGA
-    // ============================================================
-    simple_dual_port_ram #(
-        .P_DATA_WIDTH ( 8                ),
-        .P_ADDR_WIDTH ( VRAM_ADDR_WIDTH  ),
-        .P_DEPTH      ( VRAM_DEPTH       )
+    true_dual_port_ram #(
+        .P_DATA_WIDTH ( 8               ),
+        .P_ADDR_WIDTH ( VRAM_ADDR_WIDTH ),
+        .P_DEPTH      ( VRAM_DEPTH      )
     ) vram_inst (
-        // 写端口（CPU）
-        .i_we    ( mem_en_w        ),
-        .i_waddr ( vram_wr_addr    ),
-        .i_wdata ( mem_data_w      ),
-        // 读端口（VGA）
-        .i_re    ( 1'b1            ),  // VGA 持续读取
-        .i_raddr ( vram_scan_addr    ),
-        .o_rdata ( vram_rd_data    ),
-        // 时钟与复位
-        .clk     ( clk             ),
-        .rst_n   ( rst_n           )
+        .i_wea    ( mem_en_w        ),
+        .i_addra  ( vram_cpu_addr   ),
+        .i_wdataa ( mem_data_w      ),
+        .o_rdataa ( vram_cpu_rdata  ),
+        .i_web    ( 1'b0            ),
+        .i_addrb  ( vram_scan_addr  ),
+        .i_wdatab ( 8'h0            ),
+        .o_rdatab ( vram_rd_data    ),
+        .clk      ( clk             ),
+        .rst_n    ( rst_n           )
     );
 
     // ------------------------------------------------------------------------

@@ -120,10 +120,10 @@ function automatic logic compute_condition (
         4'h9: compute_condition = ~sf_val;
         4'hA: compute_condition = pf_val;
         4'hB: compute_condition = ~pf_val;
-        4'hC: compute_condition = sf_val ^ of_val;
-        4'hD: compute_condition = ~(sf_val ^ of_val);
-        4'hE: compute_condition = sf_val ^ of_val ^ cf_val;
-        4'hF: compute_condition = 1'b1;
+        4'hC: compute_condition = sf_val ^ of_val;                 // JL/JNGE
+        4'hD: compute_condition = ~(sf_val ^ of_val);              // JNL/JGE
+        4'hE: compute_condition = (sf_val ^ of_val) | zf_val;      // JLE/JNG
+        4'hF: compute_condition = ~((sf_val ^ of_val) | zf_val);   // JG/JNLE
         default: compute_condition = 1'b0;
     endcase
 endfunction
@@ -131,6 +131,29 @@ endfunction
 // ============================================================
 // Flag computation helper functions
 // ============================================================
+
+// Pack arith/logic status flags into architected EFLAGS bit positions.
+// Preserves TF/IF/DF/IOPL/NT/RF/VM from base (ALU ops must not clear IF).
+function automatic logic [31: 0] pack_eflags_status (
+    input logic [31: 0] base,
+    input logic         cf_val,
+    input logic         pf_val,
+    input logic         af_val,
+    input logic         zf_val,
+    input logic         sf_val,
+    input logic         of_val
+);
+    logic [31: 0] r;
+    r        = base;
+    r[0]     = cf_val;
+    r[1]     = 1'b1; // reserved, always 1
+    r[2]     = pf_val;
+    r[4]     = af_val;
+    r[6]     = zf_val;
+    r[7]     = sf_val;
+    r[11]    = of_val;
+    return r;
+endfunction
 
 // Parity flag: even parity of low 8 bits
 function automatic logic compute_pf (input logic [31: 0] data);

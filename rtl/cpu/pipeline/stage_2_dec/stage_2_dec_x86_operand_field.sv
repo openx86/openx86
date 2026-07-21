@@ -229,6 +229,7 @@ module stage_2_dec_x86_operand_field (
     input  logic         i_opcode_x86_SUB_imm_to_reg_mem,
     input  logic         i_opcode_x86_SUB_imm_to_acc,
     input  logic         i_opcode_x86_PUSH_reg_mem_and_reg,
+    input  logic         i_opcode_x86_TEST_reg_mem_and_reg,
     input  logic         i_opcode_x86_TEST_imm_and_reg_mem,
     input  logic         i_opcode_x86_TEST_imm_and_acc,
     input  logic         i_opcode_x86_UD0_undefined_instruction,
@@ -278,11 +279,18 @@ module stage_2_dec_x86_operand_field (
 // 当前无独立字段错误；占位 0 供上游 OR 聚合（避免 UNDRIVEN）
 assign o_decode_error = 1'b0;
 
+logic tttn_at_0_3_0;
+assign tttn_at_0_3_0 =
+    i_opcode_x86_Jcc_jump_if_cond_is_met_8_bit_disp |
+    1'b0;
 logic tttn_at_1_3_0;
 assign tttn_at_1_3_0 =
     i_opcode_x86_SETcc_byte_set_on_condition |
+    i_opcode_x86_Jcc_jump_if_cond_is_met_full_disp |
     1'b0;
-assign o_tttn = tttn_at_1_3_0 ? i_instruction[1][3: 0] : 4'b0000;
+// Short Jcc: 7t → tttn in opcode[3:0]; near Jcc/SETcc: 0F 8t/9t → byte1[3:0]
+assign o_tttn = tttn_at_1_3_0 ? i_instruction[1][3: 0] :
+                tttn_at_0_3_0 ? i_instruction[0][3: 0] : 4'b0000;
 
 logic sreg3_at_1_5_3;
 assign sreg3_at_1_5_3 =
@@ -337,6 +345,7 @@ assign reg_1_at_1_5_3 =
     i_opcode_x86_ADD_reg_mem_to_reg |
     i_opcode_x86_AND_reg_to_reg_mem |
     i_opcode_x86_AND_reg_mem_to_reg |
+    i_opcode_x86_TEST_reg_mem_and_reg |
     1'b0;
 logic reg_1_at_1_2_0;
 assign reg_1_at_1_2_0 =
@@ -443,6 +452,7 @@ assign w_at_0_0 =
     i_opcode_x86_SUB_imm_to_reg_mem |
     i_opcode_x86_SUB_imm_to_acc |
     i_opcode_x86_PUSH_reg_mem_and_reg |
+    i_opcode_x86_TEST_reg_mem_and_reg |
     i_opcode_x86_TEST_imm_and_reg_mem |
     i_opcode_x86_TEST_imm_and_acc |
     i_opcode_x86_XCHG_reg_mem_with_reg |
@@ -614,6 +624,7 @@ assign o_modrm_present =
     i_opcode_x86_SUB_reg_mem_to_reg |
     i_opcode_x86_SUB_imm_to_reg_mem |
     i_opcode_x86_PUSH_reg_mem_and_reg |
+    i_opcode_x86_TEST_reg_mem_and_reg |
     i_opcode_x86_TEST_imm_and_reg_mem |
     i_opcode_x86_VERR_verify_a_segment_for_reading |
     i_opcode_x86_VERW_verify_a_segment_for_writing |
@@ -625,6 +636,7 @@ assign o_modrm_present =
     1'b0;
 logic [7: 0] mod_rm_instruction;
 assign {o_mod, o_rm} = {mod_rm_instruction[7: 6], mod_rm_instruction[2: 0]};
+assign o_eee = o_modrm_present ? mod_rm_instruction[5: 3] : 3'b0;
 // ModR/M 原始字节：随主 opcode 为 1/2/3 字节指令而相对位移
 always_comb begin
     case (1'b1)
@@ -676,6 +688,7 @@ assign o_imm_size_8b =
     i_opcode_x86_BTR_reg_mem_with_imm |
     i_opcode_x86_BTS_reg_mem_with_imm |
     i_opcode_x86_IN_port_fixed |
+    i_opcode_x86_OUT_port_fixed |
     i_opcode_x86_INT_interrupt_type_n |
     i_opcode_x86_RCL_reg_mem_by_imm |
     i_opcode_x86_RCR_reg_mem_by_imm |
@@ -707,7 +720,6 @@ assign o_disp_size_8b =
     i_opcode_x86_LOOP_count |
     i_opcode_x86_LOOPZ_count_while_zero |
     i_opcode_x86_LOOPNZ_count_while_not_zero |
-    i_opcode_x86_OUT_port_fixed |
     1'b0;
 assign o_disp_present =
     o_disp_size_full |
@@ -1060,6 +1072,7 @@ assign o_opcode_byte_1 =
     i_opcode_x86_SUB_imm_to_reg_mem              |
     i_opcode_x86_SUB_imm_to_acc                  |
     i_opcode_x86_PUSH_reg_mem_and_reg            |
+    i_opcode_x86_TEST_reg_mem_and_reg            |
     i_opcode_x86_TEST_imm_and_reg_mem            |
     i_opcode_x86_TEST_imm_and_acc                |
     i_opcode_x86_WAIT_wait                       |

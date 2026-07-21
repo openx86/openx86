@@ -30,8 +30,10 @@ module vga_graphics_adapter_tb;
     logic [ 7: 0] io_data_w;
     logic [ 7: 0] io_data_r;
     logic         mem_en_w;
+    logic         mem_en_r;
     logic [19: 0] mem_addr;
     logic [ 7: 0] mem_data_w;
+    logic [ 7: 0] mem_data_r;
     logic         vga_hsync;
     logic         vga_vsync;
     logic [ 3: 0] vga_r;
@@ -48,8 +50,10 @@ module vga_graphics_adapter_tb;
         .io_data_w  ( io_data_w ),
         .io_data_r  ( io_data_r ),
         .mem_en_w   ( mem_en_w ),
+        .mem_en_r   ( mem_en_r ),
         .mem_addr   ( mem_addr ),
         .mem_data_w ( mem_data_w ),
+        .mem_data_r ( mem_data_r ),
         .vga_hsync  ( vga_hsync ),
         .vga_vsync  ( vga_vsync ),
         .vga_r      ( vga_r ),
@@ -70,6 +74,7 @@ module vga_graphics_adapter_tb;
         io_addr        = '0;
         io_data_w      = '0;
         mem_en_w       = 1'b0;
+        mem_en_r       = 1'b0;
         mem_addr       = '0;
         mem_data_w     = '0;
         fail_count     = 0;

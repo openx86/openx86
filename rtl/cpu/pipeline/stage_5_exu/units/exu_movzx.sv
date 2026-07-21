@@ -31,7 +31,7 @@ module exu_movzx (
 
     logic [31: 0] src_data;
 
-    assign src_data = i_has_imm ? i_immediate : i_src2_data;
+    assign src_data = i_has_imm ? i_immediate : {24'h0, i_src2_data[7: 0]};
 
     assign o_result.result           = src_data;
     assign o_result.cf               = 1'b0;

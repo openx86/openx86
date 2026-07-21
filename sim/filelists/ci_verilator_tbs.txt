@@ -25,4 +25,5 @@ tb/chipset/chip_8259_pic_tb.sv
 tb/chipset/chip_ns16550_com_tb.sv
 tb/device/vga/vga_graphics_adapter_tb.sv
 tb/seabios_post_tb.sv
+tb/dos_boot_tb.sv
 tb/win95_boot_tb.sv

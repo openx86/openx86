@@ -54,6 +54,10 @@ module lsu_mmu_translate (
     logic         mmu_bus_we;
     logic [31: 0] mmu_bus_wdata;
     logic         active_r;
+    // Latch translate request: EXU may retire / change reg_uop while LSU is busy.
+    logic         latched_is_write;
+    logic [31: 0] latched_eff_addr;
+    logic [ 2: 0] latched_seg_index;
 
     memory_management_unit #(
         .read_from_fetch (1'b0)
@@ -64,9 +68,9 @@ module lsu_mmu_translate (
         .i_segment_selector      (i_segment_selector),
         .i_segment_descriptor    (i_segment_descriptor),
         .i_current_privilege_level (i_cpl),
-        .i_segment_index         (i_segment_index),
-        .i_effective_address     (i_effective_address),
-        .i_write_enable          (i_is_write),
+        .i_segment_index         (latched_seg_index),
+        .i_effective_address     (latched_eff_addr),
+        .i_write_enable          (latched_is_write),
         .i_paging_enable         (i_paging_enable),
         .i_page_directory_base   (i_page_directory_base),
         .o_physical_address      (o_physical_address),
@@ -90,10 +94,16 @@ module lsu_mmu_translate (
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            active_r <= 1'b0;
+            active_r          <= 1'b0;
+            latched_is_write  <= 1'b0;
+            latched_eff_addr  <= 32'h0;
+            latched_seg_index <= 3'b0;
         end else begin
             if (i_start && ~active_r) begin
-                active_r <= 1'b1;
+                active_r          <= 1'b1;
+                latched_is_write  <= i_is_write;
+                latched_eff_addr  <= i_effective_address;
+                latched_seg_index <= i_segment_index;
             end else if (o_done) begin
                 active_r <= 1'b0;
             end

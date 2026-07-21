@@ -76,3 +76,10 @@ fpga/**/*.done
 # LibreLane generated design config + run trees
 asic/librelane/generated.config.json
 asic/librelane/runs/
+
+# Local firmware / disk images (SeaBIOS, FreeDOS, MS-DOS)
+artifacts/
+*.img
+!rtl/**/*.img
+bios.bin
+

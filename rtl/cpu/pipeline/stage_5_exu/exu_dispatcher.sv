@@ -33,6 +33,9 @@ module exu_dispatcher (
     input  logic         i_has_disp,
     input  logic         i_mem_access,
     input  logic         i_is_store,
+    input  logic         i_agu_base,
+    input  logic         i_agu_index,
+    input  logic [ 1: 0] i_sib_scale,
     input  logic [ 3: 0] i_tttn,
     input  logic         i_pf,
     input  logic         i_af,
@@ -117,9 +120,11 @@ module exu_dispatcher (
     assign reg_mov_only = (i_uop_opcode == `UOP_MOV) & ~i_mem_access;
     assign misc_simple  = (i_uop_opcode == `UOP_MISC) &
                           exu_opcode_is_misc_simple(i_immediate[7: 0]);
-    assign branch_target = i_has_disp ? i_displacement : i_immediate;
+    assign branch_target = i_has_disp ? i_displacement : i_src1_data;
     assign call_target   = i_has_disp ? i_displacement : i_immediate;
-    assign condition_met = compute_condition(i_tttn, i_of, i_cf, i_zf, i_sf, i_pf);
+    // JMP marks unconditional with has_imm && imm[0]; Jcc leaves has_imm=0.
+    assign condition_met = (i_has_imm & i_immediate[0]) |
+                           compute_condition(i_tttn, i_of, i_cf, i_zf, i_sf, i_pf);
 
     function automatic exu_dispatch_out_t pack_gpr_flags(
         input exu_result_t data
@@ -367,6 +372,9 @@ module exu_dispatcher (
         .i_src1_data    (i_src1_data),
         .i_src2_data    (i_src2_data),
         .i_displacement (i_displacement),
+        .i_agu_base     (i_agu_base),
+        .i_agu_index    (i_agu_index),
+        .i_sib_scale    (i_sib_scale),
         .o_result       (lea_r)
     );
 
@@ -625,9 +633,17 @@ module exu_dispatcher (
     assign branch_entry.write_ip              = condition_met;
     assign branch_entry.ip_data               = branch_target;
 
-    assign call_entry                  = pack_mem_gpr(call_r);
-    assign call_entry.write_ip         = 1'b1;
-    assign call_entry.ip_data          = call_target;
+    // Single driver for call_entry (avoid whole-struct + field assign conflict
+    // that left write_ip stuck at 0 in Verilator).
+    // Defer ESP and IP writeback until store completes — issuing write_ip early
+    // redirects before the return address is pushed; write_gpr early lets a
+    // re-issue push again with ESP already decremented (clobbering the arg).
+    always_comb begin
+        call_entry                = pack_mem_gpr(call_r);
+        call_entry.write_gpr      = 1'b0;
+        call_entry.write_ip       = 1'b0;
+        call_entry.ip_data        = call_target;
+    end
 
     assign xchg_entry.data             = xchg_r;
     assign xchg_entry.write_gpr        = 1'b1;
@@ -661,10 +677,10 @@ module exu_dispatcher (
             `UOP_SHLD:    select_idx = 6'd20;
             `UOP_SHRD:    select_idx = 6'd21;
             `UOP_MOV:     if (reg_mov_only) select_idx = 6'd22;
-            `UOP_MOVSX:   select_idx = 6'd23;
-            `UOP_MOVZX:   select_idx = 6'd24;
+            `UOP_MOVSX:   if (~i_mem_access) select_idx = 6'd23;
+            `UOP_MOVZX:   if (~i_mem_access) select_idx = 6'd24;
             `UOP_LEA:     select_idx = 6'd25;
-            `UOP_BRANCH:  select_idx = 6'd26;
+            `UOP_BRANCH:  if (~i_mem_access) select_idx = 6'd26;
             `UOP_CALL:    select_idx = 6'd27;
             `UOP_RET:     select_idx = 6'd28;
             `UOP_PUSH:    select_idx = 6'd29;
@@ -707,6 +723,8 @@ module exu_dispatcher (
         exu_opcode_dispatched(i_uop_opcode) |
         misc_simple |
         (i_uop_opcode == `UOP_XCHG)
-    ) & ~((i_uop_opcode == `UOP_MOV) & i_mem_access);
+    ) & ~((i_uop_opcode == `UOP_MOV) & i_mem_access)
+      & ~(((i_uop_opcode == `UOP_MOVZX) | (i_uop_opcode == `UOP_MOVSX)) & i_mem_access)
+      & ~((i_uop_opcode == `UOP_BRANCH) & i_mem_access);
 
 endmodule

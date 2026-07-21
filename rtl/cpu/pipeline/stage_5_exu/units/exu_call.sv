@@ -34,7 +34,9 @@ module exu_call (
     logic [31: 0] return_addr;
     logic [31: 0] new_esp;
 
-    assign return_addr = i_src1_data;
+    // Return address: prefer explicit imm (insn_eip+len from dec_to_uop);
+    // fall back to src1 for legacy/indirect forms.
+    assign return_addr = i_has_imm ? i_immediate : i_src1_data;
     assign new_esp     = i_src2_data - 32'd4;
 
     assign o_result.result           = new_esp;

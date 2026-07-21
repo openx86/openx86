@@ -47,14 +47,10 @@ module sdcard_controller #(
             // BRAM/映像盘体（P_USE_SDIO_DISK=0 时直接字节读）
             logic [ 7: 0] image [0:P_BYTE_DEPTH-1];
 
-            // 上电写魔术数到映像首字节（便于仿真可见）
-            always_ff @(posedge clk or negedge rst_n) begin
-                if (~rst_n) begin
-                    image[0] <= 8'hA5;
-                    image[1] <= 8'h5A;
-                end else if (i_disk_we && (i_disk_waddr < P_BYTE_DEPTH)) begin
+            // BRAM retains contents across rst_n so TB $fread preload survives reset.
+            always_ff @(posedge clk) begin
+                if (i_disk_we && (i_disk_waddr < P_BYTE_DEPTH))
                     image[i_disk_waddr[LP_AW-1: 0]] <= i_disk_wdata;
-                end
             end
 
             // 纯 BRAM：组合读 image，越界返回 0

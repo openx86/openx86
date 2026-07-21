@@ -24,7 +24,7 @@ module i486_dec_uop_stage (
     input  logic [15: 0][ 7: 0] i_ifu_instruction,
     input  logic                i_ifu_instruction_valid,
     input  logic                i_ifu_segment_fault,
-    input  logic [ 4: 0]        i_ifu_fifo_count,
+    input  logic [ 5: 0]        i_ifu_fifo_count,
     input  logic [31: 0]        i_ifu_eip,
     output logic                o_ifu_dec_ready,
     output logic                o_ifu_dec_fire,
@@ -35,6 +35,8 @@ module i486_dec_uop_stage (
     output micro_op_t           o_uop,
     input  logic                i_reg_ready,
     input  logic                i_stall,
+    // CS.D default operand/address size for decoder (1 = 32-bit)
+    input  logic                i_default_size_32,
     input  logic                clk,
     input  logic                rst_n
 );
@@ -296,6 +298,7 @@ module i486_dec_uop_stage (
         .o_uop_stage2_valid       (uop_stage2_valid),
         .i_uop_stage2_ready       (uop_stage2_ready),
         .i_uop_flush              (i_uop_flush),
+        .i_default_size_32        (i_default_size_32),
         .o_dec_base_reg_index                       (w_dec_base_reg_index),
         .o_dec_base_reg_is_present                  (w_dec_base_reg_is_present),
         .o_dec_displacement                         (w_dec_displacement),
@@ -547,6 +550,8 @@ module i486_dec_uop_stage (
         .i_dec_target_sreg_index                    (w_dec_target_sreg_index),
         .i_dec_sib_scale_factor                     (w_dec_sib_scale_factor),
         .i_eee                                      (w_eee),
+        .i_insn_eip                                 (i_ifu_eip),
+        .i_insn_len                                 (o_ifu_dec_consume_bytes),
         .i_opcode_aaa                               (w_opcode_aaa),
         .i_opcode_aad                               (w_opcode_aad),
         .i_opcode_aam                               (w_opcode_aam),

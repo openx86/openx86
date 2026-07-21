@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 # Run a single SystemVerilog testbench with Verilator.
-# Usage: scripts/sim_tb_verilator.sh [--tb path/to/tb.sv] [--top MODULE]
+# Usage:
+#   scripts/sim_tb_verilator.sh --tb path/to/tb.sv [--top MODULE] [-- +PLUSARGS...]
+# Extra args after "--" (or VERILATOR_TB_EXTRA_ARGS) are forwarded to the sim binary.
 
 set -eu
 
@@ -9,6 +11,7 @@ cd "$ROOT"
 
 TB=""
 TOP=""
+EXTRA_ARGS=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -20,17 +23,26 @@ while [ $# -gt 0 ]; do
       TOP="$2"
       shift 2
       ;;
+    --)
+      shift
+      EXTRA_ARGS="$*"
+      break
+      ;;
     *)
       if [ -z "$TB" ]; then
         TB="$1"
       else
-        echo "error: unknown argument: $1" >&2
+        echo "error: unknown argument: $1 (use -- before plusargs)" >&2
         exit 2
       fi
       shift
       ;;
   esac
 done
+
+if [ -n "${VERILATOR_TB_EXTRA_ARGS:-}" ]; then
+  EXTRA_ARGS="${EXTRA_ARGS} ${VERILATOR_TB_EXTRA_ARGS}"
+fi
 
 if [ -z "$TB" ]; then
   echo "error: missing --tb or TB path argument" >&2
@@ -68,6 +80,9 @@ CMDFILE="${OBJDIR}/verilator_tb.vf"
 } >"$CMDFILE"
 
 echo "Verilator TB: top=$TOP tb=$TB"
+if [ -n "$EXTRA_ARGS" ]; then
+  echo "Plusargs: $EXTRA_ARGS"
+fi
 verilator --version
 verilator \
   --binary \
@@ -83,16 +98,16 @@ verilator \
 
 LOG="${OBJDIR}/sim.log"
 set +e
-"${OBJDIR}/V${TOP}" 2>&1 | tee "$LOG"
+# shellcheck disable=SC2086
+"${OBJDIR}/V${TOP}" $EXTRA_ARGS 2>&1 | tee "$LOG"
 SIM_EC=$?
 set -e
 
-if grep -E '^FAIL( |$)|FAIL:' "$LOG" >/dev/null 2>&1; then
+if grep -Eiq '^FAIL( |$)|FAIL:|%Fatal|Assertion failed' "$LOG"; then
   echo "error: TB reported FAIL: $TOP" >&2
   exit 1
 fi
 if ! grep -E '^PASS( |$)|PASS:' "$LOG" >/dev/null 2>&1; then
-  # Allow TBs that only $finish without PASS if sim exited cleanly and no FAIL
   if [ "$SIM_EC" -ne 0 ]; then
     echo "error: TB exited $SIM_EC without PASS: $TOP" >&2
     exit 1

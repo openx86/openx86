@@ -25,12 +25,18 @@ module exu_lea (
     input  logic [31: 0] i_src1_data,
     input  logic [31: 0] i_src2_data,
     input  logic [31: 0] i_displacement,
+    input  logic         i_agu_base,
+    input  logic         i_agu_index,
+    input  logic [ 1: 0] i_sib_scale,
     output exu_result_t   o_result
 );
 
     logic [31: 0] effective_addr;
+    logic [31: 0] index_term;
 
-    assign effective_addr = i_src1_data + i_src2_data + i_displacement;
+    assign index_term     = i_agu_index ? (i_src2_data << i_sib_scale) : 32'h0;
+    assign effective_addr = (i_agu_base ? i_src1_data : 32'h0) +
+                            index_term + i_displacement;
 
     assign o_result.result           = effective_addr;
     assign o_result.cf               = 1'b0;

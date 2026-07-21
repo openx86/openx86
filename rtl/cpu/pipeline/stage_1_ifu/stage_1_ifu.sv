@@ -63,7 +63,7 @@ module stage_1_ifu (
     output logic                 o_segment_fault,
     output logic                 o_page_fault,
     output logic [31: 0]        o_fault_linear_address,
-    output logic [ 4: 0]        o_fifo_count,
+    output logic [ 5: 0]        o_fifo_count,
     output logic [31: 0]        o_eip,
     input  logic                 i_dec_ready,
     input  logic                 i_dec_fire,
@@ -78,6 +78,8 @@ module stage_1_ifu (
     input  logic                 rst_n
 );
 
+    // Clear prefetch on control-flow redirect so decode does not drain stale bytes.
+
     // ============================================================
     // IFU state registers
     // ============================================================
@@ -85,7 +87,7 @@ module stage_1_ifu (
     logic         started_r;
     logic         fetch_active_r;
     logic         fetch_code_phase;
-    logic [ 1: 0] fetch_word_idx_r;
+    logic [ 2: 0] fetch_word_idx_r;
     logic         fetch_instruction_ready_r;
     logic         segment_fault_r;
     logic         page_fault_r;
@@ -96,25 +98,31 @@ module stage_1_ifu (
     // ============================================================
     logic         fetch_request;
 
-    logic [15: 0][ 7: 0] fetch_instruction;
+    logic [31: 0][ 7: 0] fetch_instruction;
     logic                fetch_instruction_ready;
-    logic                fetch_segment_fault;
+    logic [ 1: 0]        fetch_skip_r;
+    logic [ 2: 0]        fetch_last_word;
+    logic [ 4: 0]        fetch_push_bytes_r;
+    logic [31: 0][ 7: 0] fetch_push_data;
+    logic [31: 0]        fetch_eip_r;
+    logic [31: 0]        fetch_eip_next;
 
     // ============================================================
     // FIFO signals
     // ============================================================
     logic [15: 0][ 7: 0] fifo_window;
-    logic [ 4: 0]        fifo_count;
+    logic [ 5: 0]        fifo_count;
     logic                fifo_push_ready;
     logic                fifo_pop_ready;
     logic                fifo_full;
     logic                fifo_empty;
+    logic                fifo_refill_clear;
 
     // ============================================================
     // decode interface signals
     // ============================================================
     logic                ifu_valid;
-    logic [ 4: 0]        dec_consume_bytes_ext;
+    logic [ 5: 0]        dec_consume_bytes_ext;
 
     // ============================================================
     // MMU request gating and signals
@@ -130,10 +138,31 @@ module stage_1_ifu (
     logic [31: 0] mmu_phys_addr;
     logic         fetch_need_mmu;
     logic [31: 0] fetch_linear_addr;
+    logic [31: 0] fetch_base_aligned;
 
-    assign fetch_linear_addr = eip_r + {28'h0, fetch_word_idx_r, 2'b00};
-    assign fetch_need_mmu    = fetch_active_r & ~fetch_code_phase;
-    assign mmu_req_valid     = fetch_need_mmu;
+    // Prefetch appends at eip+fifo_count. Do not clear leftovers — they remain
+    // a valid prefix of the instruction stream.
+    // skip=0 → 4 dwords (16B) so EIP=FFF0 does not fetch past BIOS at 0x100000.
+    // skip!=0 → 6 dwords (24B raw).
+    logic [ 5: 0] fifo_free_count;
+    logic [ 4: 0] fetch_push_bytes;
+    assign fetch_eip_next     = eip_r + {26'h0, fifo_count};
+    assign fetch_base_aligned = {fetch_eip_r[31: 2], 2'b00};
+    assign fetch_linear_addr  = fetch_base_aligned + {27'h0, fetch_word_idx_r, 2'b00};
+    assign fetch_need_mmu     = fetch_active_r & ~fetch_code_phase;
+    assign mmu_req_valid      = fetch_need_mmu;
+    assign fetch_last_word    = (|fetch_skip_r) ? 3'd5 : 3'd3;
+    assign fifo_free_count    = 6'd32 - fifo_count;
+    // Empty fill: take all useful bytes from the burst. Append fill: up to 16B.
+    assign fetch_push_bytes   = fifo_empty ?
+                                ((|eip_r[1: 0]) ? (5'd24 - {3'b0, eip_r[1: 0]}) : 5'd16) :
+                                ((fifo_free_count < 6'd16) ? fifo_free_count[4: 0] : 5'd16);
+
+    always_comb begin
+        for (int unsigned i = 0; i < 32; i++) begin
+            fetch_push_data[i] = fetch_instruction[{1'b0, fetch_skip_r} + 6'(i)];
+        end
+    end
 
     memory_management_unit #(
         .read_from_fetch (1'b1)
@@ -167,9 +196,14 @@ module stage_1_ifu (
     // ============================================================
     // fetch control assignments
     // ============================================================
-    assign fetch_request           = started_r & i_start & ~fetch_active_r & fifo_empty & ~i_stall;
+    // Append when the window may run short and the FIFO has room.
+    // Wait for ~stall so IFU refill does not contend with EXU data loads.
+    assign fetch_request           = started_r & i_start & ~fetch_active_r &
+                                     ~fetch_instruction_ready_r & ~i_stall &
+                                     (fifo_empty | (fifo_count < 6'd15)) &
+                                     (fifo_free_count >= 6'd4);
+    assign fifo_refill_clear       = 1'b0;
     assign fetch_instruction_ready = fetch_instruction_ready_r;
-    assign fetch_segment_fault     = mmu_seg_fault;
 
     assign o_code_valid            = fetch_active_r & fetch_code_phase;
     assign o_code_address          = mmu_phys_addr;
@@ -177,11 +211,8 @@ module stage_1_ifu (
     // ============================================================
     // decode interface assignments
     // ============================================================
-    assign dec_consume_bytes_ext = {1'b0, i_dec_consume_bytes};
-    assign ifu_valid             =
-        ~fifo_empty &
-        (dec_consume_bytes_ext != 5'd0) &
-        (dec_consume_bytes_ext <= fifo_count);
+    assign dec_consume_bytes_ext = {2'b0, i_dec_consume_bytes};
+    assign ifu_valid             = (fifo_count >= 6'd15);
 
     assign o_instruction       = fifo_window;
     assign o_instruction_valid = ifu_valid;
@@ -191,29 +222,34 @@ module stage_1_ifu (
     assign o_fifo_count        = fifo_count;
     assign o_eip               = eip_r;
 
-    // 时序逻辑块：维护 EIP、取指拼包状态、16B 窗口有效脉冲。
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
-            eip_r                    <= 32'h0000_0000;
-            started_r                <= 1'b0;
-            fetch_active_r           <= 1'b0;
-            fetch_code_phase         <= 1'b0;
-            fetch_word_idx_r         <= 2'b00;
+            eip_r                     <= 32'h0000_0000;
+            started_r                 <= 1'b0;
+            fetch_active_r            <= 1'b0;
+            fetch_code_phase          <= 1'b0;
+            fetch_word_idx_r          <= 3'b000;
             fetch_instruction_ready_r <= 1'b0;
-            fetch_instruction        <= '0;
-            segment_fault_r          <= 1'b0;
-            page_fault_r             <= 1'b0;
-            fault_linear_r           <= 32'h0;
+            fetch_instruction         <= '0;
+            fetch_skip_r              <= 2'b00;
+            fetch_eip_r               <= 32'h0;
+            fetch_push_bytes_r        <= 5'd0;
+            segment_fault_r           <= 1'b0;
+            page_fault_r              <= 1'b0;
+            fault_linear_r            <= 32'h0;
         end else if (i_reload_eip) begin
-            eip_r                    <= i_reload_eip_value;
-            started_r                <= 1'b1;
-            fetch_active_r           <= 1'b0;
-            fetch_code_phase         <= 1'b0;
-            fetch_word_idx_r         <= 2'b00;
+            eip_r                     <= i_reload_eip_value;
+            started_r                 <= 1'b1;
+            fetch_active_r            <= 1'b0;
+            fetch_code_phase          <= 1'b0;
+            fetch_word_idx_r          <= 3'b000;
             fetch_instruction_ready_r <= 1'b0;
-            segment_fault_r          <= 1'b0;
-            page_fault_r             <= 1'b0;
-            fault_linear_r           <= 32'h0;
+            fetch_skip_r              <= 2'b00;
+            fetch_eip_r               <= 32'h0;
+            fetch_push_bytes_r        <= 5'd0;
+            segment_fault_r           <= 1'b0;
+            page_fault_r              <= 1'b0;
+            fault_linear_r            <= 32'h0;
         end else begin
             fetch_instruction_ready_r <= 1'b0;
 
@@ -225,9 +261,13 @@ module stage_1_ifu (
             end
 
             if (fetch_request) begin
-                fetch_active_r   <= 1'b1;
-                fetch_code_phase <= 1'b0;
-                fetch_word_idx_r <= 2'b00;
+                fetch_active_r     <= 1'b1;
+                fetch_code_phase   <= 1'b0;
+                fetch_word_idx_r   <= 3'b000;
+                fetch_eip_r        <= fetch_eip_next;
+                fetch_skip_r       <= fetch_eip_next[1: 0];
+                fetch_push_bytes_r <= fetch_push_bytes;
+                fetch_instruction  <= '0;
             end
 
             if (fetch_active_r) begin
@@ -250,65 +290,91 @@ module stage_1_ifu (
                 end else if (i_code_ready) begin
                     fetch_code_phase <= 1'b0;
                     unique case (fetch_word_idx_r)
-                    2'd0: begin
-                        fetch_instruction[0] <= i_code_data_read[31: 24];
-                        fetch_instruction[1] <= i_code_data_read[23: 16];
-                        fetch_instruction[2] <= i_code_data_read[15: 8];
-                        fetch_instruction[3] <= i_code_data_read[ 7: 0];
+                    3'd0: begin
+                        fetch_instruction[0] <= i_code_data_read[ 7: 0];
+                        fetch_instruction[1] <= i_code_data_read[15: 8];
+                        fetch_instruction[2] <= i_code_data_read[23:16];
+                        fetch_instruction[3] <= i_code_data_read[31:24];
                     end
-                    2'd1: begin
-                        fetch_instruction[4] <= i_code_data_read[31: 24];
-                        fetch_instruction[5] <= i_code_data_read[23: 16];
-                        fetch_instruction[6] <= i_code_data_read[15: 8];
-                        fetch_instruction[7] <= i_code_data_read[ 7: 0];
+                    3'd1: begin
+                        fetch_instruction[4] <= i_code_data_read[ 7: 0];
+                        fetch_instruction[5] <= i_code_data_read[15: 8];
+                        fetch_instruction[6] <= i_code_data_read[23:16];
+                        fetch_instruction[7] <= i_code_data_read[31:24];
                     end
-                    2'd2: begin
-                        fetch_instruction[8]  <= i_code_data_read[31: 24];
-                        fetch_instruction[9]  <= i_code_data_read[23: 16];
-                        fetch_instruction[10] <= i_code_data_read[15: 8];
-                        fetch_instruction[11] <= i_code_data_read[ 7: 0];
+                    3'd2: begin
+                        fetch_instruction[8]  <= i_code_data_read[ 7: 0];
+                        fetch_instruction[9]  <= i_code_data_read[15: 8];
+                        fetch_instruction[10] <= i_code_data_read[23:16];
+                        fetch_instruction[11] <= i_code_data_read[31:24];
+                    end
+                    3'd3: begin
+                        fetch_instruction[12] <= i_code_data_read[ 7: 0];
+                        fetch_instruction[13] <= i_code_data_read[15: 8];
+                        fetch_instruction[14] <= i_code_data_read[23:16];
+                        fetch_instruction[15] <= i_code_data_read[31:24];
+                    end
+                    3'd4: begin
+                        fetch_instruction[16] <= i_code_data_read[ 7: 0];
+                        fetch_instruction[17] <= i_code_data_read[15: 8];
+                        fetch_instruction[18] <= i_code_data_read[23:16];
+                        fetch_instruction[19] <= i_code_data_read[31:24];
+                    end
+                    3'd5: begin
+                        fetch_instruction[20] <= i_code_data_read[ 7: 0];
+                        fetch_instruction[21] <= i_code_data_read[15: 8];
+                        fetch_instruction[22] <= i_code_data_read[23:16];
+                        fetch_instruction[23] <= i_code_data_read[31:24];
+                    end
+                    3'd6: begin
+                        fetch_instruction[24] <= i_code_data_read[ 7: 0];
+                        fetch_instruction[25] <= i_code_data_read[15: 8];
+                        fetch_instruction[26] <= i_code_data_read[23:16];
+                        fetch_instruction[27] <= i_code_data_read[31:24];
                     end
                     default: begin
-                        fetch_instruction[12] <= i_code_data_read[31: 24];
-                        fetch_instruction[13] <= i_code_data_read[23: 16];
-                        fetch_instruction[14] <= i_code_data_read[15: 8];
-                        fetch_instruction[15] <= i_code_data_read[ 7: 0];
+                        fetch_instruction[28] <= i_code_data_read[ 7: 0];
+                        fetch_instruction[29] <= i_code_data_read[15: 8];
+                        fetch_instruction[30] <= i_code_data_read[23:16];
+                        fetch_instruction[31] <= i_code_data_read[31:24];
                     end
-                endcase
+                    endcase
 
-                if (fetch_word_idx_r == 2'd3) begin
-                    fetch_active_r            <= 1'b0;
-                    fetch_instruction_ready_r <= 1'b1;
-                    segment_fault_r           <= 1'b0;
-                    page_fault_r              <= 1'b0;
-                end else begin
-                    fetch_word_idx_r <= fetch_word_idx_r + 2'd1;
+                    if (fetch_word_idx_r == fetch_last_word) begin
+                        fetch_active_r            <= 1'b0;
+                        fetch_instruction_ready_r <= 1'b1;
+                        segment_fault_r           <= 1'b0;
+                        page_fault_r              <= 1'b0;
+                    end else begin
+                        fetch_word_idx_r <= fetch_word_idx_r + 3'd1;
+                    end
                 end
-            end
             end
         end
     end
 
     stage_1_ifu_fifo #(
-        .P_DEPTH      (16),
+        .P_DEPTH      (32),
+        .P_WINDOW     (16),
+        .P_PUSH_MAX   (32),
         .P_DATA_WIDTH (8)
     ) u_stage_1_ifu_fifo (
-        .i_push_valid  (fetch_instruction_ready),
-        .i_push_data   (fetch_instruction),
-        .i_push_bytes  (5'd16),
+        .i_push_valid  (fetch_instruction_ready & ~i_reload_eip),
+        .i_push_data   (fetch_push_data),
+        .i_push_bytes  ({1'b0, fetch_push_bytes_r}),
         .o_push_ready  (fifo_push_ready),
-        .i_pop_valid   (i_dec_fire),
+        .i_pop_valid   (i_dec_fire & ~i_reload_eip & ~fifo_refill_clear),
         .i_pop_bytes   (dec_consume_bytes_ext),
         .o_pop_ready   (fifo_pop_ready),
         .o_window_data (fifo_window),
         .o_count       (fifo_count),
         .o_full        (fifo_full),
         .o_empty       (fifo_empty),
+        .i_clear       (i_reload_eip | fifo_refill_clear),
         .clk           (clk),
         .rst_n         (rst_n)
     );
 
-    // Keep lint clean for currently unused status/context wires.
     /* verilator lint_off UNUSEDSIGNAL */
     logic unused_ifu;
     assign unused_ifu =
@@ -319,25 +385,28 @@ module stage_1_ifu (
 endmodule
 
 module stage_1_ifu_fifo #(
-    parameter int P_DEPTH      = 16,
+    parameter int P_DEPTH      = 32,
+    parameter int P_WINDOW     = 16,
+    parameter int P_PUSH_MAX   = 32,
     parameter int P_DATA_WIDTH = 8
 ) (
-    input  logic                                        i_push_valid,
-    input  logic [P_DEPTH - 1: 0][P_DATA_WIDTH - 1: 0] i_push_data,
-    input  logic [$clog2(P_DEPTH + 1) - 1: 0]          i_push_bytes,
-    output logic                                        o_push_ready,
+    input  logic                                          i_push_valid,
+    input  logic [P_PUSH_MAX - 1: 0][P_DATA_WIDTH - 1: 0] i_push_data,
+    input  logic [$clog2(P_DEPTH + 1) - 1: 0]            i_push_bytes,
+    output logic                                          o_push_ready,
 
-    input  logic                                        i_pop_valid,
-    input  logic [$clog2(P_DEPTH + 1) - 1: 0]          i_pop_bytes,
-    output logic                                        o_pop_ready,
+    input  logic                                          i_pop_valid,
+    input  logic [$clog2(P_DEPTH + 1) - 1: 0]            i_pop_bytes,
+    output logic                                          o_pop_ready,
 
-    output logic [P_DEPTH - 1: 0][P_DATA_WIDTH - 1: 0] o_window_data,
-    output logic [$clog2(P_DEPTH + 1) - 1: 0]          o_count,
-    output logic                                        o_full,
-    output logic                                        o_empty,
+    output logic [P_WINDOW - 1: 0][P_DATA_WIDTH - 1: 0]  o_window_data,
+    output logic [$clog2(P_DEPTH + 1) - 1: 0]            o_count,
+    output logic                                          o_full,
+    output logic                                          o_empty,
+    input  logic                                          i_clear,
 
-    input  logic                                        clk, // 时钟信号
-    input  logic                                        rst_n // 复位信号
+    input  logic                                          clk,
+    input  logic                                          rst_n
 );
 
     localparam int LP_ADDR_WIDTH  = $clog2(P_DEPTH);
@@ -382,9 +451,8 @@ module stage_1_ifu_fifo #(
     assign o_empty = (count == LP_COUNT_WIDTH'(0));
     assign o_full  = (count == LP_DEPTH_W);
 
-    // 组合逻辑块：输出从 head 开始的前视窗口。
     always_comb begin
-        for (int i = 0; i < P_DEPTH; i++) begin
+        for (int i = 0; i < P_WINDOW; i++) begin
             if (LP_COUNT_WIDTH'(i) < count) begin
                 o_window_data[i] = fifo_mem[f_wrap_index(head_ptr, LP_COUNT_WIDTH'(i))];
             end else begin
@@ -393,15 +461,18 @@ module stage_1_ifu_fifo #(
         end
     end
 
-    // 时序逻辑块：按 push/pop 握手更新环形指针与计数。
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
             head_ptr <= '0;
             tail_ptr <= '0;
             count    <= '0;
+        end else if (i_clear) begin
+            head_ptr <= '0;
+            tail_ptr <= '0;
+            count    <= '0;
         end else begin
             if (do_push) begin
-                for (int i = 0; i < P_DEPTH; i++) begin
+                for (int i = 0; i < P_PUSH_MAX; i++) begin
                     if (LP_COUNT_WIDTH'(i) < i_push_bytes) begin
                         fifo_mem[f_wrap_index(tail_ptr, LP_COUNT_WIDTH'(i))] <= i_push_data[i];
                     end

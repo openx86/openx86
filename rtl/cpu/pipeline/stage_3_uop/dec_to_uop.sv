@@ -250,6 +250,8 @@ module dec_to_uop (
     input  logic [ 3: 0]        i_tttn,
     input  logic [ 2: 0]        i_eee,
 
+    input  logic [31: 0]        i_insn_eip,
+    input  logic [ 3: 0]        i_insn_len,
     input  logic [31: 0]        i_dec_displacement,
     input  logic [31: 0]        i_dec_immediate,
     input  logic                i_dec_base_reg_is_present,
@@ -276,6 +278,15 @@ module dec_to_uop (
     // Micro-op conversion signals
     // ============================================================
     micro_op_t uop_next;
+    logic [31: 0] branch_rel;
+    logic [31: 0] branch_target_abs;
+    // Relative control transfers: target = next_eip + sign_extended(rel).
+    assign branch_rel =
+        (i_opcode_jmp_short || i_opcode_jcc_short ||
+         i_opcode_loop || i_opcode_loopz || i_opcode_loopnz || i_opcode_jcxz) ?
+        {{24{i_dec_displacement[7]}}, i_dec_displacement[7: 0]} :
+        {{16{i_dec_displacement[15]}}, i_dec_displacement[15: 0]};
+    assign branch_target_abs = i_insn_eip + {28'h0, i_insn_len} + branch_rel;
 
     // Default micro-op (NOP)
     micro_op_t uop_default;
@@ -292,6 +303,8 @@ module dec_to_uop (
         uop_sib_scale:   2'b0,
         uop_has_imm:     1'b0,
         uop_has_disp:    1'b0,
+        uop_agu_base:    1'b0,
+        uop_agu_index:   1'b0,
         uop_mem_access:  1'b0,
         uop_is_store:    1'b0,
         uop_rep:         1'b0,
@@ -317,10 +330,34 @@ module dec_to_uop (
                 uop_next.uop_mem_access = (i_dec_modrm_mod != 2'b11);
                 uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
                 uop_next.uop_displacement = i_dec_displacement;
+                // r/m GPR holds the selector (e.g. MOV DS,CX → src2=CX)
+                uop_next.uop_src2_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
             end else if (i_opcode_mov_reg_to_reg_mem || i_opcode_mov_reg_mem_to_reg) begin
+                // 88/89: r/m <- r ; 8A/8B: r <- r/m. ModRM.reg is i_eee.
+                // Mem address base: SIB base, else 32-bit non-SIB base in index_*.
+                // Do not use field_gpr as dest for mem forms — that became MOV ESP,EAX
+                // when SIB base=ESP was treated as a GPR dest with src2=EAX default.
                 uop_next.uop_opcode = `UOP_MOV;
-                uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
-                uop_next.uop_src1_reg = i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0;
+                if (i_dec_modrm_mod != 2'b11) begin
+                    uop_next.uop_mem_access   = 1'b1;
+                    uop_next.uop_is_store     = i_opcode_mov_reg_to_reg_mem;
+                    uop_next.uop_has_disp     = 1'b1;
+                    uop_next.uop_displacement = i_dec_displacement;
+                    uop_next.uop_agu_base     = i_dec_base_reg_is_present | i_dec_index_reg_is_present;
+                    uop_next.uop_src1_reg     = i_dec_base_reg_is_present ? i_dec_base_reg_index :
+                                               (i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0);
+                    if (i_opcode_mov_reg_to_reg_mem) begin
+                        uop_next.uop_src2_reg = i_eee;
+                    end else begin
+                        uop_next.uop_dest_reg = i_eee;
+                    end
+                end else if (i_opcode_mov_reg_to_reg_mem) begin
+                    uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                    uop_next.uop_src2_reg = i_eee;
+                end else begin
+                    uop_next.uop_dest_reg = i_eee;
+                    uop_next.uop_src2_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                end
             end else if (i_opcode_mov_imm_to_reg_mem || i_opcode_mov_imm_to_reg) begin
                 uop_next.uop_opcode = `UOP_MOV;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
@@ -334,21 +371,55 @@ module dec_to_uop (
                 uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
                 uop_next.uop_displacement = i_dec_displacement;
             end else if (i_opcode_movsx) begin
+                // 0F BE/BF: r <- sign_extend(r/m). ModRM.reg = i_eee.
+                // imm[0] reserved for width (0=byte BE, 1=word BF); default byte.
                 uop_next.uop_opcode = `UOP_MOVSX;
-                uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
-                uop_next.uop_src1_reg = i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0;
+                uop_next.uop_immediate = 32'h0;
+                if (i_dec_modrm_mod != 2'b11) begin
+                    uop_next.uop_mem_access   = 1'b1;
+                    uop_next.uop_has_disp     = 1'b1;
+                    uop_next.uop_displacement = i_dec_displacement;
+                    uop_next.uop_agu_base     = i_dec_base_reg_is_present | i_dec_index_reg_is_present;
+                    uop_next.uop_src1_reg     = i_dec_base_reg_is_present ? i_dec_base_reg_index :
+                                               (i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0);
+                    uop_next.uop_dest_reg     = i_eee;
+                end else begin
+                    uop_next.uop_dest_reg = i_eee;
+                    uop_next.uop_src2_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                end
             end else if (i_opcode_movzx) begin
+                // 0F B6/B7: r <- zero_extend(r/m). ModRM.reg = i_eee.
                 uop_next.uop_opcode = `UOP_MOVZX;
-                uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
-                uop_next.uop_src1_reg = i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0;
+                uop_next.uop_immediate = 32'h0;
+                if (i_dec_modrm_mod != 2'b11) begin
+                    uop_next.uop_mem_access   = 1'b1;
+                    uop_next.uop_has_disp     = 1'b1;
+                    uop_next.uop_displacement = i_dec_displacement;
+                    uop_next.uop_agu_base     = i_dec_base_reg_is_present | i_dec_index_reg_is_present;
+                    uop_next.uop_src1_reg     = i_dec_base_reg_is_present ? i_dec_base_reg_index :
+                                               (i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0);
+                    uop_next.uop_dest_reg     = i_eee;
+                end else begin
+                    uop_next.uop_dest_reg = i_eee;
+                    uop_next.uop_src2_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                end
             end else if (i_opcode_xchg_reg_mem || i_opcode_xchg_acc) begin
                 uop_next.uop_opcode = `UOP_XCHG;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_src1_reg = i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0;
             end else if (i_opcode_lea) begin
+                // 8D: LEA r, m — ModRM.reg = i_eee is dest; r/m forms the EA.
                 uop_next.uop_opcode = `UOP_LEA;
-                uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
-                uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
+                uop_next.uop_dest_reg = i_eee;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ?
+                                        i_dec_base_reg_index : 3'b0;
+                uop_next.uop_agu_base = i_dec_base_reg_is_present;
+                uop_next.uop_agu_index = i_dec_index_reg_is_present;
+                uop_next.uop_src2_reg = i_dec_index_reg_is_present ?
+                                        i_dec_index_reg_index : 3'b0;
+                uop_next.uop_sib_scale = i_dec_index_reg_is_present ?
+                                        i_dec_sib_scale_factor : 2'b0;
+                uop_next.uop_has_disp = 1'b1;
                 uop_next.uop_displacement = i_dec_displacement;
             end
 
@@ -358,8 +429,10 @@ module dec_to_uop (
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_src1_reg = i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0;
             end else if (i_opcode_add_imm_to_reg_mem || i_opcode_add_imm_to_acc) begin
+                // 81/83 /0, 05: r/m := r/m + imm (RMW — src1 must be dest)
                 uop_next.uop_opcode = `UOP_ADD;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_has_imm = 1'b1;
                 uop_next.uop_immediate = i_dec_immediate;
             end else if (i_opcode_adc_reg_to_reg_mem || i_opcode_adc_reg_mem_to_reg) begin
@@ -369,6 +442,7 @@ module dec_to_uop (
             end else if (i_opcode_adc_imm_to_reg_mem || i_opcode_adc_imm_to_acc) begin
                 uop_next.uop_opcode = `UOP_ADC;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_has_imm = 1'b1;
                 uop_next.uop_immediate = i_dec_immediate;
             end else if (i_opcode_sub_reg_to_reg_mem || i_opcode_sub_reg_mem_to_reg) begin
@@ -376,8 +450,10 @@ module dec_to_uop (
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_src1_reg = i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0;
             end else if (i_opcode_sub_imm_to_reg_mem || i_opcode_sub_imm_to_acc) begin
+                // 81/83 /5, 2D: r/m := r/m - imm (RMW — src1 must be dest)
                 uop_next.uop_opcode = `UOP_SUB;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_has_imm = 1'b1;
                 uop_next.uop_immediate = i_dec_immediate;
             end else if (i_opcode_sbb_reg_to_reg_mem || i_opcode_sbb_reg_mem_to_reg) begin
@@ -387,17 +463,21 @@ module dec_to_uop (
             end else if (i_opcode_sbb_imm_to_reg_mem || i_opcode_sbb_imm_to_acc) begin
                 uop_next.uop_opcode = `UOP_SBB;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_has_imm = 1'b1;
                 uop_next.uop_immediate = i_dec_immediate;
             end else if (i_opcode_inc_reg_mem || i_opcode_inc_reg) begin
                 uop_next.uop_opcode = `UOP_INC;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
             end else if (i_opcode_dec_reg_mem || i_opcode_dec_reg) begin
                 uop_next.uop_opcode = `UOP_DEC;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
             end else if (i_opcode_neg) begin
                 uop_next.uop_opcode = `UOP_NEG;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
             end else if (i_opcode_cmp_mem_reg || i_opcode_cmp_reg_mem) begin
                 uop_next.uop_opcode = `UOP_CMP;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
@@ -405,8 +485,15 @@ module dec_to_uop (
             end else if (i_opcode_cmp_imm_reg_mem || i_opcode_cmp_imm_acc) begin
                 uop_next.uop_opcode = `UOP_CMP;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                // AGU base: stage_4 reads uop_src1_reg; disp-only must not use EAX
+                // (src1_reg=0). uop_agu_base gates src1 in EXU address calc.
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_agu_base = i_dec_base_reg_is_present;
                 uop_next.uop_has_imm = 1'b1;
                 uop_next.uop_immediate = i_dec_immediate;
+                uop_next.uop_mem_access = i_opcode_cmp_imm_reg_mem & (i_dec_modrm_mod != 2'b11);
+                uop_next.uop_has_disp = uop_next.uop_mem_access;
+                uop_next.uop_displacement = i_dec_displacement;
             end
 
             // Logic instructions: AND, OR, XOR, NOT, TEST
@@ -417,6 +504,7 @@ module dec_to_uop (
             end else if (i_opcode_and_imm_to_reg_mem || i_opcode_and_imm_to_acc) begin
                 uop_next.uop_opcode = `UOP_AND;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_has_imm = 1'b1;
                 uop_next.uop_immediate = i_dec_immediate;
             end else if (i_opcode_or_reg_to_reg_mem || i_opcode_or_reg_mem_to_reg) begin
@@ -426,6 +514,7 @@ module dec_to_uop (
             end else if (i_opcode_or_imm_to_reg_mem || i_opcode_or_imm_to_acc) begin
                 uop_next.uop_opcode = `UOP_OR;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_has_imm = 1'b1;
                 uop_next.uop_immediate = i_dec_immediate;
             end else if (i_opcode_xor_reg_to_reg_mem || i_opcode_xor_reg_mem_to_reg) begin
@@ -435,20 +524,36 @@ module dec_to_uop (
             end else if (i_opcode_xor_imm_to_reg_mem || i_opcode_xor_imm_to_acc) begin
                 uop_next.uop_opcode = `UOP_XOR;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_has_imm = 1'b1;
                 uop_next.uop_immediate = i_dec_immediate;
             end else if (i_opcode_not) begin
                 uop_next.uop_opcode = `UOP_NOT;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
             end else if (i_opcode_test_reg_mem) begin
+                // 84/85: TEST r/m, r — ModRM.reg = i_eee, r/m = base when mod=11
                 uop_next.uop_opcode = `UOP_TEST;
-                uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
-                uop_next.uop_src1_reg = i_dec_index_reg_is_present ? i_dec_index_reg_index : 3'b0;
+                if (i_dec_modrm_mod != 2'b11) begin
+                    uop_next.uop_mem_access = 1'b1;
+                    uop_next.uop_has_disp   = 1'b1;
+                    uop_next.uop_displacement = i_dec_displacement;
+                    uop_next.uop_src1_reg   = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                    uop_next.uop_agu_base   = i_dec_base_reg_is_present;
+                    uop_next.uop_src2_reg   = i_eee;
+                end else begin
+                    uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                    uop_next.uop_src2_reg = i_eee;
+                end
             end else if (i_opcode_test_imm_reg_mem || i_opcode_test_imm_acc) begin
                 uop_next.uop_opcode = `UOP_TEST;
-                uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
                 uop_next.uop_has_imm = 1'b1;
                 uop_next.uop_immediate = i_dec_immediate;
+                uop_next.uop_mem_access = i_opcode_test_imm_reg_mem & (i_dec_modrm_mod != 2'b11);
+                uop_next.uop_has_disp = uop_next.uop_mem_access;
+                uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_agu_base = i_dec_base_reg_is_present & uop_next.uop_mem_access;
             end
 
             // Shift instructions: SHL, SHR, SAR, ROL, ROR, RCL, RCR, SHLD, SHRD
@@ -523,24 +628,40 @@ module dec_to_uop (
             end
 
             // Stack instructions: PUSH, POP
+            // exu_push: src1/imm = value, src2 = ESP, dest = ESP (new ESP)
+            // exu_pop:  src1 = ESP (addr), dest = GPR; ESP:=ESP+4 written in EXU
             else if (i_opcode_push_reg || i_opcode_push_reg_mem || i_opcode_push_imm) begin
                 uop_next.uop_opcode = `UOP_PUSH;
-                uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_src2_reg = `index_reg_gpr_ESP;
+                uop_next.uop_dest_reg = `index_reg_gpr_ESP;
                 uop_next.uop_has_imm = i_opcode_push_imm;
                 uop_next.uop_immediate = i_dec_immediate;
+                if (i_opcode_push_reg_mem && (i_dec_modrm_mod != 2'b11)) begin
+                    uop_next.uop_mem_access = 1'b1;
+                    uop_next.uop_has_disp = 1'b1;
+                    uop_next.uop_displacement = i_dec_displacement;
+                end
             end else if (i_opcode_pushf) begin
                 uop_next.uop_opcode = `UOP_PUSH;
+                uop_next.uop_src2_reg = `index_reg_gpr_ESP;
+                uop_next.uop_dest_reg = `index_reg_gpr_ESP;
                 uop_next.uop_immediate = {24'h0, `UOP_TAG_PUSHF};
             end else if (i_opcode_pusha) begin
                 uop_next.uop_opcode = `UOP_PUSH;
+                uop_next.uop_src2_reg = `index_reg_gpr_ESP;
+                uop_next.uop_dest_reg = `index_reg_gpr_ESP;
             end else if (i_opcode_pop_reg || i_opcode_pop_reg_mem) begin
                 uop_next.uop_opcode = `UOP_POP;
+                uop_next.uop_src1_reg = `index_reg_gpr_ESP;
                 uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
             end else if (i_opcode_popf) begin
                 uop_next.uop_opcode = `UOP_POP;
+                uop_next.uop_src1_reg = `index_reg_gpr_ESP;
                 uop_next.uop_immediate = {24'h0, `UOP_TAG_POPF};
             end else if (i_opcode_popa) begin
                 uop_next.uop_opcode = `UOP_POP;
+                uop_next.uop_src1_reg = `index_reg_gpr_ESP;
             end
 
             // Control flow instructions: JMP, CALL, RET, LOOP, Jcc
@@ -571,26 +692,63 @@ module dec_to_uop (
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_FAR_RET};
                 uop_next.uop_has_disp = (i_opcode_ret_far_imm);
                 uop_next.uop_displacement = i_dec_displacement;
-            end else if (i_opcode_jmp_short || i_opcode_jmp_near_direct || i_opcode_jmp_near_indirect) begin
+            end else if (i_opcode_jmp_short || i_opcode_jmp_near_direct) begin
                 uop_next.uop_opcode = `UOP_BRANCH;
+                uop_next.uop_tttn = 4'h0;
+                uop_next.uop_has_imm = 1'b1;
+                uop_next.uop_immediate = 32'h1; // unconditional marker
                 uop_next.uop_has_disp = 1'b1;
-                uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_displacement = branch_target_abs;
+            end else if (i_opcode_jmp_near_indirect) begin
+                // FF /4: JMP r/m32 — register form uses src1; mem form loads later.
+                // SIB index*scale+disp (e.g. puthex jump table) needs agu_index.
+                uop_next.uop_opcode = `UOP_BRANCH;
+                uop_next.uop_tttn = 4'h0;
+                uop_next.uop_has_imm = 1'b1;
+                uop_next.uop_immediate = 32'h1; // unconditional marker
+                if (i_dec_modrm_mod == 2'b11) begin
+                    uop_next.uop_src1_reg = i_dec_base_reg_is_present ?
+                                           i_dec_base_reg_index : 3'b0;
+                end else begin
+                    uop_next.uop_mem_access     = 1'b1;
+                    uop_next.uop_has_disp       = 1'b1;
+                    uop_next.uop_displacement   = i_dec_displacement;
+                    uop_next.uop_agu_base       = i_dec_base_reg_is_present;
+                    uop_next.uop_src1_reg       = i_dec_base_reg_is_present ?
+                                                 i_dec_base_reg_index : 3'b0;
+                    uop_next.uop_agu_index      = i_dec_index_reg_is_present;
+                    uop_next.uop_src2_reg       = i_dec_index_reg_is_present ?
+                                                 i_dec_index_reg_index : 3'b0;
+                    uop_next.uop_sib_scale      = i_dec_index_reg_is_present ?
+                                                 i_dec_sib_scale_factor : 2'b0;
+                end
             end else if (i_opcode_call_near_direct || i_opcode_call_near_indirect) begin
+                // exu_call: imm = return EIP, src2 = ESP, dest = ESP, disp = target
                 uop_next.uop_opcode = `UOP_CALL;
+                uop_next.uop_src2_reg = `index_reg_gpr_ESP;
+                uop_next.uop_dest_reg = `index_reg_gpr_ESP;
+                uop_next.uop_has_imm = 1'b1;
+                uop_next.uop_immediate = i_insn_eip + {28'h0, i_insn_len};
                 uop_next.uop_has_disp = 1'b1;
-                uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_displacement = i_opcode_call_near_indirect ?
+                                            i_dec_displacement : branch_target_abs;
             end else if (i_opcode_ret_near || i_opcode_ret_near_imm) begin
+                // exu_ret: src1 = ESP (pop addr), dest = ESP (new ESP)
                 uop_next.uop_opcode = `UOP_RET;
+                uop_next.uop_src1_reg = `index_reg_gpr_ESP;
+                uop_next.uop_dest_reg = `index_reg_gpr_ESP;
+                uop_next.uop_has_imm = i_opcode_ret_near_imm;
+                uop_next.uop_immediate = i_dec_immediate;
                 uop_next.uop_has_disp = i_opcode_ret_near_imm;
                 uop_next.uop_displacement = i_dec_displacement;
             end else if (i_opcode_loop || i_opcode_loopz || i_opcode_loopnz || i_opcode_jcxz) begin
                 uop_next.uop_opcode = `UOP_BRANCH;
                 uop_next.uop_has_disp = 1'b1;
-                uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_displacement = branch_target_abs;
             end else if (i_opcode_jcc_short || i_opcode_jcc_near) begin
                 uop_next.uop_opcode = `UOP_BRANCH;
                 uop_next.uop_has_disp = 1'b1;
-                uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_displacement = branch_target_abs;
             end
 
             // String instructions: MOVS, CMPS, SCAS, LODS, STOS, INS, OUTS
@@ -783,12 +941,16 @@ module dec_to_uop (
                 uop_next.uop_mem_access = 1'b1;
                 uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
                 uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_agu_base = i_dec_base_reg_is_present;
             end else if (i_opcode_lidt) begin
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_LIDT};
                 uop_next.uop_mem_access = 1'b1;
                 uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
                 uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_agu_base = i_dec_base_reg_is_present;
             end else if (i_opcode_sgdt) begin
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_SGDT};
@@ -796,6 +958,8 @@ module dec_to_uop (
                 uop_next.uop_is_store = 1'b1;
                 uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
                 uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_agu_base = i_dec_base_reg_is_present;
             end else if (i_opcode_sidt) begin
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_SIDT};
@@ -803,9 +967,20 @@ module dec_to_uop (
                 uop_next.uop_is_store = 1'b1;
                 uop_next.uop_has_disp = (i_dec_modrm_mod != 2'b11);
                 uop_next.uop_displacement = i_dec_displacement;
+                uop_next.uop_src1_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+                uop_next.uop_agu_base = i_dec_base_reg_is_present;
             end else if (i_opcode_lmsw || i_opcode_mov_cr_from_reg) begin
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {24'h0, i_opcode_lmsw ? `MISC_SUB_LMSW : `MISC_SUB_MOV_CR};
+                // MOV CRn,r32: eee selects CRn; r/m (base) is the GPR source.
+                // LMSW always targets CR0; source is r/m.
+                uop_next.uop_dest_reg = i_opcode_lmsw ? 3'd0 : i_eee;
+                uop_next.uop_src2_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
+            end else if (i_opcode_mov_reg_from_cr) begin
+                // MOV r32,CRn — SeaBIOS PE entry reads CR0 into ECX.
+                uop_next.uop_opcode = `UOP_MISC;
+                uop_next.uop_immediate = {24'h0, `MISC_SUB_MOV_FROM_CR};
+                uop_next.uop_dest_reg = i_dec_base_reg_is_present ? i_dec_base_reg_index : 3'b0;
             end else if (i_opcode_clts) begin
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_CLTS};
@@ -868,21 +1043,35 @@ module dec_to_uop (
             end else if (i_opcode_pop_sreg_2 || i_opcode_pop_sreg_3) begin
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {13'h0, i_dec_target_sreg_index, `MISC_SUB_POP_SEG};
-            end else if (i_opcode_str || i_opcode_sldt || i_opcode_mov_reg_from_cr ||
+            end else if (i_opcode_str || i_opcode_sldt ||
                          i_opcode_mov_dr_from_reg || i_opcode_mov_reg_from_dr ||
                          i_opcode_mov_tr_from_reg || i_opcode_mov_reg_from_tr) begin
-                // Partially wired control/debug/test register ops — #UD until complete
+                // Partially wired debug/test register ops — #UD until complete
                 uop_next.uop_opcode = `UOP_MISC;
                 uop_next.uop_immediate = {24'h0, `MISC_SUB_UD};
             end
 
-            // I/O instructions (IN, OUT)
+            // I/O instructions (IN, OUT).
+            // immediate[7:0]  = MISC_SUB_*; immediate[23:8] = port (imm8 zero-ext
+            // or DX placeholder); immediate[31] = 1 → port is DX (src1).
             else if (i_opcode_in_fixed || i_opcode_in_var) begin
                 uop_next.uop_opcode = `UOP_MISC;
-                uop_next.uop_immediate = {24'h0, `MISC_SUB_IN};
+                if (i_opcode_in_fixed)
+                    uop_next.uop_immediate = {8'h0, 8'h0, i_dec_immediate[7: 0], `MISC_SUB_IN};
+                else begin
+                    uop_next.uop_immediate = {8'h80, 16'h0, `MISC_SUB_IN};
+                    uop_next.uop_src1_reg  = 3'd2; // EDX holds DX port
+                end
+                uop_next.uop_dest_reg = 3'd0; // AL/AX/EAX
             end else if (i_opcode_out_fixed || i_opcode_out_var) begin
                 uop_next.uop_opcode = `UOP_MISC;
-                uop_next.uop_immediate = {24'h0, `MISC_SUB_OUT};
+                if (i_opcode_out_fixed)
+                    uop_next.uop_immediate = {8'h0, 8'h0, i_dec_immediate[7: 0], `MISC_SUB_OUT};
+                else begin
+                    uop_next.uop_immediate = {8'h80, 16'h0, `MISC_SUB_OUT};
+                    uop_next.uop_src1_reg  = 3'd2; // EDX holds DX port
+                end
+                uop_next.uop_src2_reg = 3'd0; // AL/AX/EAX data
             end
 
             // Explicit undefined opcodes

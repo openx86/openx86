@@ -28,17 +28,19 @@ module rf_x86_seg_cs (
     input  logic         rst_n
 );
 
+// PC-compatible reset: CS=F000 so real-mode base=F0000 with EIP=FFF0 → PA=FFFF0
 always_ff @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
-        o_selector <= 16'b0;
+        o_selector <= 16'hF000;
     end else if (i_write_enable) begin
         o_selector <= i_write_selector;
     end
 end
 
+// Hidden cache matches real-mode CS=F000 (base=F0000, limit=FFFF, code AR=9B)
 always_ff @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
-        o_descriptor <= 64'b0;
+        o_descriptor <= 64'h0000_FFFF_0000_9B0F;
     end else if (i_write_enable) begin
         o_descriptor <= i_write_descriptor;
     end

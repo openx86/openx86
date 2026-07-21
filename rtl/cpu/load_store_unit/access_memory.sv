@@ -31,7 +31,6 @@ module access_memory (
     output logic [31: 0] o_rdata,
     output logic          o_done,
     output logic          o_busy,
-
     // =========================
     // downstream memory port
     // =========================
@@ -41,7 +40,6 @@ module access_memory (
     output logic [31: 0] o_mem_wdata,
     input  logic [31: 0] i_mem_rdata,
     input  logic          i_mem_ready,
-
     // =========================
     // clock and reset
     // =========================
@@ -49,21 +47,17 @@ module access_memory (
     input  logic          rst_n
 );
 
-    // ============================================================
-    // access memory state machine
-    // ============================================================
     typedef enum logic [1: 0] {
         S_IDLE,
-        S_WAIT
+        S_WAIT,
+        S_COOLDOWN
     } am_state_e;
 
     am_state_e state;
 
-    assign o_busy = (state == S_WAIT) || ((state == S_IDLE) && i_start);
+    assign o_busy = (state == S_WAIT) || (state == S_COOLDOWN) ||
+                    ((state == S_IDLE) && i_start);
 
-    // ============================================================
-    // sequential logic: keep MEM submodule as independent synthesizable state machine
-    // ============================================================
     always_ff @(posedge clk or negedge rst_n) begin : ff_access_memory
         if (~rst_n) begin
             state        <= S_IDLE;
@@ -92,8 +86,14 @@ module access_memory (
                             o_rdata <= i_mem_rdata;
                         end
                         o_done <= 1'b1;
-                        state  <= S_IDLE;
+                        // Require start to fall before the next accept so a
+                        // level-held master cannot immediately re-fire.
+                        state  <= S_COOLDOWN;
                     end
+                end
+                S_COOLDOWN: begin
+                    if (~i_start)
+                        state <= S_IDLE;
                 end
                 default: begin
                     state <= S_IDLE;

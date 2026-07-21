@@ -94,8 +94,10 @@ module openx86_soc_top #(
     // VGA memory interface
     // ============================================================
     logic        vga_mem_en_w;
+    logic        vga_mem_en_r;
     logic [19: 0] vga_mem_addr;
     logic [ 7: 0]  vga_mem_data_w;
+    logic [ 7: 0]  vga_mem_data_r;
 
     // ============================================================
     // VGA I/O interface
@@ -106,8 +108,10 @@ module openx86_soc_top #(
     logic [ 7: 0]  vga_io_data_w;
     logic [ 7: 0]  vga_io_data_r;
 
-    logic [15: 0] bios_addr;     // 系统 BIOS 窗口内字偏移→字节
+    logic [16: 0] bios_addr;     // E0000–FFFFF 内字节偏移
     logic [31: 0] bios_rdata;
+    logic         bios_we;
+    logic [31: 0] bios_wdata;
     logic [16: 0] ext_bios_addr; // 扩展 ROM 窗口地址
     logic [31: 0] ext_bios_rdata;
 
@@ -235,8 +239,10 @@ module openx86_soc_top #(
         .o_bus_data_read    (bus_rdata),
         .i_bus_data_write   (bus_wdata),
         .o_vga_mem_en_w     (vga_mem_en_w),
+        .o_vga_mem_en_r     (vga_mem_en_r),
         .o_vga_mem_addr     (vga_mem_addr),
         .o_vga_mem_data_w   (vga_mem_data_w),
+        .i_vga_mem_data_r   (vga_mem_data_r),
         .o_vga_io_en_w      (vga_io_en_w),
         .o_vga_io_en_r      (vga_io_en_r),
         .o_vga_io_addr      (vga_io_addr),
@@ -244,6 +250,8 @@ module openx86_soc_top #(
         .i_vga_io_data_r    (vga_io_data_r),
         .o_bios_addr        (bios_addr),
         .i_bios_rdata       (bios_rdata),
+        .o_bios_we          (bios_we),
+        .o_bios_wdata       (bios_wdata),
         .o_ext_bios_addr    (ext_bios_addr),
         .i_ext_bios_rdata   (ext_bios_rdata),
         .o_sdram_en         (o_sdram_en),
@@ -335,8 +343,10 @@ module openx86_soc_top #(
         .io_data_w    (vga_io_data_w),
         .io_data_r    (vga_io_data_r),
         .mem_en_w     (vga_mem_en_w),
+        .mem_en_r     (vga_mem_en_r),
         .mem_addr     (vga_mem_addr),
         .mem_data_w   (vga_mem_data_w),
+        .mem_data_r   (vga_mem_data_r),
         .vga_hsync    (o_vga_hsync),
         .vga_vsync    (o_vga_vsync),
         .vga_r        (o_vga_r),
@@ -346,15 +356,16 @@ module openx86_soc_top #(
         .rst_n        (rst_n)
     );
 
-    // 系统 BIOS 0xF0000–0xFFFFF + 扩展 ROM 0xC0000–0xDFFFF → 后端 EEPROM（镜像：128KB 扩展 + 64KB 系统）
-    // 使用 24LC32（4KiB）做后端：地址在 192KiB 线性镜像上取模映射到 4KiB
+    // 系统 BIOS 0xE0000–0xFFFFF → 128KiB 线性 ROM（复位向量在偏移 0x1FFF0）
     chip_pc_bios_eeprom u_bios_24lc32 (
-        .clk               (clk),
-        .rst_n             (rst_n),
+        .clk                 (clk),
+        .rst_n               (rst_n),
         .i_sys_bios_byte_off (bios_addr),
         .i_ext_bios_byte_off (ext_bios_addr),
         .o_sys_bios_rdata    (bios_rdata),
-        .o_ext_bios_rdata    (ext_bios_rdata)
+        .o_ext_bios_rdata    (ext_bios_rdata),
+        .i_sys_bios_we       (bios_we),
+        .i_sys_bios_wdata    (bios_wdata)
     );
 
 endmodule

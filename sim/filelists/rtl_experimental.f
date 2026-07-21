@@ -15,6 +15,7 @@ rtl/chipset/chip_i8042_ps2.sv
 rtl/chipset/chip_mc146818_rtc.sv
 rtl/chipset/chip_ns16550_com.sv
 rtl/chipset/chip_pc_bios_eeprom.sv
+rtl/chipset/chip_i440fx_pci_stub.sv
 rtl/common/dual_port_rom.sv
 rtl/common/edge_detect.sv
 rtl/common/fifo.sv

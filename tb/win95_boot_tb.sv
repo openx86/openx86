@@ -107,7 +107,8 @@ module win95_boot_tb;
     endtask
 
     task automatic tb_apply_default_pc_bootstub();
-        int unsigned base = 16'h0FF0;
+        // Reset vector at F000:FFF0 → ROM offset 0xFFF0
+        int unsigned base = 17'h1FFF0;
         dut.u_bios_24lc32.mem[base+0]  = 8'h66;
         dut.u_bios_24lc32.mem[base+1]  = 8'hB8;
         dut.u_bios_24lc32.mem[base+2]  = 8'h34;
@@ -130,7 +131,7 @@ module win95_boot_tb;
         $readmemh("rtl/device/vga/vga_font_8x16.hex", dut.u_vga.font_rom_inst.font_rom_inst.rom);
         begin
             automatic string p;
-            for (int i = 0; i < 4096; i++)
+            for (int i = 0; i < 131072; i++)
                 dut.u_bios_24lc32.mem[i] = 8'hFF;
             if ($value$plusargs("SEABIOS_BIN=%s", p))
                 tb_load_bin_to_bios(p);

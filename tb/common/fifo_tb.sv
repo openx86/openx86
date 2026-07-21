@@ -41,6 +41,7 @@ module fifo_tb;
     logic [ 4: 0]        o_count;
     logic                o_full;
     logic                o_empty;
+    logic                i_clear;
 
     // ============================================================
     // DUT instantiation
@@ -60,6 +61,7 @@ module fifo_tb;
         .o_count       ( o_count ),
         .o_full        ( o_full ),
         .o_empty       ( o_empty ),
+        .i_clear       ( i_clear ),
         .clk           ( clk ),
         .rst_n         ( rst_n )
     );
@@ -85,6 +87,7 @@ module fifo_tb;
         i_push_bytes = 5'd0;
         i_pop_valid  = 1'b0;
         i_pop_bytes  = 5'd0;
+        i_clear      = 1'b0;
 
         tick();
         rst_n = 1'b1;

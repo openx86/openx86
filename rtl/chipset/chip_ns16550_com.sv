@@ -87,6 +87,10 @@ module chip_ns16550_com (
     assign dlab = lcr[7];
     assign wr   = !i_cs_n && !i_wr_n;
     assign rd   = !i_cs_n && !i_rd_n;
+    // Bus may hold WR# for multiple clocks; treat writes as one-cycle edges.
+    logic         wr_r;
+    logic         wr_posedge;
+    assign wr_posedge = wr & ~wr_r;
 
     // ============================================================
     // transmit status
@@ -164,7 +168,7 @@ module chip_ns16550_com (
             rbr_valid <= 1'b0;
             ier       <= 8'h0;
             fcr       <= 8'h0;
-            lcr       <= 8'h00;
+            lcr       <= 8'h03;
             mcr       <= 8'h0;
             scr       <= 8'h0;
             dll       <= 8'h01;
@@ -176,11 +180,12 @@ module chip_ns16550_com (
             thre_irq_pending <= 1'b1;
             thr_shadow       <= 8'h0;
             thr_write_pulse  <= 1'b0;
-
+            wr_r             <= 1'b0;
             msr_status_prev <= 4'b0000;
             msr_delta       <= 4'b0000;
         end else begin
             thr_write_pulse <= 1'b0;
+            wr_r            <= wr;
             if (tx_drain_pending) begin
                 tx_drain_pending <= 1'b0;
                 thr_empty        <= 1'b1;
@@ -202,7 +207,7 @@ module chip_ns16550_com (
                 rbr       <= i_rx_data;
                 rbr_valid <= 1'b1;
             end
-            if (wr) begin
+            if (wr_posedge) begin
                 unique case (off)
                     3'd0: begin
                         if (dlab)

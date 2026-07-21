@@ -66,13 +66,6 @@ module bus_interface_unit (
 );
 
     // ============================================================
-    // three master ports share same read data bus (direct broadcast)
-    // ============================================================
-    assign o_mmu_data_read   = i_bus_data_read;
-    assign o_code_data_read  = i_bus_data_read;
-    assign o_data_data_read  = i_bus_data_read;
-
-    // ============================================================
     // BIU arbitration state machine
     // ============================================================
     typedef enum logic [ 2: 0] {
@@ -83,6 +76,17 @@ module bus_interface_unit (
     } biu_state_e;
 
     biu_state_e state;
+    logic       biu_hold_r;
+    // Registered ready is one cycle after i_bus_ready, when o_bus_valid is
+    // already low. Latch rdata on the bus-ready beat so UART/chipset reads
+    // (combo 0xFF when deselected) are not sampled as idle defaults.
+    logic [31: 0] mmu_rdata_lat_r;
+    logic [31: 0] code_rdata_lat_r;
+    logic [31: 0] data_rdata_lat_r;
+
+    assign o_mmu_data_read  = mmu_rdata_lat_r;
+    assign o_code_data_read = code_rdata_lat_r;
+    assign o_data_data_read = data_rdata_lat_r;
 
     // ============================================================
     // fixed priority arbitration with single-transaction handshake
@@ -90,6 +94,7 @@ module bus_interface_unit (
     always_ff @(posedge clk or negedge rst_n) begin : ff_biu_arbiter
     if (~rst_n) begin  // 异步复位：状态空闲，总线与各 ready 无效
         state <= S_IDLE;
+        biu_hold_r <= 1'b0;
         o_bus_valid <= 1'b0;
         o_bus_write_enable <= 1'b0;
         o_bus_io_access <= 1'b0;
@@ -98,56 +103,71 @@ module bus_interface_unit (
         o_mmu_ready <= 1'b0;
         o_code_ready <= 1'b0;
         o_data_ready <= 1'b0;
+        mmu_rdata_lat_r <= 32'h0;
+        code_rdata_lat_r <= 32'h0;
+        data_rdata_lat_r <= 32'h0;
     end else begin
         // 默认：本周期不完成各子事务（由状态分支拉高对应 ready）
         o_mmu_ready <= 1'b0;
         o_code_ready <= 1'b0;
         o_data_ready <= 1'b0;
+        biu_hold_r <= 1'b0;
 
         unique case (state)
             S_IDLE: begin
                 o_bus_valid <= 1'b0;
-                if (i_mmu_valid) begin  // 最高优先：页表/MMU
-                    state               <= S_MMU;
-                    o_bus_valid         <= 1'b1;
-                    o_bus_write_enable  <= 1'b0;
-                    o_bus_io_access     <= 1'b0;
-                    o_bus_address       <= i_mmu_address;
-                    o_bus_data_write    <= 32'h0;
-                end else if (i_code_valid) begin  // 次之：取指
-                    state               <= S_CODE;
-                    o_bus_valid         <= 1'b1;
-                    o_bus_write_enable  <= 1'b0;
-                    o_bus_io_access     <= 1'b0;
-                    o_bus_address       <= i_code_address;
-                    o_bus_data_write    <= 32'h0;
-                end else if (i_data_valid) begin  // 最后：数据访存
-                    state               <= S_DATA;
-                    o_bus_valid         <= 1'b1;
-                    o_bus_write_enable  <= i_data_write_enable;
-                    o_bus_io_access     <= i_data_io_access;
-                    o_bus_address       <= i_data_address;
-                    o_bus_data_write    <= i_data_data_write;
+                // One-cycle hold after a completed beat prevents the master from
+                // immediately re-issuing with a stale address on the same edge
+                // the previous transaction completes.
+                if (~biu_hold_r) begin
+                    if (i_mmu_valid) begin  // 最高优先：页表/MMU
+                        state               <= S_MMU;
+                        o_bus_valid         <= 1'b1;
+                        o_bus_write_enable  <= 1'b0;
+                        o_bus_io_access     <= 1'b0;
+                        o_bus_address       <= i_mmu_address;
+                        o_bus_data_write    <= 32'h0;
+                    end else if (i_code_valid) begin  // 次之：取指
+                        state               <= S_CODE;
+                        o_bus_valid         <= 1'b1;
+                        o_bus_write_enable  <= 1'b0;
+                        o_bus_io_access     <= 1'b0;
+                        o_bus_address       <= i_code_address;
+                        o_bus_data_write    <= 32'h0;
+                    end else if (i_data_valid) begin  // 最后：数据访存
+                        state               <= S_DATA;
+                        o_bus_valid         <= 1'b1;
+                        o_bus_write_enable  <= i_data_write_enable;
+                        o_bus_io_access     <= i_data_io_access;
+                        o_bus_address       <= i_data_address;
+                        o_bus_data_write    <= i_data_data_write;
+                    end
                 end
             end
             S_MMU: begin
                 if (i_bus_ready) begin  // 总线完成：应答 MMU
+                    mmu_rdata_lat_r <= i_bus_data_read;
                     o_mmu_ready  <= 1'b1;
                     o_bus_valid  <= 1'b0;
+                    biu_hold_r   <= 1'b1;
                     state        <= S_IDLE;
                 end
             end
             S_CODE: begin
                 if (i_bus_ready) begin  // 总线完成：应答取指
+                    code_rdata_lat_r <= i_bus_data_read;
                     o_code_ready <= 1'b1;
                     o_bus_valid  <= 1'b0;
+                    biu_hold_r   <= 1'b1;
                     state        <= S_IDLE;
                 end
             end
             S_DATA: begin
                 if (i_bus_ready) begin  // 总线完成：应答数据端口
+                    data_rdata_lat_r <= i_bus_data_read;
                     o_data_ready <= 1'b1;
                     o_bus_valid  <= 1'b0;
+                    biu_hold_r   <= 1'b1;
                     state        <= S_IDLE;
                 end
             end

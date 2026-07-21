@@ -26,7 +26,6 @@ module i486_cache_unit (
     output logic         o_code_ready,
     input  logic [31: 0] i_code_address,
     output logic [31: 0] o_code_data,
-
     // =========================
     // CPU-side DATA port
     // =========================
@@ -37,7 +36,6 @@ module i486_cache_unit (
     input  logic [31: 0] i_data_address,
     input  logic [31: 0] i_data_wdata,
     output logic [31: 0] o_data_rdata,
-
     // =========================
     // Downstream BIU (single beat)
     // =========================
@@ -49,45 +47,45 @@ module i486_cache_unit (
     output logic [31: 0] o_mem_address,
     output logic [31: 0] o_mem_wdata,
     input  logic [31: 0] i_mem_rdata,
-
     // =========================
     // Cache maintenance
     // =========================
     input  logic         i_invalidate_all,
     input  logic         i_wbinvd,
-
     input  logic         clk,
     input  logic         rst_n
 );
 
-    localparam int LP_LINE_BYTES = 32;
-    localparam int LP_NUM_SETS   = 64;
-    localparam int LP_NUM_WAYS   = 4;
-    localparam int LP_INDEX_BITS = 6;
+    localparam int LP_LINE_BYTES  = 32;
+    localparam int LP_NUM_SETS    = 64;
+    localparam int LP_NUM_WAYS    = 4;
+    localparam int LP_INDEX_BITS  = 6;
     localparam int LP_OFFSET_BITS = 5;
-    localparam int LP_TAG_BITS   = 32 - LP_INDEX_BITS - LP_OFFSET_BITS;
+    localparam int LP_TAG_BITS    = 32 - LP_INDEX_BITS - LP_OFFSET_BITS;
 
     logic [LP_NUM_SETS - 1: 0][LP_NUM_WAYS - 1: 0][LP_TAG_BITS - 1: 0] tag_mem;
     logic [LP_NUM_SETS - 1: 0][LP_NUM_WAYS - 1: 0]                      valid_mem;
     logic [LP_NUM_SETS - 1: 0][LP_NUM_WAYS - 1: 0][LP_LINE_BYTES * 8 - 1: 0] data_mem;
-    logic [LP_INDEX_BITS - 1: 0] lru_ptr [LP_NUM_SETS - 1: 0];
+    logic [1: 0] lru_ptr [LP_NUM_SETS - 1: 0];
 
-    logic [31: 0] req_addr;
-    logic         req_write;
-    logic         req_code;
-    logic         req_valid;
-    logic [31: 0] req_wdata;
-    logic [LP_INDEX_BITS - 1: 0]    req_index;
-    logic [LP_OFFSET_BITS - 1: 0]   req_offset;
-    logic [LP_TAG_BITS - 1: 0]      req_tag;
-    logic [LP_NUM_WAYS - 1: 0]      hit_way_onehot;
-    logic                           cache_hit;
-    logic [ 1: 0]                   hit_way;
-    logic [31: 0]                   hit_data;
+    logic                           code_hit;
+    logic [ 1: 0]                   code_hit_way;
+    logic [31: 0]                   code_hit_data;
+    logic                           data_hit;
+    logic [ 1: 0]                   data_hit_way;
+    logic [31: 0]                   data_hit_data;
+    logic [LP_INDEX_BITS - 1: 0]    code_index;
+    logic [LP_OFFSET_BITS - 1: 0]   code_offset;
+    logic [LP_TAG_BITS - 1: 0]      code_tag;
+    logic [LP_INDEX_BITS - 1: 0]    data_index;
+    logic [LP_OFFSET_BITS - 1: 0]   data_offset;
+    logic [LP_TAG_BITS - 1: 0]      data_tag;
 
-    typedef enum logic [ 1: 0] {
+    typedef enum logic [ 2: 0] {
         S_IDLE,
-        S_FILL,
+        S_FILL_ISSUE,
+        S_FILL_WAIT,
+        S_FILL_GAP,
         S_RESP
     } cache_state_e;
 
@@ -95,11 +93,20 @@ module i486_cache_unit (
     logic [ 1: 0] fill_way;
     logic [ 4: 0] fill_beat;
     logic [31: 0] fill_base_addr;
+    logic [LP_INDEX_BITS - 1: 0] fill_index;
+    logic [LP_TAG_BITS - 1: 0]   fill_tag;
     logic         pending_code;
     logic         pending_data;
     logic         pending_write;
     logic [31: 0] pending_addr;
     logic [31: 0] pending_wdata;
+    logic         code_hit_accept_r;
+    logic [ 1: 0] fill_gap_r;
+    logic [31: 0] fill_resp_data;
+    logic         fill_resp_active;
+    logic [31: 0] io_rdata_r;
+    logic         io_rdata_valid_r;
+    logic         io_req_accept_r;
 
     function automatic logic [31: 0] f_extract_word (
         input logic [LP_LINE_BYTES * 8 - 1: 0] line_data,
@@ -111,52 +118,73 @@ module i486_cache_unit (
     endfunction
 
     always_comb begin
-        req_valid = i_code_valid | i_data_valid;
-        req_code  = i_code_valid;
-        req_write = i_data_valid & i_data_write_enable;
-        req_addr  = i_code_valid ? i_code_address : i_data_address;
-        req_wdata = i_data_wdata;
-        req_index = req_addr[LP_INDEX_BITS + LP_OFFSET_BITS - 1: LP_OFFSET_BITS];
-        req_offset = req_addr[LP_OFFSET_BITS - 1: 0];
-        req_tag   = req_addr[31: LP_INDEX_BITS + LP_OFFSET_BITS];
-
-        hit_way_onehot = 4'b0000;
-        cache_hit      = 1'b0;
-        hit_data       = 32'h0;
-        hit_way        = 2'b00;
+        code_index  = i_code_address[LP_INDEX_BITS + LP_OFFSET_BITS - 1: LP_OFFSET_BITS];
+        code_offset = i_code_address[LP_OFFSET_BITS - 1: 0];
+        code_tag    = i_code_address[31: LP_INDEX_BITS + LP_OFFSET_BITS];
+        data_index  = i_data_address[LP_INDEX_BITS + LP_OFFSET_BITS - 1: LP_OFFSET_BITS];
+        data_offset = i_data_address[LP_OFFSET_BITS - 1: 0];
+        data_tag    = i_data_address[31: LP_INDEX_BITS + LP_OFFSET_BITS];
+        code_hit      = 1'b0;
+        code_hit_way  = 2'b00;
+        code_hit_data = 32'h0;
         for (int w = 0; w < LP_NUM_WAYS; w++) begin
-            if (valid_mem[req_index][w] & (tag_mem[req_index][w] == req_tag)) begin
-                hit_way_onehot[w] = 1'b1;
-                cache_hit         = 1'b1;
-                hit_way           = w[1: 0];
-                hit_data          = f_extract_word(data_mem[req_index][w], req_offset);
+            if (valid_mem[code_index][w] & (tag_mem[code_index][w] == code_tag)) begin
+                code_hit      = 1'b1;
+                code_hit_way  = w[1: 0];
+                code_hit_data = f_extract_word(data_mem[code_index][w], code_offset);
+            end
+        end
+        data_hit      = 1'b0;
+        data_hit_way  = 2'b00;
+        data_hit_data = 32'h0;
+        for (int w = 0; w < LP_NUM_WAYS; w++) begin
+            if (valid_mem[data_index][w] & (tag_mem[data_index][w] == data_tag)) begin
+                data_hit      = 1'b1;
+                data_hit_way  = w[1: 0];
+                data_hit_data = f_extract_word(data_mem[data_index][w], data_offset);
             end
         end
     end
 
-    assign o_code_data  = hit_data;
-    assign o_data_rdata = hit_data;
+    // Post-fill response must use pending_addr — live IFU/EXU addresses can change.
+    // IO responses forward BIU rdata (never the hit mux, which would be 0).
+    assign fill_resp_active = (state == S_RESP) & ~o_mem_valid;
+    assign fill_resp_data   = f_extract_word(
+        data_mem[fill_index][fill_way],
+        pending_addr[LP_OFFSET_BITS - 1: 0]
+    );
+    assign o_code_data  = (fill_resp_active & pending_code) ? fill_resp_data : code_hit_data;
+    assign o_data_rdata = (state == S_RESP && o_mem_valid) ? i_mem_rdata :
+                          io_rdata_valid_r ? io_rdata_r :
+                          (fill_resp_active & pending_data) ? fill_resp_data : data_hit_data;
 
     always_ff @(posedge clk or negedge rst_n) begin : ff_cache_ctrl
         integer s, w;
         if (~rst_n) begin
-            state          <= S_IDLE;
-            o_code_ready   <= 1'b0;
-            o_data_ready   <= 1'b0;
-            o_mem_valid    <= 1'b0;
-            o_mem_write    <= 1'b0;
-            o_mem_io       <= 1'b0;
-            o_mem_code     <= 1'b0;
-            o_mem_address  <= 32'h0;
-            o_mem_wdata    <= 32'h0;
-            fill_beat      <= 5'd0;
-            fill_way       <= 2'b00;
-            fill_base_addr <= 32'h0;
-            pending_code   <= 1'b0;
-            pending_data   <= 1'b0;
-            pending_write  <= 1'b0;
-            pending_addr   <= 32'h0;
-            pending_wdata  <= 32'h0;
+            state             <= S_IDLE;
+            o_code_ready      <= 1'b0;
+            o_data_ready      <= 1'b0;
+            o_mem_valid       <= 1'b0;
+            o_mem_write       <= 1'b0;
+            o_mem_io          <= 1'b0;
+            o_mem_code        <= 1'b0;
+            o_mem_address     <= 32'h0;
+            o_mem_wdata       <= 32'h0;
+            fill_beat         <= 5'd0;
+            fill_way          <= 2'b00;
+            fill_base_addr    <= 32'h0;
+            fill_index        <= {LP_INDEX_BITS{1'b0}};
+            fill_tag          <= {LP_TAG_BITS{1'b0}};
+            pending_code      <= 1'b0;
+            pending_data      <= 1'b0;
+            pending_write     <= 1'b0;
+            pending_addr      <= 32'h0;
+            pending_wdata     <= 32'h0;
+            code_hit_accept_r <= 1'b0;
+            fill_gap_r        <= 2'd0;
+            io_rdata_r        <= 32'h0;
+            io_rdata_valid_r  <= 1'b0;
+            io_req_accept_r   <= 1'b0;
             for (s = 0; s < LP_NUM_SETS; s = s + 1) begin
                 lru_ptr[s] <= 2'b00;
                 for (w = 0; w < LP_NUM_WAYS; w = w + 1) begin
@@ -167,7 +195,6 @@ module i486_cache_unit (
         end else begin
             o_code_ready <= 1'b0;
             o_data_ready <= 1'b0;
-
             if (i_invalidate_all | i_wbinvd) begin
                 for (s = 0; s < LP_NUM_SETS; s = s + 1) begin
                     for (w = 0; w < LP_NUM_WAYS; w = w + 1) begin
@@ -175,71 +202,121 @@ module i486_cache_unit (
                     end
                 end
             end
-
+            if (~i_code_valid)
+                code_hit_accept_r <= 1'b0;
+            // New IO request only after master drops valid (level-held start).
+            if (~i_data_valid)
+                io_req_accept_r <= 1'b0;
+            if (io_rdata_valid_r & o_data_ready)
+                io_rdata_valid_r <= 1'b0;
             unique case (state)
                 S_IDLE: begin
                     o_mem_valid <= 1'b0;
-                    if (i_code_valid & cache_hit) begin
-                        o_code_ready <= 1'b1;
-                        lru_ptr[req_index] <= hit_way;
-                    end else if (i_data_valid & ~i_data_io_access & cache_hit) begin
-                        o_data_ready <= 1'b1;
-                        lru_ptr[req_index] <= hit_way;
+                    // Independent code/data hit checks: after code_hit_accept_r,
+                    // fall through must NOT reuse code hit_data for a data load.
+                    if (i_code_valid & code_hit & ~code_hit_accept_r) begin
+                        o_code_ready        <= 1'b1;
+                        code_hit_accept_r   <= 1'b1;
+                        lru_ptr[code_index] <= code_hit_way;
+                    end else if (i_data_valid & ~i_data_io_access & data_hit) begin
+                        o_data_ready        <= 1'b1;
+                        lru_ptr[data_index] <= data_hit_way;
                         if (i_data_write_enable) begin
-                            data_mem[req_index][hit_way][req_offset[4: 2] * 32 +: 32] <= i_data_wdata;
+                            data_mem[data_index][data_hit_way][data_offset[4: 2] * 32 +: 32] <= i_data_wdata;
                         end
-                    end else if (req_valid & ~i_data_io_access & ~cache_hit) begin
-                        fill_way       <= lru_ptr[req_index];
+                    end else if (i_data_valid & i_data_io_access & ~io_req_accept_r) begin
+                        o_mem_valid     <= 1'b1;
+                        o_mem_write     <= i_data_write_enable;
+                        o_mem_io        <= 1'b1;
+                        o_mem_code      <= 1'b0;
+                        o_mem_address   <= i_data_address;
+                        o_mem_wdata     <= i_data_wdata;
+                        io_req_accept_r <= 1'b1;
+                        state           <= S_RESP;
+                    end else if (i_code_valid & ~code_hit) begin
+                        fill_way       <= lru_ptr[code_index];
                         fill_beat      <= 5'd0;
-                        fill_base_addr <= {req_addr[31: LP_OFFSET_BITS], {LP_OFFSET_BITS{1'b0}}};
-                        pending_code   <= i_code_valid;
-                        pending_data   <= i_data_valid;
-                        pending_write  <= req_write;
-                        pending_addr   <= req_addr;
-                        pending_wdata  <= req_wdata;
+                        fill_base_addr <= {i_code_address[31: LP_OFFSET_BITS], {LP_OFFSET_BITS{1'b0}}};
+                        fill_index     <= code_index;
+                        fill_tag       <= code_tag;
+                        pending_code   <= 1'b1;
+                        pending_data   <= 1'b0;
+                        pending_write  <= 1'b0;
+                        pending_addr   <= i_code_address;
+                        pending_wdata  <= 32'h0;
                         o_mem_valid    <= 1'b1;
                         o_mem_write    <= 1'b0;
                         o_mem_io       <= 1'b0;
-                        o_mem_code     <= i_code_valid;
-                        o_mem_address  <= {req_addr[31: LP_OFFSET_BITS], {LP_OFFSET_BITS{1'b0}}};
-                        state          <= S_FILL;
-                    end else if (i_data_valid & i_data_io_access) begin
-                        o_mem_valid   <= 1'b1;
-                        o_mem_write   <= i_data_write_enable;
-                        o_mem_io      <= 1'b1;
-                        o_mem_code    <= 1'b0;
-                        o_mem_address <= i_data_address;
-                        o_mem_wdata   <= i_data_wdata;
-                        state         <= S_RESP;
+                        o_mem_code     <= 1'b1;
+                        o_mem_address  <= {i_code_address[31: LP_OFFSET_BITS], {LP_OFFSET_BITS{1'b0}}};
+                        state          <= S_FILL_ISSUE;
+                    end else if (i_data_valid & ~i_data_io_access & ~data_hit) begin
+                        fill_way       <= lru_ptr[data_index];
+                        fill_beat      <= 5'd0;
+                        fill_base_addr <= {i_data_address[31: LP_OFFSET_BITS], {LP_OFFSET_BITS{1'b0}}};
+                        fill_index     <= data_index;
+                        fill_tag       <= data_tag;
+                        pending_code   <= 1'b0;
+                        pending_data   <= 1'b1;
+                        pending_write  <= i_data_write_enable;
+                        pending_addr   <= i_data_address;
+                        pending_wdata  <= i_data_wdata;
+                        o_mem_valid    <= 1'b1;
+                        o_mem_write    <= 1'b0;
+                        o_mem_io       <= 1'b0;
+                        o_mem_code     <= 1'b0;
+                        o_mem_address  <= {i_data_address[31: LP_OFFSET_BITS], {LP_OFFSET_BITS{1'b0}}};
+                        state          <= S_FILL_ISSUE;
                     end
                 end
-                S_FILL: begin
+                S_FILL_ISSUE: begin
+                    // Pulse valid one cycle per beat, then wait with valid low.
+                    o_mem_valid <= 1'b0;
+                    state       <= S_FILL_WAIT;
+                end
+                S_FILL_WAIT: begin
                     if (i_mem_ready) begin
-                        data_mem[req_index][fill_way][fill_beat * 32 +: 32] <= i_mem_rdata;
-                        fill_beat <= fill_beat + 5'd1;
+                        data_mem[fill_index][fill_way][fill_beat * 32 +: 32] <= i_mem_rdata;
                         if (fill_beat == 5'd7) begin
-                            valid_mem[req_index][fill_way] <= 1'b1;
-                            tag_mem[req_index][fill_way]   <= req_tag;
-                            lru_ptr[req_index]             <= fill_way;
-                            o_mem_valid                    <= 1'b0;
-                            state                          <= S_RESP;
+                            valid_mem[fill_index][fill_way] <= 1'b1;
+                            tag_mem[fill_index][fill_way]   <= fill_tag;
+                            lru_ptr[fill_index]             <= fill_way;
+                            state                           <= S_RESP;
                         end else begin
+                            fill_beat     <= fill_beat + 5'd1;
                             o_mem_address <= fill_base_addr + ((fill_beat + 5'd1) << 2);
+                            fill_gap_r    <= 2'd0;
+                            state         <= S_FILL_GAP;
                         end
+                    end
+                end
+                S_FILL_GAP: begin
+                    fill_gap_r <= fill_gap_r + 2'd1;
+                    if (fill_gap_r == 2'd2) begin
+                        o_mem_valid <= 1'b1;
+                        state       <= S_FILL_ISSUE;
                     end
                 end
                 S_RESP: begin
-                    if (i_mem_ready) begin
+                    if (o_mem_valid) begin
+                        if (i_mem_ready) begin
+                            io_rdata_r       <= i_mem_rdata;
+                            io_rdata_valid_r <= 1'b1;
+                            o_data_ready     <= 1'b1;
+                            o_mem_valid      <= 1'b0;
+                            state            <= S_IDLE;
+                        end
+                    end else begin
                         if (pending_code) begin
-                            o_code_ready <= 1'b1;
+                            o_code_ready      <= 1'b1;
+                            code_hit_accept_r <= 1'b1;
                         end else begin
                             o_data_ready <= 1'b1;
                             if (pending_write) begin
-                                data_mem[req_index][fill_way][pending_addr[4: 2] * 32 +: 32] <= pending_wdata;
+                                data_mem[fill_index][fill_way][pending_addr[4: 2] * 32 +: 32] <= pending_wdata;
                             end
                         end
-                        o_mem_valid <= 1'b0;
-                        state       <= S_IDLE;
+                        state <= S_IDLE;
                     end
                 end
                 default: state <= S_IDLE;

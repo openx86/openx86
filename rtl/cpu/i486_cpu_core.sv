@@ -265,7 +265,8 @@ module i486_cpu_core (
     logic         wbinvd_cmd;
     logic         cr3_flush_pulse;
 
-    assign cpl = descriptor_cache[`sreg_index_CS][45:44];
+    // Internal descriptor layout (segment_descriptor_encode): DPL is [14:13]
+    assign cpl = descriptor_cache[`sreg_index_CS][14:13];
     assign FLAGS_write_enable = wrb_FLAGS_write_enable;
     assign FLAGS_write_data   = wrb_FLAGS_write_data;
     assign IP_write_enable    = wrb_IP_write_enable;
@@ -859,6 +860,7 @@ module i486_cpu_core (
         .i_sf                      (SF),
         .i_of                      (OF),
         .i_if_flag                 (IF),
+        .i_df                      (DF),
         .i_protected_mode          (PE),
         .i_segment_selector        (segment_selector),
         .i_segment_descriptor      (descriptor_cache),

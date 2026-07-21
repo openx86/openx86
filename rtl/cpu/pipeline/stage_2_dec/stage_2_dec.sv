@@ -27,7 +27,7 @@ module stage_2_dec (
     input  logic [15: 0][ 7: 0] i_ifu_instruction,
     input  logic                i_ifu_instruction_valid,
     input  logic                i_ifu_segment_fault,
-    input  logic [ 4: 0]        i_ifu_fifo_count,
+    input  logic [ 5: 0]        i_ifu_fifo_count,
     input  logic [31: 0]        i_ifu_eip,
     output logic                o_ifu_dec_ready,
     output logic                o_ifu_dec_fire,
@@ -40,6 +40,9 @@ module stage_2_dec (
     output logic                o_uop_stage2_valid,
     input  logic                i_uop_stage2_ready,
     input  logic                i_uop_flush,
+
+    // CS.D / default operand+address size (0=16-bit, 1=32-bit)
+    input  logic                i_default_size_32,
 
     // =========================
     // Decoded opcode outputs (to stage_3_uop)
@@ -617,6 +620,9 @@ module stage_2_dec (
     logic [ 2: 0]             operand_base_reg_index;
     logic                     operand_index_reg_valid;
     logic [ 2: 0]             operand_index_reg_index;
+    logic [ 2: 0]             operand_rm;
+    logic                     operand_field_gpr_valid;
+    logic [ 2: 0]             operand_field_gpr_index;
     logic [ 2: 0]             operand_seg_reg_index_addr;
     logic [ 2: 0]             operand_target_sreg_index;
     logic [ 1: 0]             operand_scale;
@@ -625,6 +631,9 @@ module stage_2_dec (
     logic [31: 0]             operand_imm_value;
     logic [ 3: 0]             operand_consume_byte_count;
     logic                     operand_decode_error;
+    logic                     operand_opcode_byte_1;
+    logic                     operand_opcode_byte_2;
+    logic                     operand_opcode_byte_3;
 
     // ============================================================
     // Internal control signals
@@ -650,9 +659,11 @@ module stage_2_dec (
     end
 
     // ============================================================
-    // Opcode byte count (fixed to 1 for now)
+    // Opcode byte count (1/2/3 from operand field classification)
     // ============================================================
-    assign opcode_byte_count = 4'd1;
+    assign opcode_byte_count = operand_opcode_byte_3 ? 4'd3 :
+                               operand_opcode_byte_2 ? 4'd2 :
+                               4'd1;
 
     // ============================================================
     // Total byte count calculation
@@ -664,7 +675,10 @@ module stage_2_dec (
     // ============================================================
     assign can_start_decode   = i_ifu_instruction_valid & ~stage1_valid_r & ~stage2_valid_r & ~stage3_valid_r;
     assign pipeline_stall      = ~i_uop_stage2_ready;
-    assign can_fire_to_uop     = stage3_valid_r & i_uop_stage2_ready & ~i_uop_flush;
+    // Fire only in READY so o_uop_stage2_valid is high in the same cycle (avoids
+    // IFU consume while dec_to_uop still sees stage2_valid=0 → NOP uop).
+    assign can_fire_to_uop     = (state_r == LP_STATE_READY) & stage3_valid_r &
+                                 i_uop_stage2_ready & ~i_uop_flush;
 
     // ============================================================
     // FSM next state logic
@@ -1034,11 +1048,18 @@ module stage_2_dec (
     // ============================================================
     assign o_dec_displacement          = operand_disp_value;
     assign o_dec_immediate             = operand_imm_value;
-    assign o_dec_base_reg_is_present   = operand_base_reg_valid;
-    assign o_dec_base_reg_index        = operand_base_reg_index;
+    // mod=11: r/m encodes a GPR; opcode forms (B8+r etc.) use field gpr.
+    assign o_dec_base_reg_is_present   = operand_base_reg_valid | (operand_mod == 2'b11) |
+                                         operand_field_gpr_valid;
+    assign o_dec_base_reg_index        = operand_field_gpr_valid ? operand_field_gpr_index :
+                                         (operand_mod == 2'b11) ? operand_rm
+                                                               : operand_base_reg_index;
     assign o_dec_index_reg_is_present  = operand_index_reg_valid;
     assign o_dec_index_reg_index       = operand_index_reg_index;
-    assign o_dec_segment_reg_index     = operand_seg_reg_index_addr;
+    // Segment override prefix (2E/36/...) wins over ModRM default DS/SS.
+    assign o_dec_segment_reg_index     = prefix_group_2_segment_override
+                                           ? prefix_segment_override_index
+                                           : operand_seg_reg_index_addr;
     assign o_dec_target_sreg_index     = operand_target_sreg_index;
     assign o_dec_sib_scale_factor      = operand_scale;
     assign o_dec_modrm_mod             = operand_mod;
@@ -1046,8 +1067,15 @@ module stage_2_dec (
     // ============================================================
     // Prefix module instantiation (bytes[0:3])
     // ============================================================
+    logic [ 3: 0][ 7: 0] prefix_instruction_bytes;
+    always_comb begin
+        for (int unsigned i = 0; i < 4; i++) begin
+            prefix_instruction_bytes[i] = i_ifu_instruction[4'(i)];
+        end
+    end
+
     stage_2_dec_x86_prefix u_prefix (
-        .i_instruction                (i_ifu_instruction[0]),
+        .i_instruction                (prefix_instruction_bytes),
         .o_group_1_lock_bus           (prefix_group_1_lock_bus),
         .o_group_1_repeat_not_equal   (prefix_group_1_repeat_not_equal),
         .o_group_1_repeat_equal       (prefix_group_1_repeat_equal),
@@ -1073,15 +1101,13 @@ module stage_2_dec (
     // Opcode module instantiation (bytes[prefix_count:prefix_count+3])
     // ============================================================
     logic [ 3: 0][ 7: 0] opcode_instruction_bytes;
+    // 4-byte window starting after prefixes (not a single zero-extended byte)
     always_comb begin
-        unique case (stage1_prefix_bytes_r)
-            4'd0: opcode_instruction_bytes = i_ifu_instruction[0];
-            4'd1: opcode_instruction_bytes = i_ifu_instruction[1];
-            4'd2: opcode_instruction_bytes = i_ifu_instruction[2];
-            4'd3: opcode_instruction_bytes = i_ifu_instruction[3];
-            4'd4: opcode_instruction_bytes = i_ifu_instruction[4];
-            default: opcode_instruction_bytes = i_ifu_instruction[0];
-        endcase
+        for (int unsigned i = 0; i < 4; i++) begin
+            // Live prefix count: stage1_prefix_bytes_r still holds the previous
+            // instruction during the DECODE_PREFIX cycle that samples opcode size.
+            opcode_instruction_bytes[i] = i_ifu_instruction[prefix_byte_count + 4'(i)];
+        end
     end
 
     /* verilator lint_off PINMISSING */
@@ -1458,35 +1484,29 @@ module stage_2_dec (
     );
 
     // ============================================================
-    // Operand module instantiation (bytes[prefix_count+opcode_count:prefix_count+opcode_count+7])
+    // Operand module instantiation (bytes[prefix_count ..] includes opcode)
+    // Field expects opcode at [0]; disp/imm are sliced after opcode+modrm+sib.
     // ============================================================
     logic [ 7: 0][ 7: 0] operand_instruction_bytes;
     logic [ 3: 0]        operand_byte_offset;
-    assign operand_byte_offset = stage2_prefix_bytes_r + stage2_opcode_bytes_r;
+    assign operand_byte_offset = stage2_prefix_bytes_r;
 
     always_comb begin
-        unique case (operand_byte_offset)
-            4'd0: operand_instruction_bytes = i_ifu_instruction[0];
-            4'd1: operand_instruction_bytes = i_ifu_instruction[1];
-            4'd2: operand_instruction_bytes = i_ifu_instruction[2];
-            4'd3: operand_instruction_bytes = i_ifu_instruction[3];
-            4'd4: operand_instruction_bytes = i_ifu_instruction[4];
-            4'd5: operand_instruction_bytes = i_ifu_instruction[5];
-            4'd6: operand_instruction_bytes = i_ifu_instruction[6];
-            4'd7: operand_instruction_bytes = i_ifu_instruction[7];
-            4'd8: operand_instruction_bytes = i_ifu_instruction[8];
-            default: operand_instruction_bytes = i_ifu_instruction[0];
-        endcase
+        for (int unsigned i = 0; i < 8; i++) begin
+            operand_instruction_bytes[i] = i_ifu_instruction[operand_byte_offset + 4'(i)];
+        end
     end
 
     /* verilator lint_off PINMISSING */
     /* verilator lint_off PINCONNECTEMPTY */
     stage_2_dec_x86_operand u_operand (
         .i_instruction_bytes         (operand_instruction_bytes),
-        .i_default_op_size           (3'b011),
+        // CS.D (and real-mode default 16): drives ModR/M 16/32 and operand size.
+        .i_default_op_size           ({2'b0, i_default_size_32}),
+        .i_opsz_override             (stage2_group_3_operand_size_r),
         .o_tttn                      (operand_tttn),
-        .o_gpr_reg_index_valid       (),
-        .o_gpr_reg_index             (),
+        .o_gpr_reg_index_valid       (operand_field_gpr_valid),
+        .o_gpr_reg_index             (operand_field_gpr_index),
         .o_seg_reg_index_valid       (),
         .o_seg_reg_index             (operand_target_sreg_index),
         .o_w_valid                   (),
@@ -1496,7 +1516,7 @@ module stage_2_dec (
         .o_eee                       (operand_eee),
         .o_modrm_present             (),
         .o_mod                       (operand_mod),
-        .o_rm                        (),
+        .o_rm                        (operand_rm),
         .o_imm_size_full             (),
         .o_imm_size_16b             (),
         .o_imm_size_8b              (),
@@ -1504,9 +1524,9 @@ module stage_2_dec (
         .o_disp_size_full            (),
         .o_disp_size_8b             (),
         .o_disp_present             (),
-        .o_opcode_byte_1            (),
-        .o_opcode_byte_2            (),
-        .o_opcode_byte_3            (),
+        .o_opcode_byte_1            (operand_opcode_byte_1),
+        .o_opcode_byte_2            (operand_opcode_byte_2),
+        .o_opcode_byte_3            (operand_opcode_byte_3),
         .o_seg_reg_index_addr        (operand_seg_reg_index_addr),
         .o_base_reg_valid            (operand_base_reg_valid),
         .o_base_reg_index           (operand_base_reg_index),
@@ -1727,6 +1747,7 @@ module stage_2_dec (
         .i_opcode_x86_SUB_reg_mem_to_reg                   (opcode_sub_reg_mem_to_reg),
         .i_opcode_x86_SUB_imm_to_reg_mem                   (opcode_sub_imm_to_reg_mem),
         .i_opcode_x86_SUB_imm_to_acc                       (opcode_sub_imm_to_acc),
+        .i_opcode_x86_TEST_reg_mem_and_reg                 (opcode_test_reg_mem),
         .i_opcode_x86_TEST_imm_and_reg_mem                 (opcode_test_imm_reg_mem),
         .i_opcode_x86_TEST_imm_and_acc                     (opcode_test_imm_acc),
         .i_opcode_x86_UD0_undefined_instruction            (opcode_ud0),

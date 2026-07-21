@@ -456,9 +456,11 @@ typedef struct packed {
     logic [ 3: 0] uop_tttn;          // Condition code for Jcc/SETcc
     logic [ 5: 0] uop_eee;           // X87 sub-opcode index (EXE_X87_*)
     logic [ 2: 0] uop_seg_index;     // Segment register index for mem ops
-    logic [ 1: 0] uop_sib_scale;     // SIB scale factor
+    logic [ 1: 0] uop_sib_scale;     // SIB scale factor (index <<= scale)
     logic        uop_has_imm;        // Has immediate operand
     logic        uop_has_disp;       // Has displacement operand
+    logic        uop_agu_base;       // src1 is AGU base (else no base term)
+    logic        uop_agu_index;      // src2 is AGU index (scaled by uop_sib_scale)
     logic        uop_mem_access;     // Memory access operation
     logic        uop_is_store;       // Store operation (1) vs load (0)
     logic        uop_rep;            // REP/REPE prefix present
@@ -536,6 +538,7 @@ typedef struct packed {
 `define MISC_SUB_SIDT     8'h13
 `define MISC_SUB_LMSW     8'h14
 `define MISC_SUB_MOV_CR   8'h15
+`define MISC_SUB_MOV_FROM_CR 8'h16
 `define MISC_SUB_IN       8'h20
 `define MISC_SUB_OUT      8'h21
 `define MISC_SUB_INT      8'h30

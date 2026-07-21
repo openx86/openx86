@@ -35,6 +35,7 @@ module seabios_post_tb;
     int           require_post;
     int           checkpoint;
     string        uart_buf;
+    int           thr_count;
     bit           has_seabios;
 
     // Hierarchical helpers:
@@ -87,11 +88,18 @@ module seabios_post_tb;
         n = $fread(dut.u_bios_24lc32.mem, fh);
         $fclose(fh);
         has_seabios = 1'b1;
-        $display("seabios_post_tb: SEABIOS_BIN loaded %0d bytes", n);
+        $display("seabios_post_tb: SEABIOS_BIN loaded %0d bytes into 128KiB ROM", n);
+        $display("seabios_post_tb: resetvec=%02h %02h %02h %02h %02h",
+                 dut.u_bios_24lc32.mem[17'h1FFF0],
+                 dut.u_bios_24lc32.mem[17'h1FFF1],
+                 dut.u_bios_24lc32.mem[17'h1FFF2],
+                 dut.u_bios_24lc32.mem[17'h1FFF3],
+                 dut.u_bios_24lc32.mem[17'h1FFF4]);
     endtask
 
     task automatic tb_apply_default_pc_bootstub();
-        int unsigned base = 16'h0FF0;
+        // Reset vector at F000:FFF0 → ROM offset 0x1FFF0
+        int unsigned base = 17'h1FFF0;
         dut.u_bios_24lc32.mem[base+0]  = 8'h66;
         dut.u_bios_24lc32.mem[base+1]  = 8'hB8;
         dut.u_bios_24lc32.mem[base+2]  = 8'h34;
@@ -115,7 +123,7 @@ module seabios_post_tb;
         has_seabios = 1'b0;
         begin
             automatic string p;
-            for (int i = 0; i < 4096; i++)
+            for (int i = 0; i < 131072; i++)
                 dut.u_bios_24lc32.mem[i] = 8'hFF;
             if ($value$plusargs("SEABIOS_BIN=%s", p))
                 tb_load_bin_to_bios(p);
@@ -129,17 +137,42 @@ module seabios_post_tb;
         forever #5 clk = ~clk;
     end
 
+    int           thr_cyc;
+    int           thr_last_cyc;
+    logic         thr_have_pending;
     always @(posedge clk) begin
-        if (rst_n && dut.u_bus_controller.u_chip_com1.thr_write_pulse) begin
-            automatic logic [7: 0] ch;
-            ch = dut.u_bus_controller.u_chip_com1.thr_shadow;
-            if ((ch >= 8'h20) && (ch <= 8'h7E))
-                uart_buf = {uart_buf, string'(ch)};
-            if (uart_buf.len() > 0) begin
-                if (uart_buf.len() >= 7) begin
-                    for (int i = 0; i + 7 <= uart_buf.len(); i++) begin
-                        if (uart_buf.substr(i, i + 6) == "SeaBIOS")
-                            checkpoint = (checkpoint < 1) ? 1 : checkpoint;
+        if (!rst_n) begin
+            thr_cyc         = 0;
+            thr_last_cyc    = 0;
+            thr_have_pending = 1'b0;
+        end else begin
+            thr_cyc = thr_cyc + 1;
+            if (dut.u_bus_controller.u_chip_com1.thr_write_pulse) begin
+                automatic logic [7: 0] ch;
+                thr_count = thr_count + 1;
+                ch = dut.u_bus_controller.u_chip_com1.thr_shadow;
+                if ((ch >= 8'h20) && (ch <= 8'h7E)) begin
+                    // Pair strobe: only collapse identical char re-strobes
+                    if (thr_have_pending && ((thr_cyc - thr_last_cyc) <= 32) &&
+                        (uart_buf.len() > 0) &&
+                        (uart_buf[uart_buf.len()-1] == string'(ch))) begin
+                        ; // drop duplicate
+                    end else begin
+                        uart_buf = {uart_buf, string'(ch)};
+                    end
+                    thr_last_cyc     = thr_cyc;
+                    thr_have_pending = 1'b1;
+                    if (uart_buf.len() >= 7) begin
+                        automatic string un;
+                        un = "";
+                        for (int j = 0; j < uart_buf.len(); j++) begin
+                            if ((un.len() == 0) || (un[un.len()-1] != uart_buf[j]))
+                                un = {un, string'(uart_buf[j])};
+                        end
+                        for (int i = 0; i + 7 <= un.len(); i++) begin
+                            if (un.substr(i, i + 6) == "SeaBIOS")
+                                checkpoint = (checkpoint < 1) ? 1 : checkpoint;
+                        end
                     end
                 end
             end
@@ -149,6 +182,7 @@ module seabios_post_tb;
     initial begin
         $display("=== seabios_post_tb ===");
         uart_buf     = "";
+        thr_count    = 0;
         checkpoint   = 0;
         require_post = 0;
         max_cycles   = 500000;
@@ -163,8 +197,19 @@ module seabios_post_tb;
         while (c < max_cycles) begin
             @(posedge clk);
             c++;
+            if ((c == 10000) || (c == 100000) || (c == 500000) || (c == 1000000)) begin
+                $display("dbg c=%0d eip=%h uart_len=%0d uart='%s'",
+                         c,
+                         dut.u_cpu.cpu_core_0.u_pipeline.u_ifu.eip_r,
+                         uart_buf.len(),
+                         uart_buf);
+            end
             if ((require_post != 0) && (checkpoint >= 1))
                 break;
+        end
+
+        if (has_seabios && (dut.u_cpu.cpu_core_0.u_pipeline.u_ifu.eip_r == 32'h0000_FFF0)) begin
+            $fatal(1, "seabios_post_tb FAIL: EIP stuck at FFF0 after %0d cycles", c);
         end
 
         if ((require_post != 0) && (checkpoint < 1)) begin
@@ -172,8 +217,9 @@ module seabios_post_tb;
                    checkpoint, uart_buf);
         end
 
-        $display("PASS seabios_post (CP=%0d cycles=%0d seabios=%0d)",
-                 checkpoint, c, has_seabios);
+        $display("PASS seabios_post (CP=%0d cycles=%0d seabios=%0d eip=%h thr=%0d uart='%s')",
+                 checkpoint, c, has_seabios,
+                 dut.u_cpu.cpu_core_0.u_pipeline.u_ifu.eip_r, thr_count, uart_buf);
         $finish;
     end
 

@@ -189,19 +189,46 @@ logic base_mod_10_BP;
 logic base_16_BX;
 logic base_16_BP;
 
+logic base_32_EAX;
+logic base_32_ECX;
+logic base_32_EDX;
+logic base_32_EBX;
+logic base_32_ESP;
+logic base_32_EBP;
+logic base_32_ESI;
+logic base_32_EDI;
+
 assign base_mod_xx_BX = ~mod_11 & (rm_000 | rm_001 | rm_111);
 assign base_mod_00_BP = mod_00 & (rm_010 | rm_011);
 assign base_mod_01_BP = mod_01 & (rm_010 | rm_011 | rm_110);
 assign base_mod_10_BP = mod_10 & (rm_010 | rm_011 | rm_110);
-assign base_16_BX = base_mod_xx_BX;
-assign base_16_BP = base_mod_00_BP | base_mod_01_BP | base_mod_10_BP;
+assign base_16_BX = default_operation_size_16 & base_mod_xx_BX;
+assign base_16_BP = default_operation_size_16 & (base_mod_00_BP | base_mod_01_BP | base_mod_10_BP);
 
-// 16 位寻址：基址寄存器为 BX 或 BP
+// 32-bit non-SIB: r/m is the base (rm=100 → SIB; mod=00 rm=101 → disp32 only)
+assign base_32_EAX = default_operation_size_32 & ~mod_11 & rm_000;
+assign base_32_ECX = default_operation_size_32 & ~mod_11 & rm_001;
+assign base_32_EDX = default_operation_size_32 & ~mod_11 & rm_010;
+assign base_32_EBX = default_operation_size_32 & ~mod_11 & rm_011;
+assign base_32_ESP = 1'b0; // ESP only via SIB
+assign base_32_EBP = default_operation_size_32 & (mod_01 | mod_10) & rm_101;
+assign base_32_ESI = default_operation_size_32 & ~mod_11 & rm_110;
+assign base_32_EDI = default_operation_size_32 & ~mod_11 & rm_111;
+
+// 16 位：BX/BP；32 位：EAX..EDI（非 SIB）
 always_comb begin
     unique case (1'b1)
-        base_16_BX: o_base_reg_index = `index_reg_gpr__BX;
-        base_16_BP: o_base_reg_index = `index_reg_gpr__BP;
-        default   : o_base_reg_index = 3'b0;
+        base_16_BX:  o_base_reg_index = `index_reg_gpr__BX;
+        base_16_BP:  o_base_reg_index = `index_reg_gpr__BP;
+        base_32_EAX: o_base_reg_index = `index_reg_gpr_EAX;
+        base_32_ECX: o_base_reg_index = `index_reg_gpr_ECX;
+        base_32_EDX: o_base_reg_index = `index_reg_gpr_EDX;
+        base_32_EBX: o_base_reg_index = `index_reg_gpr_EBX;
+        base_32_ESP: o_base_reg_index = `index_reg_gpr_ESP;
+        base_32_EBP: o_base_reg_index = `index_reg_gpr_EBP;
+        base_32_ESI: o_base_reg_index = `index_reg_gpr_ESI;
+        base_32_EDI: o_base_reg_index = `index_reg_gpr_EDI;
+        default    : o_base_reg_index = 3'b0;
     endcase
 end
 
@@ -209,46 +236,23 @@ logic base_reg_size_16;
 logic base_reg_size_32;
 
 assign base_reg_size_16 = default_operation_size_16 & (base_16_BX | base_16_BP);
-assign base_reg_size_32 = 1'b0;
-
+assign base_reg_size_32 = default_operation_size_32 & (
+    base_32_EAX | base_32_ECX | base_32_EDX | base_32_EBX |
+    base_32_ESP | base_32_EBP | base_32_ESI | base_32_EDI);
 assign o_base_reg_valid = base_reg_size_16 | base_reg_size_32;
 
-// index register
+// index register — 16-bit SI/DI only here; 32-bit scaled index comes from SIB
 logic index_mod_xx__SI;
 logic index_mod_xx__DI;
-logic index_mod_xx_EAX;
-logic index_mod_xx_ECX;
-logic index_mod_xx_EDX;
-logic index_mod_xx_EBX;
-logic index_mod_xx_ESP;
-logic index_mod_xx_EBP;
-logic index_mod_xx_ESI;
-logic index_mod_xx_EDI;
 
 assign index_mod_xx__SI = default_operation_size_16 & ~mod_11 & (rm_000 | rm_010 | rm_100);
 assign index_mod_xx__DI = default_operation_size_16 & ~mod_11 & (rm_001 | rm_011 | rm_101);
-assign index_mod_xx_EAX = default_operation_size_32 & ~mod_11 & rm_000;
-assign index_mod_xx_ECX = default_operation_size_32 & ~mod_11 & rm_001;
-assign index_mod_xx_EDX = default_operation_size_32 & ~mod_11 & rm_010;
-assign index_mod_xx_EBX = default_operation_size_32 & ~mod_11 & rm_011;
-assign index_mod_xx_ESP = 1'b0;
-assign index_mod_xx_EBP = default_operation_size_32 & (mod_01 | mod_10) & rm_101;
-assign index_mod_xx_ESI = default_operation_size_32 & ~mod_11 & rm_110;
-assign index_mod_xx_EDI = default_operation_size_32 & ~mod_11 & rm_111;
 
-// 16/32 位寻址：索引分量（SI/DI 或 EAX..EDI 子集）
+// 16 位寻址：索引分量 SI/DI（32 位非 SIB 无独立 index）
 always_comb begin
     unique case (1'b1)
         index_mod_xx__SI: o_index_reg_index = `index_reg_gpr__SI;
         index_mod_xx__DI: o_index_reg_index = `index_reg_gpr__DI;
-        index_mod_xx_EAX: o_index_reg_index = `index_reg_gpr_EAX;
-        index_mod_xx_ECX: o_index_reg_index = `index_reg_gpr_ECX;
-        index_mod_xx_EDX: o_index_reg_index = `index_reg_gpr_EDX;
-        index_mod_xx_EBX: o_index_reg_index = `index_reg_gpr_EBX;
-        index_mod_xx_ESP: o_index_reg_index = `index_reg_gpr_ESP;
-        index_mod_xx_EBP: o_index_reg_index = `index_reg_gpr_EBP;
-        index_mod_xx_ESI: o_index_reg_index = `index_reg_gpr_ESI;
-        index_mod_xx_EDI: o_index_reg_index = `index_reg_gpr_EDI;
         default         : o_index_reg_index = 3'b0;
     endcase
 end
@@ -257,16 +261,7 @@ logic index_reg_size_16;
 logic index_reg_size_32;
 
 assign index_reg_size_16 = default_operation_size_16 & (index_mod_xx__SI | index_mod_xx__DI);
-assign index_reg_size_32 = default_operation_size_32 & (
-    index_mod_xx_EAX |
-    index_mod_xx_ECX |
-    index_mod_xx_EDX |
-    index_mod_xx_EBX |
-    index_mod_xx_ESP |
-    index_mod_xx_EBP |
-    index_mod_xx_ESI |
-    index_mod_xx_EDI |
-1'b0);
+assign index_reg_size_32 = 1'b0;
 assign o_index_reg_valid = index_reg_size_16 | index_reg_size_32;
 
 // displacement_length

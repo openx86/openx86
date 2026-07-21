@@ -249,6 +249,8 @@ module stage_3_uop (
     input  logic                i_opcode_sse_any,
     input  logic [ 3: 0]        i_tttn,
     input  logic [ 2: 0]        i_eee,
+    input  logic [31: 0]        i_insn_eip,
+    input  logic [ 3: 0]        i_insn_len,
 
     input  logic [31: 0]        i_dec_displacement,
     input  logic [31: 0]        i_dec_immediate,
@@ -283,15 +285,14 @@ module stage_3_uop (
     // ============================================================
     // UOP Queue (FIFO)
     // ============================================================
-    localparam int LP_UOP_WIDTH   = 93; // micro_op_t width (84 + tttn:4 + eee:3 + sib_scale:2)
+    localparam int LP_UOP_WIDTH   = $bits(micro_op_t);
     localparam int LP_QUEUE_DEPTH = 8;
 
     logic [LP_UOP_WIDTH - 1: 0] uop_data_vector;
-    logic [LP_QUEUE_DEPTH - 1: 0][LP_UOP_WIDTH - 1: 0] uop_queue_data;
+    logic [LP_QUEUE_DEPTH - 1: 0][LP_UOP_WIDTH - 1: 0] uop_push_data;
+    logic [LP_QUEUE_DEPTH - 1: 0][LP_UOP_WIDTH - 1: 0] uop_window_data;
     logic [LP_UOP_WIDTH - 1: 0] uop_queue_out;
-    logic                        queue_push_valid;
     logic                        queue_push_ready;
-    logic                        queue_pop_valid;
     logic                        queue_pop_ready;
     logic                        queue_full;
     logic                        queue_empty;
@@ -306,7 +307,7 @@ module stage_3_uop (
     logic                pipe_stage3_ready;
 
     // ============================================================
-    // Convert micro_op_t to vector for FIFO
+    // Convert micro_op_t to vector for FIFO (width must be $bits)
     // ============================================================
     assign uop_data_vector = uop_from_dec;
 
@@ -541,6 +542,8 @@ module stage_3_uop (
         .i_tttn                      ( i_tttn ),
         .i_eee                       ( i_eee ),
 
+        .i_insn_eip                 ( i_insn_eip ),
+        .i_insn_len                 ( i_insn_len ),
         .i_dec_displacement         ( i_dec_displacement ),
         .i_dec_immediate            ( i_dec_immediate ),
         .i_dec_base_reg_is_present  ( i_dec_base_reg_is_present ),
@@ -561,37 +564,40 @@ module stage_3_uop (
 
     // ============================================================
     // UOP Queue instantiation
+    // Push and window buses must be separate — sharing one net made
+    // the live decode uop override FIFO reads (and truncated opcode).
     // ============================================================
+    always_comb begin
+        uop_push_data    = '0;
+        uop_push_data[0] = uop_data_vector;
+    end
+
     fifo #(
         .P_DEPTH      ( LP_QUEUE_DEPTH ),
         .P_DATA_WIDTH ( LP_UOP_WIDTH )
     ) u_uop_queue (
         .i_push_valid ( i_stage2_valid & ~i_flush ),
-        .i_push_data  ( uop_queue_data ),
+        .i_push_data  ( uop_push_data ),
         .i_push_bytes ( 4'd1 ),
         .o_push_ready ( queue_push_ready ),
         .i_pop_valid  ( ~queue_empty & pipe_stage3_ready & ~i_flush ),
         .i_pop_bytes  ( 4'd1 ),
-        .o_pop_ready ( queue_pop_ready ),
-        .o_window_data( uop_queue_data ),
+        .o_pop_ready  ( queue_pop_ready ),
+        .o_window_data( uop_window_data ),
         .o_count      ( queue_count ),
         .o_full       ( queue_full ),
         .o_empty      ( queue_empty ),
+        .i_clear      ( i_flush ),
         .clk          ( clk ),
         .rst_n        ( rst_n )
     );
 
     // ============================================================
-    // Queue data assignment for push
-    // ============================================================
-    assign uop_queue_data[0] = uop_data_vector;
-
-    // ============================================================
     // Queue output assignment
     // ============================================================
-    assign uop_queue_out = uop_queue_data[0];
+    assign uop_queue_out  = uop_window_data[0];
     assign uop_from_queue = uop_queue_out;
-    assign queue_valid = ~queue_empty;
+    assign queue_valid    = ~queue_empty;
 
     // ============================================================
     // Pipeline register: uop_to_exu (stage 3 → stage 4_reg_read)

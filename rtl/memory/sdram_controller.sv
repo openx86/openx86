@@ -21,6 +21,14 @@
 module sdram_controller #(
     // Clock frequency (Hz) used for init delay and refresh period
     parameter int CLK_HZ = 50_000_000,
+    // Post-reset idle wait before init commands. Full JEDEC 200us is
+    // CLK_HZ/5000 (@50MHz = 10000). Keep short so Verilator SoC boots
+    // are not blocked for thousands of cycles before first DRAM access.
+    parameter int INIT_WAIT_CYCLES = 32,
+    // When set, host read/write data is backed by an on-chip array so
+    // simulation works without a physical SDRAM device on DQ.
+    parameter bit P_BEHAVIORAL_MEM = 1'b1,
+    parameter int P_BEHAVIORAL_WORDS = 262144, // 1MiB byte window
 
     // SDRAM timing (in clock cycles @ CLK_HZ)
     parameter int T_RP  = 2,   // precharge time
@@ -196,8 +204,14 @@ module sdram_controller #(
     // 通用等待计数器（各状态复用）
     int unsigned ctr;
 
-    logic        lat_we;      // 锁存的读写方向
+    logic         lat_we;      // 锁存的读写方向
     logic [31: 0] lat_wdata;  // 锁存的写数据
+    logic [23: 0] lat_addr_off; // 锁存的主机字节偏移（behavioral mem 用）
+
+    // Optional on-chip backing store for host data (Verilator / no PHY DRAM).
+    logic [31: 0] behav_mem [0: P_BEHAVIORAL_WORDS - 1];
+    logic [17: 0] behav_word_idx;
+    assign behav_word_idx = lat_addr_off[19: 2];
 
     logic refresh_due;        // 刷新计数到期，应在空闲时插入刷新
     int unsigned refresh_ctr; // 空闲周期累计的刷新节拍计数
@@ -210,8 +224,9 @@ module sdram_controller #(
     assign o_sdram_dq_out = dq_out_r;
     assign o_sdram_dq_oe  = dq_oe_r;
 
-    // Busy whenever not idle
-    assign o_busy = (st != ST_IDLE);
+    // Busy for in-flight work. ST_DONE asserts o_ready for one cycle; treat it
+    // as not-busy so the SoC bridge (ready & ~busy) can retire the beat.
+    assign o_busy = (st != ST_IDLE) & (st != ST_DONE);
 
     // 按当前命令驱动 BA/A（默认全 0，各命令覆写相关位）
     always_comb begin
@@ -279,7 +294,7 @@ module sdram_controller #(
                 // For reset-based bring-up, treat rst_n deassert (1) as "power stable".
                 // ----------------------------------------------------------------
                 ST_INIT_WAIT: begin
-                    if (ctr >= (CLK_HZ / 5_000)) begin // 200us
+                    if (ctr >= INIT_WAIT_CYCLES) begin
                         ctr <= 0;
                         st  <= ST_INIT_PRE;
                     end else begin
@@ -338,11 +353,15 @@ module sdram_controller #(
                     if (refresh_due) begin // 到时插入刷新，阻塞新事务
                         st  <= ST_REFRESH;
                         ctr <= 0;
-                    end else if (i_en) begin // 主机请求：锁存参数并开行
-                        lat_we    <= i_we;
-                        lat_wdata <= i_wdata;
-                        st        <= ST_ACTIVATE;
-                        ctr       <= 0;
+                    // Ignore i_en on the cycle o_ready is high: the SoC bridge
+                    // still holds valid through that beat and would otherwise
+                    // double-start a second transaction with a stale address.
+                    end else if (i_en & ~o_ready) begin
+                        lat_we       <= i_we;
+                        lat_wdata    <= i_wdata;
+                        lat_addr_off <= i_addr_off;
+                        st           <= ST_ACTIVATE;
+                        ctr          <= 0;
                     end
                 end
 
@@ -392,12 +411,18 @@ module sdram_controller #(
                 end
                 ST_READ_BEAT0: begin
                     // Lower 16 bits
-                    o_rdata[15: 0] <= i_sdram_dq_in;
+                    if (P_BEHAVIORAL_MEM)
+                        o_rdata[15: 0] <= behav_mem[behav_word_idx][15: 0];
+                    else
+                        o_rdata[15: 0] <= i_sdram_dq_in;
                     st <= ST_READ_BEAT1;
                 end
                 ST_READ_BEAT1: begin
                     // Upper 16 bits
-                    o_rdata[31: 16] <= i_sdram_dq_in;
+                    if (P_BEHAVIORAL_MEM)
+                        o_rdata[31: 16] <= behav_mem[behav_word_idx][31: 16];
+                    else
+                        o_rdata[31: 16] <= i_sdram_dq_in;
                     st <= ST_DONE;
                 end
 
@@ -405,6 +430,8 @@ module sdram_controller #(
                 ST_WRITE_BEAT0: begin
                     dq_out_r <= lat_wdata[15: 0];
                     dq_oe_r  <= 1'b1;
+                    if (P_BEHAVIORAL_MEM)
+                        behav_mem[behav_word_idx] <= lat_wdata;
                     st       <= ST_WRITE_BEAT1;
                 end
                 ST_WRITE_BEAT1: begin

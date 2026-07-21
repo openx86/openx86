@@ -120,11 +120,28 @@ logic         error_repeat_group_3;
 logic         error_repeat_group_4;
 logic         error_repeat;
 
-// 各组前缀计数：同组出现 >1 记为非法编码
-assign sum_group_1 = ({2'b0, group_1_is_present[0]} + {2'b0, group_1_is_present[1]} + {2'b0, group_1_is_present[2]} + {2'b0, group_1_is_present[3]});
-assign sum_group_2 = ({2'b0, group_2_is_present[0]} + {2'b0, group_2_is_present[1]} + {2'b0, group_2_is_present[2]} + {2'b0, group_2_is_present[3]});
-assign sum_group_3 = ({2'b0, group_3_is_present[0]} + {2'b0, group_3_is_present[1]} + {2'b0, group_3_is_present[2]} + {2'b0, group_3_is_present[3]});
-assign sum_group_4 = ({2'b0, group_4_is_present[0]} + {2'b0, group_4_is_present[1]} + {2'b0, group_4_is_present[2]} + {2'b0, group_4_is_present[3]});
+// Count only leading consecutive prefix bytes — ModRM/opcode bytes that
+// alias prefix encodings (e.g. 3Eh in 2E 66 83 3E ...) must not count.
+assign sum_group_1 =
+    ({2'b0, group_1_is_present[0] & is_present[0]} +
+     {2'b0, group_1_is_present[1] & is_present[0] & is_present[1]} +
+     {2'b0, group_1_is_present[2] & is_present[0] & is_present[1] & is_present[2]} +
+     {2'b0, group_1_is_present[3] & is_present[0] & is_present[1] & is_present[2] & is_present[3]});
+assign sum_group_2 =
+    ({2'b0, group_2_is_present[0] & is_present[0]} +
+     {2'b0, group_2_is_present[1] & is_present[0] & is_present[1]} +
+     {2'b0, group_2_is_present[2] & is_present[0] & is_present[1] & is_present[2]} +
+     {2'b0, group_2_is_present[3] & is_present[0] & is_present[1] & is_present[2] & is_present[3]});
+assign sum_group_3 =
+    ({2'b0, group_3_is_present[0] & is_present[0]} +
+     {2'b0, group_3_is_present[1] & is_present[0] & is_present[1]} +
+     {2'b0, group_3_is_present[2] & is_present[0] & is_present[1] & is_present[2]} +
+     {2'b0, group_3_is_present[3] & is_present[0] & is_present[1] & is_present[2] & is_present[3]});
+assign sum_group_4 =
+    ({2'b0, group_4_is_present[0] & is_present[0]} +
+     {2'b0, group_4_is_present[1] & is_present[0] & is_present[1]} +
+     {2'b0, group_4_is_present[2] & is_present[0] & is_present[1] & is_present[2]} +
+     {2'b0, group_4_is_present[3] & is_present[0] & is_present[1] & is_present[2] & is_present[3]});
 assign error_repeat_group_1 = (sum_group_1 > 1) ? 1'b1 : 1'b0;
 assign error_repeat_group_2 = (sum_group_2 > 1) ? 1'b1 : 1'b0;
 assign error_repeat_group_3 = (sum_group_3 > 1) ? 1'b1 : 1'b0;

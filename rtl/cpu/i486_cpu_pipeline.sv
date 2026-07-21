@@ -19,6 +19,7 @@
 // ============================================================================
 
 `include "openx86_defs.h.sv"
+`include "exu_common.h.sv"
 
 module i486_cpu_pipeline (
     // =========================
@@ -64,6 +65,7 @@ module i486_cpu_pipeline (
     input  logic         i_sf,
     input  logic         i_of,
     input  logic         i_if_flag,
+    input  logic         i_df,
 
     // =========================
     // Segment / MMU context
@@ -210,7 +212,7 @@ module i486_cpu_pipeline (
     logic                ifu_segment_fault;
     logic                ifu_page_fault;
     logic [31: 0]        ifu_fault_linear;
-    logic [ 4: 0]        ifu_fifo_count;
+    logic [ 5: 0]        ifu_fifo_count;
     logic [31: 0]        ifu_eip;
     logic                ifu_dec_ready;
     logic                ifu_dec_fire;
@@ -277,6 +279,11 @@ module i486_cpu_pipeline (
     logic [ 2: 0]        exu_seg_load_target_index;
     logic [31: 0]        exu_seg_load_far_offset;
     logic [15: 0]        exu_seg_load_far_selector;
+    logic [ 1: 0]        slu_req_op_type;
+    logic [31: 0]        slu_req_far_offset;
+    logic [15: 0]        slu_req_far_selector;
+    logic [ 2: 0]        slu_req_target_index;
+    logic [15: 0]        slu_req_selector;
     logic                exu_exc_ud_valid;
     logic                exu_exc_de_valid;
     logic                exu_far_ret_new_esp_valid;
@@ -391,8 +398,22 @@ module i486_cpu_pipeline (
     logic                stall_reg;
     logic                stall_exu;
     logic                dec_reg_ready;
+    // Hold LSU translate result until memory_stage accepts (avoids LSU restart
+    // while EXU still asserts mem_valid, and survives the LSU done pulse).
+    // Match held effective address so multi-beat ops (LGDT beat2 at addr+4) cannot
+    // reuse a stale translate / mem_done from the previous beat.
+    logic                lsu_result_hold_r;
+    logic [31: 0]        lsu_hold_eff_addr_r;
+    logic                lsu_hold_addr_match;
+    logic                lsu_hold_addr_mismatch;
 
-    assign lsu_mmu_start = exu_mem_valid & ~exu_data_io;
+    assign lsu_hold_addr_match    = lsu_result_hold_r &
+                                    (exu_mem_addr == lsu_hold_eff_addr_r);
+    assign lsu_hold_addr_mismatch = lsu_result_hold_r &
+                                    (exu_mem_addr != lsu_hold_eff_addr_r);
+
+    assign lsu_mmu_start = exu_mem_valid & ~exu_data_io & ~lsu_mmu_busy &
+                           (~lsu_result_hold_r | lsu_hold_addr_mismatch);
 
     assign lsu_seg_index = (reg_uop.uop_opcode == `UOP_PUSH) |
                            (reg_uop.uop_opcode == `UOP_POP)  |
@@ -429,11 +450,31 @@ module i486_cpu_pipeline (
 
     assign pipe_flush     = pipe_flush_ctrl | eiu_flush;
     assign mem_stall      = mem_busy | multicycle_stall | (lsu_mmu_busy & ~exu_data_io) |
-                            idu_busy | slu_busy;
+                            idu_busy;
+    // slu_busy is not in mem_stall: EXU seg_load_pending waits for SLU; including
+    // slu_busy here deadlocks retirement on the SLU ready cycle.
     assign mem_start      = exu_data_io ? exu_mem_valid :
-                            (exu_mem_valid & lsu_mmu_done &
+                            (exu_mem_valid & lsu_hold_addr_match &
                              ~lsu_seg_fault & ~lsu_page_fault);
     assign mem_phys_addr  = exu_data_io ? exu_mem_addr : lsu_phys_addr;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (~rst_n) begin
+            lsu_result_hold_r   <= 1'b0;
+            lsu_hold_eff_addr_r <= 32'h0;
+        end else if (lsu_mmu_done) begin
+            lsu_result_hold_r   <= 1'b1;
+            lsu_hold_eff_addr_r <= exu_mem_addr;
+        end else if (lsu_hold_addr_mismatch |
+                     (mem_start & ~exu_data_io & ~mem_busy) |
+                     // Keep translate hold until EXU drops the request; clearing on
+                     // mem_done while exu_mem_valid is still high restarts LSU and
+                     // re-fires access_memory (POP then increments ESP forever).
+                     (mem_done & ~exu_mem_valid) |
+                     (~exu_mem_valid & ~lsu_mmu_busy)) begin
+            lsu_result_hold_r <= 1'b0;
+        end
+    end
 
     assign dec_reg_ready = reg_stage_ready & ~stall_reg;
 
@@ -456,8 +497,10 @@ module i486_cpu_pipeline (
         .rst_n               (rst_n)
     );
 
-    assign current_eflags    = {10'h0, i_of, 1'b0, 1'b0, 1'b0, i_sf, i_zf,
-                                  1'b0, i_af, 1'b0, i_pf, i_if_flag, i_cf};
+    assign current_eflags = pack_eflags_status(
+        {14'h0, i_vm, 1'b0, 1'b0, 1'b0, i_iopl, 1'b0, i_df, i_if_flag, 1'b0,
+         1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b0},
+        i_cf, i_pf, i_af, i_zf, i_sf, i_of);
     assign eflags_if_cleared = current_eflags & ~32'h0000_0200;
     assign inta_vector_mux   = (i_inta_vector != 8'h00) ? i_inta_vector : 8'h20;
     assign inta_vector_valid = eiu_inta_req;
@@ -473,9 +516,17 @@ module i486_cpu_pipeline (
                                    idu_busy ? eiu_mem_wdata : pipe_mem_wdata;
 
     assign idu_slu_req = eiu_cs_valid & i_protected_mode;
-    assign slu_start_pulse = ((exu_seg_load_valid & exu_valid & i_protected_mode) |
+    // Present live EXU/EIU request on the start pulse — SLU latches on rise;
+    // delayed slu_*_r would feed stale op/selector/offset (often 0 → #GP/null).
+    assign slu_req_op_type       = idu_slu_req ? 2'b01 : exu_seg_load_op_type;
+    assign slu_req_far_offset    = idu_slu_req ? eiu_new_eip : exu_seg_load_far_offset;
+    assign slu_req_far_selector  = idu_slu_req ? eiu_cs_selector : exu_seg_load_far_selector;
+    assign slu_req_target_index  = idu_slu_req ? `sreg_index_CS : exu_seg_load_target_index;
+    assign slu_req_selector      = idu_slu_req ? eiu_cs_selector : exu_seg_load_selector;
+    assign slu_start_pulse = ((exu_seg_load_valid & i_protected_mode) |
                               idu_slu_req) & ~slu_active_r;
-    assign slu_busy        = slu_active_r;
+    // Include start pulse so bus mux/ready see SLU on the latch cycle.
+    assign slu_busy        = slu_active_r | slu_start_pulse;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (~rst_n) begin
@@ -490,22 +541,14 @@ module i486_cpu_pipeline (
         end else begin
             slu_far_ret_esp_we <= 1'b0;
             if (slu_start_pulse) begin
-                slu_active_r <= 1'b1;
-                if (idu_slu_req) begin
-                    slu_op_type_r      <= 2'b01;
-                    slu_far_offset_r   <= eiu_new_eip;
-                    slu_far_selector_r <= eiu_cs_selector;
-                    slu_target_index_r <= `sreg_index_CS;
-                    slu_selector_r     <= eiu_cs_selector;
-                end else begin
-                    slu_op_type_r      <= exu_seg_load_op_type;
-                    slu_far_offset_r   <= exu_seg_load_far_offset;
-                    slu_far_selector_r <= exu_seg_load_far_selector;
-                    slu_target_index_r <= exu_seg_load_target_index;
-                    slu_selector_r     <= exu_seg_load_selector;
-                    if (exu_seg_load_op_type == 2'b11) begin
-                        slu_far_ret_new_esp_r <= exu_far_ret_new_esp;
-                    end
+                slu_active_r       <= 1'b1;
+                slu_op_type_r      <= slu_req_op_type;
+                slu_far_offset_r   <= slu_req_far_offset;
+                slu_far_selector_r <= slu_req_far_selector;
+                slu_target_index_r <= slu_req_target_index;
+                slu_selector_r     <= slu_req_selector;
+                if (slu_req_op_type == 2'b11) begin
+                    slu_far_ret_new_esp_r <= exu_far_ret_new_esp;
                 end
             end else if (slu_active_r & slu_ready) begin
                 slu_active_r <= 1'b0;
@@ -519,17 +562,17 @@ module i486_cpu_pipeline (
     segment_load_unit u_seg_load (
         .i_valid                 (slu_start_pulse),
         .o_ready                 (slu_ready),
-        .i_op_type               (slu_op_type_r),
+        .i_op_type               (slu_req_op_type),
         .i_protected_mode        (i_protected_mode),
         .i_cpl                   (i_cpl),
-        .i_selector              (slu_selector_r),
-        .i_target_seg_index      (slu_target_index_r),
+        .i_selector              (slu_req_selector),
+        .i_target_seg_index      (slu_req_target_index),
         .i_gdtr_base             (i_gdtr_base),
         .i_gdtr_limit            (i_gdtr_limit),
         .i_ldtr_selector         (16'h0),
         .i_ldtr_descriptor       (64'h0),
-        .i_far_offset            (slu_far_offset_r),
-        .i_far_selector          (slu_far_selector_r),
+        .i_far_offset            (slu_req_far_offset),
+        .i_far_selector          (slu_req_far_selector),
         .o_seg_write_enable      (slu_seg_write_enable),
         .o_seg_write_index       (slu_seg_write_index),
         .o_seg_write_selector    (slu_seg_write_selector),
@@ -614,7 +657,7 @@ module i486_cpu_pipeline (
         .i_paging_enable           (i_paging_enable),
         .i_page_directory_base     (i_page_directory_base),
         .i_start                   (1'b1),
-        .i_initial_eip             (32'hFFFFFFF0),
+        .i_initial_eip             (32'h0000_FFF0),
         .i_reload_eip              (o_wrb_IP_write_enable),
         .i_reload_eip_value        (o_wrb_IP_write_data),
         .o_instruction             (ifu_instruction),
@@ -688,6 +731,7 @@ module i486_cpu_pipeline (
         .o_uop                    (uop),
         .i_reg_ready              (dec_reg_ready),
         .i_stall                  (stall_dec),
+        .i_default_size_32        (i_segment_descriptor[`index_reg_seg__CS][22]),
         .clk                      (clk),
         .rst_n                    (rst_n)
     );
@@ -747,12 +791,16 @@ module i486_cpu_pipeline (
         .i_cr0_data              (i_cr0_data),
         .i_eip                   (i_eip),
         .i_cs_selector           (i_segment_selector[`index_reg_seg__CS]),
+        .i_slu_ready             (slu_ready),
         .i_cf                    (reg_cf),
         .i_pf                    (reg_pf),
         .i_af                    (reg_af),
         .i_zf                    (reg_zf),
         .i_sf                    (reg_sf),
         .i_of                    (reg_of),
+        .i_if_flag               (i_if_flag),
+        .i_df                    (i_df),
+        .i_iopl                  (i_iopl),
         .o_wrb_gpr_enable_EAX    (o_wrb_gpr_write_enable_EAX),
         .o_wrb_gpr_enable_AX     (o_wrb_gpr_write_enable_AX),
         .o_wrb_gpr_enable_AL     (o_wrb_gpr_write_enable_AL),

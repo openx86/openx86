@@ -46,6 +46,11 @@ module fifo #(
     output logic                                  o_empty,
 
     // =========================
+    // clear (synchronous; empties queue without touching mem contents)
+    // =========================
+    input  logic                                  i_clear,
+
+    // =========================
     // clock and reset
     // =========================
     input  logic                                  clk,
@@ -93,8 +98,8 @@ module fifo #(
     assign o_push_ready = (i_push_bytes <= free_count);
     assign o_pop_ready  = (i_pop_bytes != LP_COUNT_WIDTH'(0)) & (i_pop_bytes <= count);
 
-    assign do_push      = i_push_valid & o_push_ready & (i_push_bytes != LP_COUNT_WIDTH'(0));
-    assign do_pop       = i_pop_valid & o_pop_ready;
+    assign do_push      = i_push_valid & o_push_ready & (i_push_bytes != LP_COUNT_WIDTH'(0)) & ~i_clear;
+    assign do_pop       = i_pop_valid & o_pop_ready & ~i_clear;
 
     assign o_count      = count;
     assign o_empty      = (count == LP_COUNT_WIDTH'(0));
@@ -118,6 +123,10 @@ module fifo #(
     // ============================================================
     always_ff @(posedge clk or negedge rst_n) begin : ff_fifo_control
         if (~rst_n) begin
+            head_ptr <= '0;
+            tail_ptr <= '0;
+            count    <= '0;
+        end else if (i_clear) begin
             head_ptr <= '0;
             tail_ptr <= '0;
             count    <= '0;

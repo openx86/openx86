@@ -42,7 +42,9 @@ module bus_controller #(
     // BIOS ROM interface
     // =========================
     input  logic [31: 0] i_bios_rdata,
-    output logic [15: 0] o_bios_addr,
+    output logic [16: 0] o_bios_addr,
+    output logic         o_bios_we,
+    output logic [31: 0] o_bios_wdata,
 
     // =========================
     // Extended BIOS ROM interface
@@ -65,8 +67,10 @@ module bus_controller #(
     // VGA VRAM interface
     // =========================
     output logic         o_vga_mem_en_w,
+    output logic         o_vga_mem_en_r,
     output logic [19: 0] o_vga_mem_addr,
     output logic [ 7: 0] o_vga_mem_data_w,
+    input  logic [ 7: 0] i_vga_mem_data_r,
 
     // =========================
     // VGA I/O interface
@@ -125,10 +129,12 @@ module bus_controller #(
     localparam logic [31: 0] MEM_END_VRAM        = 32'h000B_FFFF;
     localparam logic [31: 0] MEM_BASE_EXT_BIOS   = 32'h000C_0000;
     localparam logic [31: 0] MEM_END_EXT_BIOS    = 32'h000D_FFFF;
-    localparam logic [31: 0] MEM_BASE_RESERVED   = 32'h000E_0000;
-    localparam logic [31: 0] MEM_END_RESERVED    = 32'h000E_FFFF;
-    localparam logic [31: 0] MEM_BASE_SYS_BIOS   = 32'h000F_0000;
+    // E0000–FFFFF: 128KiB system BIOS (SeaBIOS)
+    localparam logic [31: 0] MEM_BASE_SYS_BIOS   = 32'h000E_0000;
     localparam logic [31: 0] MEM_END_SYS_BIOS    = 32'h000F_FFFF;
+    // SeaBIOS flash alias at top of 4GiB (BIOS_SRC_OFFSET path)
+    localparam logic [31: 0] MEM_BASE_BIOS_HI    = 32'hFFFE_0000;
+    localparam logic [31: 0] MEM_END_BIOS_HI     = 32'hFFFF_FFFF;
     localparam logic [31: 0] MEM_BASE_SDRAM      = 32'h0100_0000;
     localparam logic [31: 0] MEM_END_SDRAM       = 32'h01FF_FFFF;
 
@@ -190,7 +196,9 @@ assign is_memory_access   = !mux_io;
 assign is_ram_access      = is_memory_access && (mux_addr <= MEM_END_RAM);
 assign is_vram_access     = is_memory_access && (mux_addr >= MEM_BASE_VRAM) && (mux_addr <= MEM_END_VRAM);
 assign is_ext_bios_access = is_memory_access && (mux_addr >= MEM_BASE_EXT_BIOS) && (mux_addr <= MEM_END_EXT_BIOS);
-assign is_sys_bios_access = is_memory_access && (mux_addr >= MEM_BASE_SYS_BIOS) && (mux_addr <= MEM_END_SYS_BIOS);
+assign is_sys_bios_access = is_memory_access &&
+                            (((mux_addr >= MEM_BASE_SYS_BIOS) && (mux_addr <= MEM_END_SYS_BIOS)) ||
+                             ((mux_addr >= MEM_BASE_BIOS_HI) && (mux_addr <= MEM_END_BIOS_HI)));
 assign is_sdram_access    = is_memory_access && (mux_addr >= MEM_BASE_SDRAM) && (mux_addr <= MEM_END_SDRAM);
 
 assign is_io_access       = mux_io;
@@ -210,7 +218,8 @@ assign is_chipset_io = is_other_io_access && (
     ((mux_addr[15: 0] >= 16'h01F0) && (mux_addr[15: 0] <= 16'h01F7)) ||
     (mux_addr[15: 0] == 16'h03F6) ||
     ((mux_addr[15: 0] >= 16'h0378) && (mux_addr[15: 0] <= 16'h037F)) ||
-    ((mux_addr[15: 0] >= 16'h03F8) && (mux_addr[15: 0] <= 16'h03FF))
+    ((mux_addr[15: 0] >= 16'h03F8) && (mux_addr[15: 0] <= 16'h03FF)) ||
+    ((mux_addr[15: 0] >= 16'h0CF8) && (mux_addr[15: 0] <= 16'h0CFF))
 );
     logic [ 7: 0] chipset_io_rdata;
     logic         chipset_io_hit;
@@ -228,18 +237,21 @@ logic bios_ready_internal;
 logic ext_bios_ready_internal;
 logic sdram_ready_internal;
 logic io_ready_internal;
+logic vram_rd_pend_r;
+logic vram_rd_ready_r;
+logic [ 7: 0] io_byte_data;
 
-assign chipset_io_hit = chip_io_vld & (hit_dma | hit_pic_m | hit_pic_s | hit_pit | hit_ps2 | hit_rtc | hit_com | hit_lpt | hit_ide);
+assign chipset_io_hit = chip_io_vld & (hit_dma | hit_pic_m | hit_pic_s | hit_pit | hit_ps2 | hit_rtc | hit_com | hit_lpt | hit_ide | hit_pci);
 assign bios_data_selected = is_sys_bios_access ? i_bios_rdata : 32'h0;
 assign ext_bios_data_selected = is_ext_bios_access ? i_ext_bios_rdata : 32'h0;
-assign io_data_selected = is_io_access ? {24'h0, io_byte_data} : 32'h0;
-assign vram_ready_internal = o_vga_mem_en_w ? 1'b1 : 1'b0;
+assign vram_ready_internal = (o_vga_mem_en_w | vram_rd_ready_r) ? 1'b1 : 1'b0;
 assign bios_ready_internal = is_sys_bios_access ? 1'b1 : 1'b0;
 assign ext_bios_ready_internal = is_ext_bios_access ? 1'b1 : 1'b0;
 assign sdram_ready_internal = (is_ram_access || is_sdram_access) ? i_sdram_ready : 1'b0;
 assign io_ready_internal = (o_vga_io_en_w || o_vga_io_en_r || is_other_io_access) ? 1'b1 : 1'b0;
 
-localparam int CHIP_DISK_IMAGE_BYTES = 512 * 2048;
+// 1.44MiB floppy capacity (2880 * 512) for FreeDOS boot images
+localparam int CHIP_DISK_IMAGE_BYTES = 512 * 2880;
 localparam int CHIP_DISK_SECTOR_CNT  = CHIP_DISK_IMAGE_BYTES / 512;
 
 logic [15: 0] chip_io_addr;
@@ -251,6 +263,7 @@ assign chip_io_vld  = mux_valid && mux_io && is_chipset_io;
 assign chip_io_we   = mux_we;
 
 logic [ 7: 0] r_dma, r_pic_m, r_pic_s, r_pit, r_ps2, r_rtc, r_com, r_lpt, r_ide;
+logic [31: 0] r_pci;
 
 logic hit_dma;
 logic hit_pic_m;
@@ -261,6 +274,7 @@ logic hit_rtc;
 logic hit_com;
 logic hit_lpt;
 logic hit_ide;
+logic hit_pci;
 
 logic vld;  // 与 chip_io_vld 同义别名（片选生成）
 
@@ -300,6 +314,10 @@ logic cs_ide_n;
 logic rd_ide_n;
 logic wr_ide_n;
 
+logic cs_pci_n;
+logic rd_pci_n;
+logic wr_pci_n;
+
 assign hit_dma = (chip_io_addr <= 16'h000F)
                  | ((chip_io_addr >= 16'h0080) & (chip_io_addr <= 16'h008F))
                  | ((chip_io_addr >= 16'h00C0) & (chip_io_addr <= 16'h00DF));
@@ -311,6 +329,7 @@ assign hit_rtc = (chip_io_addr == 16'h0070) | (chip_io_addr == 16'h0071);
 assign hit_com = (chip_io_addr >= 16'h03F8) & (chip_io_addr <= 16'h03FF);
 assign hit_lpt = (chip_io_addr >= 16'h0378) & (chip_io_addr <= 16'h037F);
 assign hit_ide = ((chip_io_addr >= 16'h01F0) & (chip_io_addr <= 16'h01F7)) | (chip_io_addr == 16'h03F6);
+assign hit_pci = (chip_io_addr >= 16'h0CF8) & (chip_io_addr <= 16'h0CFF);
 
 assign vld = chip_io_vld;
 
@@ -341,6 +360,9 @@ assign wr_lpt_n = !(vld &  chip_io_we & hit_lpt);
 assign cs_ide_n = !(vld & hit_ide);
 assign rd_ide_n = !(vld & !chip_io_we & hit_ide);
 assign wr_ide_n = !(vld &  chip_io_we & hit_ide);
+assign cs_pci_n = !(vld & hit_pci);
+assign rd_pci_n = !(vld & !chip_io_we & hit_pci);
+assign wr_pci_n = !(vld &  chip_io_we & hit_pci);
 
 logic       pit_out0;   // PIT 通道 0 OUT → IRQ0
 logic       intr_m, intr_s;  // 主/从 PIC INTR
@@ -507,7 +529,18 @@ ide_controller #(
     .rst_n         (rst_n)
 );
 
-// chipset 各从设备读数据优先级 MUX（DMA→…→IDE）。
+chip_i440fx_pci_stub u_chip_pci (
+    .i_cs_n   (cs_pci_n),
+    .i_rd_n   (rd_pci_n),
+    .i_wr_n   (wr_pci_n),
+    .i_addr_n (chip_io_addr[2]),
+    .i_d      (i_bus_data_write),
+    .o_d      (r_pci),
+    .clk      (clk),
+    .rst_n    (rst_n)
+);
+
+// chipset 各从设备读数据优先级 MUX（DMA→…→IDE→PCI）。
 always_comb begin
     chipset_io_rdata = 8'hFF;
     if (chip_io_vld) begin
@@ -529,13 +562,14 @@ always_comb begin
             chipset_io_rdata = r_lpt;
         else if (hit_ide)
             chipset_io_rdata = r_ide;
+        else if (hit_pci)
+            chipset_io_rdata = r_pci[7: 0];
     end
 end
 
 assign o_pic_intr = intr_m;
 
-// 注意：VGA VRAM 是只写的（从CPU角度），不支持读操作
-// 如果需要读VRAM，需要从VGA模块内部读取，这里暂时不支持
+// 注意：VGA VRAM 支持 CPU 读（1 周期延迟）；写同拍完成
 
 // ============================================================================
 // 地址转换（将物理地址转换为外设内部地址）
@@ -548,13 +582,37 @@ assign o_vga_mem_addr   = mux_addr[19: 0] - MEM_BASE_VRAM[19: 0];
 // 外设使能信号生成
 // ============================================================================
 
-// VRAM 访问控制（VGA 只支持字节写）
+// VRAM 访问控制（字节写 / 字节读）
+always_ff @(posedge clk or negedge rst_n) begin
+    if (~rst_n) begin
+        vram_rd_pend_r  <= 1'b0;
+        vram_rd_ready_r <= 1'b0;
+    end else begin
+        vram_rd_ready_r <= 1'b0;
+        if (is_vram_access && mux_valid && ~mux_we) begin
+            if (~vram_rd_pend_r) begin
+                vram_rd_pend_r <= 1'b1;
+            end else begin
+                vram_rd_pend_r  <= 1'b0;
+                vram_rd_ready_r <= 1'b1;
+            end
+        end else begin
+            vram_rd_pend_r <= 1'b0;
+        end
+    end
+end
+
 assign o_vga_mem_en_w   = is_vram_access && mux_valid && mux_we;
+assign o_vga_mem_en_r   = is_vram_access && mux_valid && ~mux_we;
 assign o_vga_mem_data_w = mux_wdata[ 7: 0];
 
-// BIOS ROM 访问控制（只读）
-assign o_bios_addr     = mux_addr[15: 0] - MEM_BASE_SYS_BIOS[15: 0];
+// BIOS 窗口：低位 E0000–FFFFF 与高位 FFFE0000–FFFFFFFF 共用 128KiB 映像
+assign o_bios_addr = (mux_addr >= MEM_BASE_BIOS_HI) ?
+                     mux_addr[16: 0] :
+                     (mux_addr[16: 0] - MEM_BASE_SYS_BIOS[16: 0]);
 assign o_ext_bios_addr = mux_addr[16: 0] - MEM_BASE_EXT_BIOS[16: 0];
+assign o_bios_we       = is_sys_bios_access && mux_valid && mux_we && rst_n;
+assign o_bios_wdata    = mux_wdata;
 
 // SDRAM（32 位字访问；常规 RAM 与高位窗口映射到同一物理地址空间，见 soc_top）
 assign o_sdram_en       = (is_ram_access || is_sdram_access) && mux_valid;
@@ -573,25 +631,27 @@ assign o_vga_io_data_w = mux_wdata[ 7: 0];
 // 数据读取路径选择
 // ============================================================================
 
-// VRAM 数据（8 位扩展到 32 位）
-// 注意：VGA VRAM 是只写的，不支持CPU读操作
-// 如果CPU尝试读VRAM，返回0（或者可以返回未定义值）
+// VRAM 数据（8 位扩展到 32 位，读路径来自 VGA 双口 RAM）
 
 // BIOS 数据
 
-// I/O 数据（8 位扩展到 32 位）
-logic [ 7: 0] io_byte_data;
-
+// I/O 数据：命中设备返回字节；未实现端口对 16/32-bit IN 返回 0xFF（避免 PCI 误判 0x00FF 为在位）
 assign io_byte_data = is_vga_io_access ? i_vga_io_data_r :
                       (chipset_io_hit ? chipset_io_rdata : 8'hFF);
+// PCI CF8/CFC: present full config dword; shift so byte/word IN at CFC+n hit the right lane.
+logic [31: 0] pci_io_rdata;
+assign pci_io_rdata = r_pci >> (8 * chip_io_addr[1: 0]);
+assign io_data_selected = is_io_access ?
+                          (hit_pci && chip_io_vld ? pci_io_rdata :
+                           ((is_vga_io_access || chipset_io_hit) ? {24'h0, io_byte_data} : 32'hFFFF_FFFF)) :
+                          32'h0;
 
 // CPU 读数据总线：按访问类型选择 SDRAM/BIOS/VGA I/O/chipset 等。
 always_comb begin
     if (is_ram_access || is_sdram_access) begin
         o_bus_data_read = i_sdram_ready ? i_sdram_rdata : 32'h0;
     end else if (is_vram_access) begin
-        // VRAM不支持读操作，返回0
-        o_bus_data_read = 32'h0;
+        o_bus_data_read = {24'h0, i_vga_mem_data_r};
     end else if (is_ext_bios_access) begin
         o_bus_data_read = ext_bios_data_selected;
     end else if (is_sys_bios_access) begin

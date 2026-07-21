@@ -66,13 +66,18 @@ Win95 disk/BIOS images are **not** committed; load via `+SEABIOS_BIN=` / `+DISK_
 ### M6 — Chipset / disk / display
 
 - [x] IDE/SoC TB disk image `$fread` preload path (`g_bram_only.image`)
+- [x] BIOS ROM 128KiB linear map (`E0000–FFFFF` / high alias) + PC reset `CS=F000 EIP=FFF0`
+- [x] IDE BRAM ≥1.44MiB (2880 sectors); VGA text window CPU read path
 - [x] 8237 DMA CH2 master transfer engine documented
 - [ ] Full SeaBIOS port probe compatibility (ongoing)
+- [ ] Behavioral SDRAM byte/halfword merge (dword stores OK; guest STOSB/IVT word stores need care)
 
-### M7 — SeaBIOS POST
+### M7 — SeaBIOS POST + FreeDOS DIR
 
-- [x] `tb/seabios_post_tb.sv` checkpoint framework (UART “SeaBIOS” → CP1)
-- [ ] INT13 disk chain-load golden (needs local SeaBIOS binary)
+- [x] `tb/seabios_post_tb.sv` + `REQUIRE_POST=1` (UART “SeaBIOS”)
+- [x] `tb/dos_boot_tb.sv` CP1–CP4 + `REQUIRE_DOS=1` (SeaBIOS → disk → prompt → DIR)
+- [x] Scripts: `fetch_build_seabios.sh`, `fetch_freedos_img.sh`, `build_openx86_dos_bios.py`
+- [ ] Full FreeDOS kernel without TB VGA assist (guest VGA/seg stores still fragile)
 
 ### M8 — Windows 95 desktop
 
@@ -106,12 +111,24 @@ Win95 disk/BIOS images are **not** committed; load via `+SEABIOS_BIN=` / `+DISK_
 # Smoke (no guest images)
 scripts/sim_tb_verilator.sh --tb tb/win95_boot_tb.sv
 
-# SeaBIOS POST (provide your binary)
-scripts/sim_tb_verilator.sh --tb tb/seabios_post_tb.sv \
-  +SEABIOS_BIN=/path/to/bios.bin +MAX_CYCLES=5000000
+# Fetch/build guest artifacts (not committed; gitignored under artifacts/)
+scripts/fetch_build_seabios.sh          # → artifacts/seabios/bios.bin + dos_bios.bin
+scripts/fetch_freedos_img.sh            # → artifacts/freedos/disk.img
+
+# SeaBIOS POST (forced)
+scripts/sim_tb_verilator.sh --tb tb/seabios_post_tb.sv -- \
+  +SEABIOS_BIN=artifacts/seabios/bios.bin +REQUIRE_POST=1 +MAX_CYCLES=200000
+
+# FreeDOS ladder to prompt + DIR (forced; CI uses dos_bios bring-up ROM)
+scripts/sim_tb_verilator.sh --tb tb/dos_boot_tb.sv -- \
+  +SEABIOS_BIN=artifacts/seabios/dos_bios.bin \
+  +DISK_IMG=artifacts/freedos/disk.img \
+  +REQUIRE_DOS=1 +MAX_CYCLES=200000
+
+# Optional local MS-DOS (not in CI): same plusargs with +DISK_IMG=/path/to/msdos.img
 
 # Win95 ladder (legal local image)
-scripts/sim_tb_verilator.sh --tb tb/win95_boot_tb.sv \
+scripts/sim_tb_verilator.sh --tb tb/win95_boot_tb.sv -- \
   +SEABIOS_BIN=/path/to/bios.bin +DISK_IMG=/path/to/win95.img \
   +MAX_CYCLES=200000000
 ```

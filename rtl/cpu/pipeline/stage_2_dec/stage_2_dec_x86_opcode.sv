@@ -391,6 +391,7 @@ stage_2_dec_x86_opcode_186 u_186 (
 );
 
 stage_2_dec_x86_opcode_286 u_286 (
+    .i_instruction                                            (i_instruction),
     .o_opcode_x86_ARPL_adjust_RPL_field_of_selector       (o_opcode_x86_ARPL_adjust_RPL_field_of_selector),
     .o_opcode_x86_CLTS_clear_task_switched_flag           (o_opcode_x86_CLTS_clear_task_switched_flag),
     .o_opcode_x86_LGDT_load_global_desciptor_table_reg    (o_opcode_x86_LGDT_load_global_desciptor_table_reg),
@@ -410,6 +411,7 @@ stage_2_dec_x86_opcode_286 u_286 (
 );
 
 stage_2_dec_x86_opcode_386 u_386 (
+    .i_instruction                                            (i_instruction),
     .o_opcode_x86_BSF_bit_scan_forward                    (o_opcode_x86_BSF_bit_scan_forward),
     .o_opcode_x86_BSR_bit_scan_reverse                    (o_opcode_x86_BSR_bit_scan_reverse),
     .o_opcode_x86_BT_reg_mem_with_imm                     (o_opcode_x86_BT_reg_mem_with_imm),
@@ -445,6 +447,7 @@ stage_2_dec_x86_opcode_386 u_386 (
 );
 
 stage_2_dec_x86_opcode_486 u_486 (
+    .i_instruction                                            (i_instruction),
     .o_opcode_x86_BSWAP_byte_swap                         (o_opcode_x86_BSWAP_byte_swap),
     .o_opcode_x86_CMPXCHG_compare_and_exchange             (o_opcode_x86_CMPXCHG_compare_and_exchange),
     .o_opcode_x86_CPUID_CPU_identification                 (o_opcode_x86_CPUID_CPU_identification),
@@ -456,6 +459,7 @@ stage_2_dec_x86_opcode_486 u_486 (
 );
 
 stage_2_dec_x86_opcode_586 u_586 (
+    .i_instruction                                            (i_instruction),
     .o_opcode_x86_RDTSC_read_time_stamp_counter            (o_opcode_x86_RDTSC_read_time_stamp_counter),
     .o_opcode_x86_RDMSR_read_from_model_specific_reg       (o_opcode_x86_RDMSR_read_from_model_specific_reg),
     .o_opcode_x86_WRMSR_write_to_model_specific_register   (o_opcode_x86_WRMSR_write_to_model_specific_register),
@@ -464,6 +468,7 @@ stage_2_dec_x86_opcode_586 u_586 (
 /* verilator lint_on PINMISSING */
 
 stage_2_dec_x86_opcode_686 u_686 (
+    .i_instruction                                            (i_instruction),
     .o_opcode_x86_RDPMC_read_performance_monitoring_counters          (o_opcode_x86_RDPMC_read_performance_monitoring_counters),
     .o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id      (o_opcode_x86_RDTSC_read_time_stamp_counter_and_processor_id),
     .o_opcode_x86_NOP_no_operation_multi_byte                         (o_opcode_x86_NOP_no_operation_multi_byte),
